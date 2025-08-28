@@ -1,0 +1,1072 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>AI 운세 - 사주라인</title>
+    <style>
+        /* 기본 설정 */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto,
+                         'Apple SD Gothic Neo', 'Noto Sans KR', sans-serif;
+            background-color: #0a0a0f;
+            color: #ffffff;
+            line-height: 1.6;
+            overflow-x: hidden;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        a {
+            text-decoration: none;
+            color: inherit;
+        }
+
+        button {
+            outline: none;
+            border: none;
+        }
+
+        /* 헤더 */
+        .header {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            background: rgba(10, 10, 15, 0.95);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            z-index: 1000;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .header-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 16px 20px;
+            height: 60px;
+        }
+
+        .back-button {
+            width: 36px;
+            height: 36px;
+            border: none;
+            background: transparent;
+            color: #fff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            font-size: 20px;
+        }
+
+        .header-title {
+            position: absolute;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 18px;
+            font-weight: 600;
+        }
+
+        .header-actions {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .icon-btn {
+            width: 36px;
+            height: 36px;
+            border: none;
+            background: transparent;
+            color: #fff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            font-size: 20px;
+        }
+
+        /* 메인 콘텐츠 */
+        .main-content {
+            margin-top: 60px;
+            padding: 20px;
+            padding-bottom: 120px;
+            flex: 1;
+            overflow-y: auto;
+        }
+
+        /* 히어로 배너 */
+        .hero {
+            background: linear-gradient(135deg, rgba(147, 51, 234, 0.3) 0%, rgba(124, 58, 237, 0.2) 100%);
+            border-radius: 20px;
+            padding: 32px 24px;
+            text-align: center;
+            margin-bottom: 24px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .hero::before {
+            content: '✨';
+            position: absolute;
+            top: -20px;
+            right: -20px;
+            font-size: 80px;
+            opacity: 0.1;
+        }
+
+        .hero-icon {
+            font-size: 48px;
+            margin-bottom: 16px;
+        }
+
+        .hero-title {
+            font-size: 24px;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+
+        .hero-desc {
+            font-size: 15px;
+            color: rgba(255, 255, 255, 0.8);
+        }
+
+        /* 입력 폼 카드 */
+        .input-card {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            padding: 24px;
+            margin-bottom: 24px;
+        }
+
+        .input-card h2 {
+            font-size: 18px;
+            font-weight: 700;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-label {
+            display: block;
+            font-size: 14px;
+            font-weight: 500;
+            color: rgba(255, 255, 255, 0.8);
+            margin-bottom: 8px;
+        }
+
+        .form-input,
+        .form-select {
+            width: 100%;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            padding: 14px 16px;
+            font-size: 16px;
+            color: #ffffff;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .form-input::-webkit-calendar-picker-indicator {
+            filter: invert(1);
+            opacity: 0.7;
+            cursor: pointer;
+        }
+
+        .form-input::-webkit-calendar-picker-indicator:hover {
+            opacity: 1;
+        }
+
+        .form-input[type="time"]::-webkit-calendar-picker-indicator {
+            filter: invert(1);
+            opacity: 0.7;
+            cursor: pointer;
+        }
+
+        .form-input[type="time"]::-webkit-calendar-picker-indicator:hover {
+            opacity: 1;
+        }
+
+        .form-input:focus,
+        .form-select:focus {
+            outline: none;
+            border-color: rgba(147, 51, 234, 0.5);
+            background: rgba(255, 255, 255, 0.08);
+        }
+
+        .form-input::placeholder {
+            color: rgba(255, 255, 255, 0.4);
+        }
+
+        .form-select {
+            width: 100%;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            padding: 14px 16px;
+            font-size: 16px;
+            color: #ffffff;
+            transition: all 0.3s ease;
+            position: relative;
+            appearance: none;
+            -webkit-appearance: none;
+            -moz-appearance: none;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='rgba(255, 255, 255, 0.7)' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 16px center;
+            background-size: 16px;
+            padding-right: 40px;
+        }
+
+        .form-select:focus {
+            outline: none;
+            border-color: rgba(147, 51, 234, 0.5);
+            background-color: rgba(255, 255, 255, 0.08);
+        }
+
+        .form-select option {
+            background: #1a1a2e;
+            color: #ffffff;
+            padding: 12px;
+        }
+
+        .calendar-type {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+
+        .calendar-option {
+            flex: 1;
+            padding: 10px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 14px;
+        }
+
+        .calendar-option.active {
+            background: rgba(147, 51, 234, 0.2);
+            border-color: rgba(147, 51, 234, 0.4);
+            color: #B794F6;
+        }
+
+        .generate-button {
+            width: 100%;
+            padding: 18px;
+            background: linear-gradient(135deg, #9333EA 0%, #7C3AED 100%);
+            border: none;
+            border-radius: 16px;
+            color: white;
+            font-size: 16px;
+            font-weight: 700;
+            cursor: pointer;
+            box-shadow: 0 4px 20px rgba(147, 51, 234, 0.4);
+            transition: all 0.3s ease;
+            margin-top: 8px;
+        }
+
+        .generate-button:active {
+            transform: scale(0.98);
+        }
+
+        /* 만세력 결과 카드 */
+        .saju-card {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            padding: 24px;
+            margin-bottom: 24px;
+            display: none;
+        }
+
+        .saju-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 24px;
+        }
+
+        .saju-title {
+            font-size: 18px;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .saju-date {
+            font-size: 14px;
+            color: rgba(255, 255, 255, 0.6);
+        }
+
+        .saju-pillars {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 12px;
+            margin-bottom: 24px;
+        }
+
+        .pillar {
+            background: rgba(147, 51, 234, 0.1);
+            border: 1px solid rgba(147, 51, 234, 0.2);
+            border-radius: 16px;
+            padding: 16px;
+            text-align: center;
+        }
+
+        .pillar-label {
+            font-size: 12px;
+            color: rgba(255, 255, 255, 0.6);
+            margin-bottom: 8px;
+        }
+
+        .pillar-stem {
+            font-size: 24px;
+            font-weight: 700;
+            color: #FFD700;
+            margin-bottom: 4px;
+        }
+
+        .pillar-branch {
+            font-size: 20px;
+            font-weight: 600;
+            color: #B794F6;
+            margin-bottom: 8px;
+        }
+
+        .pillar-element {
+            font-size: 11px;
+            color: rgba(255, 255, 255, 0.5);
+        }
+
+        /* 오행 분석 */
+        .elements-section {
+            margin-top: 24px;
+            padding-top: 24px;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .elements-title {
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 16px;
+            text-align: center;
+        }
+
+        .elements-grid {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 8px;
+        }
+
+        .element-item {
+            text-align: center;
+            padding: 12px 4px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 12px;
+        }
+
+        .element-icon {
+            font-size: 24px;
+            margin-bottom: 4px;
+        }
+
+        .element-name {
+            font-size: 12px;
+            font-weight: 500;
+            margin-bottom: 4px;
+        }
+
+        .element-count {
+            font-size: 16px;
+            font-weight: 700;
+            color: #B794F6;
+        }
+
+        /* 운세 결과 카드 */
+        .fortune-card {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            padding: 24px;
+            margin-bottom: 24px;
+            display: none;
+        }
+
+        .fortune-title {
+            font-size: 18px;
+            font-weight: 700;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .fortune-grid {
+            display: grid;
+            gap: 16px;
+        }
+
+        .fortune-item {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 16px;
+            padding: 20px;
+            border-left: 4px solid;
+        }
+
+        .fortune-item.total { border-left-color: #9333EA; }
+        .fortune-item.love { border-left-color: #FF6B6B; }
+        .fortune-item.money { border-left-color: #FFD700; }
+        .fortune-item.work { border-left-color: #4CAF50; }
+        .fortune-item.health { border-left-color: #2196F3; }
+
+        .fortune-item-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 12px;
+        }
+
+        .fortune-item-title {
+            font-size: 16px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .fortune-score {
+            font-size: 18px;
+            font-weight: 700;
+            color: #FFD700;
+        }
+
+        .fortune-summary {
+            font-size: 14px;
+            font-weight: 600;
+            color: #ffffff;
+            margin-bottom: 8px;
+        }
+
+        .fortune-text {
+            font-size: 14px;
+            color: rgba(255, 255, 255, 0.8);
+            line-height: 1.7;
+        }
+
+        /* 로딩 스피너 */
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 40px;
+        }
+
+        .loading-spinner {
+            width: 40px;
+            height: 40px;
+            border: 3px solid rgba(255, 255, 255, 0.1);
+            border-top-color: #B794F6;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+            margin: 0 auto 16px;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .loading-text {
+            font-size: 16px;
+            color: rgba(255, 255, 255, 0.8);
+        }
+
+        /* 하단 네비게이션 */
+        .bottom-nav {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: rgba(10, 10, 15, 0.95);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            display: flex;
+            justify-content: space-around;
+            padding: 8px 0 12px;
+            z-index: 1000;
+        }
+
+        .nav-item {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 8px;
+            color: rgba(255, 255, 255, 0.5);
+            text-decoration: none;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .nav-item::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 0;
+            height: 2px;
+            background: linear-gradient(90deg, #9333EA 0%, #B794F6 100%);
+            transition: width 0.3s ease;
+        }
+
+        .nav-item.active {
+            color: #B794F6;
+        }
+
+        .nav-item.active::before {
+            width: 40px;
+        }
+
+        .nav-icon {
+            font-size: 24px;
+            margin-bottom: 4px;
+        }
+
+        .nav-label {
+            font-size: 11px;
+            font-weight: 500;
+        }
+    </style>
+</head>
+<body>
+    <!-- 헤더 -->
+    <header class="header">
+        <div class="header-top">
+            <button class="back-button" onclick="window.history.back();">←</button>
+            <div class="header-actions">
+                <button class="icon-btn" onclick="window.location.href='search-page.html'">🔍</button>
+                <button class="icon-btn" onclick="window.location.href='login-page.html'">👤</button>
+            </div>
+            <h1 class="header-title">AI 운세</h1>
+        </div>
+    </header>
+
+    <!-- 메인 콘텐츠 -->
+    <main class="main-content">
+        <!-- 히어로 섹션 -->
+        <div class="hero">
+            <div class="hero-icon">🔮</div>
+            <h2 class="hero-title">AI가 분석하는 나의 운세</h2>
+            <p class="hero-desc">만세력 기반 정밀 분석으로 오늘의 운세를 확인하세요</p>
+        </div>
+
+        <!-- 입력 폼 카드 -->
+        <div class="input-card">
+            <h2>
+                <span>📝</span>
+                <span>생년월일시 입력</span>
+            </h2>
+
+            <!-- 양력/음력 선택 -->
+            <div class="calendar-type">
+                <div class="calendar-option active" data-type="solar">양력</div>
+                <div class="calendar-option" data-type="lunar">음력</div>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label" for="birth-date">생년월일</label>
+                <input type="date" id="birth-date" class="form-input" />
+            </div>
+
+            <div class="form-group">
+                <label class="form-label" for="birth-time">태어난 시간</label>
+                <input type="time" id="birth-time" class="form-input" />
+            </div>
+
+            <div class="form-group">
+                <label class="form-label" for="gender">성별</label>
+                <select id="gender" class="form-select">
+                    <option value="" disabled selected>성별을 선택하세요</option>
+                    <option value="male">남성</option>
+                    <option value="female">여성</option>
+                </select>
+            </div>
+
+            <button id="generateBtn" class="generate-button">AI 운세 분석하기</button>
+        </div>
+
+        <!-- 로딩 -->
+        <div id="loading" class="loading">
+            <div class="loading-spinner"></div>
+            <div class="loading-text">AI가 운세를 분석중입니다...</div>
+        </div>
+
+        <!-- 만세력 결과 카드 -->
+        <div id="sajuCard" class="saju-card">
+            <div class="saju-header">
+                <h3 class="saju-title">
+                    <span>📜</span>
+                    <span>만세력 분석</span>
+                </h3>
+                <span class="saju-date" id="birthInfo"></span>
+            </div>
+
+            <div class="saju-pillars">
+                <div class="pillar">
+                    <div class="pillar-label">년주</div>
+                    <div class="pillar-stem" id="yearStem">甲</div>
+                    <div class="pillar-branch" id="yearBranch">子</div>
+                    <div class="pillar-element" id="yearElement">목수</div>
+                </div>
+                <div class="pillar">
+                    <div class="pillar-label">월주</div>
+                    <div class="pillar-stem" id="monthStem">乙</div>
+                    <div class="pillar-branch" id="monthBranch">丑</div>
+                    <div class="pillar-element" id="monthElement">목토</div>
+                </div>
+                <div class="pillar">
+                    <div class="pillar-label">일주</div>
+                    <div class="pillar-stem" id="dayStem">丙</div>
+                    <div class="pillar-branch" id="dayBranch">寅</div>
+                    <div class="pillar-element" id="dayElement">화목</div>
+                </div>
+                <div class="pillar">
+                    <div class="pillar-label">시주</div>
+                    <div class="pillar-stem" id="hourStem">丁</div>
+                    <div class="pillar-branch" id="hourBranch">卯</div>
+                    <div class="pillar-element" id="hourElement">화목</div>
+                </div>
+            </div>
+
+            <!-- 오행 분석 -->
+            <div class="elements-section">
+                <h4 class="elements-title">오행 분석</h4>
+                <div class="elements-grid">
+                    <div class="element-item">
+                        <div class="element-icon">🌳</div>
+                        <div class="element-name">木</div>
+                        <div class="element-count" id="woodCount">0</div>
+                    </div>
+                    <div class="element-item">
+                        <div class="element-icon">🔥</div>
+                        <div class="element-name">火</div>
+                        <div class="element-count" id="fireCount">0</div>
+                    </div>
+                    <div class="element-item">
+                        <div class="element-icon">🏔️</div>
+                        <div class="element-name">土</div>
+                        <div class="element-count" id="earthCount">0</div>
+                    </div>
+                    <div class="element-item">
+                        <div class="element-icon">⚔️</div>
+                        <div class="element-name">金</div>
+                        <div class="element-count" id="metalCount">0</div>
+                    </div>
+                    <div class="element-item">
+                        <div class="element-icon">💧</div>
+                        <div class="element-name">水</div>
+                        <div class="element-count" id="waterCount">0</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 운세 결과 카드 -->
+        <div id="fortuneCard" class="fortune-card">
+            <h3 class="fortune-title">
+                <span>🌟</span>
+                <span>오늘의 운세</span>
+            </h3>
+            <div class="fortune-grid">
+                <div class="fortune-item total">
+                    <div class="fortune-item-header">
+                        <div class="fortune-item-title">
+                            <span>🎯</span>
+                            <span>총운</span>
+                        </div>
+                        <div class="fortune-score" id="totalScore">88점</div>
+                    </div>
+                    <div class="fortune-summary" id="totalSummary">전반적으로 안정적인 운세</div>
+                    <div class="fortune-text" id="totalFortune"></div>
+                </div>
+
+                <div class="fortune-item love">
+                    <div class="fortune-item-header">
+                        <div class="fortune-item-title">
+                            <span>❤️</span>
+                            <span>연애운</span>
+                        </div>
+                        <div class="fortune-score" id="loveScore">75점</div>
+                    </div>
+                    <div class="fortune-summary" id="loveSummary">새로운 만남의 기회</div>
+                    <div class="fortune-text" id="loveFortune"></div>
+                </div>
+
+                <div class="fortune-item money">
+                    <div class="fortune-item-header">
+                        <div class="fortune-item-title">
+                            <span>💰</span>
+                            <span>재물운</span>
+                        </div>
+                        <div class="fortune-score" id="moneyScore">82점</div>
+                    </div>
+                    <div class="fortune-summary" id="moneySummary">투자 기회 상승</div>
+                    <div class="fortune-text" id="moneyFortune"></div>
+                </div>
+
+                <div class="fortune-item work">
+                    <div class="fortune-item-header">
+                        <div class="fortune-item-title">
+                            <span>💼</span>
+                            <span>직장운</span>
+                        </div>
+                        <div class="fortune-score" id="workScore">90점</div>
+                    </div>
+                    <div class="fortune-summary" id="workSummary">성과 인정 받는 시기</div>
+                    <div class="fortune-text" id="workFortune"></div>
+                </div>
+
+                <div class="fortune-item health">
+                    <div class="fortune-item-header">
+                        <div class="fortune-item-title">
+                            <span>💪</span>
+                            <span>건강운</span>
+                        </div>
+                        <div class="fortune-score" id="healthScore">85점</div>
+                    </div>
+                    <div class="fortune-summary" id="healthSummary">컨디션 관리 필요</div>
+                    <div class="fortune-text" id="healthFortune"></div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+<!-- 하단 네비게이션 -->
+<nav class="bottom-nav">
+    <a href="main.html" class="nav-item">
+        <span class="nav-icon">🏠</span>
+        <span class="nav-label">홈</span>
+    </a>
+    <a href="ai-fortune-complete.html" class="nav-item active">
+        <span class="nav-icon">🤖</span>
+        <span class="nav-label">AI운세</span>
+    </a>
+    <a href="event.html" class="nav-item">
+        <span class="nav-icon">🎁</span>
+        <span class="nav-label">이벤트</span>
+    </a>
+    <a href="favorite.html" class="nav-item">
+        <span class="nav-icon">⭐</span>
+        <span class="nav-label">즐겨찾기</span>
+    </a>
+    <a href="mypage.html" class="nav-item">
+        <span class="nav-icon">👤</span>
+        <span class="nav-label">마이</span>
+    </a>
+</nav>
+
+    <script>
+        // 천간 (天干)
+        const heavenlyStems = ['甲', '乙', '丙', '丁', '戊', '己', '庚', '辛', '壬', '癸'];
+        const stemElements = {
+            '甲': '목', '乙': '목',
+            '丙': '화', '丁': '화',
+            '戊': '토', '己': '토',
+            '庚': '금', '辛': '금',
+            '壬': '수', '癸': '수'
+        };
+
+        // 지지 (地支)
+        const earthlyBranches = ['子', '丑', '寅', '卯', '辰', '巳', '午', '未', '申', '酉', '戌', '亥'];
+        const branchElements = {
+            '子': '수', '丑': '토', '寅': '목', '卯': '목',
+            '辰': '토', '巳': '화', '午': '화', '未': '토',
+            '申': '금', '酉': '금', '戌': '토', '亥': '수'
+        };
+
+        // 띠 동물
+        const zodiacAnimals = ['쥐', '소', '호랑이', '토끼', '용', '뱀', '말', '양', '원숭이', '닭', '개', '돼지'];
+
+        // 양력/음력 선택
+        document.querySelectorAll('.calendar-option').forEach(option => {
+            option.addEventListener('click', function() {
+                document.querySelectorAll('.calendar-option').forEach(opt => opt.classList.remove('active'));
+                this.classList.add('active');
+            });
+        });
+
+        // 간단한 만세력 계산 (실제로는 복잡한 음양력 변환이 필요)
+        function calculateSaju(year, month, day, hour) {
+            // 년주 계산
+            const yearStemIndex = (year - 4) % 10;
+            const yearBranchIndex = (year - 4) % 12;
+            
+            // 월주 계산 (간단화)
+            const monthStemIndex = ((year % 5) * 2 + Math.floor((month + 1) / 2)) % 10;
+            const monthBranchIndex = (month + 1) % 12;
+            
+            // 일주 계산 (간단화 - 실제로는 매우 복잡)
+            const dayOffset = Math.floor((year - 1900) * 365.25) + month * 30 + day;
+            const dayStemIndex = dayOffset % 10;
+            const dayBranchIndex = dayOffset % 12;
+            
+            // 시주 계산
+            const hourBranchIndex = Math.floor((hour + 1) / 2) % 12;
+            const hourStemIndex = ((dayStemIndex % 5) * 2 + Math.floor(hour / 2)) % 10;
+
+            return {
+                year: {
+                    stem: heavenlyStems[yearStemIndex],
+                    branch: earthlyBranches[yearBranchIndex],
+                    zodiac: zodiacAnimals[yearBranchIndex]
+                },
+                month: {
+                    stem: heavenlyStems[monthStemIndex],
+                    branch: earthlyBranches[monthBranchIndex]
+                },
+                day: {
+                    stem: heavenlyStems[dayStemIndex],
+                    branch: earthlyBranches[dayBranchIndex]
+                },
+                hour: {
+                    stem: heavenlyStems[hourStemIndex],
+                    branch: earthlyBranches[hourBranchIndex]
+                }
+            };
+        }
+
+        // 오행 카운트
+        function countElements(saju) {
+            const counts = { '목': 0, '화': 0, '토': 0, '금': 0, '수': 0 };
+            
+            // 각 기둥의 천간과 지지에서 오행 카운트
+            ['year', 'month', 'day', 'hour'].forEach(pillar => {
+                const stem = saju[pillar].stem;
+                const branch = saju[pillar].branch;
+                
+                if (stemElements[stem]) counts[stemElements[stem]]++;
+                if (branchElements[branch]) counts[branchElements[branch]]++;
+            });
+            
+            return counts;
+        }
+
+        // 운세 생성
+        function generateFortune(elements, gender, zodiac) {
+            const fortunes = {
+                total: {
+                    summaries: ["전반적으로 안정적인 운세", "변화와 성장의 시기", "조화와 균형이 필요한 때", "새로운 도전의 기회"],
+                    texts: [
+                        "오늘은 새로운 기회가 찾아오는 날입니다. 평소보다 적극적인 자세로 임한다면 좋은 결과를 얻을 수 있을 것입니다. 특히 오후 시간대에는 중요한 결정을 내리기에 좋은 때이니, 신중하면서도 과감하게 행동해보세요. 주변 사람들의 조언도 적극적으로 들어보는 것이 도움이 될 것입니다.",
+                        "인내심을 가지고 꾸준히 노력하는 것이 중요한 시기입니다. 조급해하지 말고 차근차근 목표를 향해 나아가세요. 현재 진행 중인 일들이 예상보다 시간이 걸릴 수 있지만, 포기하지 않고 끝까지 해내면 분명 좋은 결과가 있을 것입니다. 무엇보다 자신을 믿고 꾸준히 전진하는 것이 중요합니다.",
+                        "주변 사람들과의 조화가 중요한 날입니다. 배려와 이해를 바탕으로 관계를 발전시켜 나가세요. 혼자서는 해결하기 어려운 문제들도 협력을 통해 해결할 수 있을 것입니다. 특히 가족이나 가까운 친구들과의 시간을 소중히 여기고, 그들의 의견에 귀를 기울여보세요."
+                    ]
+                },
+                love: {
+                    summaries: ["새로운 만남의 기회", "관계 발전의 시기", "소통이 중요한 때", "감정 표현의 시기"],
+                    texts: [
+                        "연인과의 소통이 원활해지는 시기입니다. 서로의 마음을 솔직하게 표현해보세요. 평소 말하지 못했던 속마음을 털어놓을 수 있는 좋은 기회가 찾아올 것입니다. 솔직한 대화를 통해 관계가 한층 더 깊어질 수 있으니, 용기를 내어 마음을 열어보세요. 작은 오해나 갈등이 있었다면 이번 기회에 해결해보는 것도 좋겠습니다.",
+                        "새로운 인연을 만날 수 있는 기회가 있습니다. 열린 마음으로 주변을 둘러보세요. 예상치 못한 곳에서 좋은 인연이 시작될 수 있습니다. 너무 완벽한 사람을 찾으려 하지 말고, 자연스럽게 마음이 통하는 사람을 만나보세요. 첫인상보다는 시간을 들여 상대방을 알아가는 것이 중요합니다.",
+                        "기존 관계를 더욱 돈독히 할 수 있는 시기입니다. 작은 배려가 큰 감동을 줄 수 있습니다. 연인이나 배우자에게 평소 고마웠던 마음을 표현해보세요. 선물이나 특별한 이벤트보다는 진심 어린 말 한마디가 더 큰 의미를 가질 것입니다. 서로에 대한 이해와 존중을 바탕으로 관계를 발전시켜 나가세요."
+                    ]
+                },
+                money: {
+                    summaries: ["투자 기회 상승", "절약 관리 필요", "부수입 기회", "금전 계획 수립"],
+                    texts: [
+                        "재물운이 상승하는 시기입니다. 투자나 저축을 시작하기 좋은 때입니다. 하지만 무작정 투자하기보다는 충분한 정보 수집과 신중한 판단이 필요합니다. 전문가의 조언을 구하거나 관련 서적을 읽어보는 것도 도움이 될 것입니다. 작은 금액부터 시작해서 경험을 쌓아가는 것이 좋겠습니다.",
+                        "지출을 관리하는 것이 중요합니다. 꼼꼼한 가계부 작성으로 불필요한 지출을 줄여보세요. 평소 무의식적으로 사용하는 돈들을 점검해보고, 정말 필요한 지출과 그렇지 않은 지출을 구분해보세요. 작은 절약이 모여 큰 목돈을 만들 수 있습니다. 계획적인 소비 습관을 기르는 것이 중요합니다.",
+                        "부업이나 사이드 프로젝트를 통해 추가 수입을 얻을 수 있는 기회가 있습니다. 자신의 특기나 취미를 활용한 수익 창출을 고려해보세요. 온라인 플랫폼을 활용하거나 지인들의 네트워크를 통해 새로운 기회를 찾아보는 것도 좋겠습니다. 단, 본업에 지장을 주지 않는 선에서 적절히 균형을 맞춰가세요."
+                    ]
+                },
+                work: {
+                    summaries: ["성과 인정 받는 시기", "새로운 도전 기회", "팀워크 중요", "실력 발휘 시기"],
+                    texts: [
+                        "직장에서 인정받을 수 있는 좋은 기회가 찾아옵니다. 성실한 자세로 임하세요. 평소 준비해왔던 것들이 빛을 발할 시기입니다. 상사나 동료들 앞에서 자신의 능력을 적극적으로 어필해보세요. 겸손함도 중요하지만, 때로는 자신 있게 의견을 제시하는 것도 필요합니다. 리더십을 발휘할 기회도 찾아올 수 있습니다.",
+                        "새로운 프로젝트나 업무에 도전해볼 만한 시기입니다. 역량을 발휘할 때입니다. 익숙한 업무에만 안주하지 말고, 새로운 분야에 도전해보세요. 처음에는 어려울 수 있지만, 끈기를 가지고 노력한다면 새로운 능력을 개발할 수 있을 것입니다. 교육이나 세미나 참여도 적극적으로 고려해보세요.",
+                        "동료들과의 협력이 중요한 시기입니다. 팀워크를 발휘하여 좋은 결과를 만들어보세요. 혼자서 모든 것을 해결하려 하지 말고, 동료들과 함께 지혜를 모아보세요. 의견 충돌이 있더라도 건설적인 토론을 통해 더 나은 방향을 찾을 수 있을 것입니다. 서로의 장점을 인정하고 단점을 보완해주는 관계를 만들어가세요."
+                    ]
+                },
+                health: {
+                    summaries: ["컨디션 관리 필요", "운동 시작 적기", "스트레스 해소", "규칙적 생활 중요"],
+                    texts: [
+                        "전반적으로 건강한 상태를 유지하고 있습니다. 규칙적인 생활을 계속 유지하세요. 현재의 좋은 컨디션을 계속 유지하기 위해서는 꾸준한 관리가 필요합니다. 충분한 수면과 균형 잡힌 식사, 적절한 운동을 통해 건강을 지켜나가세요. 작은 이상 신호라도 무시하지 말고 미리 관리하는 것이 중요합니다.",
+                        "스트레스 관리에 신경 쓸 필요가 있습니다. 적절한 휴식과 취미 활동으로 컨디션을 조절하세요. 업무나 인간관계에서 받는 스트레스가 쌓이지 않도록 주의해야 합니다. 명상이나 요가, 산책 등 자신만의 스트레스 해소 방법을 찾아보세요. 때로는 완전히 일상에서 벗어나 휴식을 취하는 것도 필요합니다.",
+                        "운동을 시작하기 좋은 시기입니다. 꾸준한 운동으로 체력을 기르고 면역력을 높이세요. 갑자기 무리한 운동을 하기보다는 자신의 체력에 맞는 운동부터 시작해보세요. 걷기, 조깅, 수영 등 유산소 운동과 함께 근력 운동도 병행하면 더욱 좋겠습니다. 운동을 통해 체력뿐만 아니라 정신적인 건강도 함께 챙길 수 있을 것입니다."
+                    ]
+                }
+            };
+
+            // 오행 분석에 따른 점수 조정
+            const dominantElement = Object.keys(elements).reduce((a, b) => elements[a] > elements[b] ? a : b);
+            
+            return {
+                total: {
+                    score: Math.floor(Math.random() * 20) + 75,
+                    summary: fortunes.total.summaries[Math.floor(Math.random() * fortunes.total.summaries.length)],
+                    text: fortunes.total.texts[Math.floor(Math.random() * fortunes.total.texts.length)]
+                },
+                love: {
+                    score: Math.floor(Math.random() * 30) + 65,
+                    summary: fortunes.love.summaries[Math.floor(Math.random() * fortunes.love.summaries.length)],
+                    text: fortunes.love.texts[Math.floor(Math.random() * fortunes.love.texts.length)]
+                },
+                money: {
+                    score: Math.floor(Math.random() * 25) + 70,
+                    summary: fortunes.money.summaries[Math.floor(Math.random() * fortunes.money.summaries.length)],
+                    text: fortunes.money.texts[Math.floor(Math.random() * fortunes.money.texts.length)]
+                },
+                work: {
+                    score: Math.floor(Math.random() * 30) + 70,
+                    summary: fortunes.work.summaries[Math.floor(Math.random() * fortunes.work.summaries.length)],
+                    text: fortunes.work.texts[Math.floor(Math.random() * fortunes.work.texts.length)]
+                },
+                health: {
+                    score: Math.floor(Math.random() * 25) + 75,
+                    summary: fortunes.health.summaries[Math.floor(Math.random() * fortunes.health.summaries.length)],
+                    text: fortunes.health.texts[Math.floor(Math.random() * fortunes.health.texts.length)]
+                }
+            };
+        }
+
+        // 결과 표시
+        function displayResults(saju, elements, fortune, birthDate, birthTime, gender) {
+            // 만세력 표시
+            document.getElementById('yearStem').textContent = saju.year.stem;
+            document.getElementById('yearBranch').textContent = saju.year.branch;
+            document.getElementById('yearElement').textContent = stemElements[saju.year.stem] + branchElements[saju.year.branch];
+
+            document.getElementById('monthStem').textContent = saju.month.stem;
+            document.getElementById('monthBranch').textContent = saju.month.branch;
+            document.getElementById('monthElement').textContent = stemElements[saju.month.stem] + branchElements[saju.month.branch];
+
+            document.getElementById('dayStem').textContent = saju.day.stem;
+            document.getElementById('dayBranch').textContent = saju.day.branch;
+            document.getElementById('dayElement').textContent = stemElements[saju.day.stem] + branchElements[saju.day.branch];
+
+            document.getElementById('hourStem').textContent = saju.hour.stem;
+            document.getElementById('hourBranch').textContent = saju.hour.branch;
+            document.getElementById('hourElement').textContent = stemElements[saju.hour.stem] + branchElements[saju.hour.branch];
+
+            // 생년월일 정보
+            const formattedDate = new Date(birthDate).toLocaleDateString('ko-KR', {
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric'
+            });
+            const formattedTime = birthTime || '시간 미입력';
+            document.getElementById('birthInfo').textContent = `${formattedDate} ${formattedTime} (${gender === 'male' ? '남' : '여'})`;
+
+            // 오행 카운트 표시
+            document.getElementById('woodCount').textContent = elements.목;
+            document.getElementById('fireCount').textContent = elements.화;
+            document.getElementById('earthCount').textContent = elements.토;
+            document.getElementById('metalCount').textContent = elements.금;
+            document.getElementById('waterCount').textContent = elements.수;
+
+            // 운세 표시
+            document.getElementById('totalScore').textContent = fortune.total.score + '점';
+            document.getElementById('totalSummary').textContent = fortune.total.summary;
+            document.getElementById('totalFortune').textContent = fortune.total.text;
+
+            document.getElementById('loveScore').textContent = fortune.love.score + '점';
+            document.getElementById('loveSummary').textContent = fortune.love.summary;
+            document.getElementById('loveFortune').textContent = fortune.love.text;
+
+            document.getElementById('moneyScore').textContent = fortune.money.score + '점';
+            document.getElementById('moneySummary').textContent = fortune.money.summary;
+            document.getElementById('moneyFortune').textContent = fortune.money.text;
+
+            document.getElementById('workScore').textContent = fortune.work.score + '점';
+            document.getElementById('workSummary').textContent = fortune.work.summary;
+            document.getElementById('workFortune').textContent = fortune.work.text;
+
+            document.getElementById('healthScore').textContent = fortune.health.score + '점';
+            document.getElementById('healthSummary').textContent = fortune.health.summary;
+            document.getElementById('healthFortune').textContent = fortune.health.text;
+
+            // 결과 카드들 표시
+            document.getElementById('sajuCard').style.display = 'block';
+            document.getElementById('fortuneCard').style.display = 'block';
+        }
+
+        // 메인 분석 함수
+        function analyzeFortune() {
+            const birthDate = document.getElementById('birth-date').value;
+            const birthTime = document.getElementById('birth-time').value;
+            const gender = document.getElementById('gender').value;
+
+            // 입력 유효성 검사
+            if (!birthDate || !gender) {
+                alert('생년월일과 성별을 입력해주세요.');
+                return;
+            }
+
+            // 로딩 표시
+            document.getElementById('loading').style.display = 'block';
+            document.getElementById('sajuCard').style.display = 'none';
+            document.getElementById('fortuneCard').style.display = 'none';
+
+            // 시뮬레이션 딜레이
+            setTimeout(() => {
+                const date = new Date(birthDate);
+                const year = date.getFullYear();
+                const month = date.getMonth() + 1;
+                const day = date.getDate();
+                const hour = birthTime ? parseInt(birthTime.split(':')[0]) : 12;
+
+                // 사주 계산
+                const saju = calculateSaju(year, month, day, hour);
+                
+                // 오행 분석
+                const elements = countElements(saju);
+                
+                // 운세 생성
+                const fortune = generateFortune(elements, gender, saju.year.zodiac);
+
+                // 결과 표시
+                displayResults(saju, elements, fortune, birthDate, birthTime, gender);
+
+                // 로딩 숨기기
+                document.getElementById('loading').style.display = 'none';
+
+                // 결과로 스크롤
+                document.getElementById('sajuCard').scrollIntoView({ 
+                    behavior: 'smooth' 
+                });
+
+            }, 2000); // 2초 딜레이
+        }
+
+        // 이벤트 리스너
+        document.getElementById('generateBtn').addEventListener('click', analyzeFortune);
+
+        // 엔터키 이벤트
+        document.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                analyzeFortune();
+            }
+        });
+    </script>
+</body>
+</html>

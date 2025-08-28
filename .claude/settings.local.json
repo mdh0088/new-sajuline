@@ -1,0 +1,16 @@
+{
+  "permissions": {
+    "allow": [
+      "mcp__serena__list_dir",
+      "mcp__serena__write_memory",
+      "mcp__vooster-ai__list_projects",
+      "WebFetch(domain:github.com)",
+      "WebSearch",
+      "WebFetch(domain:blog.dotcs.me)",
+      "WebFetch(domain:python-dependency-injector.ets-labs.org)",
+      "WebFetch(domain:vladiliescu.net)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}

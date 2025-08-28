@@ -1,0 +1,510 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>상담사 즐겨찾기 - 사주라인</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto,
+                         'Apple SD Gothic Neo', 'Noto Sans KR', sans-serif;
+            background-color: #0a0a0f;
+            color: #ffffff;
+            line-height: 1.6;
+            overflow-x: hidden;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* 헤더 */
+        .header {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            background: rgba(10, 10, 15, 0.95);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            z-index: 1000;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .header-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 16px 20px;
+            height: 60px;
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+
+        .icon-btn {
+            width: 36px;
+            height: 36px;
+            border: none;
+            background: rgba(255, 255, 255, 0.05);
+            color: #fff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            border-radius: 12px;
+            transition: all 0.3s ease;
+            font-size: 18px;
+        }
+
+        .icon-btn:active {
+            transform: scale(0.95);
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .back-button {
+            width: 36px;
+            height: 36px;
+            border: none;
+            background: transparent;
+            color: #fff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            font-size: 20px;
+        }
+
+        .header-title {
+            position: absolute;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 18px;
+            font-weight: 600;
+        }
+
+        /* 메인 콘텐츠 */
+        .main-content {
+            margin-top: 60px;
+            padding: 20px;
+            padding-bottom: 120px; /* 하단 네비 공간 */
+            flex: 1;
+            overflow-y: auto;
+        }
+
+        .favorite-list {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 16px;
+            padding: 16px;
+        }
+
+        .favorite-item {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            padding: 20px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .favorite-item:hover {
+            background: rgba(147, 51, 234, 0.08);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 20px rgba(147, 51, 234, 0.2);
+        }
+
+        .unfavorite-button {
+            position: absolute;
+            top: 16px;
+            right: 16px;
+            width: 32px;
+            height: 32px;
+            background: rgba(255, 107, 107, 0.2);
+            color: #ff6b6b;
+            border: none;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 16px;
+            z-index: 1;
+        }
+
+        .unfavorite-button:hover {
+            background: rgba(255, 107, 107, 0.3);
+            transform: scale(1.1);
+        }
+
+        .counselor-header {
+            display: flex;
+            gap: 16px;
+            margin-bottom: 16px;
+            position: relative;
+        }
+
+        .item-thumbnail {
+            width: 64px;
+            height: 64px;
+            border-radius: 20px;
+            background: linear-gradient(135deg, rgba(147, 51, 234, 0.2) 0%, rgba(124, 58, 237, 0.1) 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 28px;
+            position: relative;
+            flex-shrink: 0;
+        }
+
+        .item-info {
+            flex: 1;
+        }
+
+        .item-header {
+            margin-bottom: 8px;
+        }
+
+        .item-name-wrapper {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 4px;
+        }
+
+        .item-name {
+            font-size: 18px;
+            font-weight: 700;
+            color: #ffffff;
+        }
+
+        .item-number {
+            font-size: 13px;
+            color: rgba(255, 255, 255, 0.5);
+            padding: 2px 8px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+        }
+
+        .item-tier {
+            font-size: 13px;
+            color: #B794F6;
+            margin-bottom: 12px;
+        }
+
+        .item-details {
+            display: flex;
+            gap: 6px;
+            margin-bottom: 12px;
+            flex-wrap: wrap;
+        }
+
+        .detail-chip {
+            padding: 6px 12px;
+            background: rgba(147, 51, 234, 0.1);
+            border: 1px solid rgba(147, 51, 234, 0.2);
+            border-radius: 16px;
+            font-size: 12px;
+            font-weight: 500;
+            color: #B794F6;
+        }
+
+        .item-description {
+            font-size: 14px;
+            color: rgba(255, 255, 255, 0.7);
+            line-height: 1.5;
+            margin-bottom: 16px;
+        }
+
+        .item-actions {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding-top: 16px;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .rating {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .rating-stars {
+            display: flex;
+            gap: 2px;
+        }
+
+        .star {
+            color: #FFD700;
+            font-size: 14px;
+        }
+
+        .rating-info {
+            font-size: 14px;
+            color: rgba(255, 255, 255, 0.6);
+        }
+
+        .action-button {
+            padding: 8px 16px;
+            font-size: 14px;
+            font-weight: 600;
+            border-radius: 16px;
+            border: none;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .chat-button {
+            background: linear-gradient(135deg, #9333EA 0%, #7C3AED 100%);
+            color: #fff;
+            box-shadow: 0 2px 8px rgba(147, 51, 234, 0.4);
+        }
+
+        .chat-button:active {
+            transform: scale(0.95);
+        }
+
+        /* 빈 상태 */
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+        }
+
+        .empty-icon {
+            font-size: 64px;
+            margin-bottom: 16px;
+            opacity: 0.3;
+        }
+
+        .empty-title {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+
+        .empty-desc {
+            font-size: 14px;
+            color: rgba(255, 255, 255, 0.6);
+        }
+
+        /* 하단 네비게이션 */
+        .bottom-nav {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: rgba(10, 10, 15, 0.95);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            display: flex;
+            justify-content: space-around;
+            padding: 8px 0 12px;
+            z-index: 1000;
+        }
+
+        .nav-item {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 8px;
+            color: rgba(255, 255, 255, 0.5);
+            text-decoration: none;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .nav-item::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 0;
+            height: 2px;
+            background: linear-gradient(90deg, #9333EA 0%, #B794F6 100%);
+            transition: width 0.3s ease;
+        }
+
+        .nav-item.active {
+            color: #B794F6;
+        }
+
+        .nav-item.active::before {
+            width: 40px;
+        }
+
+        .nav-icon {
+            font-size: 24px;
+            margin-bottom: 4px;
+        }
+
+        .nav-label {
+            font-size: 11px;
+            font-weight: 500;
+        }
+
+        /* 반응형 레이아웃 */
+        @media (max-width: 1200px) {
+            .favorite-list {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        @media (max-width: 768px) {
+            .favorite-list {
+                grid-template-columns: 1fr;
+                padding: 12px;
+            }
+
+            .favorite-item {
+                padding: 16px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- 헤더 -->
+    <header class="header">
+        <div class="header-top">
+            <button class="back-button" onclick="window.history.back();">←</button>
+            <h1 class="header-title">즐겨찾기한 상담사</h1>
+            <div class="header-actions">
+                <button class="icon-btn" onclick="window.location.href='search-page.html'">🔍</button>
+                <button class="icon-btn" onclick="window.location.href='login-page.html'">👤</button>
+            </div>
+        </div>
+    </header>
+
+    <!-- 메인 콘텐츠 -->
+    <main class="main-content">
+        <div class="favorite-list">
+            <!-- 상담사 아이템 예시 1 -->
+            <div class="favorite-item">
+                <button class="unfavorite-button">×</button>
+                <div class="counselor-header">
+                    <div class="item-thumbnail online">
+                        <span>👨‍💼</span>
+                    </div>
+                    <div class="item-info">
+                        <div class="item-header">
+                            <div class="item-name-wrapper">
+                                <div class="item-name">김철수</div>
+                                <div class="item-number">#1234</div>
+                            </div>
+                            <div class="item-tier">프리미엄 상담사</div>
+                        </div>
+                        <div class="item-details">
+                            <span class="detail-chip">사주명리</span>
+                            <span class="detail-chip">궁합</span>
+                            <span class="detail-chip">운세</span>
+                        </div>
+                        <div class="item-description">
+                            20년 경력의 사주명리 전문가입니다. 정확한 사주 분석과 따뜻한 상담으로 많은 분들의 신뢰를 받고 있습니다.
+                        </div>
+                        <div class="item-actions">
+                            <div class="rating">
+                                <div class="rating-stars">
+                                    <span class="star">★</span>
+                                    <span class="star">★</span>
+                                    <span class="star">★</span>
+                                    <span class="star">★</span>
+                                    <span class="star">★</span>
+                                </div>
+                                <span class="rating-info">4.9 (128)</span>
+                            </div>
+                            <button class="action-button chat-button">전화상담</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 상담사 아이템 예시 2 -->
+            <div class="favorite-item">
+                <button class="unfavorite-button">×</button>
+                <div class="counselor-header">
+                    <div class="item-thumbnail">
+                        <span>👩‍💼</span>
+                    </div>
+                    <div class="item-info">
+                        <div class="item-header">
+                            <div class="item-name-wrapper">
+                                <div class="item-name">이지은</div>
+                                <div class="item-number">#1235</div>
+                            </div>
+                            <div class="item-tier">골드 상담사</div>
+                        </div>
+                        <div class="item-details">
+                            <span class="detail-chip">타로</span>
+                            <span class="detail-chip">연애운</span>
+                            <span class="detail-chip">직업운</span>
+                        </div>
+                        <div class="item-description">
+                            섬세한 타로 리딩으로 연애와 직업에 대한 정확한 조언을 제공합니다. 따뜻한 상담으로 유명합니다.
+                        </div>
+                        <div class="item-actions">
+                            <div class="rating">
+                                <div class="rating-stars">
+                                    <span class="star">★</span>
+                                    <span class="star">★</span>
+                                    <span class="star">★</span>
+                                    <span class="star">★</span>
+                                    <span class="star">★</span>
+                                </div>
+                                <span class="rating-info">4.8 (95)</span>
+                            </div>
+                            <button class="action-button chat-button">전화상담</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 즐겨찾기가 없을 때 빈 상태 -->
+            <!--
+            <div class="empty-state">
+                <div class="empty-icon">📭</div>
+                <div class="empty-title">즐겨찾기한 상담사가 없습니다</div>
+                <div class="empty-desc">마음에 드는 상담사를 찾아 즐겨찾기에 추가해보세요!</div>
+            </div>
+            -->
+        </div>
+    </main>
+
+    <!-- 하단 네비게이션 -->
+    <nav class="bottom-nav">
+        <a href="main.html" class="nav-item">
+            <span class="nav-icon">🏠</span>
+            <span class="nav-label">홈</span>
+        </a>
+        <a href="ai-fortune-complete.html" class="nav-item">
+            <span class="nav-icon">🤖</span>
+            <span class="nav-label">AI운세</span>
+        </a>
+        <a href="event.html" class="nav-item">
+            <span class="nav-icon">🎁</span>
+            <span class="nav-label">이벤트</span>
+        </a>
+        <a href="#" class="nav-item active">
+            <span class="nav-icon">⭐</span>
+            <span class="nav-label">즐겨찾기</span>
+        </a>
+        <a href="mypage.html" class="nav-item">
+            <span class="nav-icon">👤</span>
+            <span class="nav-label">마이</span>
+        </a>
+    </nav>
+</body>
+</html>

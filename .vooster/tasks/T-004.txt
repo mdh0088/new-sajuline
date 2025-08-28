@@ -1,0 +1,30 @@
+# 반응형 UI/UX 및 랜딩 페이지 구현
+
+**Task ID:** T-004
+**Status:** BACKLOG
+**Importance:** MUST
+**Complexity:** 6/10
+**Urgency:** 8/10
+**Dependencies:** T-001
+
+## Description
+
+**요구사항**:
+- 홈/랜딩 페이지 반응형 레이아웃 구축
+- 신뢰 신호, 핵심 베네핏, 상담사 추천 콘텐츠 배치
+- Tailwind CSS 기반 디자인 가이드(컬러, 폰트) 적용
+- Skeleton, Toast 등 공통 UI 컴포넌트 제공
+**구현 세부사항**:
+- Nuxt pages/landing.vue에 레이아웃 구현
+- tailwind.config.js로 디자인 시스템 설정
+- components 디렉토리에 Skeleton, Toast 컴포넌트 작성
+- Pinia store 및 Axios 인테셉터 기본 셋업
+**테스트 전략**:
+- 모바일/데스크톱 화면에서 UI 반응 검사
+- Vitest 스냅샷 테스트 실행
+- 접근성 자동 검사(a11y) 도구 적용
+
+---
+
+**Created:** 2025-08-27T15:36:58.221Z
+**Updated:** 2025-08-27T15:36:58.221Z

@@ -1,0 +1,960 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>회원가입 - 사주라인</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Apple SD Gothic Neo', 'Noto Sans KR', sans-serif;
+            background-color: #0a0a0f;
+            color: #ffffff;
+            line-height: 1.6;
+            overflow-x: hidden;
+        }
+
+        /* 헤더 */
+        .header {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            background: rgba(10, 10, 15, 0.95);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            z-index: 1000;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .header-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 16px 20px;
+            height: 60px;
+        }
+
+        .back-button {
+            width: 36px;
+            height: 36px;
+            border: none;
+            background: transparent;
+            color: #fff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            font-size: 20px;
+        }
+
+        .header-title {
+            position: absolute;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 18px;
+            font-weight: 600;
+        }
+
+        /* 진행 표시 */
+        .progress-bar {
+            position: fixed;
+            top: 60px;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: rgba(255, 255, 255, 0.1);
+            z-index: 999;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #9333EA 0%, #B794F6 100%);
+            transition: width 0.3s ease;
+        }
+
+        /* 메인 콘텐츠 */
+        .main-content {
+            margin-top: 64px;
+            padding: 24px 20px 40px;
+            max-width: 400px;
+            width: 100%;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        /* 단계 표시 */
+        .step-indicator {
+            display: flex;
+            justify-content: center;
+            gap: 8px;
+            margin-bottom: 32px;
+        }
+
+        .step-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.2);
+            transition: all 0.3s ease;
+        }
+
+        .step-dot.active {
+            background: #B794F6;
+            width: 24px;
+            border-radius: 4px;
+        }
+
+        /* 회원가입 폼 */
+        .signup-form {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .form-section {
+            display: none;
+        }
+
+        .form-section.active {
+            display: block;
+        }
+
+        .section-title {
+            font-size: 24px;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+
+        .section-subtitle {
+            font-size: 15px;
+            color: rgba(255, 255, 255, 0.6);
+            margin-bottom: 32px;
+        }
+
+        /* 입력 그룹 */
+        .input-group {
+            margin-bottom: 16px;
+        }
+
+        .input-label {
+            display: block;
+            font-size: 14px;
+            font-weight: 500;
+            color: rgba(255, 255, 255, 0.8);
+            margin-bottom: 8px;
+        }
+
+        .input-wrapper {
+            position: relative;
+        }
+
+        .input-field {
+            width: 100%;
+            padding: 16px 20px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            font-size: 16px;
+            color: #ffffff;
+            outline: none;
+            transition: all 0.3s ease;
+        }
+
+        .input-field:focus {
+            border-color: rgba(147, 51, 234, 0.5);
+            background: rgba(255, 255, 255, 0.08);
+        }
+
+        .input-field::placeholder {
+            color: rgba(255, 255, 255, 0.4);
+        }
+
+        .input-field.error {
+            border-color: rgba(255, 59, 48, 0.5);
+        }
+
+        /* 인증 버튼 */
+        .input-with-button {
+            display: flex;
+            gap: 8px;
+        }
+
+        .input-with-button .input-field {
+            flex: 1;
+        }
+
+        .verify-button {
+            padding: 16px 24px;
+            background: rgba(147, 51, 234, 0.2);
+            border: 1px solid rgba(147, 51, 234, 0.4);
+            border-radius: 12px;
+            color: #B794F6;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: not-allowed; /* 비활성화 상태 */
+            opacity: 0.5;
+            transition: all 0.3s ease;
+            white-space: nowrap;
+        }
+
+        /* 도움말 텍스트 */
+        .help-text {
+            font-size: 12px;
+            color: rgba(255, 255, 255, 0.5);
+            margin-top: 4px;
+        }
+
+        .error-text {
+            font-size: 12px;
+            color: #FF6B6B;
+            margin-top: 4px;
+            display: none;
+        }
+
+        .error-text.show {
+            display: block;
+        }
+
+        /* 약관 동의 */
+        .terms-section {
+            margin-top: 24px;
+        }
+
+        .terms-all {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 16px;
+            background: rgba(147, 51, 234, 0.1);
+            border: 1px solid rgba(147, 51, 234, 0.2);
+            border-radius: 12px;
+            margin-bottom: 12px;
+            cursor: pointer;
+        }
+
+        .terms-list {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .terms-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 16px;
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            cursor: pointer;
+        }
+
+        .checkbox {
+            width: 20px;
+            height: 20px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+            flex-shrink: 0;
+        }
+
+        .checkbox.checked {
+            background: linear-gradient(135deg, #9333EA 0%, #7C3AED 100%);
+            border-color: transparent;
+        }
+
+        .checkbox.checked::after {
+            content: '✓';
+            color: white;
+            font-size: 14px;
+            font-weight: 700;
+        }
+
+        .terms-text {
+            flex: 1;
+            font-size: 14px;
+        }
+
+        .terms-link {
+            color: #B794F6;
+            text-decoration: none;
+            font-size: 12px;
+        }
+
+        .required-badge {
+            font-size: 12px;
+            color: #FF6B6B;
+            margin-left: 4px;
+        }
+
+        /* 버튼 */
+        .button-group {
+            display: flex;
+            gap: 12px;
+            margin-top: 32px;
+        }
+
+        .prev-button {
+            flex: 1;
+            padding: 18px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 16px;
+            color: white;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .next-button {
+            flex: 2;
+            padding: 18px;
+            background: linear-gradient(135deg, #9333EA 0%, #7C3AED 100%);
+            border: none;
+            border-radius: 16px;
+            color: white;
+            font-size: 16px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 20px rgba(147, 51, 234, 0.4);
+        }
+
+        .button-group button:active {
+            transform: scale(0.98);
+        }
+
+        .button-group button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        /* 성별 선택 */
+        .gender-select {
+            display: flex;
+            gap: 12px;
+        }
+
+        .gender-option {
+            flex: 1;
+            padding: 16px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .gender-option.selected {
+            background: rgba(147, 51, 234, 0.2);
+            border-color: rgba(147, 51, 234, 0.4);
+        }
+
+        .gender-icon {
+            font-size: 32px;
+            margin-bottom: 8px;
+        }
+
+        .gender-label {
+            font-size: 14px;
+        }
+
+        /* 생년월일 입력 */
+        .birth-input {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+
+        .birth-field {
+            flex: 1;
+            text-align: center;
+        }
+
+        .birth-unit {
+            font-size: 14px;
+            color: rgba(255, 255, 255, 0.6);
+        }
+
+        /* 완료 화면 */
+        .completion-section {
+            text-align: center;
+            padding: 40px 0;
+        }
+
+        .completion-icon {
+            width: 80px;
+            height: 80px;
+            margin: 0 auto 24px;
+            background: linear-gradient(135deg, rgba(76, 175, 80, 0.2) 0%, rgba(76, 175, 80, 0.1) 100%);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 40px;
+        }
+
+        .completion-title {
+            font-size: 24px;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+
+        .completion-desc {
+            font-size: 16px;
+            color: rgba(255, 255, 255, 0.7);
+            margin-bottom: 32px;
+        }
+
+        .welcome-bonus {
+            padding: 20px;
+            background: linear-gradient(135deg, rgba(255, 215, 0, 0.1) 0%, rgba(255, 215, 0, 0.05) 100%);
+            border: 1px solid rgba(255, 215, 0, 0.3);
+            border-radius: 16px;
+            margin-bottom: 24px;
+        }
+
+        .bonus-title {
+            font-size: 18px;
+            font-weight: 700;
+            color: #FFD700;
+            margin-bottom: 8px;
+        }
+
+        .bonus-desc {
+            font-size: 14px;
+            color: rgba(255, 255, 255, 0.8);
+        }
+
+        /* 모달 스타일 */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            z-index: 1000;
+            backdrop-filter: blur(5px);
+        }
+
+        .modal-content {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 90%;
+            max-width: 400px;
+            background: #1a1a1f;
+            border-radius: 16px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .modal-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: #fff;
+        }
+
+        .modal-close {
+            background: none;
+            border: none;
+            color: rgba(255, 255, 255, 0.6);
+            font-size: 24px;
+            cursor: pointer;
+            padding: 0;
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            transition: all 0.3s ease;
+        }
+
+        .modal-close:hover {
+            background: rgba(255, 255, 255, 0.1);
+            color: #fff;
+        }
+
+        .modal-body {
+            padding: 20px;
+            max-height: 60vh;
+            overflow-y: auto;
+            color: rgba(255, 255, 255, 0.8);
+            font-size: 14px;
+            line-height: 1.6;
+        }
+
+        .modal-body::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .modal-body::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 3px;
+        }
+
+        .modal-body::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 3px;
+        }
+    </style>
+</head>
+<body>
+    <!-- 헤더 -->
+    <header class="header">
+        <div class="header-top">
+            <button class="back-button" onclick="prevStep()">←</button>
+            <h1 class="header-title">회원가입</h1>
+        </div>
+    </header>
+
+    <!-- 진행 표시 -->
+    <div class="progress-bar">
+        <div class="progress-fill" style="width: 25%"></div>
+    </div>
+
+    <!-- 메인 콘텐츠 -->
+    <main class="main-content">
+        <!-- 단계 표시 -->
+        <div class="step-indicator">
+            <div class="step-dot active"></div>
+            <div class="step-dot"></div>
+            <div class="step-dot"></div>
+            <div class="step-dot"></div>
+        </div>
+
+        <form class="signup-form">
+            <!-- Step 1: 닉네임/이메일/비밀번호/휴대폰 인증 (기능 비활성화) -->
+            <div class="form-section active" id="step1">
+                <h2 class="section-title">기본 로그인 정보</h2>
+                <p class="section-subtitle">이용하실 닉네임, 이메일, 비밀번호, 휴대폰을 입력해주세요</p>
+
+                <div class="input-group">
+                    <label class="input-label">닉네임</label>
+                    <div class="input-wrapper">
+                        <input type="text" class="input-field" placeholder="사용하실 닉네임을 입력해주세요" id="nickname">
+                    </div>
+                    <p class="error-text" id="nicknameError">닉네임을 입력해주세요</p>
+                </div>
+
+                <div class="input-group">
+                    <label class="input-label">이메일</label>
+                    <div class="input-wrapper">
+                        <input type="email" class="input-field" placeholder="example@email.com" id="email">
+                    </div>
+                    <p class="error-text" id="emailError">이메일을 입력해주세요</p>
+                </div>
+
+                <div class="input-group">
+                    <label class="input-label">비밀번호</label>
+                    <div class="input-wrapper">
+                        <input type="password" class="input-field" placeholder="8자 이상 영문, 숫자, 특수문자 포함" id="password">
+                    </div>
+                    <p class="help-text">영문, 숫자, 특수문자를 포함해 8자 이상 입력해주세요</p>
+                </div>
+
+                <div class="input-group">
+                    <label class="input-label">비밀번호 확인</label>
+                    <div class="input-wrapper">
+                        <input type="password" class="input-field" placeholder="비밀번호를 다시 입력해주세요" id="passwordConfirm">
+                    </div>
+                    <p class="error-text" id="passwordError">비밀번호가 일치하지 않습니다</p>
+                </div>
+
+                <div class="input-group">
+                    <label class="input-label">휴대폰 번호</label>
+                    <div class="input-with-button">
+                        <input type="tel" class="input-field" placeholder="010-0000-0000" id="phone" maxlength="13" oninput="autoHyphen(this)">
+                        <button type="button" class="verify-button" disabled>인증하기</button>
+                    </div>
+                    <p class="error-text" id="phoneError">올바른 휴대폰 번호를 입력해주세요</p>
+                </div>
+
+                <div class="button-group">
+                    <button type="button" class="next-button" onclick="nextStep()">다음</button>
+                </div>
+            </div>
+
+            <!-- Step 2: 이름/성별/생년월일 (선택) -->
+            <div class="form-section" id="step2">
+                <h2 class="section-title">추가 정보 (선택)</h2>
+                <p class="section-subtitle">이름, 성별, 생년월일을 입력하시면 맞춤 서비스를 제공받을 수 있어요</p>
+
+                <div class="input-group">
+                    <label class="input-label">이름 (선택)</label>
+                    <div class="input-wrapper">
+                        <input type="text" class="input-field" placeholder="실명을 입력해주세요" id="name">
+                    </div>
+                </div>
+
+                <div class="input-group">
+                    <label class="input-label">성별 (선택)</label>
+                    <div class="gender-select">
+                        <div class="gender-option selected" data-gender="male">
+                            <div class="gender-icon">👨</div>
+                            <div class="gender-label">남성</div>
+                        </div>
+                        <div class="gender-option" data-gender="female">
+                            <div class="gender-icon">👩</div>
+                            <div class="gender-label">여성</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="input-group">
+                    <label class="input-label">생년월일 (선택)</label>
+                    <div class="birth-input">
+                        <input type="number" class="input-field birth-field" placeholder="1990" id="birthYear" min="1900" max="2025">
+                        <span class="birth-unit">년</span>
+                        <input type="number" class="input-field birth-field" placeholder="1" id="birthMonth" min="1" max="12">
+                        <span class="birth-unit">월</span>
+                        <input type="number" class="input-field birth-field" placeholder="1" id="birthDay" min="1" max="31">
+                        <span class="birth-unit">일</span>
+                    </div>
+                </div>
+
+                <div class="button-group">
+                    <button type="button" class="prev-button" onclick="prevStep()">이전</button>
+                    <button type="button" class="next-button" onclick="nextStep()">다음</button>
+                </div>
+            </div>
+
+            <!-- Step 3: 약관 동의 -->
+            <div class="form-section" id="step3">
+                <h2 class="section-title">약관 동의</h2>
+                <p class="section-subtitle">서비스 이용약관에 동의해주세요</p>
+
+                <div class="terms-section">
+                    <div class="terms-all">
+                        <div class="checkbox" id="agreeAll"></div>
+                        <div class="terms-text">
+                            <strong>전체 동의</strong>
+                        </div>
+                    </div>
+
+                    <div class="terms-list">
+                        <div class="terms-item">
+                            <div class="checkbox terms-check" data-required="true"></div>
+                            <div class="terms-text">
+                                서비스 이용약관 동의
+                                <span class="required-badge">(필수)</span>
+                            </div>
+                            <a href="#" class="terms-link" onclick="openTermsModal('service'); return false;">보기</a>
+                        </div>
+
+                        <div class="terms-item">
+                            <div class="checkbox terms-check" data-required="true"></div>
+                            <div class="terms-text">
+                                개인정보 수집 및 이용 동의
+                                <span class="required-badge">(필수)</span>
+                            </div>
+                            <a href="#" class="terms-link" onclick="openTermsModal('privacy'); return false;">보기</a>
+                        </div>
+
+                        <div class="terms-item">
+                            <div class="checkbox terms-check" data-required="false"></div>
+                            <div class="terms-text">
+                                마케팅 정보 수신 동의
+                                <span style="font-size: 12px; color: rgba(255,255,255,0.5);">(선택)</span>
+                            </div>
+                            <a href="#" class="terms-link" onclick="openTermsModal('marketing'); return false;">보기</a>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="button-group">
+                    <button type="button" class="prev-button" onclick="prevStep()">이전</button>
+                    <button type="button" class="next-button" onclick="completeSignup()">가입완료</button>
+                </div>
+            </div>
+
+            <!-- 약관 모달 -->
+            <div class="modal" id="termsModal">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h3 class="modal-title">약관 상세</h3>
+                        <button class="modal-close" onclick="closeTermsModal()">×</button>
+                    </div>
+                    <div class="modal-body">
+                        <div id="termsContent"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 완료 화면 -->
+            <div class="form-section" id="completion">
+                <div class="completion-section">
+                    <div class="completion-icon">✅</div>
+                    <h2 class="completion-title">회원가입 완료!</h2>
+                    <p class="completion-desc">사주라인 회원이 되신 것을 환영합니다</p>
+
+                    <div class="welcome-bonus">
+                        <div class="bonus-title">🎁 가입 축하 혜택</div>
+                        <div class="bonus-desc">
+                            신규 회원님께 1,000P를 선물로 드렸습니다!<br>
+                            첫 상담 10분 무료 쿠폰도 확인해보세요.
+                        </div>
+                    </div>
+
+                    <button type="button" class="next-button" onclick="goToLogin()">로그인하러 가기</button>
+                </div>
+            </div>
+        </form>
+    </main>
+
+    <script>
+        let currentStep = 1;
+        const totalSteps = 3; // 약관 동의까지 3단계, 완료 화면은 별도
+
+        // 다음 단계
+        function nextStep() {
+            if (currentStep === 1) {
+                const nickname = document.getElementById('nickname').value.trim();
+                const email = document.getElementById('email').value.trim();
+                const pw = document.getElementById('password').value;
+                const pwConfirm = document.getElementById('passwordConfirm').value;
+                const phone = document.getElementById('phone').value.trim();
+
+                // 닉네임 검증
+                if (!nickname) {
+                    document.getElementById('nicknameError').textContent = '닉네임을 입력해주세요';
+                    document.getElementById('nicknameError').classList.add('show');
+                    return;
+                } else {
+                    document.getElementById('nicknameError').classList.remove('show');
+                }
+
+                // 이메일 검증
+                if (!email) {
+                    document.getElementById('emailError').textContent = '이메일을 입력해주세요';
+                    document.getElementById('emailError').classList.add('show');
+                    return;
+                } else {
+                    document.getElementById('emailError').classList.remove('show');
+                }
+
+                // 비밀번호 검증
+                if (pw.length < 8) {
+                    document.getElementById('passwordError').textContent = '비밀번호 형식이 올바르지 않습니다';
+                    document.getElementById('passwordError').classList.add('show');
+                    return;
+                } else {
+                    document.getElementById('passwordError').classList.remove('show');
+                }
+                if (pw !== pwConfirm) {
+                    document.getElementById('passwordError').textContent = '비밀번호가 일치하지 않습니다';
+                    document.getElementById('passwordError').classList.add('show');
+                    return;
+                }
+
+                // 휴대폰 번호 형식 체크
+                if (!phone || phone.length < 10) {
+                    document.getElementById('phoneError').classList.add('show');
+                    return;
+                } else {
+                    document.getElementById('phoneError').classList.remove('show');
+                }
+            }
+
+            // 다음 단계로 이동
+            if (currentStep < totalSteps) {
+                document.getElementById(`step${currentStep}`).classList.remove('active');
+                currentStep++;
+                document.getElementById(`step${currentStep}`).classList.add('active');
+                updateProgress();
+                updateStepIndicator();
+            }
+        }
+
+        // 이전 단계
+        function prevStep() {
+            if (currentStep > 1) {
+                document.getElementById(`step${currentStep}`).classList.remove('active');
+                currentStep--;
+                document.getElementById(`step${currentStep}`).classList.add('active');
+                updateProgress();
+                updateStepIndicator();
+            }
+        }
+
+        // 진행률 업데이트
+        function updateProgress() {
+            const progress = (currentStep / totalSteps) * 100;
+            document.querySelector('.progress-fill').style.width = `${progress}%`;
+        }
+
+        // 단계 표시 업데이트
+        function updateStepIndicator() {
+            document.querySelectorAll('.step-dot').forEach((dot, index) => {
+                if (index < currentStep) {
+                    dot.classList.add('active');
+                } else {
+                    dot.classList.remove('active');
+                }
+            });
+        }
+
+        // 성별 선택
+        document.querySelectorAll('.gender-option').forEach(option => {
+            option.addEventListener('click', function() {
+                document.querySelectorAll('.gender-option').forEach(opt => opt.classList.remove('selected'));
+                this.classList.add('selected');
+            });
+        });
+
+        // 전체 동의 / 개별 동의
+        document.getElementById('agreeAll').addEventListener('click', function() {
+            const isChecked = this.classList.contains('checked');
+            if (!isChecked) {
+                this.classList.add('checked');
+                document.querySelectorAll('.terms-check').forEach(check => {
+                    check.classList.add('checked');
+                });
+            } else {
+                this.classList.remove('checked');
+                document.querySelectorAll('.terms-check').forEach(check => {
+                    check.classList.remove('checked');
+                });
+            }
+        });
+
+        document.querySelectorAll('.terms-check').forEach(check => {
+            check.addEventListener('click', function() {
+                this.classList.toggle('checked');
+                const allChecked = Array.from(document.querySelectorAll('.terms-check')).every(c => c.classList.contains('checked'));
+                if (allChecked) {
+                    document.getElementById('agreeAll').classList.add('checked');
+                } else {
+                    document.getElementById('agreeAll').classList.remove('checked');
+                }
+            });
+        });
+
+        // 회원가입 완료
+        function completeSignup() {
+            // 필수 약관 체크 확인
+            const requiredTerms = document.querySelectorAll('.terms-check[data-required="true"]');
+            const allRequiredChecked = Array.from(requiredTerms).every(term => term.classList.contains('checked'));
+            if (!allRequiredChecked) {
+                alert('필수 약관에 동의해주세요.');
+                return;
+            }
+
+            // 가입 완료 화면으로 이동
+            document.getElementById('step3').classList.remove('active');
+            document.getElementById('completion').classList.add('active');
+            document.querySelector('.progress-fill').style.width = '100%';
+            document.querySelector('.step-indicator').style.display = 'none';
+            document.querySelector('.header-title').textContent = '가입 완료';
+            document.querySelector('.back-button').style.display = 'none';
+
+            // 실제로는 여기서 서버에 가입 정보 전송
+        }
+
+        // 로그인 페이지로 이동
+        function goToLogin() {
+            window.location.href = 'login-page.html';
+        }
+
+        // 휴대폰 번호 자동 하이픈 추가
+        function autoHyphen(target) {
+            target.value = target.value
+                .replace(/[^0-9]/g, '')
+                .replace(/^(\d{0,3})(\d{0,4})(\d{0,4})$/g, "$1-$2-$3")
+                .replace(/(\-{1,2})$/g, "");
+        }
+
+        // 약관 모달 관련 함수
+        function openTermsModal(type) {
+            const modal = document.getElementById('termsModal');
+            const content = document.getElementById('termsContent');
+
+            let termsContent = '';
+            switch(type) {
+                case 'service':
+                    termsContent = `
+                        <h4>서비스 이용약관</h4>
+                        <p>제1조 (목적)</p>
+                        <p>이 약관은 사주라인(이하 "회사")이 제공하는 서비스의 이용과 관련하여 회사와 회원 간의 권리, 의무 및 책임사항을 규정함을 목적으로 합니다.</p>
+                        <p>제2조 (정의)</p>
+                        <p>1. "서비스"란 회사가 제공하는 모든 서비스를 의미합니다.</p>
+                        <p>2. "회원"이란 회사와 서비스 이용계약을 체결한 자를 말합니다.</p>
+                        <p>제3조 (서비스의 제공)</p>
+                        <p>회사는 회원에게 아래와 같은 서비스를 제공합니다.</p>
+                        <p>1. 사주 상담 서비스</p>
+                        <p>2. 운세 분석 서비스</p>
+                        <p>3. 기타 회사가 정하는 서비스</p>
+                    `;
+                    break;
+                case 'privacy':
+                    termsContent = `
+                        <h4>개인정보 수집 및 이용 동의</h4>
+                        <p>1. 수집하는 개인정보 항목</p>
+                        <p>- 필수항목: 닉네임, 이메일, 비밀번호, 휴대폰번호</p>
+                        <p>- 선택항목: 이름, 성별, 생년월일</p>
+                        <p>2. 개인정보의 수집 및 이용목적</p>
+                        <p>- 회원 관리 및 서비스 제공</p>
+                        <p>- 상담 및 문의 응대</p>
+                        <p>3. 개인정보의 보유 및 이용기간</p>
+                        <p>- 회원 탈퇴 시까지</p>
+                    `;
+                    break;
+                case 'marketing':
+                    termsContent = `
+                        <h4>마케팅 정보 수신 동의</h4>
+                        <p>1. 마케팅 활용 목적</p>
+                        <p>- 새로운 서비스 및 이벤트 정보 제공</p>
+                        <p>- 서비스 이용에 대한 통계 분석</p>
+                        <p>2. 마케팅 활용 항목</p>
+                        <p>- 이메일, 휴대폰번호</p>
+                        <p>3. 보유 및 이용기간</p>
+                        <p>- 동의 철회 시까지</p>
+                    `;
+                    break;
+            }
+
+            content.innerHTML = termsContent;
+            modal.style.display = 'block';
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeTermsModal() {
+            const modal = document.getElementById('termsModal');
+            modal.style.display = 'none';
+            document.body.style.overflow = 'auto';
+        }
+
+        // 모달 외부 클릭 시 닫기
+        window.onclick = function(event) {
+            const modal = document.getElementById('termsModal');
+            if (event.target == modal) {
+                closeTermsModal();
+            }
+        }
+    </script>
+</body>
+</html>

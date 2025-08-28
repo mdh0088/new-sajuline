@@ -1,0 +1,858 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>맞춤 상담사 추천 - 사주라인</title>
+  <style>
+    /* Global Styles */
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Apple SD Gothic Neo', 'Noto Sans KR', sans-serif;
+      background-color: #0a0a0f;
+      color: #fff;
+      line-height: 1.6;
+      overflow-x: hidden;
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
+    }
+    a {
+      text-decoration: none;
+      color: inherit;
+    }
+    button {
+      outline: none;
+      border: none;
+      cursor: pointer;
+    }
+    
+    /* 헤더 */
+    .header {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            background: rgba(10, 10, 15, 0.95);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            z-index: 1000;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .header-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 16px 20px;
+            height: 60px;
+        }
+
+        .back-button {
+            width: 36px;
+            height: 36px;
+            border: none;
+            background: transparent;
+            color: #fff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            border-radius: 12px;
+            font-size: 20px;
+            transition: all 0.3s ease;
+        }
+
+        .header-title {
+            position: absolute;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 18px;
+            font-weight: 600;
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 8px;
+        }
+
+        .icon-btn {
+            width: 36px;
+            height: 36px;
+            border: none;
+            background: transparent;
+            color: #fff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            font-size: 20px;
+        }
+    /* Main Content */
+    .main-content {
+      margin-top: 60px;
+      padding: 20px;
+      padding-bottom: 120px;
+      flex: 1;
+      overflow-y: auto;
+      max-width: 800px;
+      margin-left: auto;
+      margin-right: auto;
+      width: 100%;
+    }
+
+    /* Hero Section */
+    .hero {
+        background: linear-gradient(135deg, rgba(124, 58, 237, 0.2) 0%, rgba(147, 51, 234, 0.1) 100%);
+      border-radius: 16px;
+      padding: 32px 24px;
+      text-align: center;
+      position: relative;
+      margin-bottom: 32px;
+      box-shadow: 0 4px 24px rgba(0, 0, 0, 0.1);
+    }
+    .hero-icon {
+      font-size: 48px;
+      margin-bottom: 16px;
+      filter: drop-shadow(0 4px 8px rgba(147, 51, 234, 0.3));
+    }
+    .hero-title {
+      font-size: 24px;
+      font-weight: 700;
+      margin-bottom: 8px;
+      letter-spacing: -0.5px;
+    }
+    .hero-desc {
+      font-size: 15px;
+      color: rgba(255, 255, 255, 0.9);
+      line-height: 1.5;
+    }
+
+    /* Input & Filter */
+    .input-card {
+      display: flex;
+      gap: 12px;
+      justify-content: center;
+      margin: 24px 0;
+    }
+    .form-input {
+      flex: 1;
+      padding: 14px 16px;
+      background: rgba(255, 255, 255, 0.08);
+      border-radius: 12px;
+      color: #fff;
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      font-size: 15px;
+      transition: all 0.3s ease;
+    }
+    .form-input:focus {
+      border-color: rgba(147, 51, 234, 0.8);
+      background: rgba(255, 255, 255, 0.12);
+      outline: none;
+    }
+    .generate-button {
+      padding: 14px 24px;
+      background: linear-gradient(135deg, #9333EA, #7C3AED);
+      color: #fff;
+      border-radius: 12px;
+      font-weight: 600;
+      font-size: 15px;
+      transition: all 0.3s ease;
+      box-shadow: 0 4px 12px rgba(147, 51, 234, 0.3);
+    }
+    .generate-button:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 16px rgba(147, 51, 234, 0.4);
+    }
+    .generate-button:active {
+      transform: translateY(0);
+    }
+    .filter-title {
+      font-size: 15px;
+      font-weight: 600;
+      margin-top: 24px;
+      margin-bottom: 12px;
+      color: #B794F6;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .filter-title::before {
+      content: '';
+      display: inline-block;
+      width: 4px;
+      height: 16px;
+      background: linear-gradient(to bottom, #9333EA, #7C3AED);
+      border-radius: 2px;
+    }
+    .filters {
+      display: flex;
+      gap: 10px;
+      overflow-x: auto;
+      padding-bottom: 16px;
+      margin-bottom: 24px;
+      -webkit-overflow-scrolling: touch;
+      scrollbar-width: none;
+    }
+    .filters::-webkit-scrollbar {
+      display: none;
+    }
+    .filter-chip {
+      flex: 0 0 auto;
+      padding: 10px 20px;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 24px;
+      font-size: 14px;
+      color: rgba(255, 255, 255, 0.8);
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+    .filter-chip:hover {
+      background: rgba(255, 255, 255, 0.08);
+      transform: translateY(-1px);
+    }
+    .filter-chip.active {
+      background: rgba(147, 51, 234, 0.15);
+      border-color: #B794F6;
+      color: #B794F6;
+      box-shadow: 0 4px 12px rgba(147, 51, 234, 0.2);
+    }
+    .find-button {
+      width: 100%;
+      padding: 16px;
+      background: linear-gradient(135deg, #9333EA, #7C3AED);
+      color: #fff;
+      font-size: 16px;
+      font-weight: 600;
+      border-radius: 12px;
+      margin-top: 24px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      box-shadow: 0 4px 12px rgba(147, 51, 234, 0.3);
+    }
+    .find-button:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 16px rgba(147, 51, 234, 0.4);
+    }
+    .find-button:active {
+      transform: translateY(0);
+    }
+
+    /* Info Card */
+    .info-card {
+      background: rgba(255, 255, 255, 0.04);
+      border-radius: 16px;
+      padding: 20px;
+      margin-bottom: 32px;
+      box-shadow: 0 4px 24px rgba(0, 0, 0, 0.1);
+    }
+    .info-card h3 {
+      font-size: 17px;
+      font-weight: 600;
+      margin-bottom: 16px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      color: #fff;
+    }
+    .info-card h3 .icon {
+      font-size: 20px;
+      color: #9333EA;
+    }
+    .info-card p {
+      font-size: 15px;
+      color: rgba(255, 255, 255, 0.9);
+      margin-bottom: 8px;
+      line-height: 1.6;
+    }
+    .analysis-comment {
+      font-size: 14px;
+      color: rgba(255, 255, 255, 0.7);
+      margin-top: 8px;
+      font-style: italic;
+    }
+
+    /* Counselor List & Card */
+    .counselor-list {
+      display: none;
+      flex-direction: column;
+      gap: 20px;
+    }
+    .counselor-card {
+        background: linear-gradient(135deg, rgba(124, 58, 237, 0.2) 0%, rgba(147, 51, 234, 0.1) 100%);
+      border-radius: 20px;
+      padding: 24px;
+      display: flex;
+      gap: 24px;
+      align-items: flex-start;
+      transition: all 0.3s ease;
+      cursor: pointer;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      position: relative;
+      box-shadow: 0 4px 24px rgba(0, 0, 0, 0.1);
+    }
+
+    .favorite-btn {
+      position: absolute;
+      top: 20px;
+      right: 20px;
+      font-size: 22px;
+      color: rgba(255, 255, 255, 0.5);
+      cursor: pointer;
+      transition: all 0.3s ease;
+      z-index: 1;
+      width: 36px;
+      height: 36px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: rgba(255, 255, 255, 0.05);
+      border-radius: 50%;
+    }
+    .favorite-btn:hover {
+      transform: scale(1.1);
+      background: rgba(255, 255, 255, 0.1);
+    }
+    .favorite-btn.active {
+      color: #FFD700;
+      text-shadow: 0 0 8px rgba(255, 215, 0, 0.5);
+    }
+    .counselor-avatar {
+      width: 80px;
+      height: 80px;
+      border-radius: 20px;
+      background: linear-gradient(135deg, rgba(147, 51, 234, 0.2), rgba(124, 58, 237, 0.2));
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 60px;
+      position: relative;
+      flex-shrink: 0;
+      box-shadow: 0 4px 12px rgba(147, 51, 234, 0.2);
+    }
+    .counselor-avatar.online::after {
+      content: '';
+      position: absolute;
+      bottom: 8px;
+      right: 8px;
+      width: 24px;
+      height: 24px;
+      background: #4CAF50;
+      border: 4px solid #0a0a0f;
+      border-radius: 50%;
+      box-shadow: 0 0 12px rgba(76, 175, 80, 0.6);
+    }
+    .counselor-info {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+    .counselor-header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 4px;
+    }
+    .counselor-name {
+      font-size: 20px;
+      font-weight: 700;
+      letter-spacing: -0.5px;
+      background: linear-gradient(135deg, #fff, #B794F6);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    .match-badge {
+      font-size: 13px;
+      padding: 6px 12px;
+      background: rgba(147, 51, 234, 0.15);
+      border-radius: 12px;
+      color: #B794F6;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+    .match-badge::before {
+      content: '🎯';
+      font-size: 15px;
+      margin-right: 6px;
+      vertical-align: middle;
+      display: inline-block;
+      line-height: 1;
+    }
+    .counselor-meta {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      font-size: 14px;
+      color: rgba(255, 255, 255, 0.7);
+      margin-bottom: 12px;
+    }
+    .meta-item {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .meta-item::before {
+      font-size: 15px;
+      margin-right: 6px;
+      vertical-align: middle;
+      display: inline-block;
+      line-height: 1;
+    }
+    .rating::before {
+      content: '⭐';
+    }
+    .consultations::before {
+      content: '💬';
+    }
+    .counselor-tags {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-bottom: 16px;
+    }
+    .tag {
+      padding: 6px 12px;
+      background: rgba(147, 51, 234, 0.1);
+      border-radius: 12px;
+      font-size: 13px;
+      color: #B794F6;
+      font-weight: 500;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+    .tag::before {
+      content: '✨';
+      font-size: 15px;
+      margin-right: 6px;
+      vertical-align: middle;
+      display: inline-block;
+      line-height: 1;
+    }
+    .counselor-content {
+      display: flex;
+      gap: 24px;
+      align-items: flex-start;
+      margin-top: 4px;
+    }
+    .counselor-main {
+      flex: 1;
+    }
+    .counselor-side {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      align-items: flex-end;
+      min-width: 120px;
+    }
+    .reason {
+      font-size: 14px;
+      color: rgba(255, 255, 255, 0.9);
+      padding: 16px;
+      background: rgba(255, 255, 255, 0.05);
+      border-radius: 12px;
+      line-height: 1.6;
+      margin-top: 8px;
+      position: relative;
+    }
+    .reason::before {
+      content: '💡';
+      position: absolute;
+      top: -8px;
+      left: 16px;
+      font-size: 18px;
+      background: #0a0a0f;
+      padding: 0 6px;
+    }
+    .chat-btn {
+      padding: 12px 24px;
+      font-size: 15px;
+      font-weight: 600;
+      border-radius: 12px;
+      background: linear-gradient(135deg, #9333EA, #7C3AED);
+      color: #fff;
+      transition: all 0.3s ease;
+      box-shadow: 0 44px 12px rgba(147, 51, 234, 0.2);
+      width: fit-content;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .chat-btn::before {
+      content: '💬';
+      font-size: 15px;
+      margin-right: 6px;
+      vertical-align: middle;
+      display: inline-block;
+      line-height: 1;
+    }
+    .chat-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 16px rgba(147, 51, 234, 0.3);
+    }
+    .chat-btn:active {
+      transform: translateY(0);
+    }
+    .feedback {
+      font-size: 13px;
+      color: rgba(255, 255, 255, 0.7);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-top: 12px;
+    }
+    .feedback .stars {
+      color: #FFD700;
+      letter-spacing: 2px;
+    }
+
+     /* 하단 네비게이션 */
+     .bottom-nav {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: rgba(10, 10, 15, 0.95);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            display: flex;
+            justify-content: space-around;
+            padding: 8px 0 12px;
+            z-index: 1000;
+        }
+
+        .nav-item {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 8px;
+            color: rgba(255, 255, 255, 0.5);
+            text-decoration: none;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .nav-item::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 0;
+            height: 2px;
+            background: linear-gradient(90deg, #9333EA 0%, #B794F6 100%);
+            transition: width 0.3s ease;
+        }
+
+        .nav-item.active {
+            color: #B794F6;
+        }
+
+        .nav-item.active::before {
+            width: 40px;
+        }
+
+        .nav-icon {
+            font-size: 24px;
+            margin-bottom: 4px;
+        }
+
+        .nav-label {
+            font-size: 11px;
+            font-weight: 500;
+        }
+
+        .point-card {
+            background: linear-gradient(135deg, rgba(147, 51, 234, 0.1) 0%, rgba(124, 58, 237, 0.05) 100%);
+            border: 1px solid rgba(147, 51, 234, 0.2);
+            border-radius: 20px;
+            padding: 20px;
+            margin-bottom: 16px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            color: inherit;
+        }
+
+        .point-card:active {
+            transform: scale(0.98);
+        }
+  </style>
+</head>
+<body>
+<!-- 헤더 -->
+<header class="header">
+    <div class="header-top">
+        <button class="back-button" onclick="window.history.back();">←</button>
+        <h1 class="header-title">맞춤 상담사 추천</h1>
+        <div class="header-actions">
+            <button class="icon-btn" onclick="window.location.href='search-page.html'">🔍</button>
+            <button class="icon-btn" onclick="window.location.href='login-page.html'">👤</button>
+        </div>
+    </div>
+</header>
+
+  <main class="main-content">
+    <section class="hero">
+      <div class="hero-icon">🤖</div>
+      <h1 class="hero-title">AI가 추천하는 맞춤 상담사</h1>
+      <p class="hero-desc">고민 키워드를 입력하거나, 아래 분야를 눌러 추천받아보세요.</p>
+      <div class="input-card">
+        <input type="text" id="searchInput" class="form-input" placeholder="예: 직장 스트레스, 연애 고민" />
+        <button id="searchBtn" class="generate-button">검색</button>
+      </div>
+      <div class="filter-title">1단계: 고민 분야 선택</div>
+      <div class="filters" id="filterBar"></div>
+      <div class="filter-title">2단계: 세부 고민 유형 선택</div>
+      <div class="filters" id="subFilterBar"></div>
+      <div class="filter-title">3단계: 상세 고민 선택</div>
+      <div class="filters" id="subSubFilterBar"></div>
+      <button id="findBtn" class="find-button">상담사 찾기</button>
+    </section>
+
+    <div class="info-card">
+      <h3><span class="icon">💡</span>AI 분석 결과</h3>
+      <p id="analysisSummary">카테고리를 선택하거나 검색 후 상담사 찾기 버튼을 눌러주세요.</p>
+      <p id="analysisComment" class="analysis-comment"></p>
+    </div>
+
+    <div class="counselor-list" id="counselorList"></div>
+  </main>
+
+<!-- 하단 네비게이션 -->
+<nav class="bottom-nav">
+    <a href="main.html" class="nav-item">
+        <span class="nav-icon">🏠</span>
+        <span class="nav-label">홈</span>
+    </a>
+    <a href="ai-fortune-complete.html" class="nav-item">
+        <span class="nav-icon">🤖</span>
+        <span class="nav-label">AI운세</span>
+    </a>
+    <a href="event.html" class="nav-item">
+        <span class="nav-icon">🎁</span>
+        <span class="nav-label">이벤트</span>
+    </a>
+    <a href="favorite.html" class="nav-item">
+        <span class="nav-icon">⭐</span>
+        <span class="nav-label">즐겨찾기</span>
+    </a>
+    <a href="mypage.html" class="nav-item">
+        <span class="nav-icon">👤</span>
+        <span class="nav-label">마이</span>
+    </a>
+</nav>
+
+  <script>
+    const counselors = [
+      {name:'명월',tags:['직장 스트레스','힐링'],cat:['스트레스'],reason:'10년 경력 스트레스 관리 전문가',avatar:'👤',online:true},
+      {name:'소원',tags:['이별 극복','관계 개선'],cat:['연애·결혼'],reason:'연애코치 자격증 보유',avatar:'👤',online:false},
+      {name:'빛나',tags:['진로 상담','커리어'],cat:['커리어'],reason:'커리어 컨설팅 5년 경험',avatar:'👤',online:true},
+      {name:'다온',tags:['투자 전략','절세 방안'],cat:['재테크'],reason:'FP 자격 재테크 전문가',avatar:'👤',online:false},
+      {name:'하람',tags:['운동 루틴','식습관'],cat:['건강·라이프'],reason:'마인드풀니스 코치',avatar:'👤',online:true},
+      {name:'태양',tags:['사업 고민','창업'],cat:['커리어'],reason:'스타트업 CEO 출신 비즈니스 멘토',avatar:'☀️',online:true},
+      {name:'은하',tags:['결혼 고민','배우자'],cat:['연애·결혼'],reason:'부부 상담 전문가, 결혼 만족도 향상',avatar:'🪐',online:false},
+      {name:'정화',tags:['정신 건강','우울증'],cat:['스트레스'],reason:'임상 심리 전문가, 마음 치유 전문',avatar:'🌸',online:true}
+    ];
+    const subCategories = {
+      '스트레스': ['직장 스트레스','가족 스트레스','학업 스트레스'],
+      '연애·결혼': ['소개팅','이별 극복','관계 개선'],
+      '커리어': ['직무 만족','승진 고민','이직 준비'],
+      '재테크': ['투자 전략','절세 방안','부동산'],
+      '건강·라이프': ['식습관','운동 루틴','스트레칭']
+    };
+    const subSubCategories = {
+      '직장 스트레스': ['상사 갈등','업무 과부하','진로 고민'],
+      '가족 스트레스': ['부모 갈등','형제 관계','돌봄 부담'],
+      '시험 불안': ['압박감','시간 관리','공부 동기'],
+      '이별 극복': ['마음 정리','자존감 회복']
+    };
+    let selectedCat='', selectedSub='', selectedSubSub='';
+
+    const analysisEl = document.getElementById('analysisSummary');
+    const commentEl  = document.getElementById('analysisComment');
+    const counselorList = document.getElementById('counselorList');
+    const filterBar = document.getElementById('filterBar');
+    const subFilterBar = document.getElementById('subFilterBar');
+    const subSubFilterBar = document.getElementById('subSubFilterBar');
+    const searchInput = document.getElementById('searchInput');
+    const searchBtn   = document.getElementById('searchBtn');
+
+    // 카테고리 렌더
+    Object.keys(subCategories).forEach(cat=>{
+      const chip=document.createElement('div');
+      chip.className='filter-chip'; chip.textContent=cat;
+      chip.onclick=()=>{
+        // 모든 카테고리에서 active 클래스 제거
+        filterBar.querySelectorAll('.filter-chip').forEach(c=>c.classList.remove('active'));
+        subFilterBar.querySelectorAll('.filter-chip').forEach(c=>c.classList.remove('active'));
+        subSubFilterBar.querySelectorAll('.filter-chip').forEach(c=>c.classList.remove('active'));
+        
+        // 선택된 카테고리에 active 클래스 추가
+        chip.classList.add('active');
+        
+        selectedCat=cat; selectedSub=''; selectedSubSub='';
+        analysisEl.textContent=`분야: ${cat}`; commentEl.textContent='';
+        counselorList.style.display='none';
+        subFilterBar.innerHTML=''; subSubFilterBar.innerHTML='';
+        subCategories[cat].forEach(sub=>{
+          const c2=document.createElement('div'); c2.className='filter-chip'; c2.textContent=sub;
+          c2.onclick=()=>{
+            // 서브 카테고리에서 active 클래스 제거
+            subFilterBar.querySelectorAll('.filter-chip').forEach(c=>c.classList.remove('active'));
+            subSubFilterBar.querySelectorAll('.filter-chip').forEach(c=>c.classList.remove('active'));
+            
+            // 선택된 서브 카테고리에 active 클래스 추가
+            c2.classList.add('active');
+            
+            selectedSub=sub; selectedSubSub='';
+            analysisEl.textContent=`분야: ${cat} > ${sub}`; commentEl.textContent='';
+            counselorList.style.display='none';
+            subSubFilterBar.innerHTML='';
+            (subSubCategories[sub]||[]).forEach(sub2=>{
+              const c3=document.createElement('div'); c3.className='filter-chip'; c3.textContent=sub2;
+              c3.onclick=()=>{
+                // 서브서브 카테고리에서 active 클래스 제거
+                subSubFilterBar.querySelectorAll('.filter-chip').forEach(c=>c.classList.remove('active'));
+                
+                // 선택된 서브서브 카테고리에 active 클래스 추가
+                c3.classList.add('active');
+                
+                selectedSubSub=sub2;
+                analysisEl.textContent=`분야: ${cat} > ${sub} > ${sub2}`; commentEl.textContent='';
+                counselorList.style.display='none';
+              };
+              subSubFilterBar.appendChild(c3);
+            });
+          };
+          subFilterBar.appendChild(c2);
+        });
+      };
+      filterBar.appendChild(chip);
+    });
+
+    // 검색 버튼
+    searchBtn.onclick=()=>{
+      const kw=searchInput.value.trim();
+      if(!kw){alert('검색어를 입력해주세요.');return;}
+      
+      // 검색 시 모든 카테고리 선택 해제
+      filterBar.querySelectorAll('.filter-chip').forEach(c=>c.classList.remove('active'));
+      subFilterBar.querySelectorAll('.filter-chip').forEach(c=>c.classList.remove('active'));
+      subSubFilterBar.querySelectorAll('.filter-chip').forEach(c=>c.classList.remove('active'));
+      
+      selectedCat=selectedSub=selectedSubSub=''; 
+      analysisEl.textContent=`검색: ${kw}`; 
+      commentEl.textContent='';
+      counselorList.style.display='none'; 
+      setTimeout(()=>{ searchAndRender(kw.toLowerCase()); }, 500);
+    };
+
+    // 상담사 렌더링
+    function renderCounselors(){
+      counselorList.style.display = 'flex';
+      counselorList.innerHTML='';
+      let list=counselors.filter(c=>!selectedCat||c.cat.includes(selectedCat));
+      if(selectedSub){
+        const tmp=list.filter(c=>c.tags.includes(selectedSub));
+        if(tmp.length) list=tmp;
+      }
+      if(selectedSubSub){
+        const tmp=list.filter(c=>c.tags.includes(selectedSubSub));
+        if(tmp.length) list=tmp;
+      }
+      list.forEach(c=>{
+        const card=document.createElement('div'); card.className='counselor-card';
+        const prob=Math.floor(Math.random()*21+80);
+        const rating=(4.5 + Math.random() * 0.5).toFixed(1);
+        const consultations=Math.floor(Math.random()*500+200);
+        card.innerHTML=`
+          <div class="favorite-btn">☆</div>
+          <div class="counselor-avatar ${c.online?'online':''}">${c.avatar}</div>
+          <div class="counselor-info">
+            <div class="counselor-header">
+              <div class="counselor-name">${c.name} 선생님</div>
+              <div class="match-badge">${prob}% 매칭</div>
+            </div>
+            <div class="counselor-meta">
+              <div class="meta-item rating">${rating}</div>
+              <div class="meta-item consultations">상담 ${consultations}회</div>
+            </div>
+            <div class="counselor-tags">${c.tags.map(t=>`<span class="tag">${t}</span>`).join('')}</div>
+            <div class="counselor-content">
+              <div class="counselor-main">
+                <div class="reason">${c.reason}</div>
+                <div class="feedback">만족도 <span class="stars">★★★★☆</span></div>
+              </div>
+              <div class="counselor-side">
+                <button class="chat-btn">채팅하기</button>
+              </div>
+            </div>
+          </div>`;
+        // favorite toggle
+        const fav=card.querySelector('.favorite-btn');
+        fav.onclick=()=>fav.classList.toggle('active');
+        counselorList.appendChild(card);
+      });
+    }
+
+    // 키워드 검색
+    function searchAndRender(kw){
+      counselorList.style.display = 'flex';
+      counselorList.innerHTML='';
+      counselors.filter(c=>{
+        return c.tags.some(t=>t.includes(kw))||c.name.includes(kw)||c.reason.includes(kw);
+      }).forEach(c=>{
+        const card=document.createElement('div'); card.className='counselor-card';
+        const prob=Math.floor(Math.random()*21+80);
+        const rating=(4.5 + Math.random() * 0.5).toFixed(1);
+        const consultations=Math.floor(Math.random()*500+200);
+        card.innerHTML=`
+          <div class="favorite-btn">☆</div>
+          <div class="counselor-avatar ${c.online?'online':''}">${c.avatar}</div>
+          <div class="counselor-info">
+            <div class="counselor-header">
+              <div class="counselor-name">${c.name} 선생님</div>
+              <div class="match-badge">${prob}% 매칭</div>
+            </div>
+            <div class="counselor-meta">
+              <div class="meta-item rating">${rating}</div>
+              <div class="meta-item consultations">상담 ${consultations}회</div>
+            </div>
+            <div class="counselor-tags">${c.tags.map(t=>`<span class="tag">${t}</span>`).join('')}</div>
+            <div class="counselor-content">
+              <div class="counselor-main">
+                <div class="reason">${c.reason}</div>
+                <div class="feedback">만족도 <span class="stars">★★★★☆</span></div>
+              </div>
+              <div class="counselor-side">
+                <button class="chat-btn">채팅하기</button>
+              </div>
+            </div>
+          </div>`;
+        // favorite toggle
+        const fav=card.querySelector('.favorite-btn');
+        fav.onclick=()=>fav.classList.toggle('active');
+        counselorList.appendChild(card);
+      });
+    }
+
+    document.getElementById('findBtn').onclick=()=>{
+      if(!selectedCat){alert('분야를 먼저 선택해주세요.');return;}
+      const key=selectedSubSub||selectedSub||selectedCat;
+      commentEl.textContent=`"${key}" 분석 키워드 기반 추천입니다.`;
+      setTimeout(()=>renderCounselors(), 500);
+    };
+  </script>
+</body>
+</html>

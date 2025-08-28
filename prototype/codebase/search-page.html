@@ -1,0 +1,887 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>상담사 검색 - 사주라인</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Apple SD Gothic Neo', 'Noto Sans KR', sans-serif;
+            background-color: #0a0a0f;
+            color: #ffffff;
+            line-height: 1.6;
+            overflow-x: hidden;
+        }
+
+        /* 헤더 */
+        .header {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            background: rgba(10, 10, 15, 0.95);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            z-index: 1000;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .header-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 16px 20px;
+            height: 60px;
+        }
+
+        .back-button {
+            width: 36px;
+            height: 36px;
+            border: none;
+            background: transparent;
+            color: #fff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            font-size: 20px;
+        }
+
+        .header-title {
+            position: absolute;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 18px;
+            font-weight: 600;
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 8px;
+        }
+
+        .icon-btn {
+            width: 36px;
+            height: 36px;
+            border: none;
+            background: transparent;
+            color: #fff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            font-size: 20px;
+        }
+
+        /* 검색 영역 */
+        .search-section {
+            position: fixed;
+            top: 60px;
+            left: 0;
+            right: 0;
+            background: rgba(10, 10, 15, 0.98);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            padding: 16px 20px;
+            z-index: 999;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .search-wrapper {
+            position: relative;
+        }
+
+        .search-input {
+            width: 100%;
+            padding: 14px 48px 14px 20px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 16px;
+            font-size: 15px;
+            color: #ffffff;
+            outline: none;
+            transition: all 0.3s ease;
+        }
+
+        .search-input:focus {
+            border-color: rgba(147, 51, 234, 0.5);
+            background: rgba(255, 255, 255, 0.08);
+        }
+
+        .search-input::placeholder {
+            color: rgba(255, 255, 255, 0.4);
+        }
+
+        .search-icon {
+            position: absolute;
+            right: 16px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: rgba(255, 255, 255, 0.6);
+            font-size: 20px;
+        }
+
+        /* 필터 영역 */
+        .filter-section {
+            position: fixed;
+            top: 140px;
+            left: 0;
+            right: 0;
+            background: rgba(10, 10, 15, 0.95);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            padding: 0 20px 16px;
+            z-index: 998;
+        }
+
+        /* 카테고리 필터 */
+        .category-filters {
+            display: flex;
+            gap: 8px;
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+            scrollbar-width: none;
+            padding: 4px 0;
+            margin-bottom: 12px;
+        }
+
+        .category-filters::-webkit-scrollbar {
+            display: none;
+        }
+
+        .category-chip {
+            flex: 0 0 auto;
+            padding: 10px 20px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 24px;
+            font-size: 14px;
+            font-weight: 500;
+            color: rgba(255, 255, 255, 0.7);
+            white-space: nowrap;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .category-chip.active {
+            background: rgba(147, 51, 234, 0.2);
+            color: #B794F6;
+            border-color: rgba(147, 51, 234, 0.4);
+        }
+
+        /* 정렬 및 추가 필터 */
+        .sort-filter-row {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+
+        .sort-button, .filter-button {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 10px 16px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            font-size: 14px;
+            color: rgba(255, 255, 255, 0.8);
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .filter-button {
+            margin-left: auto;
+        }
+
+        .active-filters {
+            flex: 1;
+            display: flex;
+            gap: 6px;
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+            scrollbar-width: none;
+        }
+
+        .active-filters::-webkit-scrollbar {
+            display: none;
+        }
+
+        .active-filter-tag {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 12px;
+            background: rgba(147, 51, 234, 0.1);
+            border: 1px solid rgba(147, 51, 234, 0.3);
+            border-radius: 16px;
+            font-size: 12px;
+            color: #B794F6;
+            white-space: nowrap;
+        }
+
+        .remove-filter {
+            font-size: 14px;
+            cursor: pointer;
+        }
+
+        /* 메인 콘텐츠 */
+        .main-content {
+            margin-top: 220px;
+            padding: 0 20px 100px;
+        }
+
+        /* 검색 결과 정보 */
+        .search-info {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-top: 20px;
+        }
+
+        .result-count {
+            font-size: 14px;
+            color: rgba(255, 255, 255, 0.6);
+        }
+
+        .view-options {
+            display: flex;
+            gap: 8px;
+        }
+
+        .view-option {
+            width: 32px;
+            height: 32px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            background: transparent;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            color: rgba(255, 255, 255, 0.6);
+            transition: all 0.3s ease;
+        }
+
+        .view-option.active {
+            background: rgba(147, 51, 234, 0.2);
+            border-color: rgba(147, 51, 234, 0.4);
+            color: #B794F6;
+        }
+
+        /* 상담사 카드 - 기존 스타일 활용 */
+        .counselor-card {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            padding: 20px;
+            margin-bottom: 16px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .counselor-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, #9333EA 0%, #B794F6 100%);
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .counselor-card:active {
+            transform: scale(0.99);
+        }
+
+        .counselor-card:hover::before {
+            opacity: 1;
+        }
+
+        .counselor-header {
+            display: flex;
+            gap: 16px;
+            margin-bottom: 16px;
+        }
+
+        .counselor-avatar {
+            width: 64px;
+            height: 64px;
+            border-radius: 20px;
+            background: linear-gradient(135deg, rgba(147, 51, 234, 0.2) 0%, rgba(124, 58, 237, 0.1) 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 28px;
+            position: relative;
+        }
+
+        .counselor-avatar.online::after {
+            content: '';
+            position: absolute;
+            bottom: 2px;
+            right: 2px;
+            width: 16px;
+            height: 16px;
+            background: #4CAF50;
+            border: 3px solid #0a0a0f;
+            border-radius: 50%;
+        }
+
+        .counselor-info {
+            flex: 1;
+        }
+
+        .counselor-name {
+            font-size: 18px;
+            font-weight: 700;
+            color: #ffffff;
+            margin-bottom: 4px;
+        }
+
+        .counselor-status {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 14px;
+            color: rgba(255, 255, 255, 0.6);
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 4px;
+            background: #4CAF50;
+            box-shadow: 0 0 8px rgba(76, 175, 80, 0.6);
+        }
+
+        .counselor-specialty {
+            font-size: 13px;
+            color: #B794F6;
+            margin-top: 4px;
+        }
+
+        .counselor-tags {
+            display: flex;
+            gap: 6px;
+            margin-bottom: 12px;
+            flex-wrap: wrap;
+        }
+
+        .tag {
+            padding: 6px 12px;
+            background: rgba(147, 51, 234, 0.1);
+            border: 1px solid rgba(147, 51, 234, 0.2);
+            border-radius: 16px;
+            font-size: 12px;
+            font-weight: 500;
+            color: #B794F6;
+        }
+
+        .counselor-desc {
+            font-size: 14px;
+            color: rgba(255, 255, 255, 0.7);
+            line-height: 1.5;
+            margin-bottom: 16px;
+        }
+
+        .counselor-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding-top: 16px;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .rating {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .rating-stars {
+            display: flex;
+            gap: 2px;
+        }
+
+        .star {
+            color: #FFD700;
+            font-size: 14px;
+        }
+
+        .rating-info {
+            font-size: 14px;
+            color: rgba(255, 255, 255, 0.6);
+        }
+
+        .counselor-pricing {
+            text-align: right;
+        }
+
+        .price {
+            font-size: 18px;
+            font-weight: 700;
+            color: #ffffff;
+        }
+
+        .price-unit {
+            font-size: 12px;
+            color: rgba(255, 255, 255, 0.6);
+            font-weight: 400;
+        }
+
+        /* 로딩 상태 */
+        .loading-state {
+            text-align: center;
+            padding: 60px 20px;
+        }
+
+        .loading-spinner {
+            display: inline-block;
+            width: 40px;
+            height: 40px;
+            border: 3px solid rgba(255, 255, 255, 0.1);
+            border-top-color: #B794F6;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+            margin-bottom: 16px;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* 빈 상태 */
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+        }
+
+        .empty-icon {
+            font-size: 64px;
+            margin-bottom: 16px;
+            opacity: 0.3;
+        }
+
+        .empty-title {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+
+        .empty-desc {
+            font-size: 14px;
+            color: rgba(255, 255, 255, 0.6);
+        }
+
+        /* 하단 네비게이션 */
+        .bottom-nav {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: rgba(10, 10, 15, 0.95);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            display: flex;
+            justify-content: space-around;
+            padding: 8px 0 12px;
+            z-index: 1000;
+        }
+
+        .nav-item {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 8px;
+            color: rgba(255, 255, 255, 0.5);
+            text-decoration: none;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .nav-item.active {
+            color: #B794F6;
+        }
+
+        .nav-icon {
+            font-size: 24px;
+            margin-bottom: 4px;
+        }
+
+        .nav-label {
+            font-size: 11px;
+            font-weight: 500;
+        }
+
+        /* 필터 모달 */
+        .filter-modal {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: #1a1a2e;
+            border-radius: 20px 20px 0 0;
+            transform: translateY(100%);
+            transition: transform 0.3s ease;
+            z-index: 1100;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+
+        .filter-modal.active {
+            transform: translateY(0);
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            position: sticky;
+            top: 0;
+            background: #1a1a2e;
+        }
+
+        .modal-title {
+            font-size: 18px;
+            font-weight: 700;
+        }
+
+        .close-button {
+            width: 32px;
+            height: 32px;
+            border: none;
+            background: transparent;
+            color: #fff;
+            font-size: 20px;
+            cursor: pointer;
+        }
+
+        .filter-group {
+            padding: 20px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .filter-group-title {
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 12px;
+        }
+
+        .filter-options {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .filter-option {
+            padding: 10px 16px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            font-size: 14px;
+            color: rgba(255, 255, 255, 0.8);
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .filter-option.selected {
+            background: rgba(147, 51, 234, 0.2);
+            color: #B794F6;
+            border-color: rgba(147, 51, 234, 0.4);
+        }
+
+        .apply-filters {
+            margin: 20px;
+            width: calc(100% - 40px);
+            padding: 16px;
+            background: linear-gradient(135deg, #9333EA 0%, #7C3AED 100%);
+            border: none;
+            border-radius: 16px;
+            color: white;
+            font-size: 16;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.6);
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s ease;
+            z-index: 1099;
+        }
+
+        .modal-overlay.active {
+            opacity: 1;
+            visibility: visible;
+        }
+    </style>
+</head>
+<body>
+<!-- 헤더 -->
+<header class="header">
+    <div class="header-top">
+        <button class="back-button">←</button>
+        <h1 class="header-title">상담사 검색</h1>
+        <div class="header-actions">
+            <button class="icon-btn">🔔</button>
+        </div>
+    </div>
+</header>
+
+<!-- 검색 영역 -->
+<section class="search-section">
+    <div class="search-wrapper">
+        <input type="text" class="search-input" placeholder="상담사 이름 또는 전문분야 검색">
+        <span class="search-icon">🔍</span>
+    </div>
+</section>
+
+<!-- 필터 영역 -->
+<section class="filter-section">
+    <!-- 카테고리 필터 -->
+    <div class="category-filters">
+        <div class="category-chip active">
+            <span>전체</span>
+        </div>
+        <div class="category-chip">
+            <span>🔮</span>
+            <span>타로</span>
+        </div>
+        <div class="category-chip">
+            <span>📅</span>
+            <span>사주</span>
+        </div>
+        <div class="category-chip">
+            <span>✨</span>
+            <span>신점</span>
+        </div>
+        <div class="category-chip">
+            <span>💕</span>
+            <span>연애</span>
+        </div>
+        <div class="category-chip">
+            <span>💰</span>
+            <span>재물</span>
+        </div>
+        <div class="category-chip">
+            <span>💼</span>
+            <span>직장</span>
+        </div>
+        <div class="category-chip">
+            <span>🌟</span>
+            <span>운세</span>
+        </div>
+    </div>
+
+    <!-- 정렬 및 추가 필터 -->
+    <div class="sort-filter-row">
+        <button class="sort-button">
+            <span>⬇️</span>
+            <span>인기순</span>
+        </button>
+        <div class="active-filters">
+            <div class="active-filter-tag">
+                <span>상담가능</span>
+                <span class="remove-filter">×</span>
+            </div>
+            <div class="active-filter-tag">
+                <span>20년 이상</span>
+                <span class="remove-filter">×</span>
+            </div>
+        </div>
+        <button class="filter-button">
+            <span>⚙️</span>
+            <span>필터</span>
+        </button>
+    </div>
+</section>
+
+<!-- 메인 콘텐츠 -->
+<main class="main-content">
+    <!-- 검색 결과 정보 -->
+    <div class="search-info">
+        <span class="result-count">총 <strong>156명</strong>의 상담사</span>
+        <div class="view-options">
+            <button class="view-option active">▦</button>
+            <button class="view-option">☷</button>
+        </div>
+    </div>
+
+    <!-- 상담사 리스트 -->
+    <div class="counselor-list">
+        <!-- 상담사 카드 1 -->
+        <div class="counselor-card">
+            <div class="counselor-header">
+                <div class="counselor-avatar online">🌙</div>
+                <div class="counselor-info">
+                    <div class="counselor-name">명월 선생님</div>
+                    <div class="counselor-status">
+                        <span class="status-dot"></span>
+                        <span>상담가능</span>
+                    </div>
+                    <div class="counselor-specialty">타로 마스터 · 20년 경력</div>
+                </div>
+            </div>
+            <div class="counselor-tags">
+                <span class="tag">🔮 타로</span>
+                <span class="tag">💕 연애</span>
+                <span class="tag">🔄 재회</span>
+                <span class="tag">✨ 심리상담</span>
+            </div>
+            <p class="counselor-desc">
+                "모든 인연에는 의미가 있습니다" 20년간 수만건의 상담을 통해 쌓은 통찰력으로 당신의 마음을 읽어드립니다.
+            </p>
+            <div class="counselor-footer">
+                <div class="rating">
+                    <div class="rating-stars">
+                        <span class="star">⭐</span>
+                        <span class="star">⭐</span>
+                        <span class="star">⭐</span>
+                        <span class="star">⭐</span>
+                        <span class="star">⭐</span>
+                    </div>
+                    <div class="rating-info">
+                        <span style="font-weight: 600; color: #fff">4.9</span>
+                        <span>(리뷰 3,456)</span>
+                    </div>
+                </div>
+                <div class="counselor-pricing">
+                    <div class="price">3,900<span class="price-unit">원/분</span></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 상담사 카드 2 -->
+        <div class="counselor-card">
+            <div class="counselor-header">
+                <div class="counselor-avatar online">🔥</div>
+                <div class="counselor-info">
+                    <div class="counselor-name">천기누설 선생님</div>
+                    <div class="counselor-status">
+                        <span class="status-dot"></span>
+                        <span>상담가능</span>
+                    </div>
+                    <div class="counselor-specialty">사주/신점 전문 · 30년 경력</div>
+                </div>
+            </div>
+            <div class="counselor-tags">
+                <span class="tag">📅 사주</span>
+                <span class="tag">✨ 신점</span>
+                <span class="tag">💼 취업</span>
+                <span class="tag">🏠 이사</span>
+            </div>
+            <p class="counselor-desc">
+                정통 사주명리학과 신점을 통해 인생의 큰 그림을 그려드립니다. 취업, 이직, 사업 등 중요한 결정을 앞두고 계신다면 명확한 방향을 제시해드립니다.
+            </p>
+            <div class="counselor-footer">
+                <div class="rating">
+                    <div class="rating-stars">
+                        <span class="star">⭐</span>
+                        <span class="star">⭐</span>
+                        <span class="star">⭐</span>
+                        <span class="star">⭐</span>
+                        <span class="star">⭐</span>
+                    </div>
+                    <div class="rating-info">
+                        <span style="font-weight: 600; color: #fff">4.8</span>
+                        <span>(리뷰 2,892)</span>
+                    </div>
+                </div>
+                <div class="counselor-pricing">
+                    <div class="price">4,500<span class="price-unit">원/분</span></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 상담사 카드 3 -->
+        <div class="counselor-card">
+            <div class="counselor-header">
+                <div class="counselor-avatar">💫</div>
+                <div class="counselor-info">
+                    <div class="counselor-name">별빛 선생님</div>
+                    <div class="counselor-status">
+                        <span class="status-dot" style="background: #FFA500;"></span>
+                        <span>상담중</span>
+                    </div>
+                    <div class="counselor-specialty">신통력 · 15년 경력</div>
+                </div>
+            </div>
+            <div class="counselor-tags">
+                <span class="tag">🌟 신통력</span>
+                <span class="tag">💰 재물</span>
+                <span class="tag">🍀 행운</span>
+            </div>
+            <p class="counselor-desc">
+                타고난 영감과 신통력으로 막힌 운을 뚫어드립니다. 재물운, 사업운 상담에 특화되어 있으며 로또 당첨자를 다수 배출한 행운의 상담사입니다.
+            </p>
+            <div class="counselor-footer">
+                <div class="rating">
+                    <div class="rating-stars">
+                        <span class="star">⭐</span>
+                        <span class="star">⭐</span>
+                        <span class="star">⭐</span>
+                        <span class="star">⭐</span>
+                        <span class="star">⭐</span>
+                    </div>
+                    <div class="rating-info">
+                        <span style="font-weight: 600; color: #fff">5.0</span>
+                        <span>(리뷰 1,234)</span>
+                    </div>
+                </div>
+                <div class="counselor-pricing">
+                    <div class="price">5,900<span class="price-unit">원/분</span></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</main>
+
+<!-- 하단 네비게이션 -->
+<nav class="bottom-nav">
+    <a href="#" class="nav-item">
+        <span class="nav-icon">🏠</span>
+        <span class="nav-label">홈</span>
+    </a>
+    <a href="#" class="nav-item active">
+        <span class="nav-icon">🎯</span>
+        <span class="nav-label">카테고리</span>
+    </a>
+    <a href="#" class="nav-item">
+        <span class="nav-icon">💬</span>
+        <span class="nav-label">상담내역</span>
+    </a>
+    <a href="favorite.html" class="nav-item">
+        <span class="nav-icon">⭐</span>
+        <span class="nav-label">즐겨찾기</span>
+    </a>
+    <a href="#" class="nav-item">
+        <span class="nav-icon">👤</span>
+        <span class="nav-label">마이</span>
+    </a>
+</nav>

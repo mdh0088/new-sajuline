@@ -1,0 +1,27 @@
+# 포인트/상담/결제 내역 및 대시보드 구현
+
+**Task ID:** T-007
+**Status:** BACKLOG
+**Importance:** SHOULD
+**Complexity:** 5/10
+**Urgency:** 7/10
+**Dependencies:** T-002, T-003, T-006
+
+## Description
+
+**요구사항**:
+- 사용자 대시보드에 잔여 포인트, 상담/결제/예약 내역 요약 제공
+- 퀵 액션 버튼(포인트 충전, 예약 확인 등) 배치
+- 멤버십, 알림, 최근 활동 정보 표시
+**구현 세부사항**:
+- FastAPI dashboard router 및 서비스 로직 구현
+- Redis 캐시(user:{id}:dashboard) 적용으로 응답 성능 최적화
+- Nuxt pages/dashboard.vue 및 컴포넌트 작성, Pinia 연동
+**테스트 전략**:
+- 대시보드 API 응답 시간 측정(p95 300ms 이하)
+- Vitest/Playwright로 UI 스냅샷 및 E2E 테스트 실행
+
+---
+
+**Created:** 2025-08-27T15:36:58.221Z
+**Updated:** 2025-08-27T15:36:58.221Z

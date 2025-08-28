@@ -1,0 +1,950 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>빠른 문의 - 사주라인</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Apple SD Gothic Neo', 'Noto Sans KR', sans-serif;
+            background-color: #0a0a0f;
+            color: #ffffff;
+            line-height: 1.6;
+            overflow-x: hidden;
+        }
+
+        /* 헤더 */
+        .header {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            background: rgba(10, 10, 15, 0.95);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            z-index: 1000;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .header-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 16px 20px;
+            height: 60px;
+        }
+
+        .back-button {
+            width: 36px;
+            height: 36px;
+            border: none;
+            background: transparent;
+            color: #fff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            font-size: 20px;
+        }
+
+        .header-title {
+            position: absolute;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 18px;
+            font-weight: 600;
+        }
+
+        .header-actions {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .icon-btn {
+            width: 36px;
+            height: 36px;
+            border: none;
+            background: transparent;
+            color: #fff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            font-size: 20px;
+        }
+
+        /* 메인 콘텐츠 */
+        .main-content {
+            margin-top: 60px;
+            padding-bottom: 100px;
+        }
+
+        /* 상단 안내 섹션 */
+        .info-section {
+            padding: 24px 20px;
+            background: linear-gradient(180deg, rgba(147, 51, 234, 0.1) 0%, transparent 100%);
+            text-align: center;
+        }
+
+        .info-icon {
+            font-size: 48px;
+            margin-bottom: 16px;
+        }
+
+        .info-title {
+            font-size: 24px;
+            font-weight: 700;
+            margin-bottom: 8px;
+            background: linear-gradient(135deg, #ffffff 0%, #B794F6 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .info-desc {
+            font-size: 15px;
+            color: rgba(255, 255, 255, 0.7);
+            line-height: 1.5;
+        }
+
+        /* 운영시간 안내 */
+        .hours-banner {
+            margin: 20px;
+            padding: 16px 20px;
+            background: rgba(255, 215, 0, 0.1);
+            border: 1px solid rgba(255, 215, 0, 0.3);
+            border-radius: 16px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .hours-icon {
+            font-size: 24px;
+        }
+
+        .hours-content {
+            flex: 1;
+        }
+
+        .hours-title {
+            font-size: 14px;
+            font-weight: 600;
+            color: #FFD700;
+            margin-bottom: 4px;
+        }
+
+        .hours-time {
+            font-size: 16px;
+            font-weight: 700;
+            color: #ffffff;
+        }
+
+        /* 빠른 문의 카테고리 */
+        .quick-category-section {
+            padding: 24px 20px;
+        }
+
+        .section-title {
+            font-size: 20px;
+            font-weight: 700;
+            margin-bottom: 20px;
+        }
+
+        .category-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px;
+        }
+
+        .category-card {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 16px;
+            padding: 24px 20px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .category-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: radial-gradient(circle at center, rgba(147, 51, 234, 0.1) 0%, transparent 70%);
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .category-card:active {
+            transform: scale(0.98);
+        }
+
+        .category-card:hover::before {
+            opacity: 1;
+        }
+
+        .category-icon {
+            width: 56px;
+            height: 56px;
+            margin: 0 auto 12px;
+            background: linear-gradient(135deg, rgba(147, 51, 234, 0.2) 0%, rgba(124, 58, 237, 0.1) 100%);
+            border-radius: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 28px;
+        }
+
+        .category-name {
+            font-size: 16px;
+            font-weight: 600;
+            color: #ffffff;
+            margin-bottom: 4px;
+        }
+
+        .category-desc {
+            font-size: 13px;
+            color: rgba(255, 255, 255, 0.6);
+        }
+
+        /* 자주 묻는 질문 */
+        .faq-section {
+            padding: 24px 20px;
+            background: rgba(255, 255, 255, 0.02);
+            margin-bottom: 24px;
+        }
+
+        .faq-list {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .faq-item {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 16px;
+            padding: 18px 20px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .faq-item:active {
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .faq-question {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .faq-q-icon {
+            color: #B794F6;
+            font-weight: 700;
+            margin-right: 8px;
+        }
+
+        .faq-text {
+            flex: 1;
+            font-size: 15px;
+            font-weight: 500;
+        }
+
+        .faq-arrow {
+            color: rgba(255, 255, 255, 0.3);
+            font-size: 18px;
+            transition: transform 0.3s ease;
+        }
+
+        .faq-item.active .faq-arrow {
+            transform: rotate(90deg);
+        }
+
+        .faq-answer {
+            margin-top: 16px;
+            padding-top: 16px;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            font-size: 14px;
+            color: rgba(255, 255, 255, 0.7);
+            line-height: 1.6;
+            display: none;
+        }
+
+        .faq-item.active .faq-answer {
+            display: block;
+        }
+
+        /* 문의 방법 카드 */
+        .contact-methods {
+            padding: 24px 20px;
+        }
+
+        .method-card {
+            background: linear-gradient(135deg, rgba(147, 51, 234, 0.1) 0%, rgba(124, 58, 237, 0.05) 100%);
+            border: 1px solid rgba(147, 51, 234, 0.2);
+            border-radius: 20px;
+            padding: 20px;
+            margin-bottom: 16px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .method-card:active {
+            transform: scale(0.98);
+        }
+
+        .method-header {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            margin-bottom: 12px;
+        }
+
+        .method-icon {
+            width: 48px;
+            height: 48px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+        }
+
+        .method-info {
+            flex: 1;
+        }
+
+        .method-title {
+            font-size: 18px;
+            font-weight: 700;
+            margin-bottom: 4px;
+        }
+
+        .method-subtitle {
+            font-size: 14px;
+            color: rgba(255, 255, 255, 0.6);
+        }
+
+        .method-features {
+            display: flex;
+            gap: 16px;
+            margin-top: 12px;
+        }
+
+        .feature-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 13px;
+            color: #B794F6;
+        }
+
+        /* 공지사항 링크 */
+        .notice-link {
+            margin: 0 20px 24px;
+            padding: 16px 20px;
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 16px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            color: inherit;
+        }
+
+        .notice-link:active {
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .notice-content {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .notice-icon {
+            font-size: 20px;
+        }
+
+        .notice-text {
+            font-size: 15px;
+            font-weight: 500;
+        }
+
+        .notice-badge {
+            padding: 4px 10px;
+            background: rgba(255, 59, 48, 0.2);
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 600;
+            color: #FF6B6B;
+        }
+
+        /* 하단 플로팅 버튼 */
+        .floating-buttons {
+            position: fixed;
+            bottom: 20px;
+            left: 20px;
+            right: 20px;
+            display: flex;
+            gap: 12px;
+            z-index: 999;
+        }
+
+        .floating-button {
+            flex: 1;
+            padding: 18px;
+            border: none;
+            border-radius: 16px;
+            font-size: 16px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+        }
+
+        .chat-button {
+            background: linear-gradient(135deg, #9333EA 0%, #7C3AED 100%);
+            color: white;
+        }
+
+        .call-button {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            color: white;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .floating-button:active {
+            transform: scale(0.98);
+        }
+
+        /* 로딩 상태 */
+        .loading-spinner {
+            display: inline-block;
+            width: 16px;
+            height: 16px;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-top-color: #B794F6;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* 문의내역 섹션 */
+        .inquiry-section {
+            margin: 20px;
+            padding: 24px;
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+        }
+
+        .inquiry-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+            padding: 0 4px;
+        }
+
+        .inquiry-title {
+            font-size: 16px;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .inquiry-actions {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+        }
+
+        .inquiry-button {
+            padding: 8px 16px;
+            background: linear-gradient(135deg, #9333EA 0%, #7C3AED 100%);
+            border: none;
+            border-radius: 12px;
+            color: white;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .inquiry-button:active {
+            transform: scale(0.98);
+        }
+
+        .inquiry-list {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            padding: 0 4px;
+        }
+
+        .inquiry-item {
+            padding: 16px;
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            border-radius: 16px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .inquiry-item:active {
+            background: rgba(255, 255, 255, 0.05);
+            transform: scale(0.98);
+        }
+
+        .inquiry-item-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .inquiry-category {
+            font-size: 12px;
+            color: #B794F6;
+            background: rgba(147, 51, 234, 0.1);
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-weight: 500;
+            letter-spacing: -0.3px;
+        }
+
+        .inquiry-date {
+            font-size: 12px;
+            color: rgba(255, 255, 255, 0.5);
+            font-weight: 500;
+        }
+
+        .inquiry-content {
+            font-size: 14px;
+            color: rgba(255, 255, 255, 0.9);
+            margin-bottom: 10px;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+            line-height: 1.5;
+            letter-spacing: -0.3px;
+        }
+
+        .inquiry-status {
+            font-size: 12px;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-weight: 500;
+            letter-spacing: -0.3px;
+        }
+
+        .inquiry-status.waiting {
+            color: #FFD700;
+            background: rgba(255, 215, 0, 0.1);
+            border: 1px solid rgba(255, 215, 0, 0.2);
+        }
+
+        .inquiry-status.completed {
+            color: #4ADE80;
+            background: rgba(74, 222, 128, 0.1);
+            border: 1px solid rgba(74, 222, 128, 0.2);
+        }
+
+        .inquiry-status .status-icon {
+            font-size: 12px;
+            opacity: 0.9;
+        }
+
+        .view-all {
+            color: #B794F6;
+            font-size: 14px;
+            font-weight: 500;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            padding: 8px 12px;
+            background: rgba(147, 51, 234, 0.1);
+            border-radius: 12px;
+            transition: all 0.3s ease;
+        }
+
+        .view-all:active {
+            background: rgba(147, 51, 234, 0.2);
+        }
+
+        .category-item {
+            flex: 1;
+            min-width: 0;
+            padding: 16px;
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 16px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .category-item:hover {
+            background: rgba(255, 255, 255, 0.04);
+            transform: translateY(-2px);
+        }
+
+        .category-item.active {
+            background: rgba(147, 51, 234, 0.1);
+            border-color: rgba(147, 51, 234, 0.3);
+            color: #B794F6;
+        }
+
+        .category-icon {
+            font-size: 24px;
+            margin-bottom: 8px;
+        }
+
+        .category-name {
+            font-size: 13px;
+            font-weight: 500;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+    </style>
+</head>
+<body>
+<!-- 헤더 -->
+<header class="header">
+    <div class="header-top">
+        <button class="back-button" onclick="window.history.back();">←</button>
+        <h1 class="header-title">빠른 상담</h1>
+        <div class="header-actions">
+            <button class="icon-btn" onclick="window.location.href='search-page.html'">🔍</button>
+            <button class="icon-btn" onclick="window.location.href='login-page.html'">👤</button>
+        </div>
+    </div>
+</header>
+
+<!-- 메인 콘텐츠 -->
+<main class="main-content">
+    <!-- 상단 안내 -->
+    <section class="info-section">
+        <div class="info-icon">🚀</div>
+        <h2 class="info-title">빠르고 정확한 답변</h2>
+        <p class="info-desc">
+            궁금하신 사항을 빠르게 해결해드립니다<br>
+            평균 응답시간 10분 이내
+        </p>
+    </section>
+
+    <!-- 운영시간 안내 -->
+    <div class="hours-banner">
+        <div class="hours-icon">⏰</div>
+        <div class="hours-content">
+            <div class="hours-title">고객센터 운영시간</div>
+            <div class="hours-time">평일 09:00 - 22:00 | 주말 10:00 - 20:00</div>
+        </div>
+    </div>
+
+    <!-- 문의내역 섹션 -->
+    <section class="inquiry-section">
+        <div class="inquiry-header">
+            <h2 class="inquiry-title">
+                <span>📝</span>
+                <span>내 문의내역</span>
+            </h2>
+            <div class="inquiry-actions">
+                <a href="inquiry-list.html" class="view-all">
+                    <span>전체보기</span>
+                    <span>›</span>
+                </a>
+                <button class="inquiry-button" onclick="window.location.href='inquiry-write.html'">
+                    <span>✏️</span>
+                    <span>문의하기</span>
+                </button>
+            </div>
+        </div>
+        <div class="inquiry-list">
+            <div class="inquiry-item" onclick="window.location.href='inquiry-detail.html'">
+                <div class="inquiry-item-header">
+                    <span class="inquiry-category">결제문의</span>
+                    <span class="inquiry-date">2024.03.15</span>
+                </div>
+                <div class="inquiry-content">
+                    포인트 충전이 되지 않아 문의드립니다. 결제는 완료되었는데 포인트가 반영되지 않았습니다.
+                </div>
+                <div class="inquiry-status completed">
+                    <span class="status-icon">✓</span>
+                    <span>답변완료</span>
+                </div>
+            </div>
+            <div class="inquiry-item" onclick="window.location.href='inquiry-detail.html'">
+                <div class="inquiry-item-header">
+                    <span class="inquiry-category">서비스문의</span>
+                    <span class="inquiry-date">2024.03.14</span>
+                </div>
+                <div class="inquiry-content">
+                    AI 운세 서비스 이용 중 오류가 발생했습니다. 화면이 계속 로딩 중입니다.
+                </div>
+                <div class="inquiry-status waiting">
+                    <span class="status-icon">⏳</span>
+                    <span>답변대기</span>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 빠른 문의 카테고리 -->
+    <section class="quick-category-section">
+        <h3 class="section-title">무엇을 도와드릴까요?</h3>
+        <div class="category-grid">
+            <div class="category-card">
+                <div class="category-icon">💳</div>
+                <div class="category-name">결제/환불</div>
+                <div class="category-desc">포인트 충전, 환불 관련</div>
+            </div>
+            <div class="category-card">
+                <div class="category-icon">👤</div>
+                <div class="category-name">계정 문의</div>
+                <div class="category-desc">로그인, 비밀번호 찾기</div>
+            </div>
+            <div class="category-card">
+                <div class="category-icon">💬</div>
+                <div class="category-name">상담 문의</div>
+                <div class="category-desc">상담 진행, 상담사 관련</div>
+            </div>
+            <div class="category-card">
+                <div class="category-icon">🎁</div>
+                <div class="category-name">이벤트/혜택</div>
+                <div class="category-desc">프로모션, 쿠폰 사용</div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 자주 묻는 질문 -->
+    <section class="faq-section">
+        <h3 class="section-title">자주 묻는 질문 TOP 5</h3>
+        <div class="faq-list">
+            <div class="faq-item">
+                <div class="faq-question">
+                    <div class="faq-text">
+                        <span class="faq-q-icon">Q.</span>
+                        포인트는 어떻게 충전하나요?
+                    </div>
+                    <span class="faq-arrow">›</span>
+                </div>
+                <div class="faq-answer">
+                    마이페이지 > 포인트 충전 메뉴에서 원하시는 금액을 선택하여 충전하실 수 있습니다. 
+                    신용카드, 휴대폰 결제, 계좌이체, 카카오페이 등 다양한 결제 수단을 지원합니다.
+                </div>
+            </div>
+
+            <div class="faq-item">
+                <div class="faq-question">
+                    <div class="faq-text">
+                        <span class="faq-q-icon">Q.</span>
+                        상담사님과 연결이 안 돼요
+                    </div>
+                    <span class="faq-arrow">›</span>
+                </div>
+                <div class="faq-answer">
+                    선택하신 상담사님이 다른 상담 중이실 수 있습니다. 
+                    상담사 프로필에서 '예약하기'를 선택하시면 상담 가능 시간에 알림을 받으실 수 있습니다.
+                </div>
+            </div>
+
+            <div class="faq-item">
+                <div class="faq-question">
+                    <div class="faq-text">
+                        <span class="faq-q-icon">Q.</span>
+                        첫 상담 무료체험은 어떻게 받나요?
+                    </div>
+                    <span class="faq-arrow">›</span>
+                </div>
+                <div class="faq-answer">
+                    신규 회원님께는 첫 상담 10분 무료 쿠폰이 자동으로 지급됩니다. 
+                    상담사 선택 후 결제 단계에서 쿠폰을 적용하시면 됩니다.
+                </div>
+            </div>
+
+            <div class="faq-item">
+                <div class="faq-question">
+                    <div class="faq-text">
+                        <span class="faq-q-icon">Q.</span>
+                        상담 내용은 비밀이 보장되나요?
+                    </div>
+                    <span class="faq-arrow">›</span>
+                </div>
+                <div class="faq-answer">
+                    네, 모든 상담 내용은 철저히 비밀이 보장됩니다. 
+                    상담 내용은 암호화되어 저장되며, 본인 외에는 누구도 확인할 수 없습니다.
+                </div>
+            </div>
+
+            <div class="faq-item">
+                <div class="faq-question">
+                    <div class="faq-text">
+                        <span class="faq-q-icon">Q.</span>
+                        환불은 어떻게 받을 수 있나요?
+                    </div>
+                    <span class="faq-arrow">›</span>
+                </div>
+                <div class="faq-answer">
+                    사용하지 않은 포인트는 충전일로부터 7일 이내 100% 환불 가능합니다. 
+                    고객센터로 문의 주시면 빠르게 처리해드립니다.
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 문의 방법 -->
+    <section class="contact-methods">
+        <h3 class="section-title">직접 문의하기</h3>
+        
+        <div class="method-card">
+            <div class="method-header">
+                <div class="method-icon">💬</div>
+                <div class="method-info">
+                    <div class="method-title">1:1 채팅 상담</div>
+                    <div class="method-subtitle">실시간 답변</div>
+                </div>
+            </div>
+            <div class="method-features">
+                <div class="feature-item">
+                    <span>⚡</span>
+                    <span>평균 응답 5분</span>
+                </div>
+                <div class="feature-item">
+                    <span>🕐</span>
+                    <span>24시간 운영</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="method-card">
+            <div class="method-header">
+                <div class="method-icon">📞</div>
+                <div class="method-info">
+                    <div class="method-title">전화 상담</div>
+                    <div class="method-subtitle">1588-1234</div>
+                </div>
+            </div>
+            <div class="method-features">
+                <div class="feature-item">
+                    <span>📱</span>
+                    <span>통화료 무료</span>
+                </div>
+                <div class="feature-item">
+                    <span>👥</span>
+                    <span>전문 상담원</span>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 공지사항 링크 -->
+    <a href="notice.html" class="notice-link">
+        <div class="notice-content">
+            <span class="notice-icon">📢</span>
+            <span class="notice-text">공지사항</span>
+        </div>
+        <div style="display: flex; align-items: center; gap: 8px;">
+            <span class="notice-badge">NEW</span>
+            <span style="color: rgba(255, 255, 255, 0.3);">›</span>
+        </div>
+    </a>
+</main>
+
+<!-- 하단 플로팅 버튼 -->
+<div class="floating-buttons">
+    <button class="floating-button call-button">
+        <span>📞</span>
+        <span>전화 상담</span>
+    </button>
+    <button class="floating-button chat-button">
+        <span>💬</span>
+        <span>채팅 상담</span>
+    </button>
+</div>
+
+<script>
+    // FAQ 토글
+    document.querySelectorAll('.faq-item').forEach(item => {
+        item.addEventListener('click', function() {
+            // 다른 항목 닫기
+            document.querySelectorAll('.faq-item').forEach(otherItem => {
+                if (otherItem !== this) {
+                    otherItem.classList.remove('active');
+                }
+            });
+            
+            // 현재 항목 토글
+            this.classList.toggle('active');
+        });
+    });
+
+    // 카테고리 카드 클릭 이벤트
+    document.querySelectorAll('.category-card').forEach(card => {
+        card.addEventListener('click', function() {
+            const category = this.querySelector('.category-name').textContent;
+            // URL 파라미터로 카테고리 정보를 전달하여 문의하기 페이지로 이동
+            window.location.href = `inquiry-write.html?category=${encodeURIComponent(category)}`;
+        });
+    });
+
+    // 메소드 카드 클릭 효과
+    document.querySelectorAll('.method-card').forEach(card => {
+        card.addEventListener('click', function() {
+            this.style.transform = 'scale(0.98)';
+            setTimeout(() => {
+                this.style.transform = 'scale(1)';
+            }, 200);
+        });
+    });
+
+    // 문의하기 버튼 클릭 이벤트
+    document.querySelector('.inquiry-button').addEventListener('click', function() {
+        window.location.href = 'inquiry-write.html';
+    });
+
+    // 전체보기 버튼 클릭 이벤트
+    document.querySelector('.view-all').addEventListener('click', function() {
+        window.location.href = 'inquiry-list.html';
+    });
+</script>
+</body>
+</html>

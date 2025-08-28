@@ -1,0 +1,851 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>이벤트 상세 - 사주라인</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto,
+                         'Apple SD Gothic Neo', 'Noto Sans KR', sans-serif;
+            background-color: #0a0a0f;
+            color: #ffffff;
+            line-height: 1.6;
+            overflow-x: hidden;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* 헤더 */
+        .header {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            background: rgba(10, 10, 15, 0.95);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            z-index: 1000;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .header-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 16px 20px;
+            height: 60px;
+        }
+
+        .back-button {
+            width: 36px;
+            height: 36px;
+            border: none;
+            background: transparent;
+            color: #fff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            font-size: 20px;
+        }
+
+        .header-title {
+            position: absolute;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 18px;
+            font-weight: 600;
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 8px;
+        }
+
+        .icon-btn {
+            width: 36px;
+            height: 36px;
+            border: none;
+            background: transparent;
+            color: #fff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            font-size: 20px;
+        }
+
+        /* 메인 콘텐츠 */
+        .main-content {
+            margin-top: 60px;
+            padding: 20px;
+            padding-bottom: 140px; /* 하단 네비 & 댓글 여유 공간 */
+            flex: 1;
+            overflow-y: auto;
+        }
+
+        .event-detail {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .detail-thumbnail {
+            width: 100%;
+            height: 200px;
+            background: #222;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 64px;
+        }
+
+        .detail-content {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .detail-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .detail-title {
+            font-size: 20px;
+            font-weight: 700;
+            color: #fff;
+        }
+
+        .detail-meta {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            align-items: flex-end;
+        }
+
+        .detail-date {
+            font-size: 14px;
+            color: rgba(255, 255, 255, 0.6);
+        }
+
+        .detail-status {
+            font-size: 12px;
+            font-weight: 600;
+            padding: 4px 8px;
+            border-radius: 8px;
+            text-align: center;
+        }
+
+        .detail-status.ongoing {
+            background-color: #10b981;
+            color: #ffffff;
+        }
+
+        .detail-status.completed {
+            background-color: rgba(255, 255, 255, 0.2);
+            color: rgba(255, 255, 255, 0.7);
+        }
+
+        .detail-body {
+            background-color: rgba(255, 255, 255, 0.05);
+            border-radius: 8px;
+            padding: 24px;
+            font-size: 15px;
+            color: rgba(255, 255, 255, 0.85);
+            line-height: 1.8;
+            white-space: pre-wrap;
+            text-align: left;
+        }
+
+        .detail-body p {
+            margin-bottom: 16px;
+            text-align: left;
+        }
+
+        .detail-body p:last-child {
+            margin-bottom: 0;
+        }
+
+        .detail-body strong {
+            color: #B794F6;
+            font-weight: 600;
+        }
+
+        .detail-body ul, .detail-body ol {
+            margin: 12px 0;
+            padding-left: 24px;
+            text-align: left;
+        }
+
+        .detail-body li {
+            margin-bottom: 8px;
+            text-align: left;
+        }
+
+        .detail-body li:last-child {
+            margin-bottom: 0;
+        }
+
+        .detail-body br {
+            content: "";
+            display: block;
+            margin: 12px 0;
+        }
+
+        .detail-footer {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            margin-top: 24px;
+            padding: 20px;
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: 12px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .detail-button {
+            width: 100%;
+            padding: 16px;
+            background: linear-gradient(135deg, #9333EA 0%, #7C3AED 100%);
+            border: none;
+            border-radius: 12px;
+            color: white;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 20px rgba(147, 51, 234, 0.4);
+        }
+
+        .detail-button:active {
+            transform: scale(0.98);
+            box-shadow: 0 2px 10px rgba(147, 51, 234, 0.3);
+        }
+
+        /* 이전/다음 네비게이션 */
+        .navigation-links {
+            display: flex;
+            justify-content: space-between;
+            gap: 12px;
+        }
+
+        .nav-button {
+            flex: 1;
+            padding: 12px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            color: #fff;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            text-align: center;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .nav-button:hover {
+            background: rgba(147, 51, 234, 0.1);
+            border-color: rgba(147, 51, 234, 0.3);
+        }
+
+        .nav-button:active {
+            transform: scale(0.98);
+        }
+
+        .nav-button.prev {
+            color: rgba(255, 255, 255, 0.7);
+        }
+
+        .nav-button.next {
+            color: #B794F6;
+        }
+
+        .nav-button.disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            pointer-events: none;
+        }
+
+        /* 댓글 섹션 */
+        .comments-section {
+            margin-top: 24px;
+            background-color: rgba(255, 255, 255, 0.05);
+            border-radius: 8px;
+            padding: 16px;
+        }
+
+        .comments-title {
+            font-size: 16px;
+            font-weight: 700;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .comment-count {
+            font-size: 14px;
+            color: rgba(255, 255, 255, 0.5);
+            font-weight: normal;
+        }
+
+        .comments-list {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            max-height: 200px;
+            overflow-y: auto;
+            margin-bottom: 16px;
+            scrollbar-width: thin;
+            scrollbar-color: rgba(147, 51, 234, 0.5) rgba(255, 255, 255, 0.1);
+        }
+
+        /* Webkit 브라우저용 스크롤바 스타일 */
+        .comments-list::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .comments-list::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 3px;
+        }
+
+        .comments-list::-webkit-scrollbar-thumb {
+            background: rgba(147, 51, 234, 0.5);
+            border-radius: 3px;
+            transition: all 0.3s ease;
+        }
+
+        .comments-list::-webkit-scrollbar-thumb:hover {
+            background: rgba(147, 51, 234, 0.7);
+        }
+
+        /* Firefox용 스크롤바 스타일 */
+        .comments-list {
+            scrollbar-width: thin;
+            scrollbar-color: rgba(147, 51, 234, 0.5) rgba(255, 255, 255, 0.1);
+        }
+
+        .comment-item {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            padding: 12px;
+            position: relative;
+        }
+
+        .comment-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+
+        .comment-author {
+            font-size: 13px;
+            font-weight: 600;
+            color: #fff;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .author-badge {
+            font-size: 11px;
+            padding: 2px 6px;
+            background: linear-gradient(135deg, #9333EA 0%, #7C3AED 100%);
+            border-radius: 4px;
+            color: white;
+        }
+
+        .comment-actions {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+        }
+
+        .comment-date {
+            font-size: 11px;
+            color: rgba(255, 255, 255, 0.6);
+        }
+
+        .action-button {
+            background: none;
+            border: none;
+            color: rgba(255, 255, 255, 0.5);
+            font-size: 12px;
+            cursor: pointer;
+            padding: 4px 8px;
+            border-radius: 4px;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .action-button.like {
+            color: #FF6B6B;
+        }
+
+        .action-button.like.active {
+            color: #FF6B6B;
+        }
+
+        .action-button.like:hover {
+            background: rgba(255, 107, 107, 0.1);
+        }
+
+        .like-count {
+            font-size: 11px;
+            color: inherit;
+        }
+
+        .action-button.edit {
+            color: #B794F6;
+        }
+
+        .action-button.edit:hover {
+            background: rgba(183, 148, 246, 0.1);
+        }
+
+        .action-button.delete {
+            color: #FF6B6B;
+        }
+
+        .action-button.delete:hover {
+            background: rgba(255, 107, 107, 0.1);
+        }
+
+        .comment-text {
+            font-size: 14px;
+            color: rgba(255, 255, 255, 0.85);
+            line-height: 1.4;
+            margin-bottom: 8px;
+        }
+
+        .comment-edit-form {
+            display: none;
+            margin-top: 8px;
+        }
+
+        .comment-edit-form.active {
+            display: block;
+        }
+
+        .comment-edit-input {
+            width: 100%;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 8px;
+            padding: 8px 12px;
+            font-size: 14px;
+            color: #fff;
+            margin-bottom: 8px;
+            resize: none;
+            min-height: 60px;
+        }
+
+        .edit-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 8px;
+        }
+
+        .edit-button {
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .edit-button.cancel {
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: rgba(255, 255, 255, 0.8);
+        }
+
+        .edit-button.save {
+            background: linear-gradient(135deg, #9333EA 0%, #7C3AED 100%);
+            border: none;
+            color: white;
+        }
+
+        .edit-button:hover {
+            transform: translateY(-1px);
+        }
+
+        .comment-form {
+            display: flex;
+            gap: 8px;
+        }
+
+        .comment-input {
+            flex: 1;
+            resize: none;
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            padding: 8px;
+            font-size: 14px;
+            color: #fff;
+            height: 40px;
+        }
+
+        .comment-input::placeholder {
+            color: rgba(255, 255, 255, 0.5);
+        }
+
+        .comment-submit {
+            padding: 0 16px;
+            background: linear-gradient(135deg, #9333EA 0%, #7C3AED 100%);
+            border: none;
+            border-radius: 8px;
+            color: white;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.3s ease;
+        }
+
+        .comment-submit:active {
+            background: rgba(147, 51, 234, 0.7);
+        }
+
+        /* 하단 고정 네비게이션 (독바) */
+        .bottom-nav {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 60px;
+            background: rgba(10, 10, 15, 0.95);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            z-index: 1000;
+        }
+
+        .nav-link {
+            color: #fff;
+            font-size: 14px;
+            text-decoration: none;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .nav-icon {
+            font-size: 20px;
+            margin-bottom: 4px;
+        }
+                /* 하단 네비게이션 */
+                .bottom-nav {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: rgba(10, 10, 15, 0.95);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            display: flex;
+            justify-content: space-around;
+            padding: 8px 0 12px;
+            z-index: 1000;
+        }
+
+        .nav-item {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 8px;
+            color: rgba(255, 255, 255, 0.5);
+            text-decoration: none;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .nav-item::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 0;
+            height: 2px;
+            background: linear-gradient(90deg, #9333EA 0%, #B794F6 100%);
+            transition: width 0.3s ease;
+        }
+
+        .nav-item.active {
+            color: #B794F6;
+        }
+
+        .nav-item.active::before {
+            width: 40px;
+        }
+
+        .nav-icon {
+            font-size: 24px;
+            margin-bottom: 4px;
+        }
+
+        .nav-label {
+            font-size: 11px;
+            font-weight: 500;
+        }
+    </style>
+</head>
+<body>
+    <!-- 헤더 -->
+    <header class="header">
+        <div class="header-top">
+            <button class="back-button" onclick="window.history.back();">←</button>
+            <h1 class="header-title">이벤트 상세</h1>
+            <div class="header-actions">
+                <button class="icon-btn" onclick="window.location.href='search-page.html'">🔍</button>
+                <button class="icon-btn" onclick="window.location.href='login-page.html'">👤</button>
+            </div>
+        </div>
+    </header>
+
+    <!-- 메인 콘텐츠 -->
+    <main class="main-content">
+        <div class="event-detail">
+            <!-- 썸네일 (이전 페이지의 🎉 아이콘) -->
+            <div class="detail-thumbnail">🎉</div>
+
+            <div class="detail-content">
+                <!-- 제목 및 메타 정보 -->
+                <div class="detail-header">
+                    <span class="detail-title">첫 충전 2배 보너스</span>
+                    <div class="detail-meta">
+                        <span class="detail-date">2025.06.01 ~ 2025.06.30</span>
+                        <span class="detail-status ongoing">진행중</span>
+                    </div>
+                </div>
+
+                <!-- 상세 설명 -->
+                <div class="detail-body">
+안녕하세요, 사주라인 회원님!
+
+🎁 신규 회원님을 위한 특별 혜택!
+오늘 첫 포인트 충전 시 보너스 포인트 100% 증정 이벤트를 진행 중입니다.
+예를 들어, 10,000P를 충전하시면 10,000P 추가 적립되어 총 20,000P를 받으실 수 있습니다.
+
+📌 주요 내용
+・ 이벤트 기간: 2025년 6월 1일(월) 오전 00:00 ~ 6월 30일(화) 오후 23:59
+・ 대상: 사주라인 신규 회원 한정
+・ 보너스 한도: 최대 50,000P
+
+💡 참여 방법
+1. 사주라인 앱 혹은 웹에서 회원가입 후 로그인
+2. '포인트 충전' 메뉴에서 첫 충전 금액 입력
+3. 결제 완료 시 자동으로 보너스 포인트 적립
+
+⚠️ 유의 사항
+・ 이미 포인트를 충전한 기록이 있는 경우 본 이벤트 참여가 제한될 수 있습니다.
+・ 이벤트 종료 후에는 자동 보너스 지급이 중단됩니다.
+・ 부정한 방법으로 참여 시 적립된 보너스는 회수될 수 있습니다.
+
+궁금하신 점은 고객센터(1:1 문의)를 통해 문의해주시기 바랍니다.
+많은 참여 부탁드립니다!</div>
+
+                <!-- 참여 버튼과 네비게이션 -->
+                <div class="detail-footer">
+                    <button class="detail-button">지금 참여하기</button>
+                    <div class="navigation-links">
+                        <button class="nav-button prev disabled">
+                            <span>←</span>
+                            <span>이전 이벤트</span>
+                        </button>
+                        <button class="nav-button next">
+                            <span>다음 이벤트</span>
+                            <span>→</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- 댓글 섹션 -->
+                <div class="comments-section">
+                    <h2 class="comments-title">
+                        댓글
+                        <span class="comment-count">(3)</span>
+                    </h2>
+                    <div class="comments-list">
+                        <!-- 예시 댓글 1 -->
+                        <div class="comment-item">
+                            <div class="comment-header">
+                                <div class="comment-author">
+                                    <span>사용자1</span>
+                                    <span class="author-badge">작성자</span>
+                                </div>
+                                <div class="comment-actions">
+                                    <button class="action-button like active">
+                                        <span>❤️</span>
+                                        <span class="like-count">3</span>
+                                    </button>
+                                    <span class="comment-date">2025.06.05</span>
+                                    <button class="action-button edit">수정</button>
+                                    <button class="action-button delete">삭제</button>
+                                </div>
+                            </div>
+                            <p class="comment-text">이벤트 기대됩니다! 포인트 충전하고 싶네요.</p>
+                            <div class="comment-edit-form">
+                                <textarea class="comment-edit-input">이벤트 기대됩니다! 포인트 충전하고 싶네요.</textarea>
+                                <div class="edit-actions">
+                                    <button class="edit-button cancel">취소</button>
+                                    <button class="edit-button save">저장</button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 예시 댓글 2 -->
+                        <div class="comment-item">
+                            <div class="comment-header">
+                                <div class="comment-author">
+                                    <span>사용자2</span>
+                                </div>
+                                <div class="comment-actions">
+                                    <button class="action-button like">
+                                        <span>🤍</span>
+                                        <span class="like-count">1</span>
+                                    </button>
+                                    <span class="comment-date">2025.06.04</span>
+                                    <button class="action-button delete">삭제</button>
+                                </div>
+                            </div>
+                            <p class="comment-text">최대 50,000P까지라니 정말 좋은 혜택이네요!</p>
+                        </div>
+
+                        <!-- 예시 댓글 3 -->
+                        <div class="comment-item">
+                            <div class="comment-header">
+                                <div class="comment-author">
+                                    <span>사용자3</span>
+                                </div>
+                                <div class="comment-actions">
+                                    <button class="action-button like">
+                                        <span>🤍</span>
+                                        <span class="like-count">0</span>
+                                    </button>
+                                    <span class="comment-date">2025.06.03</span>
+                                    <button class="action-button delete">삭제</button>
+                                </div>
+                            </div>
+                            <p class="comment-text">이벤트 기간이 한 달이나 되니까 여유롭게 참여할 수 있겠네요.</p>
+                        </div>
+                    </div>
+                    <div class="comment-form">
+                        <textarea
+                            class="comment-input"
+                            placeholder="댓글을 입력하세요..."
+                        ></textarea>
+                        <button class="comment-submit">등록</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+<!-- 하단 네비게이션 -->
+<nav class="bottom-nav">
+    <a href="#" class="nav-item active">
+        <span class="nav-icon">🏠</span>
+        <span class="nav-label">홈</span>
+    </a>
+    <a href="#" class="nav-item">
+        <span class="nav-icon">🎯</span>
+        <span class="nav-label">카테고리</span>
+    </a>
+    <a href="#" class="nav-item">
+        <span class="nav-icon">💬</span>
+        <span class="nav-label">상담내역</span>
+    </a>
+    <a href="favorite.html" class="nav-item">
+        <span class="nav-icon">⭐</span>
+        <span class="nav-label">즐겨찾기</span>
+    </a>
+    <a href="mypage.html" class="nav-item">
+        <span class="nav-icon">👤</span>
+        <span class="nav-label">마이</span>
+    </a>
+</nav>
+
+<script>
+// 댓글 수정/삭제 기능
+document.querySelectorAll('.action-button.edit').forEach(button => {
+    button.addEventListener('click', function() {
+        const commentItem = this.closest('.comment-item');
+        const editForm = commentItem.querySelector('.comment-edit-form');
+        editForm.classList.add('active');
+    });
+});
+
+document.querySelectorAll('.edit-button.cancel').forEach(button => {
+    button.addEventListener('click', function() {
+        const editForm = this.closest('.comment-edit-form');
+        editForm.classList.remove('active');
+    });
+});
+
+document.querySelectorAll('.action-button.delete').forEach(button => {
+    button.addEventListener('click', function() {
+        if (confirm('댓글을 삭제하시겠습니까?')) {
+            const commentItem = this.closest('.comment-item');
+            commentItem.remove();
+            // 댓글 수 업데이트
+            updateCommentCount();
+        }
+    });
+});
+
+function updateCommentCount() {
+    const commentCount = document.querySelectorAll('.comment-item').length;
+    document.querySelector('.comment-count').textContent = `(${commentCount})`;
+}
+
+// 좋아요 기능
+document.querySelectorAll('.action-button.like').forEach(button => {
+    button.addEventListener('click', function() {
+        const likeCount = this.querySelector('.like-count');
+        const likeIcon = this.querySelector('span:first-child');
+        const currentCount = parseInt(likeCount.textContent);
+        
+        if (this.classList.contains('active')) {
+            // 좋아요 취소
+            this.classList.remove('active');
+            likeIcon.textContent = '🤍';
+            likeCount.textContent = currentCount - 1;
+        } else {
+            // 좋아요 추가
+            this.classList.add('active');
+            likeIcon.textContent = '❤️';
+            likeCount.textContent = currentCount + 1;
+        }
+    });
+});
+</script>
+</body>
+</html>

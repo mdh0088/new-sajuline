@@ -1,0 +1,28 @@
+# 예약 시스템(상담사-사용자) 구현
+
+**Task ID:** T-006
+**Status:** BACKLOG
+**Importance:** MUST
+**Complexity:** 7/10
+**Urgency:** 8/10
+**Dependencies:** T-002, T-005
+
+## Description
+
+**요구사항**:
+- 상담사 일정 및 가용시간 CRUD API 구현
+- 예약 생성, 변경, 취소 및 상태(Confirmed, Canceled) 관리
+- 사용자별 예약 내역 조회 기능 제공
+- 예약 관련 알림 설계(이메일/푸시 등은 추후)
+**구현 세부사항**:
+- SQLAlchemy models(reservations, schedules) 및 Alembic 마이그레이션 작성
+- FastAPI reservations router(v1/reservations) 구현 및 트랜잭션 처리
+- Nuxt Pinia store와 Axios 연동 로직 구성
+**테스트 전략**:
+- Pytest로 예약 생성/취소/변경 단위 테스트 실행
+- 동시성 시나리오에서 트랜잭션 무결성 검증
+
+---
+
+**Created:** 2025-08-27T15:36:58.221Z
+**Updated:** 2025-08-27T15:36:58.221Z

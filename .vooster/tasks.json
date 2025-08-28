@@ -1,0 +1,86 @@
+{
+  "totalCount": 8,
+  "downloadedAt": "2025-08-28T00:53:06.468Z",
+  "tasks": [
+    {
+      "taskId": "T-001",
+      "summary": "프로젝트 구조 및 개발 환경 셋업",
+      "status": "BACKLOG",
+      "importance": "MUST",
+      "complexity": 5,
+      "urgency": 10,
+      "createdAt": "2025-08-27T15:36:58.221Z",
+      "updatedAt": "2025-08-27T15:36:58.221Z"
+    },
+    {
+      "taskId": "T-002",
+      "summary": "사용자 인증 및 회원가입(소셜+이메일+KCP)",
+      "status": "BACKLOG",
+      "importance": "MUST",
+      "complexity": 7,
+      "urgency": 10,
+      "createdAt": "2025-08-27T15:36:58.221Z",
+      "updatedAt": "2025-08-27T15:36:58.221Z"
+    },
+    {
+      "taskId": "T-003",
+      "summary": "포인트 충전 및 결제 시스템(기본 결제 연동)",
+      "status": "BACKLOG",
+      "importance": "MUST",
+      "complexity": 7,
+      "urgency": 9,
+      "createdAt": "2025-08-27T15:36:58.221Z",
+      "updatedAt": "2025-08-27T15:36:58.221Z"
+    },
+    {
+      "taskId": "T-004",
+      "summary": "반응형 UI/UX 및 랜딩 페이지 구현",
+      "status": "BACKLOG",
+      "importance": "MUST",
+      "complexity": 6,
+      "urgency": 8,
+      "createdAt": "2025-08-27T15:36:58.221Z",
+      "updatedAt": "2025-08-27T15:36:58.221Z"
+    },
+    {
+      "taskId": "T-005",
+      "summary": "상담사 프로필/리스트/검색 기능 구현",
+      "status": "BACKLOG",
+      "importance": "MUST",
+      "complexity": 6,
+      "urgency": 8,
+      "createdAt": "2025-08-27T15:36:58.221Z",
+      "updatedAt": "2025-08-27T15:36:58.221Z"
+    },
+    {
+      "taskId": "T-006",
+      "summary": "예약 시스템(상담사-사용자) 구현",
+      "status": "BACKLOG",
+      "importance": "MUST",
+      "complexity": 7,
+      "urgency": 8,
+      "createdAt": "2025-08-27T15:36:58.221Z",
+      "updatedAt": "2025-08-27T15:36:58.221Z"
+    },
+    {
+      "taskId": "T-007",
+      "summary": "포인트/상담/결제 내역 및 대시보드 구현",
+      "status": "BACKLOG",
+      "importance": "SHOULD",
+      "complexity": 5,
+      "urgency": 7,
+      "createdAt": "2025-08-27T15:36:58.221Z",
+      "updatedAt": "2025-08-27T15:36:58.221Z"
+    },
+    {
+      "taskId": "T-008",
+      "summary": "1차 고객지원(FAQ/공지) 기능 구현",
+      "status": "BACKLOG",
+      "importance": "SHOULD",
+      "complexity": 4,
+      "urgency": 6,
+      "createdAt": "2025-08-27T15:36:58.221Z",
+      "updatedAt": "2025-08-27T15:36:58.221Z"
+    }
+  ]
+}

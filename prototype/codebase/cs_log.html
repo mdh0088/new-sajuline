@@ -1,0 +1,734 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>상담 내역 - 사주라인</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto,
+                         'Apple SD Gothic Neo', 'Noto Sans KR', sans-serif;
+            background-color: #0a0a0f;
+            color: #ffffff;
+            line-height: 1.6;
+            overflow-x: hidden;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        a {
+            text-decoration: none;
+            color: inherit;
+        }
+
+        button {
+            outline: none;
+            border: none;
+            cursor: pointer;
+        }
+
+        /* Header */
+        .header {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            background: rgba(10, 10, 15, 0.95);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            z-index: 1000;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .header-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 16px 20px;
+            height: 60px;
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+
+        .icon-btn {
+            width: 36px;
+            height: 36px;
+            background: rgba(255, 255, 255, 0.05);
+            color: #fff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 12px;
+            transition: all 0.3s ease;
+            font-size: 18px;
+        }
+
+        .icon-btn:active {
+            transform: scale(0.95);
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .back-button {
+            width: 36px;
+            height: 36px;
+            background: transparent;
+            color: #fff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+        }
+
+        .header-title {
+            position: absolute;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 18px;
+            font-weight: 600;
+        }
+
+        /* Main Content */
+        .main-content {
+            margin-top: 60px;
+            padding: 20px;
+            padding-bottom: 120px; /* 하단 네비 공간 */
+            flex: 1;
+            overflow-y: auto;
+        }
+
+        .history-list {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            padding: 16px;
+        }
+
+        .history-item {
+            position: relative;
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            box-shadow: 0 4px 20px rgba(147, 51, 234, 0.1);
+            transition: all 0.3s ease;
+        }
+
+        .history-item:hover {
+            background: rgba(147, 51, 234, 0.08);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 24px rgba(147, 51, 234, 0.2);
+        }
+
+        .item-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .counselor-info {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .counselor-thumb {
+            width: 64px;
+            height: 64px;
+            border-radius: 20px;
+            background: linear-gradient(135deg, rgba(147, 51, 234, 0.2) 0%, rgba(124, 58, 237, 0.1) 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 28px;
+            flex-shrink: 0;
+        }
+
+        .counselor-details {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .counselor-name {
+            font-size: 18px;
+            font-weight: 700;
+            color: #ffffff;
+        }
+
+        .counselor-type {
+            font-size: 13px;
+            color: rgba(255, 255, 255, 0.7);
+        }
+
+        .session-meta {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            align-items: flex-end;
+        }
+
+        .session-date {
+            font-size: 13px;
+            color: rgba(255, 255, 255, 0.7);
+        }
+
+        .session-status {
+            font-size: 13px;
+            font-weight: 600;
+            padding: 4px 8px;
+            border-radius: 12px;
+            text-align: center;
+        }
+
+        .status-completed {
+            background-color: #10b981;
+            color: #ffffff;
+        }
+
+        .status-cancelled {
+            background-color: rgba(255, 107, 107, 0.3);
+            color: #ff6b6b;
+        }
+
+        .item-body {
+            font-size: 14px;
+            color: rgba(255, 255, 255, 0.7);
+            line-height: 1.5;
+            background: rgba(255, 255, 255, 0.02);
+            border-radius: 12px;
+            padding: 16px;
+        }
+
+        .item-body strong {
+            color: #B794F6;
+            font-weight: 600;
+            display: block;
+            margin-bottom: 12px;
+            font-size: 15px;
+        }
+
+        .item-body p {
+            margin-bottom: 16px;
+            line-height: 1.6;
+        }
+
+        .item-body p:last-child {
+            margin-bottom: 0;
+        }
+
+        .session-info {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            margin-top: 12px;
+            padding-top: 12px;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            font-size: 13px;
+            color: rgba(255, 255, 255, 0.5);
+        }
+
+        .session-time {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .session-time::before {
+            content: '⏱️';
+            font-size: 14px;
+        }
+
+        .item-footer {
+            display: flex;
+            justify-content: flex-end;
+            gap: 12px;
+            margin-top: 16px;
+        }
+
+        .action-button {
+            padding: 8px 16px;
+            font-size: 14px;
+            font-weight: 600;
+            border-radius: 16px;
+            border: none;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .review-button {
+            background: linear-gradient(135deg, #9333EA 0%, #7C3AED 100%);
+            color: #ffffff;
+            box-shadow: 0 2px 8px rgba(147, 51, 234, 0.4);
+        }
+
+        .review-button:active {
+            transform: scale(0.95);
+            box-shadow: 0 1px 4px rgba(147, 51, 234, 0.3);
+        }
+
+        /* Empty State */
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+        }
+
+        .empty-icon {
+            font-size: 64px;
+            margin-bottom: 16px;
+            opacity: 0.3;
+        }
+
+        .empty-title {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+
+        .empty-desc {
+            font-size: 14px;
+            color: rgba(255, 255, 255, 0.6);
+        }
+
+        /* Bottom Navigation */
+        .bottom-nav {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: rgba(10, 10, 15, 0.95);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            display: flex;
+            justify-content: space-around;
+            padding: 8px 0 12px;
+            z-index: 1000;
+        }
+
+        .nav-item {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 8px;
+            color: rgba(255, 255, 255, 0.5);
+            text-decoration: none;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .nav-item::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 0;
+            height: 2px;
+            background: linear-gradient(90deg, #9333EA 0%, #B794F6 100%);
+            transition: width 0.3s ease;
+        }
+
+        .nav-item.active {
+            color: #B794F6;
+        }
+
+        .nav-item.active::before {
+            width: 40px;
+        }
+
+        .nav-icon {
+            font-size: 24px;
+            margin-bottom: 4px;
+        }
+
+        .nav-label {
+            font-size: 11px;
+            font-weight: 500;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .history-item {
+                padding: 16px;
+            }
+
+            .counselor-thumb {
+                width: 56px;
+                height: 56px;
+                font-size: 24px;
+            }
+
+            .item-body {
+                font-size: 13px;
+            }
+
+            .action-button {
+                padding: 6px 12px;
+                font-size: 13px;
+            }
+        }
+
+        /* 모달 스타일 */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(5px);
+            -webkit-backdrop-filter: blur(5px);
+            z-index: 2000;
+            display: none;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal-content {
+            background: rgba(20, 20, 25, 0.95);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 24px;
+            width: 90%;
+            max-width: 400px;
+            padding: 24px;
+            position: relative;
+            animation: modalSlideUp 0.3s ease;
+        }
+
+        @keyframes modalSlideUp {
+            from {
+                transform: translateY(20px);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .modal-title {
+            font-size: 20px;
+            font-weight: 700;
+            color: #ffffff;
+        }
+
+        .modal-close {
+            background: none;
+            border: none;
+            color: rgba(255, 255, 255, 0.6);
+            font-size: 24px;
+            cursor: pointer;
+            padding: 4px;
+            transition: all 0.3s ease;
+        }
+
+        .modal-close:hover {
+            color: #ffffff;
+        }
+
+        .review-form {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .rating-input {
+            display: flex;
+            justify-content: center;
+            gap: 8px;
+            margin-bottom: 8px;
+        }
+
+        .rating-star {
+            font-size: 32px;
+            color: rgba(255, 255, 255, 0.2);
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .rating-star.active {
+            color: #FFD700;
+        }
+
+        .review-textarea {
+            width: 100%;
+            height: 120px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            padding: 12px;
+            color: #ffffff;
+            font-size: 14px;
+            resize: none;
+            transition: all 0.3s ease;
+        }
+
+        .review-textarea:focus {
+            outline: none;
+            border-color: #B794F6;
+            background: rgba(255, 255, 255, 0.08);
+        }
+
+        .modal-footer {
+            display: flex;
+            gap: 12px;
+            margin-top: 20px;
+        }
+
+        .modal-button {
+            flex: 1;
+            padding: 12px;
+            border-radius: 12px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .submit-button {
+            background: linear-gradient(135deg, #9333EA 0%, #7C3AED 100%);
+            color: #ffffff;
+            border: none;
+        }
+
+        .cancel-button {
+            background: rgba(255, 255, 255, 0.1);
+            color: rgba(255, 255, 255, 0.8);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .modal-button:active {
+            transform: scale(0.98);
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <div class="header-top">
+            <button class="back-button" onclick="window.history.back();">←</button>
+            <h1 class="header-title">상담 내역</h1>
+            <div class="header-actions">
+                <button class="icon-btn" onclick="window.location.href='search-page.html'">🔍</button>
+                <button class="icon-btn" onclick="window.location.href='login-page.html'">👤</button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <div class="history-list">
+            <!-- 상담 내역 예시 1 -->
+            <div class="history-item">
+                <div class="item-header">
+                    <div class="counselor-info">
+                        <div class="counselor-thumb">👩‍🦰</div>
+                        <div class="counselor-details">
+                            <span class="counselor-name">김지은 상담사</span>
+                            <span class="counselor-type">사주 전문가</span>
+                        </div>
+                    </div>
+                    <div class="session-meta">
+                        <span class="session-date">2025.06.05 14:30</span>
+                        <span class="session-status status-completed">완료</span>
+                    </div>
+                </div>
+                <div class="item-body">
+                    <strong>상담 주제</strong>
+                    <p>2025년 하반기 사업 운세</p>
+                    <strong>상세 내용</strong>
+                    <p>사업 확장 시기 및 투자 방향에 대해 상담했습니다. 특히 올해 하반기에 예상되는 시장 변화와 그에 따른 대응 방안에 대해 자세히 논의했습니다.</p>
+                    <div class="session-info">
+                        <div class="session-time">상담 시간: 30분</div>
+                    </div>
+                </div>
+                <div class="item-footer">
+                    <button class="action-button review-button">후기 작성</button>
+                </div>
+            </div>
+
+            <!-- 상담 내역 예시 2 -->
+            <div class="history-item">
+                <div class="item-header">
+                    <div class="counselor-info">
+                        <div class="counselor-thumb">👨‍💼</div>
+                        <div class="counselor-details">
+                            <span class="counselor-name">박준현 상담사</span>
+                            <span class="counselor-type">타로 전문가</span>
+                        </div>
+                    </div>
+                    <div class="session-meta">
+                        <span class="session-date">2025.05.20 10:00</span>
+                        <span class="session-status status-completed">완료</span>
+                    </div>
+                </div>
+                <div class="item-body">
+                    <strong>상담 주제</strong>
+                    <p>연애 문제 해결 방안</p>
+                    <strong>상세 내용</strong>
+                    <p>이성 관계에서의 갈등 해소 및 소통 방법에 대해 상담했습니다. 현재 상황에서의 감정적 어려움과 앞으로의 관계 발전 방향에 대해 심도 있게 논의했습니다.</p>
+                    <div class="session-info">
+                        <div class="session-time">상담 시간: 45분</div>
+                    </div>
+                </div>
+                <div class="item-footer">
+                    <button class="action-button review-button">후기 작성</button>
+                </div>
+            </div>
+
+            <!-- 상담 내역 예시 3 (취소된 경우) -->
+            <div class="history-item">
+                <div class="item-header">
+                    <div class="counselor-info">
+                        <div class="counselor-thumb">🧑</div>
+                        <div class="counselor-details">
+                            <span class="counselor-name">이소민 상담사</span>
+                            <span class="counselor-type">사주·타로 통합</span>
+                        </div>
+                    </div>
+                    <div class="session-meta">
+                        <span class="session-date">2025.05.10 16:45</span>
+                        <span class="session-status status-cancelled">취소</span>
+                    </div>
+                </div>
+                <div class="item-body">
+                    <strong>상담 주제</strong>
+                    <p>건강운 상담</p>
+                    <strong>상세 내용</strong>
+                    <p>갑작스러운 일정 변경으로 인해 취소되었습니다.</p>
+                    <div class="session-info">
+                        <div class="session-time">예정 시간: 30분</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 빈 상태 예시 -->
+            <!--
+            <div class="empty-state">
+                <div class="empty-icon">📭</div>
+                <div class="empty-title">상담 내역이 없습니다</div>
+                <div class="empty-desc">상담을 통해 적립된 내역이 표시됩니다.</div>
+            </div>
+            -->
+        </div>
+    </main>
+
+    <!-- Bottom Navigation -->
+    <nav class="bottom-nav">
+        <a href="main.html" class="nav-item">
+            <span class="nav-icon">🏠</span>
+            <span class="nav-label">홈</span>
+        </a>
+        <a href="ai-fortune-complete.html" class="nav-item">
+            <span class="nav-icon">🤖</span>
+            <span class="nav-label">AI운세</span>
+        </a>
+        <a href="event.html" class="nav-item">
+            <span class="nav-icon">🎁</span>
+            <span class="nav-label">이벤트</span>
+        </a>
+        <a href="#" class="nav-item">
+            <span class="nav-icon">⭐</span>
+            <span class="nav-label">즐겨찾기</span>
+        </a>
+        <a href="mypage.html" class="nav-item active">
+            <span class="nav-icon">👤</span>
+            <span class="nav-label">마이</span>
+        </a>
+    </nav>
+
+    <!-- 모달 팝업 -->
+    <div class="modal-overlay" id="reviewModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title">후기 작성</h3>
+                <button class="modal-close" onclick="closeModal()">×</button>
+            </div>
+            <form class="review-form">
+                <div class="rating-input">
+                    <span class="rating-star" onclick="setRating(1)">⭐</span>
+                    <span class="rating-star" onclick="setRating(2)">⭐</span>
+                    <span class="rating-star" onclick="setRating(3)">⭐</span>
+                    <span class="rating-star" onclick="setRating(4)">⭐</span>
+                    <span class="rating-star" onclick="setRating(5)">⭐</span>
+                </div>
+                <textarea class="review-textarea" placeholder="상담에 대한 후기를 작성해주세요."></textarea>
+                <div class="modal-footer">
+                    <button type="button" class="modal-button cancel-button" onclick="closeModal()">취소</button>
+                    <button type="submit" class="modal-button submit-button">작성완료</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        // 모달 관련 함수들
+        function openModal() {
+            document.getElementById('reviewModal').style.display = 'flex';
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeModal() {
+            document.getElementById('reviewModal').style.display = 'none';
+            document.body.style.overflow = 'auto';
+        }
+
+        // 별점 설정
+        function setRating(rating) {
+            const stars = document.querySelectorAll('.rating-star');
+            stars.forEach((star, index) => {
+                if (index < rating) {
+                    star.classList.add('active');
+                } else {
+                    star.classList.remove('active');
+                }
+            });
+        }
+
+        // 후기 작성 버튼 클릭 이벤트
+        document.querySelectorAll('.review-button').forEach(button => {
+            button.addEventListener('click', function(e) {
+                e.preventDefault();
+                openModal();
+            });
+        });
+
+        // 모달 외부 클릭 시 닫기
+        document.getElementById('reviewModal').addEventListener('click', function(e) {
+            if (e.target === this) {
+                closeModal();
+            }
+        });
+
+        // 폼 제출 처리
+        document.querySelector('.review-form').addEventListener('submit', function(e) {
+            e.preventDefault();
+            // TODO: 후기 제출 로직 구현
+            closeModal();
+        });
+    </script>
+</body>
+</html>

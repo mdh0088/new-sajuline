@@ -1,0 +1,32 @@
+# 사용자 인증 및 회원가입(소셜+이메일+KCP)
+
+**Task ID:** T-002
+**Status:** BACKLOG
+**Importance:** MUST
+**Complexity:** 7/10
+**Urgency:** 10/10
+**Dependencies:** T-001
+
+## Description
+
+**요구사항**:
+- 이메일/비밀번호 회원가입 및 로그인 기능 제공
+- Kakao, Naver OAuth 소셜 로그인 연동
+- KCP 본인확인 API 연동 및 결과 검증
+- JWT/세션 기반 인증/인가, HttpOnly 쿠키 설정
+- 비밀번호 Argon2id 해시, PII AES-256-GCM 암호화 적용
+**구현 세부사항**:
+- FastAPI auth router 및 Pydantic schema 정의
+- python-jose로 JWT 발급/검증 구현
+- argon2-cffi로 비밀번호 해시, cryptography로 AES-256-GCM 모듈 구성
+- Authlib으로 Kakao/Naver OAuth 클라이언트 설정
+- KCP REST 클라이언트 및 해시 검증 로직 작성
+**테스트 전략**:
+- Pytest로 회원가입/로그인 E2E 테스트 수행
+- OAuth 콜백 흐름 및 오류 처리 검증
+- KCP 샌드박스 환경에서 본인확인 시나리오 실행
+
+---
+
+**Created:** 2025-08-27T15:36:58.221Z
+**Updated:** 2025-08-27T15:36:58.221Z

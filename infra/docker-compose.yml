@@ -1,0 +1,152 @@
+# 사주라인 리뉴얼 개발 환경 Docker Compose
+# Backend(FastAPI) + MariaDB + Redis + MSSQL
+
+services:
+  # 백엔드 서비스 (FastAPI)
+  backend:
+    build:
+      context: ../backend
+      dockerfile: Dockerfile
+      target: development
+    container_name: sajuline-backend
+    ports:
+      - "8000:8000"
+    env_file:
+      - ../backend/.env.development
+    environment:
+      # Docker 컨테이너용 HOST/PORT 설정
+      - HOST=0.0.0.0
+      - PORT=8000
+    volumes:
+      - ../backend/src:/app/src
+      - ../backend/logs:/app/logs
+    depends_on:
+      mariadb:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - sajuline-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # Redis 캐시 서버
+  redis:
+    image: redis:7.2-alpine
+    container_name: sajuline-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+      - ./redis.conf:/usr/local/etc/redis/redis.conf:ro
+    command: >
+      redis-server 
+      --appendonly yes 
+      --appendfsync everysec
+      --maxmemory 256mb
+      --maxmemory-policy allkeys-lru
+      --save 900 1
+      --save 300 10
+      --save 60 10000
+    networks:
+      - sajuline-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+  # MariaDB 데이터베이스
+  mariadb:
+    image: mariadb:10.11
+    container_name: sajuline-mariadb
+    environment:
+      MYSQL_ROOT_PASSWORD: root123
+      MYSQL_DATABASE: sajuline
+      MYSQL_USER: sajuline
+      MYSQL_PASSWORD: sajuline123
+      MYSQL_CHARSET: utf8mb4
+      MYSQL_COLLATION: utf8mb4_unicode_ci
+    ports:
+      - "3306:3306"
+    volumes:
+      - mariadb_data:/var/lib/mysql
+      - ./init-db-mysql:/docker-entrypoint-initdb.d:ro
+    networks:
+      - sajuline-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-proot123"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    command: >
+      --character-set-server=utf8mb4
+      --collation-server=utf8mb4_unicode_ci
+      --max-connections=200
+      --innodb-buffer-pool-size=256M
+
+  # MSSQL 2019 (ARS) 데이터베이스
+  mssql-ars:
+    image: mcr.microsoft.com/mssql/server:2019-latest
+    container_name: mssql-ars
+    environment:
+      ACCEPT_EULA: "Y"
+      SA_PASSWORD: "Str0ng!Passw0rd"
+      MSSQL_PID: Developer
+      MSSQL_COLLATION: SQL_Latin1_General_CP1_CI_AS
+    ports:
+      - "127.0.0.1:1433:1433"
+    volumes:
+      - mssql_data:/var/opt/mssql
+      - ./mssql/init:/init
+    networks:
+      - sajuline-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "bash -c '</dev/tcp/127.0.0.1/1433' || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 30
+      start_period: 90s
+
+  # MSSQL 초기화 일회성 서비스
+  mssql-ars-init:
+    image: mcr.microsoft.com/mssql/server:2019-latest
+    container_name: mssql-ars-init
+    depends_on:
+      mssql-ars:
+        condition: service_healthy
+    entrypoint: ["/bin/bash","-lc","SQLCMD=$$([ -x /opt/mssql-tools18/bin/sqlcmd ] && echo /opt/mssql-tools18/bin/sqlcmd || echo /opt/mssql-tools/bin/sqlcmd); $$SQLCMD -C -l 60 -S mssql-ars -U sa -P 'Str0ng!Passw0rd' -i /init/00_create_db.sql && $$SQLCMD -C -l 60 -S mssql-ars -U sa -P 'Str0ng!Passw0rd' -i /init/01_schema_tables.sql && $$SQLCMD -C -l 60 -S mssql-ars -U sa -P 'Str0ng!Passw0rd' -i /init/02_indexes.sql"]
+    volumes:
+      - ./mssql/init:/init:ro
+    networks:
+      - sajuline-network
+    restart: "no"
+
+# 볼륨 정의
+volumes:
+  mariadb_data:
+    driver: local
+  redis_data:
+    driver: local
+  mssql_data:
+    driver: local
+
+# 네트워크 정의
+networks:
+  sajuline-network:
+    driver: bridge
+    ipam:
+      driver: default
+      config:
+        - subnet: 172.20.0.0/16
+          gateway: 172.20.0.1

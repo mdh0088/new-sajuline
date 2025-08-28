@@ -1,0 +1,434 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>공지사항 - 사주라인</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Apple SD Gothic Neo', 'Noto Sans KR', sans-serif;
+            background-color: #0a0a0f;
+            color: #ffffff;
+            line-height: 1.6;
+            overflow-x: hidden;
+        }
+
+        /* 헤더 */
+        .header {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            background: rgba(10, 10, 15, 0.95);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            z-index: 1000;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .header-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 16px 20px;
+            height: 60px;
+        }
+
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .back-button {
+            width: 36px;
+            height: 36px;
+            border: none;
+            background: transparent;
+            color: #fff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            font-size: 20px;
+        }
+
+        .header-title {
+            font-size: 20px;
+            font-weight: 700;
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 12px;
+        }
+
+        .icon-btn {
+            width: 36px;
+            height: 36px;
+            border: none;
+            background: transparent;
+            color: #fff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            font-size: 20px;
+        }
+
+        /* 메인 콘텐츠 */
+        .main-content {
+            margin-top: 60px;
+            padding: 20px;
+            padding-bottom: 80px;
+        }
+
+        /* 공지사항 리스트 */
+        .notice-list {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .notice-item {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 16px;
+            padding: 20px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .notice-item:hover {
+            transform: translateY(-2px);
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .notice-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+
+        .notice-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: #ffffff;
+        }
+
+        .notice-date {
+            font-size: 13px;
+            color: rgba(255, 255, 255, 0.5);
+        }
+
+        .notice-content {
+            font-size: 14px;
+            color: rgba(255, 255, 255, 0.7);
+            line-height: 1.6;
+        }
+
+        .notice-badge {
+            display: inline-block;
+            padding: 4px 8px;
+            background: rgba(147, 51, 234, 0.2);
+            color: #B794F6;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 600;
+            margin-right: 8px;
+        }
+
+        /* 하단 네비게이션 */
+        .bottom-nav {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: rgba(10, 10, 15, 0.95);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            display: flex;
+            justify-content: space-around;
+            padding: 8px 0 12px;
+            z-index: 1000;
+        }
+
+        .nav-item {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 8px;
+            color: rgba(255, 255, 255, 0.5);
+            text-decoration: none;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .nav-item::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 0;
+            height: 2px;
+            background: linear-gradient(90deg, #9333EA 0%, #B794F6 100%);
+            transition: width 0.3s ease;
+        }
+
+        .nav-item.active {
+            color: #B794F6;
+        }
+
+        .nav-item.active::before {
+            width: 40px;
+        }
+
+        .nav-icon {
+            font-size: 24px;
+            margin-bottom: 4px;
+        }
+
+        .nav-label {
+            font-size: 11px;
+            font-weight: 500;
+        }
+
+        /* 공지사항 상세 */
+        .notice-detail {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 16px;
+            padding: 24px;
+            margin-bottom: 20px;
+        }
+
+        .notice-detail-header {
+            margin-bottom: 20px;
+        }
+
+        .notice-detail-title {
+            font-size: 20px;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+
+        .notice-detail-meta {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            color: rgba(255, 255, 255, 0.5);
+            font-size: 14px;
+        }
+
+        .notice-detail-content {
+            font-size: 15px;
+            line-height: 1.8;
+            color: rgba(255, 255, 255, 0.8);
+        }
+
+        .notice-detail-content p {
+            margin-bottom: 16px;
+        }
+
+        .notice-detail-content strong {
+            color: #B794F6;
+            font-weight: 600;
+        }
+
+        .notice-detail-content ul {
+            list-style: none;
+            margin: 16px 0;
+            padding-left: 20px;
+        }
+
+        .notice-detail-content li {
+            position: relative;
+            margin-bottom: 8px;
+            padding-left: 16px;
+        }
+
+        .notice-detail-content li::before {
+            content: '•';
+            position: absolute;
+            left: 0;
+            color: #B794F6;
+        }
+
+        /* 페이지네이션 */
+        .pagination {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 8px;
+            margin-top: 24px;
+        }
+
+        .page-btn {
+            min-width: 36px;
+            height: 36px;
+            padding: 0 12px;
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            color: #fff;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .page-btn:hover {
+            background: rgba(147, 51, 234, 0.1);
+            transform: translateY(-1px);
+        }
+
+        .page-btn.active {
+            background: rgba(147, 51, 234, 0.2);
+            color: #B794F6;
+            border-color: rgba(147, 51, 234, 0.3);
+        }
+
+        .page-btn.disabled {
+            background: rgba(255, 255, 255, 0.05);
+            color: rgba(255, 255, 255, 0.3);
+            cursor: not-allowed;
+        }
+    </style>
+</head>
+<body>
+    <!-- 헤더 -->
+    <header class="header">
+        <div class="header-top">
+            <div class="header-left">
+                <button class="back-button" onclick="window.history.back()">←</button>
+                <h1 class="header-title">공지사항</h1>
+            </div>
+            <div class="header-actions">
+                <button class="icon-btn" onclick="window.location.href='search-page.html'">🔍</button>
+                <button class="icon-btn" onclick="window.location.href='login-page.html'">👤</button>
+            </div>
+        </div>
+    </header>
+
+    <!-- 메인 콘텐츠 -->
+    <main class="main-content">
+        <!-- 공지사항 리스트 -->
+        <div class="notice-list">
+            <div class="notice-item" onclick="window.location.href='notice_detail.html'">
+                <div class="notice-header">
+                    <div class="notice-title">
+                        <span class="notice-badge">NEW</span>
+                        시스템 점검 안내
+                    </div>
+                    <div class="notice-date">2024.03.15</div>
+                </div>
+                <div class="notice-content">
+                    서비스 안정화를 위한 시스템 점검 안내드립니다...
+                </div>
+            </div>
+
+            <div class="notice-item" onclick="window.location.href='notice_detail.html'">
+                <div class="notice-header">
+                    <div class="notice-title">
+                        <span class="notice-badge">이벤트</span>
+                        봄맞이 이벤트 안내
+                    </div>
+                    <div class="notice-date">2024.03.10</div>
+                </div>
+                <div class="notice-content">
+                    봄을 맞이하여 진행되는 특별 이벤트 안내드립니다...
+                </div>
+            </div>
+
+            <div class="notice-item" onclick="window.location.href='notice_detail.html'">
+                <div class="notice-header">
+                    <div class="notice-title">
+                        <span class="notice-badge">업데이트</span>
+                        앱 버전 업데이트 안내
+                    </div>
+                    <div class="notice-date">2024.03.05</div>
+                </div>
+                <div class="notice-content">
+                    더 나은 서비스 이용을 위한 앱 업데이트 안내드립니다...
+                </div>
+            </div>
+        </div>
+
+        <!-- 페이지네이션 -->
+        <div class="pagination">
+            <button class="page-btn" onclick="changePage('prev')">이전</button>
+            <button class="page-btn active">1</button>
+            <button class="page-btn">2</button>
+            <button class="page-btn">3</button>
+            <button class="page-btn" onclick="changePage('next')">다음</button>
+        </div>
+    </main>
+
+    <!-- 하단 네비게이션 -->
+    <nav class="bottom-nav">
+        <a href="main.html" class="nav-item">
+            <span class="nav-icon">🏠</span>
+            <span class="nav-label">홈</span>
+        </a>
+        <a href="ai-fortune-complete.html" class="nav-item">
+            <span class="nav-icon">🤖</span>
+            <span class="nav-label">AI운세</span>
+        </a>
+        <a href="event.html" class="nav-item">
+            <span class="nav-icon">🎁</span>
+            <span class="nav-label">이벤트</span>
+        </a>
+        <a href="favorite.html" class="nav-item">
+            <span class="nav-icon">⭐</span>
+            <span class="nav-label">즐겨찾기</span>
+        </a>
+        <a href="mypage.html" class="nav-item">
+            <span class="nav-icon">👤</span>
+            <span class="nav-label">마이</span>
+        </a>
+    </nav>
+
+    <script>
+        // 페이지네이션 관련 변수
+        let currentPage = 1;
+        const totalPages = 3;
+
+        function changePage(direction) {
+            if (direction === 'prev' && currentPage > 1) {
+                currentPage--;
+            } else if (direction === 'next' && currentPage < totalPages) {
+                currentPage++;
+            }
+            updatePagination();
+        }
+
+        function updatePagination() {
+            const pageButtons = document.querySelectorAll('.page-btn');
+            pageButtons.forEach((btn, index) => {
+                if (index === 0) { // 이전 버튼
+                    btn.classList.toggle('disabled', currentPage === 1);
+                } else if (index === pageButtons.length - 1) { // 다음 버튼
+                    btn.classList.toggle('disabled', currentPage === totalPages);
+                } else { // 페이지 번호 버튼
+                    btn.classList.toggle('active', index === currentPage);
+                }
+            });
+        }
+
+        // 초기 페이지네이션 설정
+        updatePagination();
+    </script>
+</body>
+</html>

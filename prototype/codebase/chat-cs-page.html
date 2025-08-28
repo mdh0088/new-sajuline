@@ -1,0 +1,473 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>고객센터 상담 - 사주라인</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Apple SD Gothic Neo', 'Noto Sans KR', sans-serif;
+            background-color: #0a0a0f;
+            color: #ffffff;
+            line-height: 1.6;
+            overflow-x: hidden;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* 헤더 */
+        .chat-header {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            background: rgba(10, 10, 15, 0.95);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            z-index: 1000;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .header-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 16px 20px;
+            height: 60px;
+        }
+
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .back-button {
+            width: 36px;
+            height: 36px;
+            border: none;
+            background: transparent;
+            color: #fff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            font-size: 20px;
+        }
+
+        .back-button i {
+            font-size: 20px;
+        }
+
+        .counselor-info {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .counselor-avatar-small {
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(135deg, rgba(147, 51, 234, 0.3) 0%, rgba(124, 58, 237, 0.2) 100%);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+        }
+
+        .counselor-details {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .counselor-name {
+            font-size: 16px;
+            font-weight: 600;
+        }
+
+        .counselor-status {
+            font-size: 12px;
+            color: #4CAF50;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .status-indicator {
+            width: 6px;
+            height: 6px;
+            background: #4CAF50;
+            border-radius: 50%;
+            display: inline-block;
+        }
+
+        /* 채팅 영역 */
+        .chat-container {
+            flex: 1;
+            overflow-y: auto;
+            padding: 60px 20px 100px;
+            background: linear-gradient(to bottom, rgba(147, 51, 234, 0.05) 0%, transparent 50%);
+        }
+
+        /* 날짜 구분선 */
+        .date-divider {
+            text-align: center;
+            margin: 20px 0;
+            position: relative;
+        }
+
+        .date-text {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            padding: 6px 16px;
+            border-radius: 20px;
+            font-size: 12px;
+            color: rgba(255, 255, 255, 0.6);
+            display: inline-block;
+        }
+
+        /* 메시지 */
+        .message {
+            margin-bottom: 16px;
+            display: flex;
+            align-items: flex-end;
+            gap: 8px;
+        }
+
+        .message.counselor {
+            flex-direction: row;
+        }
+
+        .message.user {
+            flex-direction: row-reverse;
+        }
+
+        .message-avatar {
+            width: 32px;
+            height: 32px;
+            background: rgba(147, 51, 234, 0.2);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+            flex-shrink: 0;
+        }
+
+        .message-content {
+            max-width: 70%;
+        }
+
+        .message-bubble {
+            padding: 12px 16px;
+            border-radius: 20px;
+            font-size: 15px;
+            line-height: 1.5;
+            position: relative;
+            white-space: pre-line;
+        }
+
+        .counselor .message-bubble {
+            background: rgba(255, 255, 255, 0.1);
+            border-bottom-left-radius: 4px;
+        }
+
+        .user .message-bubble {
+            background: linear-gradient(135deg, #9333EA 0%, #7C3AED 100%);
+            border-bottom-right-radius: 4px;
+        }
+
+        .message-time {
+            font-size: 11px;
+            color: rgba(255, 255, 255, 0.5);
+            margin-top: 4px;
+        }
+
+        .counselor .message-time {
+            text-align: left;
+        }
+
+        .user .message-time {
+            text-align: right;
+        }
+
+        /* 입력 영역 */
+        .input-container {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: rgba(10, 10, 15, 0.98);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            padding: 16px 20px;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            display: flex;
+            gap: 12px;
+            align-items: center;
+        }
+
+        .chat-input {
+            flex: 1;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 24px;
+            padding: 10px 20px;
+            color: #fff;
+            font-size: 15px;
+            outline: none;
+            height: 44px;
+        }
+
+        .chat-input::placeholder {
+            color: rgba(255, 255, 255, 0.4);
+        }
+
+        .send-button {
+            width: 44px;
+            height: 44px;
+            border: none;
+            background: linear-gradient(135deg, #9333EA 0%, #7C3AED 100%);
+            color: #fff;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            font-size: 18px;
+            transition: all 0.3s ease;
+        }
+
+        .send-button:hover {
+            transform: scale(1.05);
+        }
+
+        .send-button:active {
+            transform: scale(0.95);
+        }
+
+        .send-button i {
+            font-size: 18px;
+        }
+
+        /* 상담 안내 메시지 */
+        .guide-message {
+            background: linear-gradient(135deg, rgba(147, 51, 234, 0.1) 0%, rgba(124, 58, 237, 0.05) 100%);
+            border: 1px solid rgba(147, 51, 234, 0.2);
+            border-radius: 16px;
+            padding: 16px;
+            margin-bottom: 16px;
+        }
+
+        .guide-title {
+            font-size: 14px;
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: #B794F6;
+        }
+
+        .guide-content {
+            font-size: 13px;
+            color: rgba(255, 255, 255, 0.8);
+            line-height: 1.5;
+        }
+
+        /* 자주 묻는 질문 */
+        .faq-section {
+            margin-bottom: 20px;
+            padding: 0 4px;
+        }
+
+        .faq-title {
+            font-size: 14px;
+            font-weight: 600;
+            color: rgba(255, 255, 255, 0.6);
+            margin-bottom: 12px;
+            padding-left: 4px;
+        }
+
+        .faq-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .faq-item {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            padding: 8px 16px;
+            font-size: 13px;
+            color: rgba(255, 255, 255, 0.8);
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .faq-item:hover {
+            background: rgba(255, 255, 255, 0.1);
+            transform: translateY(-1px);
+        }
+
+        .faq-item:active {
+            transform: translateY(0);
+        }
+    </style>
+</head>
+<body>
+    <header class="chat-header">
+        <div class="header-top">
+            <div class="header-left">
+                <button class="back-button" onclick="history.back()">
+                    <i class="fas fa-arrow-left"></i>
+                </button>
+                <div class="counselor-info">
+                    <div class="counselor-avatar-small">
+                        <i class="fas fa-headset"></i>
+                    </div>
+                    <div class="counselor-details">
+                        <div class="counselor-name">고객센터</div>
+                        <div class="counselor-status">
+                            <span class="status-indicator"></span>
+                            상담 가능
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <main class="chat-container">
+        <div class="date-divider">
+            <span class="date-text">2024년 3월 21일</span>
+        </div>
+
+        <div class="guide-message">
+            <div class="guide-title">상담 안내</div>
+            <div class="guide-content">
+                안녕하세요! 사주라인 고객센터입니다.<br>
+                평일 오전 9시 ~ 오후 6시까지 상담이 가능합니다.<br>
+                주말 및 공휴일은 상담이 제한될 수 있습니다.
+            </div>
+        </div>
+
+        <div class="faq-section">
+            <div class="faq-title">자주 묻는 질문</div>
+            <div class="faq-list">
+                <div class="faq-item" data-question="사주 상담은 어떻게 이용하나요?">사주 상담 이용 방법</div>
+                <div class="faq-item" data-question="포인트는 어떻게 충전하나요?">포인트 충전 방법</div>
+                <div class="faq-item" data-question="결제 취소는 어떻게 하나요?">결제 취소 방법</div>
+                <div class="faq-item" data-question="회원 탈퇴는 어떻게 하나요?">회원 탈퇴 방법</div>
+            </div>
+        </div>
+
+        <div class="message counselor">
+            <div class="message-avatar">
+                <i class="fas fa-headset"></i>
+            </div>
+            <div class="message-content">
+                <div class="message-bubble">
+                    안녕하세요! 사주라인 고객센터입니다. 무엇을 도와드릴까요?
+                </div>
+                <div class="message-time">10:00</div>
+            </div>
+        </div>
+
+        <div class="message user">
+            <div class="message-avatar">
+                <i class="fas fa-user"></i>
+            </div>
+            <div class="message-content">
+                <div class="message-bubble">
+                    안녕하세요! 사주 상담 서비스 이용 방법에 대해 문의드립니다.
+                </div>
+                <div class="message-time">10:01</div>
+            </div>
+        </div>
+    </main>
+
+    <div class="input-container">
+        <input type="text" class="chat-input" placeholder="메시지를 입력하세요...">
+        <button class="send-button">
+            <i class="fas fa-paper-plane"></i>
+        </button>
+    </div>
+
+    <script src="https://kit.fontawesome.com/6e5f52c476.js" crossorigin="anonymous"></script>
+    <script>
+        // 채팅 입력 처리
+        const chatInput = document.querySelector('.chat-input');
+        const sendButton = document.querySelector('.send-button');
+        const chatContainer = document.querySelector('.chat-container');
+
+        function getCurrentTime() {
+            const now = new Date();
+            const hours = String(now.getHours()).padStart(2, '0');
+            const minutes = String(now.getMinutes()).padStart(2, '0');
+            return `${hours}:${minutes}`;
+        }
+
+        function sendMessage(message, isUser = true) {
+            const messageHTML = `
+                <div class="message ${isUser ? 'user' : 'counselor'}">
+                    <div class="message-avatar">
+                        <i class="fas fa-${isUser ? 'user' : 'headset'}"></i>
+                    </div>
+                    <div class="message-content">
+                        <div class="message-bubble">
+                            ${message}
+                        </div>
+                        <div class="message-time">${getCurrentTime()}</div>
+                    </div>
+                </div>
+            `;
+            chatContainer.insertAdjacentHTML('beforeend', messageHTML);
+            chatContainer.scrollTop = chatContainer.scrollHeight;
+        }
+
+        // 자주 묻는 질문 답변
+        const faqAnswers = {
+            '사주 상담은 어떻게 이용하나요?': '사주 상담은 다음과 같이 이용하실 수 있습니다:\n1. 메인 화면에서 원하시는 상담가를 선택\n2. 상담 시간과 포인트 확인\n3. 결제 후 상담 시작\n\n상세한 이용 방법은 고객센터에서 안내해 드리겠습니다.',
+            '포인트는 어떻게 충전하나요?': '포인트 충전은 다음과 같이 하실 수 있습니다:\n1. 마이페이지 > 포인트 메뉴 선택\n2. 충전할 금액 선택\n3. 결제 수단 선택 후 결제\n\n충전된 포인트는 즉시 반영됩니다.',
+            '결제 취소는 어떻게 하나요?': '결제 취소는 다음과 같이 신청하실 수 있습니다:\n1. 마이페이지 > 결제 내역\n2. 취소할 결제 건 선택\n3. 취소 사유 입력 후 신청\n\n취소 신청은 결제일로부터 7일 이내 가능합니다.',
+            '회원 탈퇴는 어떻게 하나요?': '회원 탈퇴는 다음과 같이 진행하실 수 있습니다:\n1. 마이페이지 > 설정\n2. 회원 탈퇴 메뉴 선택\n3. 탈퇴 사유 입력 후 확인\n\n탈퇴 시 보유 포인트는 소멸되니 참고해 주세요.'
+        };
+
+        // 자주 묻는 질문 클릭 이벤트
+        document.querySelectorAll('.faq-item').forEach(item => {
+            item.addEventListener('click', () => {
+                const question = item.getAttribute('data-question');
+                sendMessage(question, true);
+                setTimeout(() => {
+                    sendMessage(faqAnswers[question], false);
+                }, 500);
+            });
+        });
+
+        sendButton.addEventListener('click', () => {
+            const message = chatInput.value.trim();
+            if (message) {
+                sendMessage(message, true);
+                chatInput.value = '';
+            }
+        });
+
+        chatInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                const message = chatInput.value.trim();
+                if (message) {
+                    sendMessage(message, true);
+                    chatInput.value = '';
+                }
+            }
+        });
+    </script>
+</body>
+</html> 

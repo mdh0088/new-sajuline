@@ -1,0 +1,609 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>문의하기 - 사주라인</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Apple SD Gothic Neo', 'Noto Sans KR', sans-serif;
+            background-color: #0a0a0f;
+            color: #ffffff;
+            line-height: 1.6;
+            overflow-x: hidden;
+        }
+
+        /* 헤더 */
+        .header {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            background: rgba(10, 10, 15, 0.95);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            z-index: 1000;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .header-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 16px 20px;
+            height: 60px;
+        }
+
+        .back-button {
+            width: 36px;
+            height: 36px;
+            border: none;
+            background: transparent;
+            color: #fff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            font-size: 20px;
+        }
+
+        .header-title {
+            position: absolute;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 18px;
+            font-weight: 600;
+        }
+
+        /* 메인 콘텐츠 */
+        .main-content {
+            margin-top: 60px;
+            padding: 20px;
+            padding-bottom: 100px;
+        }
+
+        /* 폼 섹션 */
+        .form-section {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            padding: 24px;
+            margin-bottom: 20px;
+        }
+
+        .form-group {
+            margin-bottom: 24px;
+        }
+
+        .form-group:last-child {
+            margin-bottom: 0;
+        }
+
+        .form-label {
+            display: block;
+            font-size: 14px;
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: rgba(255, 255, 255, 0.9);
+        }
+
+        .form-required {
+            color: #FF6B6B;
+            margin-left: 4px;
+        }
+
+        /* 카테고리 선택 */
+        .category-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 8px;
+        }
+
+        .category-option {
+            position: relative;
+        }
+
+        .category-option input[type="radio"] {
+            position: absolute;
+            opacity: 0;
+        }
+
+        .category-label {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+            padding: 10px 8px;
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .category-option input[type="radio"]:checked + .category-label {
+            background: rgba(147, 51, 234, 0.1);
+            border-color: #B794F6;
+            color: #B794F6;
+        }
+
+        .category-icon {
+            font-size: 20px;
+        }
+
+        .category-name {
+            font-size: 12px;
+            font-weight: 500;
+            text-align: center;
+            white-space: nowrap;
+        }
+
+        /* 텍스트 입력 */
+        .form-input {
+            width: 100%;
+            padding: 16px;
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 16px;
+            color: #ffffff;
+            font-size: 15px;
+            resize: none;
+            transition: all 0.3s ease;
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: #B794F6;
+            background: rgba(255, 255, 255, 0.03);
+        }
+
+        .form-input::placeholder {
+            color: rgba(255, 255, 255, 0.4);
+        }
+
+        textarea.form-input {
+            min-height: 200px;
+            line-height: 1.6;
+        }
+
+        /* 파일 첨부 */
+        .file-upload {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 16px;
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 16px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .file-upload:hover {
+            background: rgba(255, 255, 255, 0.03);
+        }
+
+        .file-icon {
+            font-size: 24px;
+            color: #B794F6;
+        }
+
+        .file-text {
+            flex: 1;
+            font-size: 14px;
+            color: rgba(255, 255, 255, 0.6);
+        }
+
+        .file-button {
+            padding: 8px 16px;
+            background: rgba(147, 51, 234, 0.1);
+            border: 1px solid rgba(147, 51, 234, 0.2);
+            border-radius: 12px;
+            color: #B794F6;
+            font-size: 13px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .file-button:hover {
+            background: rgba(147, 51, 234, 0.2);
+        }
+
+        /* 제출 버튼 */
+        .submit-section {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            padding: 20px;
+            background: rgba(10, 10, 15, 0.95);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .submit-button {
+            width: 100%;
+            padding: 18px;
+            background: linear-gradient(135deg, #9333EA 0%, #7C3AED 100%);
+            border: none;
+            border-radius: 16px;
+            color: white;
+            font-size: 16px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .submit-button:active {
+            transform: scale(0.98);
+        }
+
+        .submit-button:disabled {
+            background: rgba(255, 255, 255, 0.1);
+            cursor: not-allowed;
+        }
+
+        /* 안내 텍스트 */
+        .form-help {
+            font-size: 13px;
+            color: rgba(255, 255, 255, 0.5);
+            margin-top: 8px;
+        }
+
+        /* 반응형 스타일 */
+        @media screen and (max-width: 768px) {
+            .main-content {
+                padding: 16px;
+                padding-bottom: 100px;
+            }
+
+            .form-section {
+                padding: 20px;
+                margin-bottom: 16px;
+                border-radius: 16px;
+            }
+
+            .category-grid {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 8px;
+            }
+
+            .category-label {
+                padding: 12px 8px;
+            }
+
+            .category-icon {
+                font-size: 22px;
+            }
+
+            .category-name {
+                font-size: 13px;
+            }
+
+            .form-input {
+                padding: 14px;
+                font-size: 14px;
+            }
+
+            textarea.form-input {
+                min-height: 180px;
+            }
+
+            .file-upload {
+                padding: 14px;
+            }
+
+            .file-icon {
+                font-size: 20px;
+            }
+
+            .file-text {
+                font-size: 13px;
+            }
+
+            .file-button {
+                padding: 6px 12px;
+                font-size: 12px;
+            }
+
+            .submit-button {
+                padding: 16px;
+                font-size: 15px;
+            }
+        }
+
+        @media screen and (max-width: 480px) {
+            .main-content {
+                padding: 12px;
+                padding-bottom: 90px;
+            }
+
+            .form-section {
+                padding: 16px;
+                margin-bottom: 12px;
+                border-radius: 16px;
+            }
+
+            .form-group {
+                margin-bottom: 20px;
+            }
+
+            .form-label {
+                font-size: 13px;
+                margin-bottom: 6px;
+            }
+
+            .category-grid {
+                grid-template-columns: 1fr;
+                gap: 8px;
+            }
+
+            .category-label {
+                flex-direction: row;
+                justify-content: flex-start;
+                padding: 12px 16px;
+                gap: 12px;
+            }
+
+            .category-icon {
+                font-size: 20px;
+            }
+
+            .category-name {
+                font-size: 14px;
+                text-align: left;
+            }
+
+            .form-input {
+                padding: 12px;
+                font-size: 13px;
+                border-radius: 12px;
+            }
+
+            textarea.form-input {
+                min-height: 160px;
+            }
+
+            .file-upload {
+                padding: 12px;
+                border-radius: 12px;
+            }
+
+            .file-icon {
+                font-size: 18px;
+            }
+
+            .file-text {
+                font-size: 12px;
+            }
+
+            .file-button {
+                padding: 5px 10px;
+                font-size: 11px;
+                border-radius: 10px;
+            }
+
+            .form-help {
+                font-size: 11px;
+                margin-top: 6px;
+            }
+
+            .submit-section {
+                padding: 16px;
+            }
+
+            .submit-button {
+                padding: 14px;
+                font-size: 14px;
+                border-radius: 14px;
+            }
+        }
+
+        /* 태블릿 최적화 */
+        @media screen and (min-width: 769px) and (max-width: 1024px) {
+            .main-content {
+                padding: 20px;
+                padding-bottom: 100px;
+            }
+        }
+
+        /* 데스크톱 최적화 */
+        @media screen and (min-width: 1025px) {
+            .main-content {
+                padding: 20px;
+                padding-bottom: 100px;
+            }
+
+            .form-section {
+                padding: 32px;
+            }
+
+            .category-grid {
+                gap: 12px;
+            }
+
+            .category-label {
+                padding: 14px 12px;
+            }
+
+            .category-icon {
+                font-size: 24px;
+            }
+
+            .category-name {
+                font-size: 14px;
+            }
+
+            .form-input {
+                padding: 18px;
+                font-size: 16px;
+            }
+
+            textarea.form-input {
+                min-height: 240px;
+            }
+        }
+    </style>
+</head>
+<body>
+<!-- 헤더 -->
+<header class="header">
+    <div class="header-top">
+        <button class="back-button" onclick="window.history.back();">←</button>
+        <h1 class="header-title">문의하기</h1>
+    </div>
+</header>
+
+<!-- 메인 콘텐츠 -->
+<main class="main-content">
+    <form id="inquiryForm">
+        <!-- 카테고리 선택 -->
+        <section class="form-section">
+            <div class="form-group">
+                <label class="form-label">
+                    문의 유형
+                    <span class="form-required">*</span>
+                </label>
+                <div class="category-grid">
+                    <div class="category-option">
+                        <input type="radio" name="category" id="payment" value="payment" required>
+                        <label class="category-label" for="payment">
+                            <span class="category-icon">💳</span>
+                            <span class="category-name">결제/환불</span>
+                        </label>
+                    </div>
+                    <div class="category-option">
+                        <input type="radio" name="category" id="account" value="account">
+                        <label class="category-label" for="account">
+                            <span class="category-icon">👤</span>
+                            <span class="category-name">계정 문의</span>
+                        </label>
+                    </div>
+                    <div class="category-option">
+                        <input type="radio" name="category" id="service" value="service">
+                        <label class="category-label" for="service">
+                            <span class="category-icon">💬</span>
+                            <span class="category-name">상담 문의</span>
+                        </label>
+                    </div>
+                    <div class="category-option">
+                        <input type="radio" name="category" id="event" value="event">
+                        <label class="category-label" for="event">
+                            <span class="category-icon">🎁</span>
+                            <span class="category-name">이벤트/혜택</span>
+                        </label>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 문의 내용 -->
+        <section class="form-section">
+            <div class="form-group">
+                <label class="form-label">
+                    문의 내용
+                    <span class="form-required">*</span>
+                </label>
+                <textarea class="form-input" placeholder="문의하실 내용을 자세히 작성해 주세요." required></textarea>
+                <p class="form-help">최대 1000자까지 작성 가능합니다.</p>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">첨부파일</label>
+                <div class="file-upload">
+                    <span class="file-icon">📎</span>
+                    <span class="file-text">파일을 첨부하려면 클릭하세요</span>
+                    <button type="button" class="file-button">파일 선택</button>
+                </div>
+                <p class="form-help">이미지, PDF 파일만 첨부 가능합니다. (최대 5MB)</p>
+            </div>
+        </section>
+    </form>
+</main>
+
+<!-- 제출 버튼 -->
+<section class="submit-section">
+    <button type="submit" form="inquiryForm" class="submit-button">문의하기</button>
+</section>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // URL 파라미터에서 카테고리 정보 가져오기
+        const urlParams = new URLSearchParams(window.location.search);
+        const selectedCategory = urlParams.get('category');
+
+        // 카테고리가 전달된 경우 해당 카테고리 선택
+        if (selectedCategory) {
+            const categoryInputs = document.querySelectorAll('input[name="category"]');
+            categoryInputs.forEach(input => {
+                const label = input.nextElementSibling;
+                if (label.querySelector('.category-name').textContent.trim() === selectedCategory) {
+                    input.checked = true;
+                    label.style.background = 'rgba(147, 51, 234, 0.1)';
+                    label.style.borderColor = '#B794F6';
+                    label.style.color = '#B794F6';
+                }
+            });
+        }
+
+        // 카테고리 선택 처리
+        document.querySelectorAll('input[name="category"]').forEach(input => {
+            input.addEventListener('change', function() {
+                // 선택된 라벨에 스타일 적용
+                const selectedLabel = this.nextElementSibling;
+                selectedLabel.style.background = 'rgba(147, 51, 234, 0.1)';
+                selectedLabel.style.borderColor = '#B794F6';
+                selectedLabel.style.color = '#B794F6';
+            });
+        });
+
+        // 파일 업로드
+        document.querySelector('.file-button').addEventListener('click', function() {
+            const input = document.createElement('input');
+            input.type = 'file';
+            input.accept = 'image/*,.pdf';
+            input.onchange = function(e) {
+                const file = e.target.files[0];
+                if (file) {
+                    if (file.size > 5 * 1024 * 1024) {
+                        alert('파일 크기는 5MB를 초과할 수 없습니다.');
+                        return;
+                    }
+                    document.querySelector('.file-text').textContent = file.name;
+                }
+            };
+            input.click();
+        });
+
+        // 폼 제출
+        document.getElementById('inquiryForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const category = document.querySelector('input[name="category"]:checked');
+            const content = document.querySelector('textarea.form-input').value;
+            
+            if (!category) {
+                alert('문의 유형을 선택해주세요.');
+                return;
+            }
+
+            if (!content.trim()) {
+                alert('문의 내용을 입력해주세요.');
+                return;
+            }
+
+            // 여기에 폼 제출 로직 추가
+            alert('문의가 접수되었습니다.');
+            window.location.href = 'inquiry-list.html';
+        });
+    });
+</script>
+</body>
+</html> 

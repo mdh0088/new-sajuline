@@ -1,0 +1,197 @@
+"""
+JWT 기반 공통 인증 서비스 및 의존성
+"""
+import uuid
+from datetime import datetime, timedelta
+from typing import Dict, Optional
+
+from jose import JWTError, jwt
+from passlib.context import CryptContext
+from fastapi import HTTPException, status, Request, Depends
+
+from src.config.settings import settings
+
+
+class AuthService:
+    """공통 인증 서비스 (JWT 토큰 관리 및 비밀번호 처리)"""
+    
+    def __init__(self):
+        # PHP 호환 bcrypt 설정 (prototype과 동일)
+        self.pwd_context = CryptContext(
+            schemes=["bcrypt"],
+            deprecated="auto",
+            bcrypt__default_ident="2y",    # PHP 호환 식별자
+            bcrypt__default_rounds=10      # PHP와 동일한 라운드 수
+        )
+        self.secret_key = settings.secret_key
+        self.algorithm = settings.algorithm
+        self.access_token_expire_minutes = settings.access_token_expire_minutes
+    
+    def verify_password(self, plain_password: str, hashed_password: str) -> bool:
+        """비밀번호 검증"""
+        return self.pwd_context.verify(plain_password, hashed_password)
+    
+    def hash_password(self, password: str) -> str:
+        """비밀번호 해싱"""
+        return self.pwd_context.hash(password)
+    
+    def create_access_token(self, user_id: str, email: str, role: str = "user") -> str:
+        """JWT 액세스 토큰 생성"""
+        now = datetime.utcnow()
+        expire = now + timedelta(minutes=self.access_token_expire_minutes)
+        
+        payload = {
+            "sub": user_id,
+            "email": email,
+            "role": role,
+            "exp": expire,
+            "iat": now,
+            "jti": str(uuid.uuid4())
+        }
+        
+        return jwt.encode(payload, self.secret_key, algorithm=self.algorithm)
+    
+    def verify_token(self, token: str) -> Dict[str, any]:
+        """JWT 토큰 검증"""
+        try:
+            payload = jwt.decode(token, self.secret_key, algorithms=[self.algorithm])
+            
+            # 필수 필드 확인
+            if not payload.get("sub") or not payload.get("email"):
+                raise HTTPException(
+                    status_code=status.HTTP_401_UNAUTHORIZED,
+                    detail="토큰이 유효하지 않습니다"
+                )
+            
+            return payload
+            
+        except JWTError:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="토큰이 유효하지 않습니다"
+            )
+
+
+# JWT 인증 관련 스키마 (임시로 여기에 정의)
+class TokenPayload:
+    """JWT 토큰 페이로드"""
+    def __init__(self, sub: str, email: str, role: str, exp: int, iat: int, jti: str):
+        self.sub = sub
+        self.email = email
+        self.role = role
+        self.exp = exp
+        self.iat = iat
+        self.jti = jti
+
+
+# 의존성 함수들
+def get_auth_service() -> AuthService:
+    """AuthService 의존성"""
+    return AuthService()
+
+
+async def get_current_user_optional(
+    request: Request,
+    auth_service: AuthService = Depends(get_auth_service)
+) -> Optional[TokenPayload]:
+    """
+    선택적 사용자 인증 (인증되지 않아도 오류 발생 안함)
+    
+    목적: 로그인하지 않아도 접근할 수 있지만, 로그인한 사용자에게는 추가 기능을 제공하는 API에 사용
+    
+    사용 예시:
+    - 메인 페이지: 로그인 안해도 볼 수 있지만, 로그인하면 개인화된 운세 표시
+    - 상품 목록: 누구나 볼 수 있지만, 로그인하면 찜한 상품 표시
+    - 게시글 목록: 누구나 볼 수 있지만, 로그인하면 내가 쓴 글 하이라이트
+    
+    실제 사용법:
+    @router.get("/fortune/daily")
+    async def get_daily_fortune(
+        current_user: Optional[TokenPayload] = Depends(get_current_user_optional)
+    ):
+        if current_user:
+            return get_personalized_fortune(current_user.sub)
+        else:
+            return get_general_fortune()
+    
+    HttpOnly 쿠키에서 JWT 토큰을 읽어서 검증하되, 토큰이 없거나 유효하지 않아도 None 반환
+    """
+    try:
+        # HttpOnly 쿠키에서 access_token 읽기
+        access_token = request.cookies.get("access_token")
+        
+        if not access_token:
+            return None
+        
+        # JWT 토큰 검증
+        payload = auth_service.verify_token(access_token)
+        
+        return TokenPayload(
+            sub=payload["sub"],
+            email=payload["email"],
+            role=payload.get("role", "user"),
+            exp=payload["exp"],
+            iat=payload["iat"],
+            jti=payload["jti"]
+        )
+        
+    except Exception:
+        # 토큰이 유효하지 않아도 None 반환 (오류 발생 안함)
+        return None
+
+
+async def get_current_user(
+    request: Request,
+    auth_service: AuthService = Depends(get_auth_service)
+) -> TokenPayload:
+    """
+    필수 사용자 인증 (인증되지 않으면 401 오류 발생)
+    
+    목적: 반드시 로그인해야만 접근할 수 있는 API에 사용
+    
+    사용 예시:
+    - 마이페이지
+    - 포인트 충전  
+    - 상담 예약
+    - 개인정보 수정
+    
+    실제 사용법:
+    @router.get("/mypage")
+    async def get_mypage(
+        current_user: TokenPayload = Depends(get_current_user)  # 로그인 안하면 401 에러
+    ):
+        return get_user_data(current_user.sub)
+    
+    HttpOnly 쿠키에서 JWT 토큰을 읽어서 검증하고, 토큰이 없거나 유효하지 않으면 401 에러 발생
+    """
+    try:
+        # HttpOnly 쿠키에서 access_token 읽기
+        access_token = request.cookies.get("access_token")
+        
+        if not access_token:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="인증 토큰이 없습니다"
+            )
+        
+        # JWT 토큰 검증
+        payload = auth_service.verify_token(access_token)
+        
+        return TokenPayload(
+            sub=payload["sub"],
+            email=payload["email"],
+            role=payload.get("role", "user"),
+            exp=payload["exp"],
+            iat=payload["iat"],
+            jti=payload["jti"]
+        )
+        
+    except HTTPException:
+        # HTTPException은 그대로 다시 발생
+        raise
+    except Exception:
+        # 다른 예외는 401 에러로 변환
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="유효하지 않은 토큰입니다"
+        )

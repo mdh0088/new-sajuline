@@ -1,0 +1,875 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>상담 후기 - 사주라인</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Apple SD Gothic Neo', 'Noto Sans KR', sans-serif;
+            background-color: #0a0a0f;
+            color: #ffffff;
+            line-height: 1.6;
+            overflow-x: hidden;
+        }
+
+        /* 헤더 */
+        .header {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            background: rgba(10, 10, 15, 0.95);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            z-index: 1000;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .header-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 16px 20px;
+            height: 60px;
+        }
+
+        .back-button {
+            width: 36px;
+            height: 36px;
+            border: none;
+            background: transparent;
+            color: #fff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            font-size: 20px;
+        }
+
+        .header-title {
+            position: absolute;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 18px;
+            font-weight: 600;
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 12px;
+        }
+
+        .icon-btn {
+            width: 36px;
+            height: 36px;
+            border: none;
+            background: transparent;
+            color: #fff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            font-size: 20px;
+        }
+
+        /* 탭 메뉴 */
+        .tab-menu {
+            position: fixed;
+            top: 60px;
+            left: 0;
+            right: 0;
+            background: rgba(10, 10, 15, 0.98);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            padding: 0 20px;
+            z-index: 999;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .tab-list {
+            display: flex;
+            gap: 24px;
+        }
+
+        .tab-item {
+            padding: 16px 0;
+            font-size: 15px;
+            font-weight: 500;
+            color: rgba(255, 255, 255, 0.6);
+            cursor: pointer;
+            position: relative;
+            transition: all 0.3s ease;
+        }
+
+        .tab-item.active {
+            color: #B794F6;
+        }
+
+        .tab-item::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: linear-gradient(90deg, #9333EA 0%, #B794F6 100%);
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .tab-item.active::after {
+            opacity: 1;
+        }
+
+        .tab-badge {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 20px;
+            height: 20px;
+            padding: 0 6px;
+            background: rgba(147, 51, 234, 0.2);
+            border-radius: 10px;
+            font-size: 12px;
+            font-weight: 600;
+            color: #B794F6;
+            margin-left: 6px;
+        }
+
+        /* 메인 콘텐츠 */
+        .main-content {
+            margin-top: 112px;
+            padding: 20px 20px 100px;
+        }
+
+        /* 리뷰 통계 */
+        .review-stats {
+            background: linear-gradient(135deg, rgba(147, 51, 234, 0.1) 0%, rgba(124, 58, 237, 0.05) 100%);
+            border: 1px solid rgba(147, 51, 234, 0.2);
+            border-radius: 20px;
+            padding: 24px;
+            margin-bottom: 24px;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px;
+            text-align: center;
+        }
+
+        .stat-item {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .stat-value {
+            font-size: 28px;
+            font-weight: 800;
+            color: #B794F6;
+        }
+
+        .stat-label {
+            font-size: 13px;
+            color: rgba(255, 255, 255, 0.6);
+        }
+
+        /* 리뷰 리스트 */
+        .review-list {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .review-card {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            padding: 20px;
+            transition: all 0.3s ease;
+        }
+
+        .review-card.pending {
+            background: rgba(255, 215, 0, 0.05);
+            border-color: rgba(255, 215, 0, 0.2);
+        }
+
+        .review-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 16px;
+        }
+
+        .counselor-info {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .counselor-avatar {
+            width: 48px;
+            height: 48px;
+            background: linear-gradient(135deg, rgba(147, 51, 234, 0.2) 0%, rgba(124, 58, 237, 0.1) 100%);
+            border-radius: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+        }
+
+        .counselor-details {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .counselor-name {
+            font-size: 16px;
+            font-weight: 600;
+        }
+
+        .consultation-date {
+            font-size: 13px;
+            color: rgba(255, 255, 255, 0.6);
+        }
+
+        .review-status {
+            padding: 6px 14px;
+            background: rgba(76, 175, 80, 0.2);
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            color: #4CAF50;
+        }
+
+        .review-status.pending {
+            background: rgba(255, 215, 0, 0.2);
+            color: #FFD700;
+        }
+
+        /* 별점 */
+        .rating-section {
+            margin-bottom: 16px;
+        }
+
+        .rating-stars {
+            display: flex;
+            gap: 4px;
+            margin-bottom: 8px;
+        }
+
+        .star {
+            font-size: 24px;
+            color: rgba(255, 255, 255, 0.2);
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .star.filled {
+            color: #FFD700;
+        }
+
+        .star:hover {
+            transform: scale(1.1);
+        }
+
+        /* 리뷰 내용 */
+        .review-content {
+            font-size: 15px;
+            line-height: 1.6;
+            color: rgba(255, 255, 255, 0.8);
+            margin-bottom: 16px;
+        }
+
+        .review-placeholder {
+            color: rgba(255, 255, 255, 0.4);
+            font-style: italic;
+        }
+
+        /* 리뷰 태그 */
+        .review-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            margin-bottom: 16px;
+        }
+
+        .review-tag {
+            padding: 6px 12px;
+            background: rgba(147, 51, 234, 0.1);
+            border: 1px solid rgba(147, 51, 234, 0.2);
+            border-radius: 16px;
+            font-size: 12px;
+            color: #B794F6;
+        }
+
+        /* 리뷰 액션 */
+        .review-actions {
+            display: flex;
+            gap: 12px;
+            padding-top: 16px;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .review-button {
+            flex: 1;
+            padding: 12px;
+            border: none;
+            border-radius: 12px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .write-button {
+            background: linear-gradient(135deg, #9333EA 0%, #7C3AED 100%);
+            color: white;
+        }
+
+        .edit-button {
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            backdrop-filter: blur(10px);
+        }
+
+        .delete-button {
+            background: rgba(255, 59, 48, 0.1);
+            color: #FF6B6B;
+            border: 1px solid rgba(255, 59, 48, 0.3);
+        }
+
+        .review-button:active {
+            transform: scale(0.98);
+        }
+
+        /* 빈 상태 */
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+        }
+
+        .empty-icon {
+            font-size: 64px;
+            margin-bottom: 16px;
+            opacity: 0.3;
+        }
+
+        .empty-title {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+
+        .empty-desc {
+            font-size: 14px;
+            color: rgba(255, 255, 255, 0.6);
+            margin-bottom: 24px;
+        }
+
+        .empty-button {
+            padding: 14px 28px;
+            background: linear-gradient(135deg, #9333EA 0%, #7C3AED 100%);
+            border: none;
+            border-radius: 24px;
+            color: white;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        /* 리뷰 작성 모달 */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.8);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 2000;
+            padding: 20px;
+        }
+
+        .modal-content {
+            background: #1a1a2e;
+            border-radius: 20px;
+            max-width: 400px;
+            width: 100%;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+
+        .modal-header {
+            padding: 24px 24px 20px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .modal-title {
+            font-size: 20px;
+            font-weight: 700;
+        }
+
+        .modal-body {
+            padding: 24px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-label {
+            font-size: 14px;
+            font-weight: 600;
+            margin-bottom: 8px;
+            display: block;
+        }
+
+        .textarea {
+            width: 100%;
+            min-height: 120px;
+            padding: 14px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            color: white;
+            font-size: 15px;
+            resize: vertical;
+            outline: none;
+            transition: all 0.3s ease;
+        }
+
+        .textarea:focus {
+            border-color: rgba(147, 51, 234, 0.5);
+            background: rgba(255, 255, 255, 0.08);
+        }
+
+        .char-count {
+            text-align: right;
+            font-size: 12px;
+            color: rgba(255, 255, 255, 0.5);
+            margin-top: 4px;
+        }
+
+        .tag-select {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .tag-option {
+            padding: 10px 16px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            font-size: 14px;
+            color: rgba(255, 255, 255, 0.8);
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .tag-option.selected {
+            background: rgba(147, 51, 234, 0.2);
+            color: #B794F6;
+            border-color: rgba(147, 51, 234, 0.4);
+        }
+
+        .modal-footer {
+            padding: 20px 24px;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            display: flex;
+            gap: 12px;
+        }
+
+        .modal-button {
+            flex: 1;
+            padding: 14px;
+            border: none;
+            border-radius: 12px;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .modal-cancel {
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+        }
+
+        .modal-submit {
+            background: linear-gradient(135deg, #9333EA 0%, #7C3AED 100%);
+            color: white;
+        }
+
+        /* 하단 네비게이션 */
+        .bottom-nav {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: rgba(10, 10, 15, 0.95);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            display: flex;
+            justify-content: space-around;
+            padding: 8px 0 12px;
+            z-index: 1000;
+        }
+
+        .nav-item {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 8px;
+            color: rgba(255, 255, 255, 0.5);
+            text-decoration: none;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .nav-item::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 0;
+            height: 2px;
+            background: linear-gradient(90deg, #9333EA 0%, #B794F6 100%);
+            transition: width 0.3s ease;
+        }
+
+        .nav-item.active {
+            color: #B794F6;
+        }
+
+        .nav-item.active::before {
+            width: 40px;
+        }
+
+        .nav-icon {
+            font-size: 24px;
+            margin-bottom: 4px;
+        }
+
+        .nav-label {
+            font-size: 11px;
+            font-weight: 500;
+        }
+    </style>
+</head>
+<body>
+<!-- 헤더 -->
+<header class="header">
+    <div class="header-top">
+        <button class="back-button" onclick="window.history.back();">←</button>
+        <h1 class="header-title">리뷰</h1>
+        <div class="header-actions">
+            <button class="icon-btn" onclick="window.location.href='search-page.html'">🔍</button>
+            <button class="icon-btn" onclick="window.location.href='login-page.html'">👤</button>
+        </div>
+    </div>
+</header>
+
+<!-- 탭 메뉴 -->
+<div class="tab-menu">
+    <div class="tab-list">
+        <div class="tab-item active">
+            작성한 후기
+            <span class="tab-badge">12</span>
+        </div>
+        <div class="tab-item">
+            작성 대기
+            <span class="tab-badge">3</span>
+        </div>
+    </div>
+</div>
+
+<!-- 메인 콘텐츠 -->
+<main class="main-content">
+    <!-- 리뷰 통계 -->
+    <section class="review-stats">
+        <div class="stats-grid">
+            <div class="stat-item">
+                <div class="stat-value">4.8</div>
+                <div class="stat-label">평균 평점</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-value">89</div>
+                <div class="stat-label">작성한 후기</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-value">1,200P</div>
+                <div class="stat-label">받은 포인트</div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 리뷰 리스트 -->
+    <div class="review-list">
+        <!-- 작성 대기 리뷰 -->
+        <div class="review-card pending">
+            <div class="review-header">
+                <div class="counselor-info">
+                    <div class="counselor-avatar">🌙</div>
+                    <div class="counselor-details">
+                        <div class="counselor-name">명월 선생님</div>
+                        <div class="consultation-date">2025.05.30 상담</div>
+                    </div>
+                </div>
+                <div class="review-status pending">작성 대기</div>
+            </div>
+            <div class="review-content">
+                <p class="review-placeholder">아직 후기를 작성하지 않으셨습니다. 후기를 작성하고 100P를 받아보세요!</p>
+            </div>
+            <div class="review-actions">
+                <button class="review-button write-button">후기 작성하기</button>
+            </div>
+        </div>
+
+        <!-- 작성한 리뷰 1 -->
+        <div class="review-card">
+            <div class="review-header">
+                <div class="counselor-info">
+                    <div class="counselor-avatar">🔥</div>
+                    <div class="counselor-details">
+                        <div class="counselor-name">천기누설 선생님</div>
+                        <div class="consultation-date">2025.05.25 상담</div>
+                    </div>
+                </div>
+                <div class="review-status">작성 완료</div>
+            </div>
+            <div class="rating-section">
+                <div class="rating-stars">
+                    <span class="star filled">⭐</span>
+                    <span class="star filled">⭐</span>
+                    <span class="star filled">⭐</span>
+                    <span class="star filled">⭐</span>
+                    <span class="star filled">⭐</span>
+                </div>
+            </div>
+            <div class="review-tags">
+                <span class="review-tag">정확해요</span>
+                <span class="review-tag">친절해요</span>
+                <span class="review-tag">속시원해요</span>
+            </div>
+            <div class="review-content">
+                취업 관련해서 고민이 많았는데 선생님께서 정말 정확하게 봐주셨어요. 
+                말씀하신 시기에 정말로 면접 연락이 왔고, 덕분에 좋은 회사에 합격했습니다. 
+                앞으로도 중요한 결정할 때마다 찾아뵙고 싶어요. 감사합니다!
+            </div>
+            <div class="review-actions">
+                <button class="review-button edit-button">수정</button>
+                <button class="review-button delete-button">삭제</button>
+            </div>
+        </div>
+
+        <!-- 작성한 리뷰 2 -->
+        <div class="review-card">
+            <div class="review-header">
+                <div class="counselor-info">
+                    <div class="counselor-avatar">💫</div>
+                    <div class="counselor-details">
+                        <div class="counselor-name">별빛 선생님</div>
+                        <div class="consultation-date">2025.05.20 상담</div>
+                    </div>
+                </div>
+                <div class="review-status">작성 완료</div>
+            </div>
+            <div class="rating-section">
+                <div class="rating-stars">
+                    <span class="star filled">⭐</span>
+                    <span class="star filled">⭐</span>
+                    <span class="star filled">⭐</span>
+                    <span class="star filled">⭐</span>
+                    <span class="star">⭐</span>
+                </div>
+            </div>
+            <div class="review-tags">
+                <span class="review-tag">위로가 돼요</span>
+                <span class="review-tag">공감력 좋아요</span>
+            </div>
+            <div class="review-content">
+                힘든 시기에 큰 위로가 되었습니다. 
+                선생님의 따뜻한 말씀 덕분에 마음이 많이 편안해졌어요. 
+                앞으로의 방향도 잘 제시해주셔서 희망을 갖고 나아갈 수 있을 것 같습니다.
+            </div>
+            <div class="review-actions">
+                <button class="review-button edit-button">수정</button>
+                <button class="review-button delete-button">삭제</button>
+            </div>
+        </div>
+    </div>
+</main>
+
+<!-- 리뷰 작성 모달 -->
+<div class="modal-overlay">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3 class="modal-title">후기 작성</h3>
+        </div>
+        <div class="modal-body">
+            <!-- 별점 -->
+            <div class="form-group">
+                <label class="form-label">만족도를 평가해주세요</label>
+                <div class="rating-stars">
+                    <span class="star">⭐</span>
+                    <span class="star">⭐</span>
+                    <span class="star">⭐</span>
+                    <span class="star">⭐</span>
+                    <span class="star">⭐</span>
+                </div>
+            </div>
+
+            <!-- 태그 선택 -->
+            <div class="form-group">
+                <label class="form-label">어떤 점이 좋았나요? (최대 3개)</label>
+                <div class="tag-select">
+                    <div class="tag-option">정확해요</div>
+                    <div class="tag-option">친절해요</div>
+                    <div class="tag-option">속시원해요</div>
+                    <div class="tag-option">위로가 돼요</div>
+                    <div class="tag-option">공감력 좋아요</div>
+                    <div class="tag-option">해결책 제시</div>
+                </div>
+            </div>
+
+            <!-- 리뷰 내용 -->
+            <div class="form-group">
+                <label class="form-label">상담은 어떠셨나요?</label>
+                <textarea class="textarea" placeholder="다른 회원님들께 도움이 될 수 있도록 솔직한 후기를 남겨주세요. (최소 20자)"></textarea>
+                <div class="char-count">0 / 500</div>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="modal-button modal-cancel">취소</button>
+            <button class="modal-button modal-submit">작성완료</button>
+        </div>
+    </div>
+</div>
+
+<!-- 하단 네비게이션 -->
+<nav class="bottom-nav">
+    <a href="main.html" class="nav-item">
+        <span class="nav-icon">🏠</span>
+        <span class="nav-label">홈</span>
+    </a>
+    <a href="ai-fortune-complete.html" class="nav-item">
+        <span class="nav-icon">🤖</span>
+        <span class="nav-label">AI운세</span>
+    </a>
+    <a href="event.html" class="nav-item">
+        <span class="nav-icon">🎁</span>
+        <span class="nav-label">이벤트</span>
+    </a>
+    <a href="favorite.html" class="nav-item">
+        <span class="nav-icon">⭐</span>
+        <span class="nav-label">즐겨찾기</span>
+    </a>
+    <a href="mypage.html" class="nav-item">
+        <span class="nav-icon">👤</span>
+        <span class="nav-label">마이</span>
+    </a>
+</nav>
+
+<script>
+    // 탭 전환
+    document.querySelectorAll('.tab-item').forEach(tab => {
+        tab.addEventListener('click', function() {
+            document.querySelectorAll('.tab-item').forEach(t => t.classList.remove('active'));
+            this.classList.add('active');
+        });
+    });
+
+    // 별점 선택
+    document.querySelectorAll('.rating-stars').forEach(ratingGroup => {
+        const stars = ratingGroup.querySelectorAll('.star');
+        
+        stars.forEach((star, index) => {
+            star.addEventListener('click', function() {
+                stars.forEach((s, i) => {
+                    if (i <= index) {
+                        s.classList.add('filled');
+                    } else {
+                        s.classList.remove('filled');
+                    }
+                });
+            });
+
+            star.addEventListener('mouseenter', function() {
+                stars.forEach((s, i) => {
+                    if (i <= index) {
+                        s.style.color = '#FFD700';
+                    } else {
+                        s.style.color = 'rgba(255, 255, 255, 0.2)';
+                    }
+                });
+            });
+        });
+
+        ratingGroup.addEventListener('mouseleave', function() {
+            stars.forEach(s => {
+                if (s.classList.contains('filled')) {
+                    s.style.color = '#FFD700';
+                } else {
+                    s.style.color = 'rgba(255, 255, 255, 0.2)';
+                }
+            });
+        });
+    });
+
+    // 태그 선택
+    document.querySelectorAll('.tag-option').forEach(tag => {
+        tag.addEventListener('click', function() {
+            const selectedTags = document.querySelectorAll('.tag-option.selected');
+            
+            if (this.classList.contains('selected')) {
+                this.classList.remove('selected');
+            } else if (selectedTags.length < 3) {
+                this.classList.add('selected');
+            }
+        });
+    });
+
+    // 글자수 카운트
+    document.querySelector('.textarea').addEventListener('input', function() {
+        const length = this.value.length;
+        document.querySelector('.char-count').textContent = `${length} / 500`;
+    });
+
+    // 리뷰 작성 버튼
+    document.querySelectorAll('.write-button').forEach(btn => {
+        btn.addEventListener('click', function() {
+            document.querySelector('.modal-overlay').style.display = 'flex';
+        });
+    });
+
+    // 모달 닫기
+    document.querySelector('.modal-cancel').addEventListener('click', function() {
+        document.querySelector('.modal-overlay').style.display = 'none';
+    });
+
+    // 모달 외부 클릭 시 닫기
+    document.querySelector('.modal-overlay').addEventListener('click', function(e) {
+        if (e.target === this) {
+            this.style.display = 'none';
+        }
+    });
+</script>
+</body>
+</html>

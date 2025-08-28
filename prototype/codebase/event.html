@@ -1,0 +1,518 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>프로모션 이벤트 - 사주라인</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto,
+                'Apple SD Gothic Neo', 'Noto Sans KR', sans-serif;
+            background-color: #0a0a0f;
+            color: #ffffff;
+            line-height: 1.6;
+            overflow-x: hidden;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* 헤더 */
+        .header {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            background: rgba(10, 10, 15, 0.95);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            z-index: 1000;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .header-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 16px 20px;
+            height: 60px;
+        }
+
+        .back-button {
+            width: 36px;
+            height: 36px;
+            border: none;
+            background: transparent;
+            color: #fff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            font-size: 20px;
+        }
+
+        .header-title {
+            position: absolute;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 18px;
+            font-weight: 600;
+        }
+
+        .header-actions {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .icon-btn {
+            width: 36px;
+            height: 36px;
+            border: none;
+            background: transparent;
+            color: #fff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            font-size: 20px;
+        }
+
+        /* 메인 콘텐츠 */
+        .main-content {
+            margin-top: 60px;
+            padding: 20px;
+            flex: 1;
+            overflow-y: auto;
+        }
+
+        /* 이벤트 리스트 */
+        .event-list {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .event-item {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 16px;
+            overflow: hidden;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            text-decoration: none;
+            color: inherit;
+            display: block;
+        }
+
+        .event-item:hover {
+            background: rgba(147, 51, 234, 0.05);
+            transform: translateY(-2px);
+        }
+
+        .event-item:active {
+            transform: translateY(0);
+        }
+
+        .event-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 16px 20px;
+        }
+
+        .event-thumbnail {
+            width: 60px;
+            height: 60px;
+            border-radius: 8px;
+            background: #222;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            font-size: 32px;
+        }
+
+        .event-thumbnail img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .event-info {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .event-title {
+            font-size: 16px;
+            font-weight: 700;
+            color: #ffffff;
+        }
+
+        .event-meta {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .event-date {
+            font-size: 13px;
+            color: rgba(255, 255, 255, 0.6);
+        }
+
+        .event-status {
+            font-size: 11px;
+            font-weight: 600;
+            padding: 2px 6px;
+            border-radius: 8px;
+            text-align: center;
+        }
+
+        .event-status.ongoing {
+            background-color: #10b981; /* 녹색 계열 */
+            color: #ffffff;
+        }
+
+        .event-status.completed {
+            background-color: rgba(255, 255, 255, 0.2); /* 회색 계열 */
+            color: rgba(255, 255, 255, 0.7);
+        }
+
+        .event-body {
+            padding: 0 20px 16px;
+            font-size: 14px;
+            color: rgba(255, 255, 255, 0.8);
+            line-height: 1.5;
+        }
+
+        /* 참가 버튼 */
+        .event-footer {
+            display: flex;
+            justify-content: flex-end;
+            padding: 0 20px 16px;
+        }
+
+        .event-button {
+            padding: 10px 24px;
+            background: linear-gradient(135deg, #9333EA 0%, #7C3AED 100%);
+            border: none;
+            border-radius: 16px;
+            color: white;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 20px rgba(147, 51, 234, 0.4);
+        }
+
+        .event-button:active {
+            transform: scale(0.95);
+        }
+
+        /* 빈 상태 */
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+        }
+
+        .empty-icon {
+            font-size: 64px;
+            margin-bottom: 16px;
+            opacity: 0.3;
+        }
+
+        .empty-title {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+
+        .empty-desc {
+            font-size: 14px;
+            color: rgba(255, 255, 255, 0.6);
+        }
+
+        /* 페이지네이션 */
+        .pagination {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 8px;
+            margin-top: 32px;
+            padding: 16px 0;
+        }
+
+        .page-button {
+            min-width: 36px;
+            height: 36px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0 12px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            color: rgba(255, 255, 255, 0.7);
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .page-button:hover {
+            background: rgba(147, 51, 234, 0.1);
+            border-color: rgba(147, 51, 234, 0.3);
+            color: #B794F6;
+        }
+
+        .page-button.active {
+            background: linear-gradient(135deg, #9333EA 0%, #7C3AED 100%);
+            border-color: transparent;
+            color: white;
+            box-shadow: 0 4px 12px rgba(147, 51, 234, 0.3);
+        }
+
+        .page-button.disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            pointer-events: none;
+        }
+
+        .page-ellipsis {
+            color: rgba(255, 255, 255, 0.5);
+            font-size: 14px;
+            padding: 0 4px;
+        }
+
+        /* 하단 네비게이션 */
+        .bottom-nav {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: rgba(10, 10, 15, 0.95);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            display: flex;
+            justify-content: space-around;
+            padding: 8px 0 12px;
+            z-index: 1000;
+        }
+
+        .nav-item {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 8px;
+            color: rgba(255, 255, 255, 0.5);
+            text-decoration: none;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .nav-item::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 0;
+            height: 2px;
+            background: linear-gradient(90deg, #9333EA 0%, #B794F6 100%);
+            transition: width 0.3s ease;
+        }
+
+        .nav-item.active {
+            color: #B794F6;
+        }
+
+        .nav-item.active::before {
+            width: 40px;
+        }
+
+        .nav-icon {
+            font-size: 24px;
+            margin-bottom: 4px;
+        }
+
+        .nav-label {
+            font-size: 11px;
+            font-weight: 500;
+        }
+
+        .event-item.completed {
+            opacity: 0.7;
+            background: rgba(255, 255, 255, 0.02);
+        }
+
+        .event-item.completed .event-title,
+        .event-item.completed .event-body {
+            color: rgba(255, 255, 255, 0.5);
+        }
+
+        .event-button:disabled {
+            background: rgba(255, 255, 255, 0.1);
+            color: rgba(255, 255, 255, 0.5);
+            box-shadow: none;
+            cursor: not-allowed;
+        }
+    </style>
+</head>
+<body>
+    <!-- 헤더 -->
+    <header class="header">
+        <div class="header-top">
+            <button class="back-button" onclick="window.history.back();">←</button>
+            <h1 class="header-title">이벤트</h1>
+            <div class="header-actions">
+                <button class="icon-btn" onclick="window.location.href='search-page.html'">🔍</button>
+                <button class="icon-btn" onclick="window.location.href='login-page.html'">👤</button>
+            </div>
+        </div>
+    </header>
+
+    <!-- 메인 콘텐츠 -->
+    <main class="main-content">
+        <!-- 이벤트 리스트 (예시: 실제 데이터에 맞춰 동적으로 교체) -->
+        <div class="event-list">
+            <!-- 이벤트 아이템 예시 1 -->
+            <a href="event_detail.html" class="event-item">
+                <div class="event-header">
+                    <div class="event-thumbnail">🎉</div>
+                    <div class="event-info">
+                        <span class="event-title">첫 충전 2배 보너스</span>
+                        <div class="event-meta">
+                            <span class="event-date">2025.06.01 ~ 2025.06.30</span>
+                            <span class="event-status ongoing">진행중</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="event-body">
+                    신규 회원님께 첫 포인트 충전 시 보너스 포인트 100% 증정! 최대 50,000P까지 적용됩니다.
+                </div>
+                <div class="event-footer">
+                    <button class="event-button">참여하기</button>
+                </div>
+            </a>
+
+            <!-- 이벤트 아이템 예시 2 -->
+            <a href="event_detail.html" class="event-item">
+                <div class="event-header">
+                    <div class="event-thumbnail">🔮</div>
+                    <div class="event-info">
+                        <span class="event-title">타로 무료 뽑기</span>
+                        <div class="event-meta">
+                            <span class="event-date">상시 진행 중</span>
+                            <span class="event-status ongoing">진행중</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="event-body">
+                    매일 한 번! 무료 타로 카드 뽑기를 통해 당신의 오늘 운세를 확인해보세요. 결과 공유 시 추가 포인트 지급.
+                </div>
+                <div class="event-footer">
+                    <button class="event-button">뽑기 하러 가기</button>
+                </div>
+            </a>
+
+            <!-- 이벤트 아이템 예시 3 -->
+            <a href="event_detail.html" class="event-item">
+                <div class="event-header">
+                    <div class="event-thumbnail">🎁</div>
+                    <div class="event-info">
+                        <span class="event-title">리뷰 작성시 포인트 적립</span>
+                        <div class="event-meta">
+                            <span class="event-date">2025.05.15 ~ 2025.07.15</span>
+                            <span class="event-status ongoing">진행중</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="event-body">
+                    상담 후 리뷰를 작성하면 500P를 즉시 적립해드립니다. 솔직한 후기만 남겨주세요!
+                </div>
+                <div class="event-footer">
+                    <button class="event-button">리뷰 작성하기</button>
+                </div>
+            </a>
+
+            <!-- 예시: 이미 종료된 이벤트 (진행완료) -->
+            <a href="event_detail.html" class="event-item completed">
+                <div class="event-header">
+                    <div class="event-thumbnail">🎁</div>
+                    <div class="event-info">
+                        <span class="event-title">지난 달 이벤트 예시</span>
+                        <div class="event-meta">
+                            <span class="event-date">2025.04.01 ~ 2025.04.30</span>
+                            <span class="event-status completed">진행완료</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="event-body">
+                    지난 달에 진행된 특별 이벤트로, 모든 회원님께 감사드립니다.
+                </div>
+                <div class="event-footer">
+                    <button class="event-button" disabled>종료됨</button>
+                </div>
+            </a>
+
+            <!-- 이벤트가 없을 때 빈 상태 -->
+            <!--
+            <div class="empty-state">
+                <div class="empty-icon">📭</div>
+                <div class="empty-title">진행 중인 이벤트가 없습니다</div>
+                <div class="empty-desc">새로운 이벤트가 등록되는 대로 알려드릴게요!</div>
+            </div>
+            -->
+        </div>
+
+        <!-- 페이지네이션 -->
+        <div class="pagination">
+            <button class="page-button disabled">
+                <span>←</span>
+            </button>
+            <button class="page-button active">1</button>
+            <button class="page-button">2</button>
+            <button class="page-button">3</button>
+            <span class="page-ellipsis">...</span>
+            <button class="page-button">10</button>
+            <button class="page-button">
+                <span>→</span>
+            </button>
+        </div>
+    </main>
+<!-- 하단 네비게이션 -->
+<nav class="bottom-nav">
+    <a href="main.html" class="nav-item">
+        <span class="nav-icon">🏠</span>
+        <span class="nav-label">홈</span>
+    </a>
+    <a href="ai-fortune-complete.html" class="nav-item">
+        <span class="nav-icon">🤖</span>
+        <span class="nav-label">AI운세</span>
+    </a>
+    <a href="event.html" class="nav-item active">
+        <span class="nav-icon">🎁</span>
+        <span class="nav-label">이벤트</span>
+    </a>
+    <a href="favorite.html" class="nav-item">
+        <span class="nav-icon">⭐</span>
+        <span class="nav-label">즐겨찾기</span>
+    </a>
+    <a href="mypage.html" class="nav-item">
+        <span class="nav-icon">👤</span>
+        <span class="nav-label">마이</span>
+    </a>
+</nav>
+</body>
+</html>

@@ -1,0 +1,31 @@
+# 프로젝트 구조 및 개발 환경 셋업
+
+**Task ID:** T-001
+**Status:** BACKLOG
+**Importance:** MUST
+**Complexity:** 5/10
+**Urgency:** 10/10
+**Dependencies:** None
+
+## Description
+
+**요구사항**:
+- Nuxt 3.18/TypeScript/Tailwind/shadcn ui, FastAPI/Python, MariaDB/Redis 환경 구축
+- Docker Compose 기반 컨테이너 구성 및 .env 관리
+- Lint/Test/빌드 스크립트 설정(ESLint, Prettier, Vitest, Pytest)
+- Sentry, GA4 연동 구성
+**구현 세부사항**:
+- nuxt.config.ts, package.json, tsconfig.json 기본 설정
+- FastAPI app factory와 Dockerfile 작성
+- Alembic, SQLAlchemy 초기 마이그레이션 설정
+- redis-py, python-dotenv, Authlib 등 주요 라이브러리 설치
+- docker-compose.yml에 frontend, backend, mariadb, redis, nginx 서비스 정의
+**테스트 전략**:
+- 컨테이너 기동 후 /healthz, /readyz 엔드포인트 응답 확인
+- ESLint, Vitest, Pytest 실행 성공 여부 점검
+- Sentry/GA4 테스트 이벤트 송출 확인
+
+---
+
+**Created:** 2025-08-27T15:36:58.221Z
+**Updated:** 2025-08-27T15:36:58.221Z

@@ -1,0 +1,1211 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>명월 선생님 - 사주라인</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Apple SD Gothic Neo', 'Noto Sans KR', sans-serif;
+            background-color: #0a0a0f;
+            color: #ffffff;
+            line-height: 1.6;
+            overflow-x: hidden;
+        }
+
+        /* 헤더 */
+        .header {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            background: rgba(10, 10, 15, 0.95);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            z-index: 1000;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .header-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 16px 20px;
+            height: 60px;
+        }
+
+        .back-button {
+            width: 36px;
+            height: 36px;
+            border: none;
+            background: transparent;
+            color: #fff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            border-radius: 12px;
+            font-size: 20px;
+            transition: all 0.3s ease;
+        }
+
+        .header-title {
+            position: absolute;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 18px;
+            font-weight: 600;
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 8px;
+        }
+
+        .icon-btn {
+            width: 36px;
+            height: 36px;
+            border: none;
+            background: transparent;
+            color: #fff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            font-size: 20px;
+        }
+
+        /* 메인 콘텐츠 */
+        .main-content {
+            margin-top: 60px;
+            padding-bottom: 100px;
+        }
+
+        /* 프로필 섹션 */
+        .profile-section {
+            text-align: center;
+            padding: 32px 20px;
+            background: radial-gradient(ellipse at center top, rgba(147, 51, 234, 0.2) 0%, transparent 70%);
+            position: relative;
+        }
+
+        .profile-avatar {
+            width: 120px;
+            height: 120px;
+            margin: 0 auto 20px;
+            background: linear-gradient(135deg, rgba(147, 51, 234, 0.3) 0%, rgba(124, 58, 237, 0.2) 100%);
+            border-radius: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 60px;
+            position: relative;
+            box-shadow: 0 8px 32px rgba(147, 51, 234, 0.3);
+        }
+
+        .online-indicator {
+            position: absolute;
+            bottom: 8px;
+            right: 8px;
+            width: 24px;
+            height: 24px;
+            background: #4CAF50;
+            border: 4px solid #0a0a0f;
+            border-radius: 50%;
+            box-shadow: 0 0 12px rgba(76, 175, 80, 0.6);
+        }
+
+        .profile-name {
+            font-size: 28px;
+            font-weight: 800;
+            margin-bottom: 8px;
+            background: linear-gradient(135deg, #ffffff 0%, #B794F6 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .profile-title {
+            font-size: 16px;
+            color: #B794F6;
+            margin-bottom: 16px;
+        }
+
+        .profile-stats {
+            display: flex;
+            justify-content: center;
+            gap: 32px;
+            margin-top: 24px;
+        }
+
+        .stat {
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 24px;
+            font-weight: 700;
+            color: #ffffff;
+        }
+
+        .stat-label {
+            font-size: 14px;
+            color: rgba(255, 255, 255, 0.6);
+        }
+
+        /* 전문 분야 */
+        .expertise-section {
+            padding: 24px 20px;
+        }
+
+        .section-title {
+            font-size: 20px;
+            font-weight: 700;
+            margin-bottom: 16px;
+        }
+
+        .expertise-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .expertise-tag {
+            padding: 12px 20px;
+            background: rgba(147, 51, 234, 0.1);
+            border: 1px solid rgba(147, 51, 234, 0.3);
+            border-radius: 24px;
+            font-size: 14px;
+            color: #B794F6;
+            font-weight: 500;
+        }
+
+        /* 상담사 소개 */
+        .intro-section {
+            padding: 24px 20px;
+            background: rgba(255, 255, 255, 0.02);
+        }
+
+        .intro-content {
+            font-size: 15px;
+            line-height: 1.8;
+            color: rgba(255, 255, 255, 0.8);
+        }
+
+        .highlight-box {
+            margin-top: 20px;
+            padding: 16px;
+            background: linear-gradient(135deg, rgba(147, 51, 234, 0.1) 0%, rgba(124, 58, 237, 0.05) 100%);
+            border: 1px solid rgba(147, 51, 234, 0.2);
+            border-radius: 16px;
+        }
+
+        .highlight-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: #B794F6;
+            margin-bottom: 8px;
+        }
+
+        .highlight-text {
+            font-size: 14px;
+            color: rgba(255, 255, 255, 0.7);
+        }
+
+        /* 리뷰 섹션 */
+        .reviews-section {
+            padding: 24px 20px;
+        }
+
+        .review-summary {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            padding: 20px;
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: 16px;
+            margin-bottom: 20px;
+        }
+
+        .rating-large {
+            font-size: 48px;
+            font-weight: 800;
+            color: #FFD700;
+        }
+
+        .rating-details {
+            flex: 1;
+        }
+
+        .stars {
+            display: flex;
+            gap: 4px;
+            margin-bottom: 8px;
+        }
+
+        .star {
+            color: #FFD700;
+            font-size: 20px;
+        }
+
+        .review-count {
+            font-size: 14px;
+            color: rgba(255, 255, 255, 0.6);
+        }
+
+        .review-card {
+            padding: 20px;
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 16px;
+            margin-bottom: 12px;
+        }
+
+        .review-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+
+        .reviewer-info {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .reviewer-name {
+            font-weight: 600;
+        }
+
+        .review-date {
+            font-size: 12px;
+            color: rgba(255, 255, 255, 0.5);
+        }
+
+        .review-rating {
+            display: flex;
+            gap: 2px;
+        }
+
+        .review-content {
+            font-size: 14px;
+            line-height: 1.6;
+            color: rgba(255, 255, 255, 0.8);
+        }
+
+        /* 가격 정보 */
+        .pricing-section {
+            padding: 24px 20px;
+            background: rgba(255, 255, 255, 0.02);
+        }
+
+        .pricing-card {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px;
+            background: linear-gradient(135deg, rgba(147, 51, 234, 0.1) 0%, rgba(124, 58, 237, 0.05) 100%);
+            border: 1px solid rgba(147, 51, 234, 0.2);
+            border-radius: 16px;
+            margin-bottom: 12px;
+        }
+
+        .pricing-type {
+            font-size: 16px;
+            font-weight: 600;
+        }
+
+        .pricing-value {
+            text-align: right;
+        }
+
+        .price {
+            font-size: 24px;
+            font-weight: 700;
+            color: #ffffff;
+        }
+
+        .price-unit {
+            font-size: 14px;
+            color: rgba(255, 255, 255, 0.6);
+            font-weight: 400;
+        }
+
+        .discount-info {
+            font-size: 12px;
+            color: #FF6B6B;
+            margin-top: 4px;
+        }
+
+        /* 하단 CTA */
+        .bottom-cta {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            padding: 16px 20px 24px;
+            background: linear-gradient(to top, #0a0a0f 0%, rgba(10, 10, 15, 0.95) 100%);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .cta-buttons {
+            display: flex;
+            gap: 12px;
+        }
+
+        .cta-button {
+            flex: 1;
+            padding: 18px;
+            border: none;
+            border-radius: 16px;
+            font-size: 16px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .cta-primary {
+            background: linear-gradient(135deg, #9333EA 0%, #7C3AED 100%);
+            color: white;
+            box-shadow: 0 4px 20px rgba(147, 51, 234, 0.4);
+        }
+
+        .cta-secondary {
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .cta-button:active {
+            transform: scale(0.98);
+        }
+
+        /* 팝업 오버레이 */
+        .call-popup-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            display: flex;
+            justify-content: center;
+            align-items: center; /* 중앙 정렬 */
+            z-index: 2000;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.3s ease, visibility 0.3s ease;
+        }
+
+        .call-popup-overlay.active {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        /* 팝업 본문 */
+        .call-popup {
+            background: #1a1a2e;
+            border-radius: 20px; /* 모든 모서리 둥글게 */
+            width: 100%;
+            max-width: 500px;
+            transform: scale(0.95); /* 초기 스케일 축소 */
+            opacity: 0; /* 초기 투명도 0 */
+            transition: transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1), opacity 0.3s ease; /* 애니메이션 효과 */
+            padding-bottom: env(safe-area-inset-bottom); /* 아이폰 하단 세이프 영역 */
+        }
+
+        .call-popup-overlay.active .call-popup {
+            transform: scale(1); /* 활성화 시 원래 크기로 */
+            opacity: 1; /* 활성화 시 투명도 1 */
+        }
+
+        .popup-header {
+            padding: 20px;
+            background: linear-gradient(135deg, #2a2a4a 0%, #1a1a2e 100%);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            border-radius: 20px 20px 0 0; /* 상단만 둥글게 -> 여기는 헤더만 둥글게 유지 */
+        }
+
+        .popup-profile {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .popup-avatar {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            overflow: hidden;
+            border: 2px solid #9333EA;
+            box-shadow: 0 0 15px rgba(147, 51, 234, 0.4);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background-color: #3a3a5a;
+        }
+
+        .popup-avatar img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .popup-info {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .popup-tag {
+            background: rgba(147, 51, 234, 0.2);
+            color: #B794F6;
+            padding: 6px 10px;
+            border-radius: 16px;
+            font-size: 13px;
+            font-weight: 600;
+        }
+
+        .popup-name {
+            font-size: 20px;
+            font-weight: 700;
+            color: #ffffff;
+        }
+
+        .popup-id {
+            font-size: 16px;
+            color: rgba(255, 255, 255, 0.7);
+        }
+
+        .popup-content {
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .phone-consult-button {
+            background: linear-gradient(135deg, #9333EA 0%, #7C3AED 100%);
+            color: white;
+            padding: 15px 20px;
+            border-radius: 12px;
+            font-size: 17px;
+            font-weight: 700;
+            border: none;
+            width: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            box-shadow: 0 5px 20px rgba(147, 51, 234, 0.3);
+            cursor: pointer;
+            transition: transform 0.2s ease;
+        }
+
+        .phone-consult-button:active {
+            transform: scale(0.98);
+        }
+
+        .p-icon {
+            background-color: white;
+            color: #9333EA;
+            border-radius: 50%;
+            width: 24px;
+            height: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 900;
+            font-size: 14px;
+        }
+
+        .point-info {
+            text-align: right;
+            font-size: 14px;
+            color: rgba(255, 255, 255, 0.6);
+        }
+
+        .point-info strong {
+            color: #FFD700;
+            font-size: 18px;
+        }
+
+        .connect-info {
+            font-size: 14px;
+            color: rgba(255, 255, 255, 0.7);
+            text-align: center;
+            margin-top: 10px;
+            margin-bottom: 20px;
+        }
+
+        .point-status {
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 12px;
+            padding: 15px;
+            margin-bottom: 20px;
+        }
+
+        .status-item {
+            text-align: center;
+        }
+
+        .status-label {
+            font-size: 13px;
+            color: rgba(255, 255, 255, 0.5);
+            display: block;
+            margin-bottom: 5px;
+        }
+
+        .status-value {
+            font-size: 24px;
+            font-weight: 700;
+            color: #ffffff;
+        }
+
+        .charge-button {
+            background: #B794F6;
+            color: #1a1a2e;
+            padding: 10px 15px;
+            border-radius: 10px;
+            border: none;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.2s ease;
+        }
+
+        .charge-button:hover {
+            background: #a06ede;
+        }
+
+        .prepay-option {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 12px;
+            margin-top: 10px;
+        }
+
+        .prepay-toggle {
+            width: 100%;
+            background: transparent;
+            border: none;
+            color: rgba(255, 255, 255, 0.8);
+            padding: 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 16px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background 0.2s ease;
+        }
+
+        .prepay-toggle:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .arrow-down {
+            transition: transform 0.3s ease;
+            font-size: 12px;
+        }
+
+        .prepay-option.open .arrow-down {
+            transform: rotate(180deg);
+        }
+
+        .prepay-details {
+            display: none;
+            background: rgba(255, 255, 255, 0.03);
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .prepay-option.open .prepay-details {
+            display: block;
+        }
+
+        .prepay-content {
+            padding: 15px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .phone-060-button {
+            background: rgba(183, 148, 246, 0.2);
+            color: #B794F6;
+            padding: 12px 20px;
+            border-radius: 12px;
+            font-size: 17px;
+            font-weight: 600;
+            border: 1px solid rgba(183, 148, 246, 0.4);
+            width: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            cursor: pointer;
+            transition: background 0.2s ease;
+        }
+
+        .phone-060-button:active {
+            transform: scale(0.98);
+        }
+
+        .phone-icon {
+            font-size: 20px;
+            color: #B794F6;
+        }
+
+        .fee-info {
+            text-align: center;
+            font-size: 14px;
+            color: rgba(255, 255, 255, 0.6);
+            margin: 0;
+        }
+
+        .fee-info strong {
+            color: #FFD700;
+            font-size: 18px;
+        }
+
+        .guide-title {
+            font-size: 15px;
+            font-weight: 600;
+            color: rgba(255, 255, 255, 0.8);
+            text-align: center;
+            margin: 0;
+        }
+
+        .guide-text {
+            font-size: 14px;
+            color: rgba(255, 255, 255, 0.7);
+            text-align: center;
+            line-height: 1.5;
+            margin: 0;
+        }
+
+        .close-button {
+            background: #444466;
+            color: white;
+            padding: 15px 20px;
+            border-radius: 12px;
+            font-size: 17px;
+            font-weight: 700;
+            border: none;
+            width: 100%;
+            margin-top: 20px;
+            cursor: pointer;
+            transition: background 0.2s ease;
+        }
+
+        .close-button:hover {
+            background: #555577;
+        }
+
+        /* 모바일 반응형 */
+        @media (max-width: 768px) {
+            .call-popup {
+                width: 100%;
+                border-radius: 20px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .header-top {
+                padding: 12px 15px;
+            }
+
+            .profile-section {
+                padding: 24px 15px;
+            }
+
+            .profile-avatar {
+                width: 100px;
+                height: 100px;
+                border-radius: 30px;
+            }
+
+            .profile-name {
+                font-size: 24px;
+            }
+
+            .profile-title {
+                font-size: 15px;
+            }
+
+            .profile-stats {
+                gap: 20px;
+            }
+
+            .stat-value {
+                font-size: 20px;
+            }
+
+            .stat-label {
+                font-size: 12px;
+            }
+
+            .expertise-section, .intro-section, .reviews-section, .pricing-section {
+                padding: 20px 15px;
+            }
+
+            .section-title {
+                font-size: 18px;
+            }
+
+            .expertise-tag {
+                padding: 10px 16px;
+                font-size: 13px;
+            }
+
+            .intro-content, .highlight-text, .review-content {
+                font-size: 13px;
+            }
+
+            .rating-large {
+                font-size: 40px;
+            }
+
+            .stars .star {
+                font-size: 18px;
+            }
+
+            .review-count {
+                font-size: 13px;
+            }
+
+            .pricing-card {
+                padding: 15px;
+            }
+
+            .price {
+                font-size: 20px;
+            }
+
+            .price-unit {
+                font-size: 12px;
+            }
+
+            .discount-info {
+                font-size: 11px;
+            }
+
+            .bottom-cta {
+                padding: 12px 15px 18px;
+            }
+
+            .cta-button {
+                padding: 16px;
+                font-size: 15px;
+            }
+
+            .call-popup {
+                border-radius: 15px 15px 0 0;
+            }
+
+            .popup-header {
+                padding: 15px;
+            }
+
+            .popup-avatar {
+                width: 50px;
+                height: 50px;
+            }
+
+            .popup-name {
+                font-size: 18px;
+            }
+
+            .popup-id {
+                font-size: 14px;
+            }
+
+            .popup-tag {
+                padding: 5px 8px;
+                font-size: 12px;
+            }
+
+            .popup-content {
+                padding: 15px;
+            }
+
+            .phone-consult-button {
+                padding: 12px 15px;
+                font-size: 15px;
+            }
+
+            .p-icon {
+                width: 20px;
+                height: 20px;
+                font-size: 12px;
+            }
+
+            .point-info strong {
+                font-size: 16px;
+            }
+
+            .charge-button {
+                padding: 8px 12px;
+                font-size: 12px;
+            }
+
+            .prepay-toggle {
+                padding: 12px;
+                font-size: 14px;
+            }
+
+            .prepay-details {
+                padding: 10px;
+            }
+
+            .phone-060-button {
+                padding: 10px 15px;
+                font-size: 15px;
+            }
+
+            .phone-icon {
+                font-size: 18px;
+            }
+
+            .fee-info strong {
+                font-size: 16px;
+            }
+
+            .guide-title {
+                font-size: 14px;
+            }
+
+            .guide-text {
+                font-size: 13px;
+            }
+
+            .close-button {
+                padding: 12px 15px;
+                font-size: 15px;
+            }
+
+            .prepay-content {
+                padding: 10px;
+                gap: 8px;
+            }
+
+            .phone-060-button {
+                padding: 10px 15px;
+                font-size: 15px;
+            }
+
+            .phone-icon {
+                font-size: 18px;
+            }
+
+            .fee-info strong {
+                font-size: 16px;
+            }
+
+            .guide-title {
+                font-size: 14px;
+            }
+
+            .guide-text {
+                font-size: 13px;
+            }
+        }
+    </style>
+</head>
+<body>
+<!-- 헤더 -->
+<header class="header">
+    <div class="header-top">
+        <button class="back-button" onclick="window.history.back();">←</button>
+        <h1 class="header-title">상담사 상세</h1>
+        <div class="header-actions">
+            <button class="icon-btn" onclick="window.location.href='search-page.html'">🔍</button>
+            <button class="icon-btn" onclick="window.location.href='login-page.html'">👤</button>
+        </div>
+    </div>
+</header>
+
+<!-- 메인 콘텐츠 -->
+<main class="main-content">
+    <!-- 프로필 섹션 -->
+    <section class="profile-section">
+        <div class="profile-avatar">
+            🌙
+            <div class="online-indicator"></div>
+        </div>
+        <h2 class="profile-name">명월 선생님</h2>
+        <p class="profile-title">타로 마스터 · 20년 경력</p>
+
+        <div class="profile-stats">
+            <div class="stat">
+                <div class="stat-value">4.9</div>
+                <div class="stat-label">평점</div>
+            </div>
+            <div class="stat">
+                <div class="stat-value">3,456</div>
+                <div class="stat-label">상담건수</div>
+            </div>
+            <div class="stat">
+                <div class="stat-value">98%</div>
+                <div class="stat-label">재상담률</div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 전문 분야 -->
+    <section class="expertise-section">
+        <h3 class="section-title">전문 분야</h3>
+        <div class="expertise-tags">
+            <div class="expertise-tag">🔮 타로카드</div>
+            <div class="expertise-tag">💕 연애/재회</div>
+            <div class="expertise-tag">💼 직장/이직</div>
+            <div class="expertise-tag">✨ 심리상담</div>
+            <div class="expertise-tag">🔄 운명교정</div>
+        </div>
+    </section>
+
+    <!-- 상담사 소개 -->
+    <section class="intro-section">
+        <h3 class="section-title">상담사 소개</h3>
+        <div class="intro-content">
+            안녕하세요, 명월입니다.<br><br>
+            20년간 수만 건의 상담을 통해 쌓은 통찰력으로 당신의 마음을 읽어드립니다.
+            특히 복잡한 연애 문제와 재회 상담을 전문으로 하며, 막막한 상황에서도
+            명확한 방향을 제시해드립니다.<br><br>
+            "모든 인연에는 의미가 있습니다. 그 의미를 함께 찾아가요."
+        </div>
+
+        <div class="highlight-box">
+            <div class="highlight-title">💫 명월 선생님만의 특별함</div>
+            <div class="highlight-text">
+                • 20년 경력의 정통 타로 마스터<br>
+                • 재회 성공률 87% 달성<br>
+                • 심리상담사 1급 자격 보유<br>
+                • 24시간 이내 답변 보장
+            </div>
+        </div>
+    </section>
+
+    <!-- 리뷰 섹션 -->
+    <section class="reviews-section">
+        <h3 class="section-title">상담 후기</h3>
+
+        <div class="review-summary">
+            <div class="rating-large">4.9</div>
+            <div class="rating-details">
+                <div class="stars">
+                    <span class="star">⭐</span>
+                    <span class="star">⭐</span>
+                    <span class="star">⭐</span>
+                    <span class="star">⭐</span>
+                    <span class="star">⭐</span>
+                </div>
+                <div class="review-count">3,456개의 리뷰</div>
+            </div>
+        </div>
+
+        <div class="review-card">
+            <div class="review-header">
+                <div class="reviewer-info">
+                    <span class="reviewer-name">김**</span>
+                    <span class="review-date">2025.05.30</span>
+                </div>
+                <div class="review-rating">
+                    <span class="star">⭐</span>
+                    <span class="star">⭐</span>
+                    <span class="star">⭐</span>
+                    <span class="star">⭐</span>
+                    <span class="star">⭐</span>
+                </div>
+            </div>
+            <div class="review-content">
+                정말 신기할 정도로 정확하세요. 제가 말하지 않은 부분까지 알아맞추시고,
+                앞으로의 방향도 명확하게 제시해주셔서 큰 도움이 되었습니다.
+            </div>
+        </div>
+
+        <div class="review-card">
+            <div class="review-header">
+                <div class="reviewer-info">
+                    <span class="reviewer-name">이**</span>
+                    <span class="review-date">2025.05.29</span>
+                </div>
+                <div class="review-rating">
+                    <span class="star">⭐</span>
+                    <span class="star">⭐</span>
+                    <span class="star">⭐</span>
+                    <span class="star">⭐</span>
+                    <span class="star">⭐</span>
+                </div>
+            </div>
+            <div class="review-content">
+                재회 상담 받고 정말로 연락이 왔어요! 선생님 말씀대로 기다렸더니
+                3주만에 연락이 왔습니다. 감사합니다.
+            </div>
+        </div>
+    </section>
+
+    <!-- 가격 정보 -->
+    <section class="pricing-section">
+        <h3 class="section-title">상담 요금</h3>
+
+        <div class="pricing-card">
+            <div class="pricing-type">
+                <div>💬 채팅 상담</div>
+            </div>
+            <div class="pricing-value">
+                <div class="price">3,900<span class="price-unit">원/분</span></div>
+                <div class="discount-info">첫 상담 30% 할인</div>
+            </div>
+        </div>
+
+        <div class="pricing-card">
+            <div class="pricing-type">
+                <div>📞 전화 상담</div>
+            </div>
+            <div class="pricing-value">
+                <div class="price">4,900<span class="price-unit">원/분</span></div>
+            </div>
+        </div>
+    </section>
+</main>
+
+<!-- 하단 CTA -->
+<div class="bottom-cta">
+    <div class="cta-buttons">
+        <button class="cta-button cta-secondary" onclick="location.href='chatting.html'">
+            <span>💬</span>
+            <span>채팅 상담</span>
+        </button>
+        <button class="cta-button cta-primary" id="openCallPopup">
+            <span>📞</span>
+            <span>전화 상담</span>
+        </button>
+    </div>
+</div>
+
+<!-- 전화 상담 팝업 -->
+<div class="call-popup-overlay" id="callPopupOverlay">
+    <div class="call-popup">
+        <div class="popup-header">
+            <div class="popup-profile">
+                <div class="popup-avatar">
+                    <img src="https://via.placeholder.com/60" alt="프로필 이미지">
+                </div>
+                <div class="popup-info">
+                    <span class="popup-tag">타로</span>
+                    <span class="popup-name">겨루</span>
+                    <span class="popup-id">615번</span>
+                </div>
+            </div>
+        </div>
+        <div class="popup-content">
+            <button class="phone-consult-button">
+                <span class="p-icon">P</span>
+                <span>포인트 상담 (02-6209-0808)</span>
+            </button>
+            <p class="point-info">포인트상담(선불) <strong>800P</strong>(30초)</p>
+            <p class="connect-info">전화연결시 선택한 선생님과 바로연결됩니다.</p>
+
+            <div class="point-status">
+                <div class="status-item">
+                    <span class="status-label">보유 포인트</span>
+                    <span class="status-value">P</span>
+                </div>
+                <div class="status-item">
+                    <span class="status-label">상담 가능 시간</span>
+                    <span class="status-value">0분</span>
+                </div>
+                <button class="charge-button">포인트 충전</button>
+            </div>
+
+            <div class="prepay-option">
+                <button class="prepay-toggle">
+                    <span>060후불 상담 이용하기</span>
+                    <span class="arrow-down">▼</span>
+                </button>
+                <div class="prepay-details">
+                    <div class="prepay-content">
+                        <button class="phone-060-button">
+                            <span class="phone-icon">📞</span>
+                            <span>060상담 (060-800-1300)</span>
+                        </button>
+                        <p class="fee-info">060상담(후불) <strong>1300원</strong>(30초)(vat별도)</p>
+                        <p class="guide-title">상담안내</p>
+                        <p class="guide-text">전화상담 연결 후, 고유번호 615번 누르세요.</p>
+                    </div>
+                </div>
+            </div>
+
+            <button class="close-button">닫기</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const openCallPopupButton = document.getElementById('openCallPopup');
+        const callPopupOverlay = document.getElementById('callPopupOverlay');
+        const closeButton = document.querySelector('.call-popup .close-button');
+        const prepayToggle = document.querySelector('.prepay-toggle');
+
+        // 팝업 열기
+        if (openCallPopupButton) {
+            openCallPopupButton.addEventListener('click', function() {
+                if (callPopupOverlay) {
+                    callPopupOverlay.classList.add('active');
+                }
+            });
+        }
+
+        // 팝업 닫기 (닫기 버튼 클릭 시)
+        if (closeButton) {
+            closeButton.addEventListener('click', function() {
+                if (callPopupOverlay) {
+                    callPopupOverlay.classList.remove('active');
+                }
+            });
+        }
+
+        // 팝업 닫기 (오버레이 클릭 시)
+        if (callPopupOverlay) {
+            callPopupOverlay.addEventListener('click', function(event) {
+                if (event.target === callPopupOverlay) {
+                    callPopupOverlay.classList.remove('active');
+                }
+            });
+        }
+
+        // 060 후불 상담 토글 기능
+        if (prepayToggle) {
+            prepayToggle.addEventListener('click', function() {
+                const parent = this.closest('.prepay-option');
+                const prepayDetails = parent.querySelector('.prepay-details');
+                
+                if (parent) {
+                    parent.classList.toggle('open');
+                }
+            });
+        }
+    });
+</script>
+</body>
+</html>
