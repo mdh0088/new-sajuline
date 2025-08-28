@@ -6,7 +6,8 @@ from typing import Optional, List, Tuple
 from datetime import datetime
 
 from sqlalchemy.ext.asyncio import AsyncSession
-from fastapi import HTTPException, status
+from src.common.exceptions import NotFoundError, DuplicateError, AuthenticationError, ValidationError
+from src.common.logging import logger, get_logger_with_request_id
 
 from src.models.user import User, UserStatus
 from src.schemas.user import UserCreate, UserUpdate, UserResponse, UserListResponse
@@ -21,6 +22,7 @@ class UserService:
         self.user_repo = user_repo
         self.auth_service = auth_service
     
+    @logger.catch
     async def create_user(self, user_data: UserCreate) -> UserResponse:
         """
         사용자 생성 비즈니스 로직
@@ -28,24 +30,21 @@ class UserService:
         - 비밀번호 해싱
         - 사용자 생성
         """
+        log = get_logger_with_request_id()
+        log.info("Creating new user", user_id=user_data.user_id, email=user_data.email)
+        
         # 중복 검증
         if await self.user_repo.exists_by_user_id(user_data.user_id):
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="이미 존재하는 사용자 ID입니다."
-            )
+            log.warning("User ID already exists", user_id=user_data.user_id)
+            raise DuplicateError("이미 존재하는 사용자 ID입니다.")
         
         if await self.user_repo.exists_by_email(user_data.email):
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="이미 존재하는 이메일입니다."
-            )
+            log.warning("Email already exists", email=user_data.email)
+            raise DuplicateError("이미 존재하는 이메일입니다.")
         
         if await self.user_repo.exists_by_phone(user_data.phone):
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="이미 존재하는 전화번호입니다."
-            )
+            log.warning("Phone already exists", phone=user_data.phone)
+            raise DuplicateError("이미 존재하는 전화번호입니다.")
         
         # 비밀번호 해싱 (소셜 로그인이 아닌 경우)
         password_hash = None
@@ -55,24 +54,27 @@ class UserService:
         # 사용자 생성
         user = await self.user_repo.create(user_data, password_hash)
         
+        log.info("User created successfully", user_id=user.user_id, email=user.email)
         return UserResponse.model_validate(user)
     
-    async def get_user(self, user_id: str) -> Optional[UserResponse]:
+    @logger.catch
+    async def get_user(self, user_id: str) -> UserResponse:
         """사용자 조회"""
         user = await self.user_repo.get_by_id(user_id)
         if not user:
-            return None
+            raise NotFoundError("사용자를 찾을 수 없습니다.")
         
         return UserResponse.model_validate(user)
     
-    async def get_user_by_email(self, email: str) -> Optional[UserResponse]:
+    async def get_user_by_email(self, email: str) -> UserResponse:
         """이메일로 사용자 조회"""
         user = await self.user_repo.get_by_email(email)
         if not user:
-            return None
+            raise NotFoundError("사용자를 찾을 수 없습니다.")
         
         return UserResponse.model_validate(user)
     
+    @logger.catch
     async def update_user(self, user_id: str, user_data: UserUpdate) -> Optional[UserResponse]:
         """
         사용자 정보 수정 비즈니스 로직
@@ -83,24 +85,19 @@ class UserService:
         # 사용자 존재 여부 확인
         existing_user = await self.user_repo.get_by_id(user_id)
         if not existing_user:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail="사용자를 찾을 수 없습니다."
-            )
+            raise NotFoundError("사용자를 찾을 수 없습니다.")
         
         # 전화번호 변경시 중복 검증
         if user_data.phone and user_data.phone != existing_user.phone:
             if await self.user_repo.exists_by_phone(user_data.phone):
-                raise HTTPException(
-                    status_code=status.HTTP_400_BAD_REQUEST,
-                    detail="이미 존재하는 전화번호입니다."
-                )
+                raise DuplicateError("이미 존재하는 전화번호입니다.")
         
         # 사용자 정보 수정
         updated_user = await self.user_repo.update(user_id, user_data)
         
         return UserResponse.model_validate(updated_user) if updated_user else None
     
+    @logger.catch
     async def delete_user(self, user_id: str) -> bool:
         """
         사용자 삭제 비즈니스 로직
@@ -109,10 +106,7 @@ class UserService:
         """
         existing_user = await self.user_repo.get_by_id(user_id)
         if not existing_user:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail="사용자를 찾을 수 없습니다."
-            )
+            raise NotFoundError("사용자를 찾을 수 없습니다.")
         
         success = await self.user_repo.delete(user_id)
         
@@ -138,10 +132,7 @@ class UserService:
         
         # 상태 검증
         if user_status and user_status not in [status.value for status in UserStatus]:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="유효하지 않은 사용자 상태입니다."
-            )
+            raise ValidationError("유효하지 않은 사용자 상태입니다.")
         
         users = await self.user_repo.get_list(skip, size, user_status)
         total = await self.user_repo.get_count(user_status)
@@ -155,7 +146,8 @@ class UserService:
             size=size
         )
     
-    async def authenticate_user(self, user_id_or_email: str, password: str) -> Optional[UserResponse]:
+    @logger.catch
+    async def authenticate_user(self, user_id_or_email: str, password: str) -> UserResponse:
         """
         사용자 인증 비즈니스 로직
         - 사용자 ID 또는 이메일로 조회
@@ -170,18 +162,15 @@ class UserService:
             user = await self.user_repo.get_by_id(user_id_or_email)
         
         if not user:
-            return None
+            raise AuthenticationError("아이디 또는 비밀번호가 올바르지 않습니다")
         
         # 계정 잠금 확인
         if user.locked_until and user.locked_until > datetime.utcnow():
-            raise HTTPException(
-                status_code=status.HTTP_423_LOCKED,
-                detail=f"계정이 {user.locked_until}까지 잠겨있습니다."
-            )
+            raise AuthenticationError(f"계정이 {user.locked_until}까지 잠겨있습니다.")
         
         # 비밀번호 검증
         if not user.password_hash or not self.auth_service.verify_password(password, user.password_hash):
-            return None
+            raise AuthenticationError("아이디 또는 비밀번호가 올바르지 않습니다")
         
         return UserResponse.model_validate(user)
     
@@ -193,10 +182,13 @@ class UserService:
         - 로그인 실패 횟수 관리
         - 마지막 로그인 시간 업데이트
         """
-        # 사용자 인증
-        user_response = await self.authenticate_user(user_id_or_email, password)
+        log = get_logger_with_request_id()
+        log.info("Login attempt", identifier=user_id_or_email)
         
-        if not user_response:
+        # 사용자 인증
+        try:
+            user_response = await self.authenticate_user(user_id_or_email, password)
+        except AuthenticationError as auth_error:
             # 실패 횟수 증가 (실제 사용자가 있는 경우)
             user = None
             if "@" in user_id_or_email:
@@ -207,18 +199,14 @@ class UserService:
             if user:
                 await self.user_repo.increment_failed_login(user.user_id)
             
-            raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="아이디 또는 비밀번호가 올바르지 않습니다"
-            )
+            log.warning("Authentication failed", identifier=user_id_or_email, reason=str(auth_error))
+            raise  # 원래 예외 다시 발생
         
         # 계정 상태 확인
         user = await self.user_repo.get_by_id(user_response.user_id)
         if user.user_status != UserStatus.ACTIVE:
-            raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN,
-                detail="계정이 비활성화되었습니다"
-            )
+            log.warning("Login failed - inactive account", user_id=user.user_id, status=user.user_status.value)
+            raise AuthenticationError("계정이 비활성화되었습니다")
         
         # 로그인 성공 시 실패 횟수 초기화
         await self.user_repo.reset_failed_login(user.user_id)
@@ -233,4 +221,5 @@ class UserService:
         # 마지막 로그인 시간 업데이트
         await self.user_repo.update_last_login(user.user_id)
         
+        log.info("Login successful", user_id=user.user_id, email=user.email)
         return access_token, user_response

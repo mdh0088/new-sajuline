@@ -10,3 +10,4 @@ you MUST read below files and STRICTLY FOLLOW as guidelines:
 - vooster__prd: @rules/vooster__prd.md
 - vooster__step-by-step: @rules/vooster__step-by-step.md
 - vooster__tdd: @rules/vooster__tdd.md
+- custom__logging: @rules/custom__logging.md

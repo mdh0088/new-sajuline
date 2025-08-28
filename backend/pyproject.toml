@@ -73,6 +73,7 @@ dependencies = [
     # 로깅 및 모니터링
     "sentry-sdk[fastapi]==1.45.0",
     "python-json-logger==2.0.7",
+    "loguru==0.7.2",
     
     # 환경 변수 및 설정
     "python-dotenv==1.0.1",

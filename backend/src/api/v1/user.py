@@ -14,7 +14,8 @@ from src.schemas.user import (
     UserLogin, PasswordChange
 )
 from src.schemas.auth import LoginRequest, LoginData
-from src.schemas.response import APIResponse, ok, fail
+from src.common.response import APIResponse, ok, fail
+from src.common.logging import logger, get_logger_with_request_id
 
 router = APIRouter(prefix="/users", tags=["users"])
 
@@ -67,13 +68,7 @@ async def get_user(
     user_service: UserService = Depends(get_user_service)
 ):
     """사용자 ID로 조회"""
-    user = await user_service.get_user(user_id)
-    if not user:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="사용자를 찾을 수 없습니다."
-        )
-    return user
+    return await user_service.get_user(user_id)
 
 
 @router.get(
@@ -87,13 +82,7 @@ async def get_user_by_email(
     user_service: UserService = Depends(get_user_service)
 ):
     """이메일로 사용자 조회"""
-    user = await user_service.get_user_by_email(email)
-    if not user:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="사용자를 찾을 수 없습니다."
-        )
-    return user
+    return await user_service.get_user_by_email(email)
 
 
 @router.put(
@@ -155,13 +144,7 @@ async def authenticate_user(
     user_service: UserService = Depends(get_user_service)
 ):
     """사용자 인증 - ID/이메일 및 비밀번호 검증"""
-    user = await user_service.authenticate_user(login_data.user_id, login_data.password)
-    if not user:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="잘못된 사용자 정보입니다."
-        )
-    return user
+    return await user_service.authenticate_user(login_data.user_id, login_data.password)
 
 
 @router.post(
@@ -183,6 +166,9 @@ async def login(
     user_service: UserService = Depends(get_user_service)
 ):
     """사용자 로그인"""
+    log = get_logger_with_request_id()
+    log.info("Login attempt", user_id=request.user_id)
+    
     try:
         # 로그인 처리
         access_token, user_response = await user_service.login(
@@ -207,16 +193,18 @@ async def login(
             nickname=user_response.nickname
         )
         
+        log.info("Authentication successful", user_id=user_response.user_id)
         return ok(data=login_data, message="로그인 성공")
         
-    except HTTPException as e:
-        print(f"HTTPException in login: {e.detail}, status: {e.status_code}")
-        return fail(message=e.detail, code=str(e.status_code))
     except Exception as e:
-        print(f"Unexpected error in login: {type(e).__name__}: {str(e)}")
-        import traceback
-        traceback.print_exc()
-        return fail(message="로그인 처리 중 오류가 발생했습니다", code="INTERNAL_SERVER_ERROR")
+        log.error("Login failed", user_id=request.user_id, error=str(e), error_type=type(e).__name__)
+        # 구체적인 예외 타입에 따른 적절한 응답 반환
+        if "AuthenticationError" in str(type(e)):
+            return fail(message=str(e), code="AUTHENTICATION_FAILED")
+        elif "ValidationError" in str(type(e)):
+            return fail(message=str(e), code="VALIDATION_ERROR")
+        else:
+            return fail(message="로그인 처리 중 오류가 발생했습니다", code="LOGIN_ERROR")
 
 
 @router.post(
@@ -228,19 +216,12 @@ async def login(
 )
 async def logout(response: Response):
     """사용자 로그아웃"""
-    try:
-        # HttpOnly 쿠키에서 JWT 토큰 삭제
-        response.delete_cookie(
-            key="access_token",
-            httponly=True,
-            secure=True,
-            samesite="lax"
-        )
-        
-        return ok(data=None, message="로그아웃 성공")
-        
-    except Exception as e:
-        print(f"Unexpected error in logout: {type(e).__name__}: {str(e)}")
-        import traceback
-        traceback.print_exc()
-        return fail(message="로그아웃 처리 중 오류가 발생했습니다", code="INTERNAL_SERVER_ERROR")
+    # HttpOnly 쿠키에서 JWT 토큰 삭제
+    response.delete_cookie(
+        key="access_token",
+        httponly=True,
+        secure=True,
+        samesite="lax"
+    )
+    
+    return ok(data=None, message="로그아웃 성공")

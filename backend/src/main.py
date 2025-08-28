@@ -2,13 +2,23 @@
 사주라인 리뉴얼 프로젝트 - FastAPI 메인 애플리케이션
 """
 
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.trustedhost import TrustedHostMiddleware
+from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 
 from src.config.settings import settings
 from src.api.v1.user import router as user_router
+from src.common.response import fail
+from src.common.exceptions import BaseAppException
+from src.common.logging.config import setup_logging
+from src.common.logging.events import SystemEvents
+from src.common.logging import logger
+from src.common.middleware.logging import LoggingMiddleware
+
+# 로깅 시스템 초기화
+setup_logging()
 
 # FastAPI 앱 생성
 app = FastAPI(
@@ -44,6 +54,50 @@ app.add_middleware(
     TrustedHostMiddleware,
     allowed_hosts=settings.trusted_hosts_list
 )
+
+# 로깅 미들웨어 (가장 먼저 추가)
+app.add_middleware(LoggingMiddleware)
+
+# 전역 예외 핸들러
+@app.exception_handler(BaseAppException)
+async def app_exception_handler(request: Request, exc: BaseAppException):
+    """커스텀 애플리케이션 예외 처리"""
+    # 에러 로깅
+    logger.error(f"Application Error: {exc.message}", 
+                status_code=exc.status_code,
+                path=request.url.path,
+                method=request.method)
+    
+    return JSONResponse(
+        status_code=exc.status_code,
+        content={
+            "success": False,
+            "message": exc.message,
+            "data": None,
+            "error": {"code": "APP_ERROR"},
+            "meta": {"timestamp": None, "request_id": None, "pagination": None}
+        }
+    )
+
+@app.exception_handler(Exception)
+async def general_exception_handler(request: Request, exc: Exception):
+    """예상치 못한 예외 처리"""
+    # 시스템 에러 로깅
+    logger.exception(f"Unhandled Exception: {str(exc)}", 
+                    path=request.url.path,
+                    method=request.method,
+                    exception_type=type(exc).__name__)
+    
+    return JSONResponse(
+        status_code=500,
+        content={
+            "success": False,
+            "message": "서버 내부 오류가 발생했습니다",
+            "data": None,
+            "error": {"code": "INTERNAL_SERVER_ERROR"},
+            "meta": {"timestamp": None, "request_id": None, "pagination": None}
+        }
+    )
 
 # API 라우터 등록
 app.include_router(user_router, prefix="/api/v1")
@@ -91,6 +145,22 @@ async def readiness_check():
         status="ready",
         services=services
     )
+
+
+@app.on_event("startup")
+async def startup_event():
+    """애플리케이션 시작 이벤트"""
+    SystemEvents.application_started(
+        environment="development" if settings.is_development else "production",
+        debug=settings.debug,
+        log_level=settings.log_level
+    )
+
+
+@app.on_event("shutdown") 
+async def shutdown_event():
+    """애플리케이션 종료 이벤트"""
+    SystemEvents.application_shutdown()
 
 
 def main():
