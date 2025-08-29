@@ -9,12 +9,12 @@ from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 
 from src.config.settings import settings
-from src.api.v1.user import router as user_router
+from src.api.v1.user_api import router as user_router
 from src.common.response import fail
-from src.common.exceptions import BaseAppException
+from src.exceptions.custom_exceptions import BaseAppException
 from src.common.logging.config import setup_logging
 from src.common.logging.events import SystemEvents
-from src.common.logging import logger
+from src.common.logging import logger, get_logger_with_request_id
 from src.common.middleware.logging import LoggingMiddleware
 
 # 로깅 시스템 초기화
@@ -62,21 +62,63 @@ app.add_middleware(LoggingMiddleware)
 @app.exception_handler(BaseAppException)
 async def app_exception_handler(request: Request, exc: BaseAppException):
     """커스텀 애플리케이션 예외 처리"""
-    # 에러 로깅
-    logger.error(f"Application Error: {exc.message}", 
-                status_code=exc.status_code,
-                path=request.url.path,
-                method=request.method)
+    # 간단한 에러 로깅 (스택 트레이스 없음)
+    log = get_logger_with_request_id()
+    
+    # status_code에 따른 로그 레벨 구분
+    # 에러 발생 위치 정보 추가
+    import traceback
+    tb = traceback.extract_tb(exc.__traceback__)
+    error_location = None
+    app_frames = []
+    
+    if tb:
+        # 모든 traceback 프레임 분석 (디버그용)
+        for frame in tb:
+            if '/app/src/' in frame.filename:  # 애플리케이션 코드만
+                app_frames.append(f"{frame.filename.split('/')[-1]}:{frame.lineno}:{frame.name}")
+        
+        # 실제 에러 발생 위치 (애플리케이션 코드 중 마지막)
+        if app_frames:
+            error_location = app_frames[-1]
+        elif tb:
+            # fallback: 전체 tb 중 마지막
+            last_frame = tb[-1]
+            error_location = f"{last_frame.filename.split('/')[-1]}:{last_frame.lineno}:{last_frame.name}"
+    
+    # Request body 및 User-Agent 정보 가져오기 (미들웨어에서 저장한 것)
+    request_body = getattr(request.state, 'request_body', None)
+    user_agent_info = getattr(request.state, 'user_agent_info', {})
+    
+    if exc.status_code >= 500:
+        log.error(f"{type(exc).__name__}: {exc.message}",
+                 path=request.url.path,
+                 method=request.method,
+                 status_code=exc.status_code,
+                 client_ip=request.client.host,
+                 user_agent=request.headers.get("user-agent", "unknown"),
+                 device=user_agent_info.get("device", "unknown"),
+                 browser=user_agent_info.get("browser", "unknown"),
+                 os=user_agent_info.get("os", "unknown"),
+                 error_location=error_location,
+                 call_stack=app_frames if len(app_frames) > 1 else None,
+                 request_body=request_body)
+    else:
+        log.warning(f"{type(exc).__name__}: {exc.message}",
+                   path=request.url.path,
+                   method=request.method,
+                   status_code=exc.status_code,
+                   client_ip=request.client.host,
+                   device=user_agent_info.get("device", "unknown"),
+                   browser=user_agent_info.get("browser", "unknown"),
+                   os=user_agent_info.get("os", "unknown"),
+                   error_location=error_location,
+                   call_stack=app_frames if len(app_frames) > 1 else None,
+                   request_body=request_body)
     
     return JSONResponse(
         status_code=exc.status_code,
-        content={
-            "success": False,
-            "message": exc.message,
-            "data": None,
-            "error": {"code": "APP_ERROR"},
-            "meta": {"timestamp": None, "request_id": None, "pagination": None}
-        }
+        content=fail(message=exc.message).model_dump(mode='json')
     )
 
 @app.exception_handler(Exception)

@@ -6,13 +6,13 @@ from typing import Optional, List, Tuple
 from datetime import datetime
 
 from sqlalchemy.ext.asyncio import AsyncSession
-from src.common.exceptions import NotFoundError, DuplicateError, AuthenticationError, ValidationError
+from src.exceptions.custom_exceptions import NotFoundError, DuplicateError, AuthenticationError, ValidationError
 from src.common.logging import logger, get_logger_with_request_id
 
-from src.models.user import User, UserStatus
-from src.schemas.user import UserCreate, UserUpdate, UserResponse, UserListResponse
-from src.repositories.user import UserRepository
-from src.services.auth import AuthService
+from src.models.user_model import User, UserStatus
+from src.schemas.user_schema import UserCreate, UserUpdate, UserResponse, UserListResponse
+from src.repositories.user_repository import UserRepository
+from src.services.auth_service import AuthService
 
 
 class UserService:
@@ -22,7 +22,6 @@ class UserService:
         self.user_repo = user_repo
         self.auth_service = auth_service
     
-    @logger.catch
     async def create_user(self, user_data: UserCreate) -> UserResponse:
         """
         사용자 생성 비즈니스 로직
@@ -32,6 +31,10 @@ class UserService:
         """
         log = get_logger_with_request_id()
         log.info("Creating new user", user_id=user_data.user_id, email=user_data.email)
+        
+        # 테스트용 강제 서비스 레이어 오류 발생
+        if user_data.user_id == "create_user_error_test":
+            raise ValidationError("Service layer: 사용자 생성 비즈니스 로직 실패 테스트")
         
         # 중복 검증
         if await self.user_repo.exists_by_user_id(user_data.user_id):
@@ -57,9 +60,12 @@ class UserService:
         log.info("User created successfully", user_id=user.user_id, email=user.email)
         return UserResponse.model_validate(user)
     
-    @logger.catch
     async def get_user(self, user_id: str) -> UserResponse:
         """사용자 조회"""
+        # 테스트용 강제 서비스 레이어 오류 발생
+        if user_id == "get_user_error_test":
+            raise ValidationError("Service layer: 사용자 조회 비즈니스 로직 실패 테스트")
+        
         user = await self.user_repo.get_by_id(user_id)
         if not user:
             raise NotFoundError("사용자를 찾을 수 없습니다.")
@@ -68,13 +74,16 @@ class UserService:
     
     async def get_user_by_email(self, email: str) -> UserResponse:
         """이메일로 사용자 조회"""
+        # 테스트용 강제 서비스 레이어 오류 발생
+        if email == "get_user_by_email_error_test@test.com":
+            raise ValidationError("Service layer: 이메일 사용자 조회 비즈니스 로직 실패 테스트")
+        
         user = await self.user_repo.get_by_email(email)
         if not user:
             raise NotFoundError("사용자를 찾을 수 없습니다.")
         
         return UserResponse.model_validate(user)
     
-    @logger.catch
     async def update_user(self, user_id: str, user_data: UserUpdate) -> Optional[UserResponse]:
         """
         사용자 정보 수정 비즈니스 로직
@@ -82,6 +91,10 @@ class UserService:
         - 중복 검증 (닉네임, 전화번호 변경시)
         - 정보 수정
         """
+        # 테스트용 강제 서비스 레이어 오류 발생
+        if user_id == "update_user_error_test":
+            raise ValidationError("Service layer: 사용자 정보 수정 비즈니스 로직 실패 테스트")
+        
         # 사용자 존재 여부 확인
         existing_user = await self.user_repo.get_by_id(user_id)
         if not existing_user:
@@ -97,13 +110,16 @@ class UserService:
         
         return UserResponse.model_validate(updated_user) if updated_user else None
     
-    @logger.catch
     async def delete_user(self, user_id: str) -> bool:
         """
         사용자 삭제 비즈니스 로직
         - 존재 여부 확인
         - 삭제 처리
         """
+        # 테스트용 강제 서비스 레이어 오류 발생
+        if user_id == "delete_user_error_test":
+            raise ValidationError("Service layer: 사용자 삭제 비즈니스 로직 실패 테스트")
+        
         existing_user = await self.user_repo.get_by_id(user_id)
         if not existing_user:
             raise NotFoundError("사용자를 찾을 수 없습니다.")
@@ -123,6 +139,10 @@ class UserService:
         - 페이징 처리
         - 상태별 필터링
         """
+        # 테스트용 강제 서비스 레이어 오류 발생
+        if user_status == "get_user_list_error_test":
+            raise ValidationError("Service layer: 사용자 목록 조회 비즈니스 로직 실패 테스트")
+        
         if page < 1:
             page = 1
         if size < 1 or size > 100:
@@ -146,7 +166,6 @@ class UserService:
             size=size
         )
     
-    @logger.catch
     async def authenticate_user(self, user_id_or_email: str, password: str) -> UserResponse:
         """
         사용자 인증 비즈니스 로직
@@ -154,6 +173,10 @@ class UserService:
         - 비밀번호 검증
         - 계정 잠금 확인
         """
+        # 테스트용 강제 서비스 레이어 오류 발생
+        if user_id_or_email == "service_error_test":
+            raise ValidationError("Service layer: 비즈니스 로직 검증 실패 테스트")
+        
         # 사용자 조회 (ID 또는 이메일)
         user = None
         if "@" in user_id_or_email:

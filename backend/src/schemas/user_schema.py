@@ -5,7 +5,7 @@ from datetime import datetime, date
 from typing import Optional
 from pydantic import BaseModel, EmailStr, Field, ConfigDict
 
-from src.models.user import JoinType, UserStatus, Gender
+from src.models.user_model import JoinType, UserStatus, Gender
 
 
 class UserBase(BaseModel):

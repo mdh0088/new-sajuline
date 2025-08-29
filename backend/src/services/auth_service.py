@@ -10,6 +10,8 @@ from passlib.context import CryptContext
 from fastapi import HTTPException, status, Request, Depends
 
 from src.config.settings import settings
+from src.exceptions.custom_exceptions import AuthenticationError, ValidationError
+from src.common.logging import get_logger_with_request_id
 
 
 class AuthService:
@@ -29,47 +31,81 @@ class AuthService:
     
     def verify_password(self, plain_password: str, hashed_password: str) -> bool:
         """비밀번호 검증"""
-        return self.pwd_context.verify(plain_password, hashed_password)
+        log = get_logger_with_request_id()
+        
+        # 테스트용 강제 비밀번호 검증 오류
+        if plain_password == "password_verify_error_test":
+            raise ValidationError("Auth service layer: 비밀번호 검증 처리 실패 테스트")
+        
+        try:
+            return self.pwd_context.verify(plain_password, hashed_password)
+        except Exception as e:
+            log.error("Password verification failed", error=str(e))
+            raise ValidationError("비밀번호 검증 중 오류가 발생했습니다")
     
     def hash_password(self, password: str) -> str:
         """비밀번호 해싱"""
-        return self.pwd_context.hash(password)
+        log = get_logger_with_request_id()
+        
+        # 테스트용 강제 비밀번호 해싱 오류
+        if password == "password_hash_error_test":
+            raise ValidationError("Auth service layer: 비밀번호 해싱 처리 실패 테스트")
+        
+        try:
+            return self.pwd_context.hash(password)
+        except Exception as e:
+            log.error("Password hashing failed", error=str(e))
+            raise ValidationError("비밀번호 해싱 중 오류가 발생했습니다")
     
     def create_access_token(self, user_id: str, email: str, role: str = "user") -> str:
         """JWT 액세스 토큰 생성"""
-        now = datetime.utcnow()
-        expire = now + timedelta(minutes=self.access_token_expire_minutes)
+        log = get_logger_with_request_id()
         
-        payload = {
-            "sub": user_id,
-            "email": email,
-            "role": role,
-            "exp": expire,
-            "iat": now,
-            "jti": str(uuid.uuid4())
-        }
+        # 테스트용 강제 토큰 생성 오류
+        if user_id == "token_create_error_test":
+            raise ValidationError("Auth service layer: JWT 토큰 생성 실패 테스트")
         
-        return jwt.encode(payload, self.secret_key, algorithm=self.algorithm)
+        try:
+            now = datetime.utcnow()
+            expire = now + timedelta(minutes=self.access_token_expire_minutes)
+            
+            payload = {
+                "sub": user_id,
+                "email": email,
+                "role": role,
+                "exp": expire,
+                "iat": now,
+                "jti": str(uuid.uuid4())
+            }
+            
+            return jwt.encode(payload, self.secret_key, algorithm=self.algorithm)
+        except Exception as e:
+            log.error("JWT token creation failed", user_id=user_id, email=email, error=str(e))
+            raise ValidationError("토큰 생성 중 오류가 발생했습니다")
     
     def verify_token(self, token: str) -> Dict[str, any]:
         """JWT 토큰 검증"""
+        log = get_logger_with_request_id()
+        
+        # 테스트용 강제 인증 서비스 레이어 오류 발생
+        if token == "auth_service_error_test":
+            raise AuthenticationError("Auth service layer: JWT 토큰 검증 실패 테스트")
+        
         try:
             payload = jwt.decode(token, self.secret_key, algorithms=[self.algorithm])
             
             # 필수 필드 확인
             if not payload.get("sub") or not payload.get("email"):
-                raise HTTPException(
-                    status_code=status.HTTP_401_UNAUTHORIZED,
-                    detail="토큰이 유효하지 않습니다"
-                )
+                log.warning("Invalid JWT token: missing required fields", 
+                           has_sub=bool(payload.get("sub")), 
+                           has_email=bool(payload.get("email")))
+                raise AuthenticationError("토큰이 유효하지 않습니다")
             
             return payload
             
-        except JWTError:
-            raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="토큰이 유효하지 않습니다"
-            )
+        except JWTError as jwt_error:
+            log.warning("JWT decode failed", error=str(jwt_error))
+            raise AuthenticationError("토큰이 유효하지 않습니다")
 
 
 # JWT 인증 관련 스키마 (임시로 여기에 정의)

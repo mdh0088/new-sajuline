@@ -33,7 +33,8 @@ class LoguruConfig:
                 format=self._get_console_format(),
                 colorize=True,
                 backtrace=True,
-                diagnose=True
+                diagnose=True,
+                filter=RequestContextFilter()
             )
         else:
             # 프로덕션에서는 JSON 포맷
@@ -41,29 +42,32 @@ class LoguruConfig:
                 sys.stdout,
                 level=self.log_level,
                 format="{time:YYYY-MM-DD HH:mm:ss.SSS} | {level} | {name}:{function}:{line} | {message}",
-                serialize=True
+                serialize=True,
+                filter=RequestContextFilter()
             )
         
-        # 파일 핸들러 추가
+        # 파일 핸들러 추가 (간결한 형태)
         logger.add(
             self.log_dir / "app.log",
             level="INFO",
-            format=self._get_json_format(),
+            format=self._get_file_format(),
             rotation="10 MB",
             retention="7 days",
             compression="gz",
-            serialize=True
+            serialize=False,  # JSON 형태 비활성화
+            filter=RequestContextFilter()
         )
         
-        # 에러 파일 핸들러
+        # 에러 파일 핸들러 (간결한 형태)
         logger.add(
             self.log_dir / "error.log",
             level="ERROR",
-            format=self._get_json_format(),
+            format=self._get_file_format(),
             rotation="10 MB", 
             retention="30 days",
             compression="gz",
-            serialize=True
+            serialize=False,  # JSON 형태 비활성화
+            filter=RequestContextFilter()
         )
         
         logger.info("Logging system initialized", extra={
@@ -77,6 +81,7 @@ class LoguruConfig:
             "<green>{time:YYYY-MM-DD HH:mm:ss.SSS}</green> | "
             "<level>{level: <8}</level> | "
             "<cyan>{name}</cyan>:<cyan>{function}</cyan>:<cyan>{line}</cyan> | "
+            "<yellow>[{extra[request_id]}]</yellow> | "
             "<level>{message}</level>"
         )
     
@@ -87,6 +92,16 @@ class LoguruConfig:
             "{level} | "
             "{name}:{function}:{line} | "
             "{message}"
+        )
+    
+    def _get_file_format(self) -> str:
+        """간결한 파일 포맷"""
+        return (
+            "{time:YYYY-MM-DD HH:mm:ss.SSS} | "
+            "{level: <8} | "
+            "{name}:{function}:{line} | "
+            "{message} | "
+            "{extra}"
         )
 
 

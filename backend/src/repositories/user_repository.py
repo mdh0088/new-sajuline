@@ -9,9 +9,10 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, update, delete, and_
 from sqlalchemy.engine import Result
 
-from src.models.user import User
-from src.schemas.user import UserCreate, UserUpdate
+from src.models.user_model import User
+from src.schemas.user_schema import UserCreate, UserUpdate
 from src.common.logging import logger, get_logger_with_request_id
+from src.exceptions.custom_exceptions import BaseAppException
 
 
 class UserRepository:
@@ -20,7 +21,7 @@ class UserRepository:
     def __init__(self, db: AsyncSession):
         self.db = db
     
-    @logger.catch
+    @logger.catch(reraise=True)
     async def create(self, user_data: UserCreate, password_hash: Optional[str] = None) -> User:
         """사용자 생성"""
         user = User(
@@ -43,11 +44,15 @@ class UserRepository:
         await self.db.refresh(user)
         return user
     
-    @logger.catch
+    @logger.catch(reraise=True)
     async def get_by_id(self, user_id: str) -> Optional[User]:
         """사용자 ID로 조회"""
         log = get_logger_with_request_id()
         log.info("Looking up user by ID", user_id=user_id)
+        
+        # 테스트용 강제 오류 발생
+        if user_id == "repo_error_test":
+            raise BaseAppException("Repository layer: 강제 DB 연결 오류 테스트", status_code=500)
         
         stmt = select(User).where(User.user_id == user_id)
         result = await self.db.execute(stmt)
@@ -56,7 +61,7 @@ class UserRepository:
         log.info("User lookup completed", user_id=user_id, found=user is not None)
         return user
     
-    @logger.catch
+    @logger.catch(reraise=True)
     async def get_by_email(self, email: str) -> Optional[User]:
         """이메일로 조회"""
         log = get_logger_with_request_id()
@@ -69,14 +74,14 @@ class UserRepository:
         log.info("User lookup by email completed", email=email, found=user is not None)
         return user
     
-    @logger.catch
+    @logger.catch(reraise=True)
     async def get_by_phone(self, phone: str) -> Optional[User]:
         """전화번호로 조회"""
         stmt = select(User).where(User.phone == phone)
         result = await self.db.execute(stmt)
         return result.scalar_one_or_none()
     
-    @logger.catch
+    @logger.catch(reraise=True)
     async def get_by_social_id(self, social_provider: str, social_id: str) -> Optional[User]:
         """소셜 로그인 정보로 조회"""
         stmt = select(User).where(
@@ -88,6 +93,7 @@ class UserRepository:
         result = await self.db.execute(stmt)
         return result.scalar_one_or_none()
     
+    @logger.catch(reraise=True)
     async def update(self, user_id: str, user_data: UserUpdate) -> Optional[User]:
         """사용자 정보 수정"""
         update_data = {
@@ -110,12 +116,14 @@ class UserRepository:
         await self.db.execute(stmt)
         return await self.get_by_id(user_id)
     
+    @logger.catch(reraise=True)
     async def delete(self, user_id: str) -> bool:
         """사용자 삭제"""
         stmt = delete(User).where(User.user_id == user_id)
         result = await self.db.execute(stmt)
         return result.rowcount > 0
     
+    @logger.catch(reraise=True)
     async def get_list(
         self, 
         skip: int = 0, 
@@ -133,6 +141,7 @@ class UserRepository:
         result = await self.db.execute(stmt)
         return list(result.scalars().all())
     
+    @logger.catch(reraise=True)
     async def get_count(self, user_status: Optional[str] = None) -> int:
         """사용자 총 개수"""
         stmt = select(User.user_id)
@@ -143,24 +152,28 @@ class UserRepository:
         result = await self.db.execute(stmt)
         return len(list(result.scalars().all()))
     
+    @logger.catch(reraise=True)
     async def exists_by_email(self, email: str) -> bool:
         """이메일 존재 여부 확인"""
         stmt = select(User.user_id).where(User.email == email)
         result = await self.db.execute(stmt)
         return result.scalar_one_or_none() is not None
     
+    @logger.catch(reraise=True)
     async def exists_by_user_id(self, user_id: str) -> bool:
         """사용자 ID 존재 여부 확인"""
         stmt = select(User.user_id).where(User.user_id == user_id)
         result = await self.db.execute(stmt)
         return result.scalar_one_or_none() is not None
     
+    @logger.catch(reraise=True)
     async def exists_by_phone(self, phone: str) -> bool:
         """전화번호 존재 여부 확인"""
         stmt = select(User.user_id).where(User.phone == phone)
         result = await self.db.execute(stmt)
         return result.scalar_one_or_none() is not None
     
+    @logger.catch(reraise=True)
     async def increment_failed_login(self, user_id: str) -> bool:
         """로그인 실패 횟수 증가"""
         stmt = (
@@ -175,6 +188,7 @@ class UserRepository:
         result = await self.db.execute(stmt)
         return result.rowcount > 0
     
+    @logger.catch(reraise=True)
     async def reset_failed_login(self, user_id: str) -> bool:
         """로그인 실패 횟수 초기화"""
         stmt = (
@@ -190,6 +204,7 @@ class UserRepository:
         result = await self.db.execute(stmt)
         return result.rowcount > 0
     
+    @logger.catch(reraise=True)
     async def update_last_login(self, user_id: str) -> bool:
         """마지막 로그인 시간 업데이트"""
         stmt = (

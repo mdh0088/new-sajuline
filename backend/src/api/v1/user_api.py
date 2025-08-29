@@ -6,9 +6,9 @@ from fastapi import APIRouter, Depends, HTTPException, status, Query, Response
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.core.database import get_db_maria
-from src.repositories.user import UserRepository
-from src.services.user import UserService
-from src.services.auth import AuthService
+from src.repositories.user_repository import UserRepository
+from src.services.user_service import UserService
+from src.services.auth_service import AuthService
 from src.schemas.user import (
     UserCreate, UserUpdate, UserResponse, UserListResponse, 
     UserLogin, PasswordChange
@@ -16,6 +16,7 @@ from src.schemas.user import (
 from src.schemas.auth import LoginRequest, LoginData
 from src.common.response import APIResponse, ok, fail
 from src.common.logging import logger, get_logger_with_request_id
+from src.common.exceptions import BaseAppException
 
 router = APIRouter(prefix="/users", tags=["users"])
 
@@ -139,6 +140,7 @@ async def get_user_list(
         423: {"description": "계정 잠금"}
     }
 )
+
 async def authenticate_user(
     login_data: UserLogin,
     user_service: UserService = Depends(get_user_service)
@@ -169,42 +171,35 @@ async def login(
     log = get_logger_with_request_id()
     log.info("Login attempt", user_id=request.user_id)
     
-    try:
-        # 로그인 처리
-        access_token, user_response = await user_service.login(
-            user_id_or_email=request.user_id,
-            password=request.password
-        )
-        
-        # HttpOnly 쿠키에 JWT 토큰 설정
-        response.set_cookie(
-            key="access_token",
-            value=access_token,
-            httponly=True,
-            secure=True,  # HTTPS에서만 전송
-            samesite="lax",  # CSRF 보호
-            max_age=30 * 60  # 30분
-        )
-        
-        # 응답 데이터 생성
-        login_data = LoginData(
-            user_id=user_response.user_id,
-            email=user_response.email,
-            nickname=user_response.nickname
-        )
-        
-        log.info("Authentication successful", user_id=user_response.user_id)
-        return ok(data=login_data, message="로그인 성공")
-        
-    except Exception as e:
-        log.error("Login failed", user_id=request.user_id, error=str(e), error_type=type(e).__name__)
-        # 구체적인 예외 타입에 따른 적절한 응답 반환
-        if "AuthenticationError" in str(type(e)):
-            return fail(message=str(e), code="AUTHENTICATION_FAILED")
-        elif "ValidationError" in str(type(e)):
-            return fail(message=str(e), code="VALIDATION_ERROR")
-        else:
-            return fail(message="로그인 처리 중 오류가 발생했습니다", code="LOGIN_ERROR")
+    # 테스트용 강제 API 레이어 오류 발생  
+    if request.user_id == "api_error_test":
+        raise BaseAppException("API layer: 예상치 못한 시스템 오류 테스트", status_code=500)
+    
+    # 로그인 처리 (예외는 전역 핸들러에서 처리)
+    access_token, user_response = await user_service.login(
+        user_id_or_email=request.user_id,
+        password=request.password
+    )
+    
+    # HttpOnly 쿠키에 JWT 토큰 설정
+    response.set_cookie(
+        key="access_token",
+        value=access_token,
+        httponly=True,
+        secure=True,  # HTTPS에서만 전송
+        samesite="lax",  # CSRF 보호
+        max_age=30 * 60  # 30분
+    )
+    
+    # 응답 데이터 생성
+    login_data = LoginData(
+        user_id=user_response.user_id,
+        email=user_response.email,
+        nickname=user_response.nickname
+    )
+    
+    log.info("Authentication successful", user_id=user_response.user_id)
+    return ok(data=login_data, message="로그인 성공")
 
 
 @router.post(
