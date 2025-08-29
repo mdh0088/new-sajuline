@@ -8,6 +8,10 @@ from fastapi.middleware.trustedhost import TrustedHostMiddleware
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 
+# 레이트 리미팅 관련 import
+from slowapi import _rate_limit_exceeded_handler
+from slowapi.errors import RateLimitExceeded
+
 from src.config.settings import settings
 from src.api.v1.user_api import router as user_router
 from src.common.response import fail
@@ -16,6 +20,7 @@ from src.common.logging.config import setup_logging
 from src.common.logging.events import SystemEvents
 from src.common.logging import logger, get_logger_with_request_id
 from src.common.middleware.logging import LoggingMiddleware
+from src.common.middleware.rate_limit import limiter
 
 # 로깅 시스템 초기화
 setup_logging()
@@ -39,6 +44,10 @@ app = FastAPI(
         },
     ],
 )
+
+# 레이트 리미팅 설정 (가장 먼저 추가)
+app.state.limiter = limiter
+app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
 # CORS 설정
 app.add_middleware(

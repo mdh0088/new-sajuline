@@ -21,9 +21,9 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "src"))
 
 # 설정 및 모델 import
 from src.config.settings import settings
-from src.models.user import Base  # Base 메타데이터
+from src.models.user_model import Base  # Base 메타데이터
 # 모든 모델을 import (중요!)
-from src.models.user import User
+from src.models.user_model import User
 
 # Alembic Config 객체
 config = context.config

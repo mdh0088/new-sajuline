@@ -134,6 +134,27 @@ class Settings(BaseSettings):
     def mariadb_url(self) -> str:
         """MariaDB 연결 URL 생성"""
         return f"mysql+aiomysql://{self.mariadb_user}:{self.mariadb_password}@{self.mariadb_host}:{self.mariadb_port}/{self.mariadb_db}?charset={self.mariadb_charset}"
+    
+    @property
+    def redis_host(self) -> str:
+        """Redis URL에서 host 추출"""
+        # redis://redis:6379/0 -> redis
+        if "://" in self.redis_url:
+            host_port = self.redis_url.split("://")[1].split("/")[0]
+            if ":" in host_port:
+                return host_port.split(":")[0]
+            return host_port
+        return "localhost"  # fallback
+    
+    @property
+    def redis_port(self) -> int:
+        """Redis URL에서 port 추출"""  
+        # redis://redis:6379/0 -> 6379
+        if "://" in self.redis_url:
+            host_port = self.redis_url.split("://")[1].split("/")[0]
+            if ":" in host_port:
+                return int(host_port.split(":")[1])
+        return 6379  # default Redis port
 
 
 # 전역 설정 인스턴스

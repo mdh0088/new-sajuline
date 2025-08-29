@@ -2,21 +2,24 @@
 사용자 관련 API 엔드포인트
 """
 from typing import Optional
-from fastapi import APIRouter, Depends, HTTPException, status, Query, Response
+from fastapi import APIRouter, Depends, HTTPException, status, Query, Response, Request
 from sqlalchemy.ext.asyncio import AsyncSession
+
+# 레이트 리미팅 import 추가
+from src.common.middleware.rate_limit import limiter
 
 from src.core.database import get_db_maria
 from src.repositories.user_repository import UserRepository
 from src.services.user_service import UserService
 from src.services.auth_service import AuthService
-from src.schemas.user import (
+from src.schemas.user_schema import (
     UserCreate, UserUpdate, UserResponse, UserListResponse, 
     UserLogin, PasswordChange
 )
-from src.schemas.auth import LoginRequest, LoginData
+from src.schemas.auth_schema import LoginRequest, LoginData
 from src.common.response import APIResponse, ok, fail
 from src.common.logging import logger, get_logger_with_request_id
-from src.common.exceptions import BaseAppException
+from src.exceptions.custom_exceptions import BaseAppException
 
 router = APIRouter(prefix="/users", tags=["users"])
 
@@ -50,7 +53,9 @@ def get_user_service(
         400: {"description": "중복된 사용자 정보"}
     }
 )
+@limiter.limit("3/hour")  # 시간당 3회 제한 (어뷰징 방지)
 async def create_user(
+    request: Request,  # ⭐ Request 파라미터 추가 필수
     user_data: UserCreate,
     user_service: UserService = Depends(get_user_service)
 ):
@@ -140,8 +145,9 @@ async def get_user_list(
         423: {"description": "계정 잠금"}
     }
 )
-
+@limiter.limit("10/minute")  # 분당 10회 제한 (브루트포스 공격 방지)
 async def authenticate_user(
+    request: Request,
     login_data: UserLogin,
     user_service: UserService = Depends(get_user_service)
 ):
@@ -161,24 +167,26 @@ async def authenticate_user(
         423: {"description": "계정 잠금"}
     }
 )
+@limiter.limit("15/minute")  # 분당 15회 제한 (로그인 시도 제한)
 async def login(
-    request: LoginRequest,
+    request: Request,
+    login_request: LoginRequest,
     response: Response,
     db: AsyncSession = Depends(get_db_maria),
     user_service: UserService = Depends(get_user_service)
 ):
     """사용자 로그인"""
     log = get_logger_with_request_id()
-    log.info("Login attempt", user_id=request.user_id)
+    log.info("Login attempt", user_id=login_request.user_id)
     
     # 테스트용 강제 API 레이어 오류 발생  
-    if request.user_id == "api_error_test":
+    if login_request.user_id == "api_error_test":
         raise BaseAppException("API layer: 예상치 못한 시스템 오류 테스트", status_code=500)
     
     # 로그인 처리 (예외는 전역 핸들러에서 처리)
     access_token, user_response = await user_service.login(
-        user_id_or_email=request.user_id,
-        password=request.password
+        user_id_or_email=login_request.user_id,
+        password=login_request.password
     )
     
     # HttpOnly 쿠키에 JWT 토큰 설정

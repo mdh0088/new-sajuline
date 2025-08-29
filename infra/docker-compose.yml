@@ -2,6 +2,39 @@
 # Backend(FastAPI) + MariaDB + Redis + MSSQL
 
 services:
+  # 프론트엔드 서비스 (Nuxt.js 4)
+  frontend:
+    build:
+      context: ../frontend
+      dockerfile: Dockerfile
+      target: development
+    container_name: sajuline-frontend
+    ports:
+      - "3000:3000"
+    env_file:
+      - ../frontend/.env.development
+    environment:
+      # Docker 환경에서 필요한 오버라이드
+      - NODE_ENV=development
+      - NITRO_HOST=0.0.0.0
+      - NITRO_PORT=3000
+    volumes:
+      - ../frontend:/app
+      - /app/node_modules
+      - /app/.nuxt
+    depends_on:
+      backend:
+        condition: service_healthy
+    networks:
+      - sajuline-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
   # 백엔드 서비스 (FastAPI)
   backend:
     build:
