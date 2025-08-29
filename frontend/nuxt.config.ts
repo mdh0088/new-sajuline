@@ -11,18 +11,12 @@ export default defineNuxtConfig({
   // 모듈
   modules: [
     '@pinia/nuxt',
-    '@nuxtjs/tailwindcss',
-    '@element-plus/nuxt'
+    '@nuxtjs/tailwindcss'
   ],
   
   // Pinia 설정
   pinia: {
     storesDirs: ['./stores/**']
-  },
-  
-  // Element Plus 설정
-  elementPlus: {
-    /** Options */
   },
   
   // CSS 설정
