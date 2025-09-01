@@ -29,6 +29,9 @@ dmypy.json
 # 로그 파일
 *.log
 logs/
+backend/logs/
+backend/src/logs/
+backend/*.log
 
 # 데이터베이스
 *.sqlite

@@ -41,12 +41,6 @@ class UserSignup(UserBase):
     # is_marketing_agreed, social_provider, social_id는 UserBase에서 상속
 
 
-class SignupResponse(BaseModel):
-    """회원가입 응답 스키마"""
-    user: UserResponse = Field(..., description="생성된 사용자 정보")
-    message: str = Field(default="회원가입이 완료되었습니다.", description="응답 메시지")
-
-
 class UserUpdate(BaseModel):
     """사용자 정보 수정 스키마"""
     nickname: Optional[str] = Field(None, min_length=2, max_length=50, description="닉네임")

@@ -241,3 +241,4 @@ class UserRepository:
         )
         result = await self.db.execute(stmt)
         return result.rowcount > 0
+    

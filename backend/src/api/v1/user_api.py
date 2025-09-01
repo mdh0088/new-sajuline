@@ -14,7 +14,7 @@ from src.services.user_service import UserService
 from src.services.auth_service import AuthService
 from src.schemas.user_schema import (
     UserCreate, UserUpdate, UserResponse, UserListResponse, 
-    UserLogin, PasswordChange, UserSignup, SignupResponse
+    UserLogin, PasswordChange, UserSignup
 )
 from src.schemas.auth_schema import LoginRequest, LoginData
 from src.common.response import APIResponse, ok, fail
@@ -65,7 +65,7 @@ async def create_user(
 
 @router.post(
     "/signup",
-    response_model=APIResponse[SignupResponse],
+    response_model=APIResponse[UserResponse],
     status_code=status.HTTP_201_CREATED,
     summary="통합 회원가입",
     description="이메일과 비밀번호로 일반 회원가입 또는 소셜 정보로 소셜 회원가입을 처리합니다.",
@@ -80,7 +80,7 @@ async def signup(
     request: Request,  # Rate Limiting 필수
     signup_data: UserSignup,
     user_service: UserService = Depends(get_user_service)
-) -> APIResponse[SignupResponse]:
+) -> APIResponse[UserResponse]:
     """통합 회원가입 - 일반/소셜 가입 통합 처리"""
     result = await user_service.signup(signup_data)
     return ok(data=result, message="회원가입이 완료되었습니다.")
@@ -88,7 +88,7 @@ async def signup(
 
 @router.post(
     "/social/signup", 
-    response_model=APIResponse[SignupResponse],
+    response_model=APIResponse[UserResponse],
     status_code=status.HTTP_201_CREATED,
     summary="소셜 회원가입 (자동 로그인)",
     description="소셜 회원가입과 동시에 자동 로그인 처리하여 JWT 토큰을 HttpOnly 쿠키에 설정합니다.",
@@ -104,7 +104,7 @@ async def social_signup_with_login(
     response: Response,
     signup_data: UserSignup,
     user_service: UserService = Depends(get_user_service)
-) -> APIResponse[SignupResponse]:
+) -> APIResponse[UserResponse]:
     """소셜 회원가입 + 자동 로그인"""
     log = get_logger_with_request_id()
     log.info("Social signup with auto-login attempt", user_id=signup_data.user_id, provider=signup_data.social_provider)
@@ -119,8 +119,8 @@ async def social_signup_with_login(
     # 자동 로그인을 위한 JWT 토큰 생성
     auth_service = AuthService()
     access_token = auth_service.create_access_token(
-        user_id=result.user.user_id,
-        email=result.user.email,
+        user_id=result.user_id,
+        email=result.email,
         role="user"
     )
     
@@ -135,9 +135,9 @@ async def social_signup_with_login(
     )
     
     # 마지막 로그인 시간 업데이트
-    await user_service.user_repo.update_last_login(result.user.user_id)
+    await user_service.user_repo.update_last_login(result.user_id)
     
-    log.info("Social signup with auto-login completed", user_id=result.user.user_id, provider=signup_data.social_provider)
+    log.info("Social signup with auto-login completed", user_id=result.user_id, provider=signup_data.social_provider)
     return ok(data=result, message="소셜 회원가입 및 로그인이 완료되었습니다.")
 
 

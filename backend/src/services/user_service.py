@@ -10,9 +10,11 @@ from src.exceptions.custom_exceptions import NotFoundError, DuplicateError, Auth
 from src.common.logging import logger, get_logger_with_request_id
 
 from src.models.user_model import User, UserStatus, JoinType
-from src.schemas.user_schema import UserCreate, UserUpdate, UserResponse, UserListResponse, UserSignup, SignupResponse
+from src.schemas.user_schema import UserCreate, UserUpdate, UserResponse, UserListResponse, UserSignup
 from src.repositories.user_repository import UserRepository
+from src.repositories.ars.tm60_users_repository import Tm60UsersRepository
 from src.services.auth_service import AuthService
+from src.core.database import get_db_mssql
 
 
 class UserService:
@@ -60,7 +62,7 @@ class UserService:
         log.info("User created successfully", user_id=user.user_id, email=user.email)
         return UserResponse.model_validate(user)
     
-    async def signup(self, signup_data: UserSignup) -> SignupResponse:
+    async def signup(self, signup_data: UserSignup) -> UserResponse:
         """
         통합 회원가입 처리 (일반 + 소셜)
         - 가입 유형 자동 판별
@@ -110,29 +112,46 @@ class UserService:
             log.warning("Phone already exists", phone=signup_data.phone)
             raise DuplicateError("이미 존재하는 전화번호입니다.")
         
-        # 4. UserCreate 스키마로 변환하여 기존 로직 재사용
-        user_create_data = UserCreate(
-            user_id=signup_data.user_id,
-            email=signup_data.email,
-            nickname=signup_data.nickname,
-            phone=signup_data.phone,
-            join_type=join_type,
-            social_provider=signup_data.social_provider,
-            social_id=signup_data.social_id,
-            profile_image_url=signup_data.profile_image_url,
-            birth_date=signup_data.birth_date,
-            gender=signup_data.gender,
-            is_marketing_agreed=signup_data.is_marketing_agreed,
-            password=signup_data.password
-        )
-        
-        # 5. 비밀번호 해싱 (일반 가입시에만)
+        # 4. 비밀번호 해싱 (일반 가입시에만)
         password_hash = None
         if signup_data.password and join_type == JoinType.COMMON:
             password_hash = self.auth_service.hash_password(signup_data.password)
         
-        # 6. 사용자 생성
-        user = await self.user_repo.create(user_create_data, password_hash)
+        # 5. 이중 DB 저장 (MariaDB + MSSQL) - 둘 다 성공해야 함
+        try:
+            # 5-1. MariaDB에 사용자 생성 (flush만 수행, 커밋 지연)
+            user = await self.user_repo.create_from_signup(signup_data, password_hash, join_type)
+            log.info("MariaDB user created (not committed yet)", user_id=user.user_id)
+            
+            # 5-2. MSSQL(TM60)에 사용자 생성 시도
+            # MSSQL 세션 생성 및 TM60UsersRepository 인스턴스화
+            for mssql_session in get_db_mssql():
+                tm60_repo = Tm60UsersRepository(mssql_session)
+                tm60_success = await tm60_repo.create(
+                    user_id=user.user_id,
+                    phone=user.phone or "",
+                    nickname=user.nickname or ""
+                )
+                
+                if not tm60_success:
+                    # TM60 실패시 MariaDB도 롤백
+                    await self.user_repo.db.rollback()
+                    log.warning("TM60 user creation failed, rolling back MariaDB", user_id=user.user_id)
+                    raise ValidationError("외부 시스템 연동 오류로 회원가입에 실패했습니다.")
+                break  # 첫 번째 세션만 사용
+            
+            # 5-3. 둘 다 성공한 경우에만 MariaDB 커밋
+            await self.user_repo.db.commit()
+            log.info("Both databases updated successfully", user_id=user.user_id)
+            
+        except ValidationError:
+            # ValidationError는 그대로 재발생
+            raise
+        except Exception as e:
+            # 기타 예외시 MariaDB 롤백
+            await self.user_repo.db.rollback()
+            log.warning("User creation failed, rolling back", user_id=signup_data.user_id, error=str(e))
+            raise ValidationError(f"회원가입 처리 중 오류가 발생했습니다: {str(e)}")
         
         log.info("Signup completed successfully", 
                 user_id=user.user_id, 
@@ -141,11 +160,7 @@ class UserService:
                 is_social=is_social)
         
         # 7. 응답 생성
-        user_response = UserResponse.model_validate(user)
-        return SignupResponse(
-            user=user_response,
-            message="회원가입이 완료되었습니다."
-        )
+        return UserResponse.model_validate(user)
     
     async def get_user(self, user_id: str) -> UserResponse:
         """사용자 조회"""
