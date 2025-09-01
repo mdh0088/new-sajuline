@@ -89,6 +89,10 @@ ENV ENVIRONMENT=development
 USER root
 COPY pyproject.toml ./
 RUN uv pip install --system -r pyproject.toml --extra dev
+
+# 테스트 파일 복사 (개발 환경에서만 필요)
+COPY tests/ ./tests/
+
 USER appuser
 
 # 개발 서버 실행 (reload 활성화)
