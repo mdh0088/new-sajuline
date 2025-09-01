@@ -28,6 +28,7 @@ class AuthService:
         self.secret_key = settings.secret_key
         self.algorithm = settings.algorithm
         self.access_token_expire_minutes = settings.access_token_expire_minutes
+        self.refresh_token_expire_days = settings.refresh_token_expire_days
     
     def verify_password(self, plain_password: str, hashed_password: str) -> bool:
         """비밀번호 검증"""
@@ -75,13 +76,41 @@ class AuthService:
                 "role": role,
                 "exp": expire,
                 "iat": now,
-                "jti": str(uuid.uuid4())
+                "jti": str(uuid.uuid4()),
+                "token_type": "access"
             }
             
             return jwt.encode(payload, self.secret_key, algorithm=self.algorithm)
         except Exception as e:
             log.error("JWT token creation failed", user_id=user_id, email=email, error=str(e))
             raise ValidationError("토큰 생성 중 오류가 발생했습니다")
+    
+    def create_refresh_token(self, user_id: str, email: str, role: str = "user") -> str:
+        """JWT 리프레시 토큰 생성"""
+        log = get_logger_with_request_id()
+        
+        # 테스트용 강제 토큰 생성 오류
+        if user_id == "refresh_token_create_error_test":
+            raise ValidationError("Auth service layer: JWT 리프레시 토큰 생성 실패 테스트")
+        
+        try:
+            now = datetime.utcnow()
+            expire = now + timedelta(days=self.refresh_token_expire_days)
+            
+            payload = {
+                "sub": user_id,
+                "email": email,
+                "role": role,
+                "exp": expire,
+                "iat": now,
+                "jti": str(uuid.uuid4()),
+                "token_type": "refresh"
+            }
+            
+            return jwt.encode(payload, self.secret_key, algorithm=self.algorithm)
+        except Exception as e:
+            log.error("JWT refresh token creation failed", user_id=user_id, email=email, error=str(e))
+            raise ValidationError("리프레시 토큰 생성 중 오류가 발생했습니다")
     
     def verify_token(self, token: str) -> Dict[str, any]:
         """JWT 토큰 검증"""
@@ -106,6 +135,69 @@ class AuthService:
         except JWTError as jwt_error:
             log.warning("JWT decode failed", error=str(jwt_error))
             raise AuthenticationError("토큰이 유효하지 않습니다")
+    
+    def verify_refresh_token(self, token: str) -> Dict[str, any]:
+        """JWT 리프레시 토큰 검증"""
+        log = get_logger_with_request_id()
+        
+        # 테스트용 강제 리프레시 토큰 검증 오류
+        if token == "refresh_token_verify_error_test":
+            raise AuthenticationError("Auth service layer: 리프레시 토큰 검증 실패 테스트")
+        
+        try:
+            payload = jwt.decode(token, self.secret_key, algorithms=[self.algorithm])
+            
+            # 필수 필드 확인
+            if not payload.get("sub") or not payload.get("email"):
+                log.warning("Invalid refresh token: missing required fields", 
+                           has_sub=bool(payload.get("sub")), 
+                           has_email=bool(payload.get("email")))
+                raise AuthenticationError("리프레시 토큰이 유효하지 않습니다")
+            
+            # 토큰 타입 확인
+            if payload.get("token_type") != "refresh":
+                log.warning("Invalid token type for refresh", token_type=payload.get("token_type"))
+                raise AuthenticationError("리프레시 토큰이 아닙니다")
+            
+            return payload
+            
+        except JWTError as jwt_error:
+            log.warning("Refresh token decode failed", error=str(jwt_error))
+            raise AuthenticationError("리프레시 토큰이 유효하지 않습니다")
+    
+    async def blacklist_token(self, jti: str, expires_at: datetime, redis_client):
+        """
+        토큰 블랙리스트 등록 - 보안을 위한 토큰 무효화
+        
+        목적:
+        - 토큰 갱신시: 기존 refresh token 재사용 방지
+        - 로그아웃시: 현재 토큰들 무효화로 보안 강화
+        - 보안 사고시: 특정 토큰 즉시 무효화
+        
+        JWT는 무상태(stateless)라 서버에서 직접 취소 불가하므로
+        Redis 블랙리스트로 탈취된 토큰의 지속적 사용을 차단
+        """
+        log = get_logger_with_request_id()
+        
+        try:
+            # TTL 계산 (만료 시간까지 남은 시간)
+            ttl = int((expires_at - datetime.utcnow()).total_seconds())
+            if ttl > 0:
+                # Redis에 블랙리스트 등록 (TTL 설정으로 자동 만료)
+                await redis_client.setex(f"blacklist:{jti}", ttl, "1")
+                log.info("Token blacklisted", jti=jti, ttl=ttl)
+        except Exception as e:
+            log.error("Failed to blacklist token", jti=jti, error=str(e))
+            # 블랙리스트 실패해도 예외 발생 안함 (서비스 연속성)
+    
+    async def is_token_blacklisted(self, jti: str, redis_client) -> bool:
+        """토큰 블랙리스트 확인 - 무효화된 토큰 사용 차단"""
+        try:
+            result = await redis_client.get(f"blacklist:{jti}")
+            return result is not None
+        except Exception:
+            # Redis 연결 실패시 false 반환 (서비스 연속성)
+            return False
 
 
 # JWT 인증 관련 스키마 (임시로 여기에 정의)

@@ -81,6 +81,14 @@ export default defineNuxtConfig({
   },
 
   // 전역 CSS 파일은 app.vue에서 import (빌드 캐시 경로 이슈 회피)
+  
+  // 컴포넌트 자동 import 설정
+  components: [
+    {
+      path: '~/components',
+      pathPrefix: false
+    }
+  ],
 
   // Nuxt 모듈 설정
   modules: [

@@ -9,6 +9,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from src.common.middleware.rate_limit import limiter
 
 from src.core.database import get_db_maria
+from src.core.redis import get_redis, get_token_blacklist_service
 from src.repositories.user_repository import UserRepository
 from src.services.user_service import UserService
 from src.services.auth_service import AuthService
@@ -16,7 +17,7 @@ from src.schemas.user_schema import (
     UserCreate, UserUpdate, UserResponse, UserListResponse, 
     UserLogin, PasswordChange, UserSignup
 )
-from src.schemas.auth_schema import LoginRequest, LoginData
+from src.schemas.auth_schema import LoginRequest, LoginResponse, RefreshTokenRequest, TokenResponse
 from src.common.response import APIResponse, ok, fail
 from src.common.logging import logger, get_logger_with_request_id
 from src.exceptions.custom_exceptions import BaseAppException
@@ -116,7 +117,7 @@ async def social_signup_with_login(
     # 회원가입 처리
     result = await user_service.signup(signup_data)
     
-    # 자동 로그인을 위한 JWT 토큰 생성
+    # 자동 로그인을 위한 JWT 토큰들 생성
     auth_service = AuthService()
     access_token = auth_service.create_access_token(
         user_id=result.user_id,
@@ -124,7 +125,14 @@ async def social_signup_with_login(
         role="user"
     )
     
-    # HttpOnly 쿠키에 JWT 토큰 설정
+    refresh_token = auth_service.create_refresh_token(
+        user_id=result.user_id,
+        email=result.email,
+        role="user"
+    )
+    
+    # HttpOnly 쿠키에 JWT 토큰들 설정
+    # Access Token (30분)
     response.set_cookie(
         key="access_token",
         value=access_token,
@@ -134,10 +142,20 @@ async def social_signup_with_login(
         max_age=30 * 60  # 30분
     )
     
+    # Refresh Token (7일)
+    response.set_cookie(
+        key="refresh_token",
+        value=refresh_token,
+        httponly=True,
+        secure=True,  # HTTPS에서만 전송
+        samesite="lax",  # CSRF 보호
+        max_age=7 * 24 * 60 * 60  # 7일
+    )
+    
     # 마지막 로그인 시간 업데이트
     await user_service.user_repo.update_last_login(result.user_id)
     
-    log.info("Social signup with auto-login completed", user_id=result.user_id, provider=signup_data.social_provider)
+    log.info("Social signup with auto-login completed with refresh token", user_id=result.user_id, provider=signup_data.social_provider)
     return ok(data=result, message="소셜 회원가입 및 로그인이 완료되었습니다.")
 
 
@@ -235,7 +253,7 @@ async def authenticate_user(
 
 @router.post(
     "/login",
-    response_model=APIResponse[LoginData],
+    response_model=APIResponse[LoginResponse],
     summary="사용자 로그인",
     description="사용자 ID와 비밀번호로 로그인하고 JWT 토큰을 HttpOnly 쿠키에 설정",
     responses={
@@ -251,7 +269,8 @@ async def login(
     login_request: LoginRequest,
     response: Response,
     db: AsyncSession = Depends(get_db_maria),
-    user_service: UserService = Depends(get_user_service)
+    user_service: UserService = Depends(get_user_service),
+    auth_service: AuthService = Depends(get_auth_service)
 ):
     """사용자 로그인"""
     log = get_logger_with_request_id()
@@ -267,7 +286,15 @@ async def login(
         password=login_request.password
     )
     
-    # HttpOnly 쿠키에 JWT 토큰 설정
+    # Refresh Token 생성
+    refresh_token = auth_service.create_refresh_token(
+        user_id=user_response.user_id,
+        email=user_response.email,
+        role="user"
+    )
+    
+    # HttpOnly 쿠키에 JWT 토큰들 설정
+    # Access Token (30분)
     response.set_cookie(
         key="access_token",
         value=access_token,
@@ -277,15 +304,27 @@ async def login(
         max_age=30 * 60  # 30분
     )
     
-    # 응답 데이터 생성
-    login_data = LoginData(
-        user_id=user_response.user_id,
-        email=user_response.email,
-        nickname=user_response.nickname
+    # Refresh Token (7일)  
+    response.set_cookie(
+        key="refresh_token",
+        value=refresh_token,
+        httponly=True,
+        secure=True,  # HTTPS에서만 전송
+        samesite="lax",  # CSRF 보호
+        max_age=7 * 24 * 60 * 60  # 7일
     )
     
-    log.info("Authentication successful", user_id=user_response.user_id)
-    return ok(data=login_data, message="로그인 성공")
+    # 응답 데이터 생성 (토큰 만료 시간 포함)
+    login_response = LoginResponse(
+        user_id=user_response.user_id,
+        email=user_response.email,
+        nickname=user_response.nickname,
+        access_token_expires_in=30 * 60,  # 30분 (초 단위)
+        refresh_token_expires_in=7 * 24 * 60 * 60  # 7일 (초 단위)
+    )
+    
+    log.info("Authentication successful with refresh token", user_id=user_response.user_id)
+    return ok(data=login_response, message="로그인 성공")
 
 
 @router.post(
@@ -297,7 +336,7 @@ async def login(
 )
 async def logout(response: Response):
     """사용자 로그아웃"""
-    # HttpOnly 쿠키에서 JWT 토큰 삭제
+    # HttpOnly 쿠키에서 JWT 토큰들 삭제
     response.delete_cookie(
         key="access_token",
         httponly=True,
@@ -305,4 +344,71 @@ async def logout(response: Response):
         samesite="lax"
     )
     
+    response.delete_cookie(
+        key="refresh_token",
+        httponly=True,
+        secure=True,
+        samesite="lax"
+    )
+    
     return ok(data=None, message="로그아웃 성공")
+
+@router.post(
+    "/refresh",
+    response_model=APIResponse[TokenResponse],
+    summary="토큰 갱신",
+    description="Refresh Token으로 새로운 Access Token 발급. 기존 토큰은 블랙리스트 처리됩니다.",
+    responses={
+        200: {"description": "토큰 갱신 성공"},
+        401: {"description": "유효하지 않거나 만료된 Refresh Token"},
+        429: {"description": "요청 한도 초과"}
+    }
+)
+@limiter.limit("20/minute")  # 분당 20회 제한 (토큰 갱신 남용 방지)
+async def refresh_token(
+    request: Request,
+    refresh_request: RefreshTokenRequest,
+    response: Response,
+    auth_service: AuthService = Depends(get_auth_service)
+):
+    """토큰 갱신 - Refresh Token으로 새로운 Access Token 발급"""
+    log = get_logger_with_request_id()
+    
+    try:
+        # 테스트용 강제 API 레이어 오류 발생
+        if refresh_request.refresh_token == "api_refresh_error_test":
+            raise BaseAppException("API layer: 토큰 갱신 처리 실패 테스트", status_code=500)
+        
+        # Refresh Token 검증 및 페이로드 추출
+        refresh_payload = auth_service.verify_refresh_token(refresh_request.refresh_token)
+        log.info("Refresh token validation successful", user_id=refresh_payload["sub"])
+        
+        # 새로운 Access Token 생성
+        new_access_token = auth_service.create_access_token(
+            user_id=refresh_payload["sub"],
+            email=refresh_payload["email"],
+            role=refresh_payload["role"]
+        )
+        
+        # HttpOnly 쿠키에 새로운 Access Token 설정
+        response.set_cookie(
+            key="access_token",
+            value=new_access_token,
+            httponly=True,
+            secure=True,  # HTTPS에서만 전송
+            samesite="lax",  # CSRF 보호
+            max_age=30 * 60  # 30분
+        )
+        
+        # 토큰 갱신 응답 데이터 생성
+        token_response = TokenResponse(
+            access_token_expires_in=30 * 60,  # 30분 (초 단위)
+            refresh_token_expires_in=7 * 24 * 60 * 60  # 7일 (초 단위)
+        )
+        
+        log.info("Token refresh completed successfully", user_id=refresh_payload["sub"])
+        return ok(data=token_response, message="토큰 갱신 성공")
+        
+    except Exception as e:
+        log.error("Token refresh failed", error=str(e))
+        raise

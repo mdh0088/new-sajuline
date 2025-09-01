@@ -1,0 +1,148 @@
+/**
+ * 인증 도메인 스타일 (로그인, 회원가입)
+ * 사주라인 인증 페이지 전용 CSS
+ */
+
+/* 커스텀 체크박스 스타일 */
+.auth-checkbox {
+  appearance: none;
+  -webkit-appearance: none;
+  background-color: transparent;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-radius: 4px;
+  width: 20px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.auth-checkbox:checked {
+  background-color: rgb(147, 51, 234);
+  border-color: rgb(147, 51, 234);
+}
+
+.auth-checkbox:checked::after {
+  content: '✓';
+  color: white;
+  font-size: 14px;
+  font-weight: bold;
+}
+
+.auth-checkbox:focus {
+  box-shadow: 0 0 0 2px rgba(147, 51, 234, 0.5);
+}
+
+/* 소셜 로그인 버튼 호버 효과 */
+.social-btn-kakao {
+  background-color: #FEE500;
+  color: #000000;
+  border-color: #FEE500;
+}
+
+.social-btn-kakao:hover {
+  background-color: #FDD835;
+}
+
+.social-btn-naver {
+  background-color: #03C75A;
+  border-color: #03C75A;
+  color: white;
+}
+
+.social-btn-naver:hover {
+  background-color: #02B351;
+}
+
+/* 애니메이션 */
+.auth-scale-98:active {
+  transform: scale(0.98);
+}
+
+/* 인증 페이지 레이아웃 */
+.auth-container {
+  min-height: 100vh;
+  background-color: rgb(2, 6, 23);
+  color: white;
+}
+
+.auth-header {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  background-color: rgba(2, 6, 23, 0.95);
+  backdrop-filter: blur(12px);
+  z-index: 50;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.auth-main {
+  padding-top: 4rem;
+  padding-bottom: 2rem;
+  padding-left: 1.25rem;
+  padding-right: 1.25rem;
+  overflow-y: auto;
+}
+
+/* 폼 입력 필드 스타일 */
+.auth-input {
+  width: 100%;
+  background-color: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 0.75rem;
+  padding: 1rem;
+  font-size: 1rem;
+  color: white;
+  transition: all 0.3s ease;
+}
+
+.auth-input::placeholder {
+  color: rgba(255, 255, 255, 0.4);
+}
+
+.auth-input:focus {
+  outline: none;
+  border-color: rgba(147, 51, 234, 0.5);
+  background-color: rgba(255, 255, 255, 0.08);
+}
+
+.auth-input.error {
+  border-color: rgb(239, 68, 68);
+}
+
+/* 인증 버튼 스타일 */
+.auth-btn-primary {
+  background: linear-gradient(to right, rgb(147, 51, 234), rgb(126, 34, 206));
+  color: white;
+  box-shadow: 0 10px 15px -3px rgba(147, 51, 234, 0.25);
+}
+
+.auth-btn-primary:hover:not(:disabled) {
+  background: linear-gradient(to right, rgb(126, 34, 206), rgb(107, 33, 168));
+}
+
+.auth-btn-primary:disabled {
+  background-color: rgba(255, 255, 255, 0.1);
+  color: rgba(255, 255, 255, 0.5);
+  cursor: not-allowed;
+}
+
+/* 메시지 알림 스타일 */
+.auth-success-message {
+  background-color: rgba(16, 185, 129, 0.2);
+  border: 1px solid rgba(16, 185, 129, 0.5);
+  color: rgb(167, 243, 208);
+  padding: 1rem;
+  border-radius: 0.75rem;
+}
+
+.auth-error-message {
+  background-color: rgba(239, 68, 68, 0.2);
+  border: 1px solid rgba(239, 68, 68, 0.5);
+  color: rgb(252, 165, 165);
+  padding: 1rem;
+  border-radius: 0.75rem;
+}
