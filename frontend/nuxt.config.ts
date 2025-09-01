@@ -45,10 +45,31 @@ export default defineNuxtConfig({
         { charset: 'utf-8' },
         { name: 'viewport', content: 'width=device-width, initial-scale=1' },
         { name: 'description', content: 'AI와 전문가의 하이브리드 사주 상담 플랫폼' },
-        { name: 'format-detection', content: 'telephone=no' }
+        { name: 'format-detection', content: 'telephone=no' },
+        
+        // Open Graph 메타 태그 (소셜 미디어 공유 최적화)
+        { property: 'og:type', content: 'website' },
+        { property: 'og:site_name', content: '사주라인' },
+        { property: 'og:locale', content: 'ko_KR' },
+        { property: 'og:image:width', content: '1200' },
+        { property: 'og:image:height', content: '630' },
+        
+        // Twitter Card 메타 태그
+        { name: 'twitter:card', content: 'summary_large_image' },
+        { name: 'twitter:site', content: '@sajuline' },
+        
+        // 모바일 앱 메타 태그 (PWA 준비)
+        { name: 'theme-color', content: '#1a1a1a' },
+        { name: 'apple-mobile-web-app-capable', content: 'yes' },
+        { name: 'apple-mobile-web-app-status-bar-style', content: 'black-translucent' }
       ],
       link: [
-        { rel: 'icon', type: 'image/x-icon', href: '/favicon.ico' }
+        { rel: 'icon', type: 'image/x-icon', href: '/favicon.ico' },
+        // 다양한 디바이스 아이콘 추가
+        { rel: 'apple-touch-icon', sizes: '180x180', href: '/apple-touch-icon.png' },
+        { rel: 'icon', type: 'image/png', sizes: '32x32', href: '/favicon-32x32.png' },
+        { rel: 'icon', type: 'image/png', sizes: '16x16', href: '/favicon-16x16.png' },
+        { rel: 'manifest', href: '/site.webmanifest' }
       ]
     }
   },
@@ -67,7 +88,11 @@ export default defineNuxtConfig({
     '@nuxtjs/tailwindcss', // Tailwind CSS
     '@pinia/nuxt',        // 상태 관리
     '@vueuse/nuxt',       // Vue 유틸리티 컬렉션
-    ...(process.env.NODE_ENV === 'development' ? ['@nuxt/test-utils'] : [])
+    // '@nuxtjs/sentry',     // Nuxt 4 호환성 이슈로 임시 비활성화
+    ...(process.env.NODE_ENV === 'development' ? [
+      '@nuxt/test-utils',
+      '@nuxt/devtools' // 개발자 도구 강화
+    ] : [])
   ],
 
   // 이미지 최적화 설정 (즉시 적용 권장)
@@ -104,11 +129,23 @@ export default defineNuxtConfig({
     }
   },
 
-  // 웹폰트 설정
+
+  // 웹폰트 설정 (단기 적용 - 폰트 최적화)
   fonts: {
     families: [
-      { name: 'Noto Sans KR', provider: 'google' }
-    ]
+      { 
+        name: 'Noto Sans KR', 
+        provider: 'google',
+        weights: ['300', '400', '500', '700'], // 필요한 폰트 웨이트만 로드
+        subsets: ['korean'] // 한글 서브셋만 로드 (파일 크기 50% 감소)
+      }
+    ],
+    // 폰트 로딩 최적화
+    defaults: {
+      weights: ['400', '700'],
+      styles: ['normal'],
+      subsets: ['korean']
+    }
   },
 
   // 런타임 환경변수 (서버/클라이언트 구분)
@@ -167,12 +204,17 @@ export default defineNuxtConfig({
       rollupOptions: {
         output: {
           chunkFileNames: '_nuxt/[name]-[hash].js',
-          entryFileNames: '_nuxt/[name]-[hash].js'
+          entryFileNames: '_nuxt/[name]-[hash].js',
+          // 청크 분할 최적화 (라이브러리별 분리)
+          manualChunks: {
+            vendor: ['vue', '@vue/runtime-core'],
+            ui: ['@tanstack/vue-query', '@vueuse/core']
+          }
         }
       }
     },
     optimizeDeps: {
-      include: ['@tanstack/vue-query']
+      include: ['@tanstack/vue-query', '@vueuse/core']
     }
   },
 

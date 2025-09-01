@@ -1315,3 +1315,41 @@ src.common.exceptions.BaseAppException: Repository layer: 강제 DB 연결 오�
 2025-09-01 04:40:48.223 | INFO     | src.common.logging.events:application_shutdown:21 | Application Shutdown | {'request_id': ''}
 2025-09-01 04:44:42.343 | INFO     | src.common.logging.config:configure:73 | Logging system initialized | {'extra': {'log_level': 'INFO', 'environment': 'development'}, 'request_id': ''}
 2025-09-01 04:44:42.367 | INFO     | src.common.logging.events:application_started:16 | Application Started | {'request_id': '', 'environment': 'development', 'debug': True, 'log_level': 'INFO'}
+2025-09-01 05:39:14.140 | INFO     | src.common.logging.events:application_shutdown:21 | Application Shutdown | {'request_id': ''}
+2025-09-01 05:39:18.465 | INFO     | src.common.logging.config:configure:73 | Logging system initialized | {'extra': {'log_level': 'INFO', 'environment': 'development'}, 'request_id': ''}
+2025-09-01 05:39:18.485 | INFO     | src.common.logging.events:application_started:16 | Application Started | {'request_id': '', 'environment': 'development', 'debug': True, 'log_level': 'INFO'}
+2025-09-01 05:41:26.196 | INFO     | src.common.logging.events:application_shutdown:21 | Application Shutdown | {'request_id': ''}
+2025-09-01 05:41:34.167 | INFO     | src.common.logging.config:configure:73 | Logging system initialized | {'extra': {'log_level': 'INFO', 'environment': 'development'}, 'request_id': ''}
+2025-09-01 05:41:34.206 | INFO     | src.common.logging.events:application_started:16 | Application Started | {'request_id': '', 'environment': 'development', 'debug': True, 'log_level': 'INFO'}
+2025-09-01 05:49:43.646 | INFO     | src.common.logging.events:application_shutdown:21 | Application Shutdown | {'request_id': ''}
+2025-09-01 05:49:50.273 | INFO     | src.common.logging.config:configure:73 | Logging system initialized | {'extra': {'log_level': 'INFO', 'environment': 'development'}, 'request_id': ''}
+2025-09-01 05:49:50.327 | INFO     | src.common.logging.events:application_started:16 | Application Started | {'request_id': '', 'environment': 'development', 'debug': True, 'log_level': 'INFO'}
+2025-09-01 05:51:02.846 | INFO     | src.common.logging.events:application_shutdown:21 | Application Shutdown | {'request_id': ''}
+2025-09-01 05:51:07.118 | INFO     | src.common.logging.config:configure:73 | Logging system initialized | {'extra': {'log_level': 'INFO', 'environment': 'development'}, 'request_id': ''}
+2025-09-01 05:51:07.142 | INFO     | src.common.logging.events:application_started:16 | Application Started | {'request_id': '', 'environment': 'development', 'debug': True, 'log_level': 'INFO'}
+2025-09-01 05:51:37.220 | INFO     | src.common.logging.events:application_shutdown:21 | Application Shutdown | {'request_id': ''}
+2025-09-01 05:51:42.468 | INFO     | src.common.logging.config:configure:73 | Logging system initialized | {'extra': {'log_level': 'INFO', 'environment': 'development'}, 'request_id': ''}
+2025-09-01 05:51:42.492 | INFO     | src.common.logging.events:application_started:16 | Application Started | {'request_id': '', 'environment': 'development', 'debug': True, 'log_level': 'INFO'}
+2025-09-01 05:51:55.221 | INFO     | src.common.logging.events:application_shutdown:21 | Application Shutdown | {'request_id': ''}
+2025-09-01 05:52:06.494 | INFO     | src.common.logging.config:configure:73 | Logging system initialized | {'extra': {'log_level': 'INFO', 'environment': 'development'}, 'request_id': ''}
+2025-09-01 05:52:06.585 | INFO     | src.common.logging.events:application_started:16 | Application Started | {'request_id': '', 'environment': 'development', 'debug': True, 'log_level': 'INFO'}
+2025-09-01 05:53:12.527 | INFO     | src.common.logging.events:application_shutdown:21 | Application Shutdown | {'request_id': ''}
+2025-09-01 05:53:29.583 | INFO     | src.common.logging.config:configure:73 | Logging system initialized | {'extra': {'log_level': 'INFO', 'environment': 'development'}, 'request_id': ''}
+2025-09-01 05:53:29.622 | INFO     | src.common.logging.events:application_started:16 | Application Started | {'request_id': '', 'environment': 'development', 'debug': True, 'log_level': 'INFO'}
+2025-09-01 05:55:30.475 | INFO     | src.common.logging.events:application_shutdown:21 | Application Shutdown | {'request_id': ''}
+2025-09-01 05:55:32.131 | INFO     | src.common.logging.config:configure:73 | Logging system initialized | {'extra': {'log_level': 'INFO', 'environment': 'development'}, 'request_id': ''}
+2025-09-01 05:55:32.150 | INFO     | src.common.logging.events:application_started:16 | Application Started | {'request_id': '', 'environment': 'development', 'debug': True, 'log_level': 'INFO'}
+2025-09-01 05:55:36.984 | INFO     | src.common.logging.events:application_shutdown:21 | Application Shutdown | {'request_id': ''}
+2025-09-01 05:55:43.879 | INFO     | src.common.logging.config:configure:73 | Logging system initialized | {'extra': {'log_level': 'INFO', 'environment': 'development'}, 'request_id': ''}
+2025-09-01 05:55:43.904 | INFO     | src.common.logging.events:application_started:16 | Application Started | {'request_id': '', 'environment': 'development', 'debug': True, 'log_level': 'INFO'}
+2025-09-01 05:57:08.741 | INFO     | src.common.logging.events:application_shutdown:21 | Application Shutdown | {'request_id': ''}
+2025-09-01 05:57:17.525 | INFO     | src.common.logging.config:configure:73 | Logging system initialized | {'extra': {'log_level': 'INFO', 'environment': 'development'}, 'request_id': ''}
+2025-09-01 05:57:17.560 | INFO     | src.common.logging.events:application_started:16 | Application Started | {'request_id': '', 'environment': 'development', 'debug': True, 'log_level': 'INFO'}
+2025-09-01 05:57:22.910 | INFO     | src.common.logging.events:application_shutdown:21 | Application Shutdown | {'request_id': ''}
+2025-09-01 05:57:28.674 | INFO     | src.common.logging.config:configure:73 | Logging system initialized | {'extra': {'log_level': 'INFO', 'environment': 'development'}, 'request_id': ''}
+2025-09-01 05:57:28.694 | INFO     | src.common.logging.events:application_started:16 | Application Started | {'request_id': '', 'environment': 'development', 'debug': True, 'log_level': 'INFO'}
+2025-09-01 06:01:12.321 | INFO     | src.common.logging.events:application_shutdown:21 | Application Shutdown | {'request_id': ''}
+2025-09-01 06:01:19.348 | INFO     | src.common.logging.config:configure:73 | Logging system initialized | {'extra': {'log_level': 'INFO', 'environment': 'development'}, 'request_id': ''}
+2025-09-01 06:01:19.384 | INFO     | src.common.logging.events:application_started:16 | Application Started | {'request_id': '', 'environment': 'development', 'debug': True, 'log_level': 'INFO'}
+2025-09-01 06:01:25.441 | INFO     | src.common.middleware.logging:dispatch:72 | Request started | {'request_id': '73acfdfd-3368-478d-9f43-0da62a3b5627', 'method': 'GET', 'path': '/nonexistent', 'query_params': None, 'client_ip': '127.0.0.1', 'user_agent': 'python-httpx/0.27.0', 'device': 'desktop', 'browser': 'unknown', 'os': 'unknown', 'request_body': {'content_type': '', 'body_logged': False}}
+2025-09-01 06:01:25.443 | INFO     | src.common.middleware.logging:dispatch:89 | Request completed | {'request_id': '73acfdfd-3368-478d-9f43-0da62a3b5627', 'method': 'GET', 'path': '/nonexistent', 'status_code': 404, 'duration_ms': 2.22, 'client_ip': '127.0.0.1'}

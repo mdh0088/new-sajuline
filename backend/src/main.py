@@ -2,6 +2,10 @@
 사주라인 리뉴얼 프로젝트 - FastAPI 메인 애플리케이션
 """
 
+# Sentry 초기화 (FastAPI 앱 생성 전에 실행)
+from src.common.monitoring.sentry_config import initialize_sentry
+initialize_sentry()
+
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.trustedhost import TrustedHostMiddleware
@@ -133,7 +137,19 @@ async def app_exception_handler(request: Request, exc: BaseAppException):
 @app.exception_handler(Exception)
 async def general_exception_handler(request: Request, exc: Exception):
     """예상치 못한 예외 처리"""
-    # 시스템 에러 로깅
+    import sentry_sdk
+    
+    # Sentry에 예외 전송 (사용자 컨텍스트와 함께)
+    with sentry_sdk.configure_scope() as scope:
+        scope.set_context("request", {
+            "url": str(request.url),
+            "method": request.method,
+            "headers": dict(request.headers),
+            "client_ip": request.client.host if request.client else None
+        })
+        sentry_sdk.capture_exception(exc)
+    
+    # 시스템 에러 로깅 (기존 로직 유지)
     logger.exception(f"Unhandled Exception: {str(exc)}", 
                     path=request.url.path,
                     method=request.method,
