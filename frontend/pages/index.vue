@@ -32,171 +32,28 @@
       </div>
     </Transition>
 
-    <!-- 헤더 -->
-    <header class="fixed top-0 left-0 right-0 bg-slate-950/95 backdrop-blur-xl z-50 border-b border-white/10">
-      <div class="flex justify-between items-center px-5 py-4 h-[60px]">
-        <div class="flex items-center">
-          <h1 class="text-xl font-bold bg-gradient-to-r from-purple-400 via-purple-300 to-purple-500 bg-clip-text text-transparent">
-            사주라인
-          </h1>
-        </div>
-        
-        <div class="flex items-center gap-2">
-          <!-- 알림 버튼 -->
-          <button 
-            class="w-9 h-9 bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl flex items-center justify-center text-lg transition-all duration-300 active:scale-95"
-            @click="handleNotificationClick"
-          >
-            🔔
-          </button>
-          
-          <!-- 메뉴 버튼 -->
-          <button 
-            class="w-9 h-9 bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl flex items-center justify-center text-lg transition-all duration-300 active:scale-95"
-            @click="handleMenuClick"
-          >
-            ☰
-          </button>
-        </div>
-      </div>
-    </header>
+    <!-- 헤더 컴포넌트 -->
+    <AppHeader />
 
     <!-- 메인 콘텐츠 -->
     <main class="pt-[60px] pb-20">
-      <!-- 히어로 섹션 -->
-      <section class="relative px-5 py-8 overflow-hidden">
-        <!-- 배경 애니메이션 -->
-        <div class="absolute inset-0 bg-gradient-to-b from-purple-600/30 via-transparent to-transparent"></div>
-        <div class="absolute top-0 left-0 w-full h-full opacity-5 pointer-events-none">
-          <div class="absolute top-10 right-10 text-8xl animate-pulse">✨</div>
-          <div class="absolute bottom-20 left-10 text-6xl animate-bounce">🌟</div>
-        </div>
-        
-        <div class="relative z-10 text-center">
-          <!-- 서비스 배지 -->
-          <div class="inline-flex items-center gap-1.5 px-4 py-1.5 bg-purple-600/10 border border-purple-600/30 rounded-full text-xs text-purple-300 mb-4 font-medium">
-            <span class="w-2 h-2 bg-green-400 rounded-full animate-pulse"></span>
-            AI × 전문가 하이브리드 상담
-          </div>
-          
-          <!-- 메인 타이틀 -->
-          <h1 class="text-3xl sm:text-4xl font-bold mb-3 leading-tight bg-gradient-to-r from-white via-purple-200 to-white bg-clip-text text-transparent">
-            당신의 운명을<br />밝히는 빛
-          </h1>
-          
-          <!-- 서브 타이틀 -->
-          <p class="text-base text-white/70 mb-6 leading-relaxed max-w-md mx-auto">
-            AI 기술과 전문가의 지혜가 만나<br />새로운 사주 상담 경험을 제공합니다
-          </p>
-          
-          <!-- CTA 버튼 -->
-          <div class="flex flex-col sm:flex-row gap-3 justify-center max-w-md mx-auto">
-            <button
-              @click="requestAIFortune"
-              class="relative px-8 py-4 bg-gradient-to-r from-purple-600 to-purple-700 rounded-full font-bold text-base shadow-lg shadow-purple-600/40 hover:shadow-purple-600/60 transition-all duration-300 active:scale-98 overflow-hidden group"
-            >
-              <span class="relative z-10">AI 운세 보기</span>
-              <div class="absolute inset-0 bg-gradient-to-r from-white/20 to-transparent opacity-0 group-active:opacity-100 transition-opacity duration-300"></div>
-            </button>
-            <button
-              @click="requestExpertConsult"
-              class="relative px-8 py-4 bg-white/10 border border-white/20 rounded-full font-bold text-base hover:bg-white/15 transition-all duration-300 active:scale-98"
-            >
-              전문가 상담 받기
-            </button>
-          </div>
-        </div>
-      </section>
+      <!-- 히어로 섹션 컴포넌트 -->
+      <HeroSection 
+        @ai-fortune-request="handleAIFortuneRequest"
+        @expert-consult-request="handleExpertConsultRequest"
+      />
 
-      <!-- 실시간 지표 -->
-      <section class="px-5 py-5 bg-white/2 border-y border-white/10">
-        <div class="flex justify-around max-w-md mx-auto">
-          <div 
-            v-for="(stat, index) in liveStats" 
-            :key="index"
-            class="text-center"
-          >
-            <div class="text-2xl font-bold text-purple-300 mb-1">{{ stat.number }}</div>
-            <div class="text-xs text-white/60">{{ stat.label }}</div>
-          </div>
-        </div>
-      </section>
+      <!-- 실시간 지표 컴포넌트 -->
+      <LiveStats :stats="liveStats" />
 
-      <!-- 오늘의 운세 카드 -->
-      <section class="px-5 py-6">
-        <div class="relative p-5 bg-gradient-to-br from-purple-600/10 to-purple-700/5 border border-purple-600/20 rounded-2xl overflow-hidden max-w-md mx-auto">
-          <div class="absolute top-0 right-0 text-8xl opacity-10 pointer-events-none">✨</div>
-          
-          <div class="relative z-10">
-            <div class="flex justify-between items-center mb-4">
-              <h2 class="text-lg font-bold flex items-center gap-2">
-                <span>🔮</span>
-                오늘의 운세
-              </h2>
-              <span class="text-sm text-white/60">{{ formattedToday }}</span>
-            </div>
-            
-            <p class="text-sm text-white/80 leading-relaxed mb-4">
-              {{ todayFortune.content }}
-            </p>
-            
-            <div class="grid grid-cols-3 gap-4">
-              <div 
-                v-for="(meter, index) in todayFortune.meters" 
-                :key="index"
-                class="text-center"
-              >
-                <div class="text-xs text-white/60 mb-2">{{ meter.label }}</div>
-                <div class="h-1 bg-white/10 rounded-full overflow-hidden mb-1">
-                  <div 
-                    class="h-full bg-gradient-to-r from-purple-600 to-purple-400 rounded-full transition-all duration-1000"
-                    :style="{ width: `${meter.value}%` }"
-                  ></div>
-                </div>
-                <div class="text-sm font-semibold text-purple-300">{{ meter.value }}%</div>
-              </div>
-            </div>
-            
-            <!-- AI 상세 분석 버튼 -->
-            <div class="mt-4 pt-4 border-t border-white/10">
-              <button
-                @click="requestAIFortune"
-                class="w-full py-3 bg-purple-600/20 hover:bg-purple-600/30 border border-purple-600/30 rounded-xl font-medium text-sm transition-all duration-300"
-              >
-                AI 상세 분석 받기 🤖
-              </button>
-            </div>
-          </div>
-        </div>
-      </section>
+      <!-- 오늘의 운세 컴포넌트 -->
+      <TodayFortune 
+        :fortune="todayFortune"
+        @ai-analysis-request="handleAIFortuneRequest"
+      />
 
-      <!-- 빠른 상담 카테고리 -->
-      <section class="px-5 py-6">
-        <div class="flex justify-between items-center mb-4">
-          <h2 class="text-xl font-bold">빠른 상담</h2>
-          <NuxtLink to="/categories" class="text-sm text-purple-300 flex items-center gap-1 hover:text-purple-200 transition-colors">
-            전체보기 →
-          </NuxtLink>
-        </div>
-        
-        <div class="grid grid-cols-3 gap-3 max-w-md mx-auto">
-          <NuxtLink
-            v-for="(category, index) in quickCategories"
-            :key="index"
-            :to="category.path"
-            class="relative p-5 bg-white/3 border border-white/10 rounded-2xl text-center cursor-pointer transition-all duration-300 hover:bg-white/5 active:scale-98 group overflow-hidden"
-          >
-            <div class="absolute inset-0 bg-gradient-to-br from-purple-600/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-            
-            <div class="relative z-10">
-              <div class="w-14 h-14 mx-auto mb-3 bg-gradient-to-br from-purple-600/20 to-purple-700/10 rounded-2xl flex items-center justify-center text-2xl border border-purple-600/20">
-                {{ category.icon }}
-              </div>
-              <div class="text-sm font-semibold text-white/90">{{ category.name }}</div>
-            </div>
-          </NuxtLink>
-        </div>
-      </section>
+      <!-- 빠른 상담 컴포넌트 -->
+      <QuickConsult :categories="quickCategories" />
 
       <!-- AI vs 전문가 비교 섹션 -->
       <section class="px-5 py-6">
@@ -298,37 +155,15 @@
       </section>
     </main>
 
-    <!-- 하단 네비게이션 -->
-    <nav class="fixed bottom-0 left-0 right-0 bg-slate-950/95 backdrop-blur-xl border-t border-white/10 px-5 py-3">
-      <div class="flex justify-around max-w-md mx-auto">
-        <button 
-          class="flex flex-col items-center gap-1 text-purple-400 transition-colors"
-          @click="handleNavClick('home')"
-        >
-          <span class="text-xl">🏠</span>
-          <span class="text-xs font-medium">홈</span>
-        </button>
-        <NuxtLink to="/fortune" class="flex flex-col items-center gap-1 text-white/60 hover:text-white/80 transition-colors">
-          <span class="text-xl">🔮</span>
-          <span class="text-xs font-medium">운세</span>
-        </NuxtLink>
-        <NuxtLink to="/chat" class="flex flex-col items-center gap-1 text-white/60 hover:text-white/80 transition-colors">
-          <span class="text-xl">💬</span>
-          <span class="text-xs font-medium">상담</span>
-        </NuxtLink>
-        <NuxtLink to="/profile" class="flex flex-col items-center gap-1 text-white/60 hover:text-white/80 transition-colors">
-          <span class="text-xl">👤</span>
-          <span class="text-xs font-medium">마이페이지</span>
-        </NuxtLink>
-      </div>
-    </nav>
+    <!-- 하단 네비게이션 컴포넌트 -->
+    <AppBottomNavi />
   </div>
 </template>
 
 
 <script setup lang="ts">
 // Vue 및 Nuxt imports
-import { ref, onMounted, computed } from 'vue'
+import { ref, onMounted } from 'vue'
 import { useHead, useRoute, navigateTo } from 'nuxt/app'
 
 // SEO 및 메타 데이터 설정
@@ -370,14 +205,6 @@ onMounted(() => {
   }
 })
 
-// 오늘 날짜 포맷
-const formattedToday = computed(() => {
-  const d = new Date()
-  const yyyy = d.getFullYear()
-  const mm = String(d.getMonth() + 1).padStart(2, '0')
-  const dd = String(d.getDate()).padStart(2, '0')
-  return `${yyyy}-${mm}-${dd}`
-})
 
 // 오늘의 운세 상태 (템플릿 구조에 맞게 content/meters 제공)
 const todayFortune = ref({
@@ -396,49 +223,26 @@ const quickCategories = ref([
   { name: '재물', path: '/categories/money', icon: '💰' }
 ])
 
-// 버튼 클릭 핸들러들
-const handleNotificationClick = () => {
-  console.log('알림 버튼 클릭')
-}
-
-const handleMenuClick = () => {
-  console.log('메뉴 버튼 클릭')
-}
-
-const handleQuickConsult = (type: string) => {
-  console.log(`빠른 상담 요청: ${type}`)
-  successMessage.value = `${type} 상담을 준비 중입니다...`
+// 컴포넌트 이벤트 핸들러들
+function handleAIFortuneRequest() {
+  console.log('AI 운세 요청')
+  successMessage.value = 'AI 운세를 준비 중입니다...'
   setTimeout(() => {
     successMessage.value = ''
   }, 2000)
 }
 
-const handleAIConsult = () => {
-  console.log('AI 상담 시작')
-  successMessage.value = 'AI 상담을 시작합니다...'
-}
-
-const handleExpertConsult = () => {
-  console.log('전문가 상담 예약')
+function handleExpertConsultRequest() {
+  console.log('전문가 상담 요청')
   successMessage.value = '전문가 상담 예약 페이지로 이동합니다...'
+  setTimeout(() => {
+    successMessage.value = ''
+  }, 2000)
 }
 
-const handleCTAClick = () => {
-  console.log('상담 시작하기 클릭')
-  successMessage.value = '상담을 시작합니다!'
-}
-
-// 템플릿에서 사용하는 호출명과 연결
-const requestAIFortune = () => handleAIConsult()
-const requestExpertConsult = () => handleExpertConsult()
-
-// 하단 네비게이션 클릭 처리
-const handleNavClick = (tab: 'home' | 'fortune' | 'chat' | 'profile') => {
-  if (tab === 'home') return
-  if (tab === 'fortune') return navigateTo('/fortune')
-  if (tab === 'chat') return navigateTo('/chat')
-  if (tab === 'profile') return navigateTo('/profile')
-}
+// 기존 호환성을 위한 별칭
+const requestAIFortune = handleAIFortuneRequest
+const requestExpertConsult = handleExpertConsultRequest
 </script>
 
 <style scoped>

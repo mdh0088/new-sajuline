@@ -13,7 +13,9 @@
       "mcp__serena__get_symbols_overview",
       "mcp__serena__find_symbol",
       "mcp__serena__search_for_pattern",
-      "Bash(docker-compose up:*)"
+      "Bash(docker-compose up:*)",
+      "Bash(mkdir:*)",
+      "Bash(docker exec:*)"
     ],
     "deny": [],
     "ask": []
