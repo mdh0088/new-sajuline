@@ -5,12 +5,15 @@
  * - 요청/응답 인터셉터 구성
  * - 에러 핸들링
  */
+import { defineNuxtPlugin, useRuntimeConfig, navigateTo, createError } from 'nuxt/app'
+
 export default defineNuxtPlugin(() => {
   const config = useRuntimeConfig()
+  const apiBase = (config.public.apiBase ?? '/api') as string
 
   // 커스텀 $fetch 인스턴스 생성 (HttpOnly 쿠키 환경)
   const api = $fetch.create({
-    baseURL: config.public.apiBase,
+    baseURL: apiBase,
     credentials: 'include', // HttpOnly 쿠키 자동 전송 (중요!)
     
     // 요청 전 인터셉터
@@ -18,21 +21,22 @@ export default defineNuxtPlugin(() => {
       // HttpOnly 쿠키는 브라우저가 자동으로 전송
       // Authorization 헤더 설정 불필요
       
-      // 공통 헤더 설정
-      options.headers = {
-        ...options.headers,
-        'Content-Type': 'application/json',
-        'Accept': 'application/json',
-        'X-Requested-With': 'XMLHttpRequest'
-      }
+      // 공통 헤더 설정 (Headers 안전 처리)
+      const headers = new Headers(options.headers as HeadersInit)
+      headers.set('Content-Type', 'application/json')
+      headers.set('Accept', 'application/json')
+      headers.set('X-Requested-With', 'XMLHttpRequest')
 
       // CSRF 토큰 처리 (서버에서 제공하는 경우)
       if (process.client) {
-        const csrfMeta = document.querySelector('meta[name="csrf-token"]')
-        if (csrfMeta) {
-          options.headers['X-CSRF-Token'] = csrfMeta.getAttribute('content')
+        const csrfMeta = document.querySelector('meta[name="csrf-token"]') as HTMLMetaElement | null
+        const token = csrfMeta?.getAttribute('content')
+        if (token) {
+          headers.set('X-CSRF-Token', token)
         }
       }
+
+      options.headers = headers
 
       // 요청 로깅 (개발 환경)
       if (process.dev) {
@@ -57,10 +61,13 @@ export default defineNuxtPlugin(() => {
       }
 
       // 새로운 CSRF 토큰 업데이트 (헤더에서 제공하는 경우)
-      if (process.client && response.headers.get('x-csrf-token')) {
-        const csrfMeta = document.querySelector('meta[name="csrf-token"]')
-        if (csrfMeta) {
-          csrfMeta.setAttribute('content', response.headers.get('x-csrf-token'))
+      if (process.client) {
+        const token = response.headers.get('x-csrf-token')
+        if (token) {
+          const csrfMeta = document.querySelector('meta[name="csrf-token"]') as HTMLMetaElement | null
+          if (csrfMeta) {
+            csrfMeta.setAttribute('content', token)
+          }
         }
       }
     },

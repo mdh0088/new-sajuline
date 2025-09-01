@@ -9,8 +9,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from src.exceptions.custom_exceptions import NotFoundError, DuplicateError, AuthenticationError, ValidationError
 from src.common.logging import logger, get_logger_with_request_id
 
-from src.models.user_model import User, UserStatus
-from src.schemas.user_schema import UserCreate, UserUpdate, UserResponse, UserListResponse
+from src.models.user_model import User, UserStatus, JoinType
+from src.schemas.user_schema import UserCreate, UserUpdate, UserResponse, UserListResponse, UserSignup, SignupResponse
 from src.repositories.user_repository import UserRepository
 from src.services.auth_service import AuthService
 
@@ -59,6 +59,93 @@ class UserService:
         
         log.info("User created successfully", user_id=user.user_id, email=user.email)
         return UserResponse.model_validate(user)
+    
+    async def signup(self, signup_data: UserSignup) -> SignupResponse:
+        """
+        통합 회원가입 처리 (일반 + 소셜)
+        - 가입 유형 자동 판별
+        - 유효성 검사 (중복 체크, 약관 동의, 비밀번호 검증)
+        - 사용자 생성
+        """
+        log = get_logger_with_request_id()
+        log.info("Starting signup process", user_id=signup_data.user_id, email=signup_data.email)
+        
+        # 1. 가입 유형 판별
+        is_social = bool(signup_data.social_provider and signup_data.social_id)
+        
+        if is_social:
+            # 소셜 가입: social_provider를 JoinType으로 변환
+            try:
+                join_type = JoinType(signup_data.social_provider.upper())
+            except ValueError:
+                log.warning("Unsupported social provider", provider=signup_data.social_provider)
+                raise ValidationError(f"지원하지 않는 소셜 제공자입니다: {signup_data.social_provider}")
+            log.info("Social signup detected", provider=signup_data.social_provider)
+        else:
+            # 일반 가입: 비밀번호 필수 검증
+            if not signup_data.password:
+                log.warning("Password required for regular signup", user_id=signup_data.user_id)
+                raise ValidationError("일반 회원가입은 비밀번호가 필수입니다.")
+            join_type = JoinType.COMMON
+            log.info("Regular signup detected", user_id=signup_data.user_id)
+        
+        # 2. 약관 동의 검증
+        if not signup_data.agree_terms or not signup_data.agree_privacy:
+            log.warning("Terms agreement required", 
+                       user_id=signup_data.user_id, 
+                       agree_terms=signup_data.agree_terms, 
+                       agree_privacy=signup_data.agree_privacy)
+            raise ValidationError("필수 약관에 동의해주세요.")
+        
+        # 3. 중복 검증
+        if await self.user_repo.exists_by_user_id(signup_data.user_id):
+            log.warning("User ID already exists", user_id=signup_data.user_id)
+            raise DuplicateError("이미 존재하는 사용자 ID입니다.")
+        
+        if await self.user_repo.exists_by_email(signup_data.email):
+            log.warning("Email already exists", email=signup_data.email)
+            raise DuplicateError("이미 존재하는 이메일입니다.")
+        
+        if await self.user_repo.exists_by_phone(signup_data.phone):
+            log.warning("Phone already exists", phone=signup_data.phone)
+            raise DuplicateError("이미 존재하는 전화번호입니다.")
+        
+        # 4. UserCreate 스키마로 변환하여 기존 로직 재사용
+        user_create_data = UserCreate(
+            user_id=signup_data.user_id,
+            email=signup_data.email,
+            nickname=signup_data.nickname,
+            phone=signup_data.phone,
+            join_type=join_type,
+            social_provider=signup_data.social_provider,
+            social_id=signup_data.social_id,
+            profile_image_url=signup_data.profile_image_url,
+            birth_date=signup_data.birth_date,
+            gender=signup_data.gender,
+            is_marketing_agreed=signup_data.is_marketing_agreed,
+            password=signup_data.password
+        )
+        
+        # 5. 비밀번호 해싱 (일반 가입시에만)
+        password_hash = None
+        if signup_data.password and join_type == JoinType.COMMON:
+            password_hash = self.auth_service.hash_password(signup_data.password)
+        
+        # 6. 사용자 생성
+        user = await self.user_repo.create(user_create_data, password_hash)
+        
+        log.info("Signup completed successfully", 
+                user_id=user.user_id, 
+                email=user.email, 
+                join_type=join_type.value,
+                is_social=is_social)
+        
+        # 7. 응답 생성
+        user_response = UserResponse.model_validate(user)
+        return SignupResponse(
+            user=user_response,
+            message="회원가입이 완료되었습니다."
+        )
     
     async def get_user(self, user_id: str) -> UserResponse:
         """사용자 조회"""

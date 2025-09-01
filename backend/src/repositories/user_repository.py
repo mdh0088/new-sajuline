@@ -9,8 +9,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, update, delete, and_
 from sqlalchemy.engine import Result
 
-from src.models.user_model import User
-from src.schemas.user_schema import UserCreate, UserUpdate
+from src.models.user_model import User, JoinType
+from src.schemas.user_schema import UserCreate, UserUpdate, UserSignup
 from src.common.logging import logger, get_logger_with_request_id
 from src.exceptions.custom_exceptions import BaseAppException
 
@@ -37,6 +37,29 @@ class UserRepository:
             birth_date=user_data.birth_date,
             gender=user_data.gender,
             is_marketing_agreed=user_data.is_marketing_agreed,
+        )
+        
+        self.db.add(user)
+        await self.db.flush()
+        await self.db.refresh(user)
+        return user
+    
+    @logger.catch(reraise=True)
+    async def create_from_signup(self, signup_data: UserSignup, password_hash: Optional[str] = None, join_type: JoinType = JoinType.COMMON) -> User:
+        """회원가입용 사용자 생성"""
+        user = User(
+            user_id=signup_data.user_id,
+            email=signup_data.email,
+            password_hash=password_hash,
+            nickname=signup_data.nickname,
+            phone=signup_data.phone,
+            join_type=join_type,
+            social_provider=signup_data.social_provider,
+            social_id=signup_data.social_id,
+            profile_image_url=signup_data.profile_image_url,
+            birth_date=signup_data.birth_date,
+            gender=signup_data.gender,
+            is_marketing_agreed=signup_data.is_marketing_agreed,
         )
         
         self.db.add(user)

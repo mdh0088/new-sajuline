@@ -14,6 +14,8 @@ class UserBase(BaseModel):
     nickname: str = Field(..., min_length=2, max_length=50, description="닉네임")
     phone: str = Field(..., min_length=1, max_length=15, description="전화번호")
     join_type: JoinType = Field(default=JoinType.COMMON, description="가입 유형")
+    social_provider: Optional[str] = Field(None, description="소셜 제공자")
+    social_id: Optional[str] = Field(None, description="소셜 고유 ID")
     profile_image_url: Optional[str] = Field(None, description="프로필 이미지 URL")
     birth_date: Optional[date] = Field(None, description="생년월일")
     gender: Optional[Gender] = Field(None, description="성별")
@@ -26,6 +28,23 @@ class UserCreate(UserBase):
     password: Optional[str] = Field(None, min_length=8, description="비밀번호 (소셜로그인시 불필요)")
     social_provider: Optional[str] = Field(None, description="소셜 제공자")
     social_id: Optional[str] = Field(None, description="소셜 고유 ID")
+
+
+class UserSignup(UserBase):
+    """통합 회원가입 요청 스키마 (일반 + 소셜)"""
+    user_id: str = Field(..., min_length=4, max_length=20, description="사용자 ID")
+    password: Optional[str] = Field(None, min_length=8, max_length=128, description="비밀번호 (일반 회원가입시 필수)")
+    
+    # 약관 동의 (필수)
+    agree_terms: bool = Field(True, description="이용약관 동의")
+    agree_privacy: bool = Field(True, description="개인정보처리방침 동의")
+    # is_marketing_agreed, social_provider, social_id는 UserBase에서 상속
+
+
+class SignupResponse(BaseModel):
+    """회원가입 응답 스키마"""
+    user: UserResponse = Field(..., description="생성된 사용자 정보")
+    message: str = Field(default="회원가입이 완료되었습니다.", description="응답 메시지")
 
 
 class UserUpdate(BaseModel):

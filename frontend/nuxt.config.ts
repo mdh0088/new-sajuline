@@ -6,14 +6,18 @@ export default defineNuxtConfig({
   devtools: { enabled: true },
   // SSR 활성화 (SEO 및 초기 렌더링 성능)
   ssr: true,
+  // 페이지 기반 라우팅 활성화 (명시)
+  pages: true,
   
   // 하이브리드 렌더링 전략 (즉시 적용 권장)
   routeRules: {
-    // 정적 페이지는 빌드 시점에 프리렌더링
-    '/': { prerender: true },
-    '/about': { prerender: true },
-    '/terms': { prerender: true },
-    '/privacy': { prerender: true },
+    // 정적 페이지는 빌드 시점에 프리렌더링 (개발 환경에서는 비활성화)
+    ...(process.env.NODE_ENV === 'production' ? {
+      '/': { prerender: true },
+      '/about': { prerender: true },
+      '/terms': { prerender: true },
+      '/privacy': { prerender: true },
+    } : {}),
     
     // 동적 콘텐츠는 SWR(Stale-While-Revalidate) 캐싱
     '/horoscope/**': { 
@@ -46,6 +50,8 @@ export default defineNuxtConfig({
         { name: 'viewport', content: 'width=device-width, initial-scale=1' },
         { name: 'description', content: 'AI와 전문가의 하이브리드 사주 상담 플랫폼' },
         { name: 'format-detection', content: 'telephone=no' },
+        // PWA 호환 메타 (경고 제거)
+        { name: 'mobile-web-app-capable', content: 'yes' },
         
         // Open Graph 메타 태그 (소셜 미디어 공유 최적화)
         { property: 'og:type', content: 'website' },
@@ -74,10 +80,7 @@ export default defineNuxtConfig({
     }
   },
 
-  // 전역 CSS 파일
-  css: [
-    '~/assets/css/main.css'
-  ],
+  // 전역 CSS 파일은 app.vue에서 import (빌드 캐시 경로 이슈 회피)
 
   // Nuxt 모듈 설정
   modules: [
@@ -170,24 +173,8 @@ export default defineNuxtConfig({
     typeCheck: true
   },
 
-  // 경로 별칭 설정
-  alias: {
-    '@': './src',
-    '~': './',
-    '@@': './',
-    '~~': './',
-    'assets': './assets',
-    'public': './public',
-    'components': './components',
-    'composables': './composables',
-    'layouts': './layouts',
-    'middleware': './middleware',
-    'pages': './pages',
-    'plugins': './plugins',
-    'stores': './stores',
-    'types': './types',
-    'utils': './utils'
-  },
+  // 경로 별칭 설정 (기본 제공 alias 사용을 권장)
+  // 커스텀 alias는 충돌을 유발할 수 있으므로 최소화
 
   // Vite 빌드 설정
   vite: {
