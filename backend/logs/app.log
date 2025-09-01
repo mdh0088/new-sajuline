@@ -1310,3 +1310,8 @@ src.common.exceptions.BaseAppException: Repository layer: 강제 DB 연결 오�
 2025-08-29 09:00:26.364 | INFO     | src.common.logging.events:application_shutdown:21 | Application Shutdown | {'request_id': ''}
 2025-08-29 09:00:48.588 | INFO     | src.common.logging.config:configure:73 | Logging system initialized | {'extra': {'log_level': 'INFO', 'environment': 'development'}, 'request_id': ''}
 2025-08-29 09:00:48.610 | INFO     | src.common.logging.events:application_started:16 | Application Started | {'request_id': '', 'environment': 'development', 'debug': True, 'log_level': 'INFO'}
+2025-09-01 04:40:46.790 | INFO     | src.common.logging.config:configure:73 | Logging system initialized | {'extra': {'log_level': 'INFO', 'environment': 'development'}, 'request_id': ''}
+2025-09-01 04:40:46.812 | INFO     | src.common.logging.events:application_started:16 | Application Started | {'request_id': '', 'environment': 'development', 'debug': True, 'log_level': 'INFO'}
+2025-09-01 04:40:48.223 | INFO     | src.common.logging.events:application_shutdown:21 | Application Shutdown | {'request_id': ''}
+2025-09-01 04:44:42.343 | INFO     | src.common.logging.config:configure:73 | Logging system initialized | {'extra': {'log_level': 'INFO', 'environment': 'development'}, 'request_id': ''}
+2025-09-01 04:44:42.367 | INFO     | src.common.logging.events:application_started:16 | Application Started | {'request_id': '', 'environment': 'development', 'debug': True, 'log_level': 'INFO'}

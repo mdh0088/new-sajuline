@@ -1,3 +1,79 @@
+# Serena MCP
 .serena/*
-backend/src/__pycache__/
+
+# Python
+**/__pycache__/
+*.py[cod]
+*$py.class
+*.so
+
+# 가상환경
+.env
+.venv/
+venv/
+env/
+
+# 테스트 및 커버리지
+.pytest_cache/
+.coverage
+.coverage.*
+coverage.xml
+htmlcov/
+.tox/
+
+# 타입 체킹
+.mypy_cache/
+.dmypy.json
+dmypy.json
+
+# 로그 파일
+*.log
+logs/
+
+# 데이터베이스
+*.sqlite
+*.sqlite3
+*.db
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Node.js (프론트엔드용)
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+
+# 빌드 출력
+dist/
+build/
+*.egg-info/
+
+# Docker
+.dockerignore
+docker-compose.override.yml
+
+# 임시 파일
+*.tmp
+*.temp
+.cache/
+
+# 백업 파일
+*.bak
+*.backup
+*~
 

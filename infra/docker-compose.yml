@@ -151,19 +151,19 @@ services:
       retries: 30
       start_period: 90s
 
-  # MSSQL 초기화 일회성 서비스
-  mssql-ars-init:
-    image: mcr.microsoft.com/mssql/server:2019-latest
-    container_name: mssql-ars-init
-    depends_on:
-      mssql-ars:
-        condition: service_healthy
-    entrypoint: ["/bin/bash","-lc","SQLCMD=$$([ -x /opt/mssql-tools18/bin/sqlcmd ] && echo /opt/mssql-tools18/bin/sqlcmd || echo /opt/mssql-tools/bin/sqlcmd); $$SQLCMD -C -l 60 -S mssql-ars -U sa -P 'Str0ng!Passw0rd' -i /init/00_create_db.sql && $$SQLCMD -C -l 60 -S mssql-ars -U sa -P 'Str0ng!Passw0rd' -i /init/01_schema_tables.sql && $$SQLCMD -C -l 60 -S mssql-ars -U sa -P 'Str0ng!Passw0rd' -i /init/02_indexes.sql"]
-    volumes:
-      - ./mssql/init:/init:ro
-    networks:
-      - sajuline-network
-    restart: "no"
+  # MSSQL 초기화 일회성 서비스 (현재 사용안함)
+  # mssql-ars-init:
+  #   image: mcr.microsoft.com/mssql/server:2019-latest
+  #   container_name: mssql-ars-init
+  #   depends_on:
+  #     mssql-ars:
+  #       condition: service_healthy
+  #   entrypoint: ["/bin/bash","-lc","SQLCMD=$$([ -x /opt/mssql-tools18/bin/sqlcmd ] && echo /opt/mssql-tools18/bin/sqlcmd || echo /opt/mssql-tools/bin/sqlcmd); $$SQLCMD -C -l 60 -S mssql-ars -U sa -P 'Str0ng!Passw0rd' -i /init/00_create_db.sql && $$SQLCMD -C -l 60 -S mssql-ars -U sa -P 'Str0ng!Passw0rd' -i /init/01_schema_tables.sql && $$SQLCMD -C -l 60 -S mssql-ars -U sa -P 'Str0ng!Passw0rd' -i /init/02_indexes.sql"]
+  #   volumes:
+  #     - ./mssql/init:/init:ro
+  #   networks:
+  #     - sajuline-network
+  #   restart: "no"
 
 # 볼륨 정의
 volumes:

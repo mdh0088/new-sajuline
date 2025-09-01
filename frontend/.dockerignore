@@ -1,19 +1,71 @@
-node_modules
-.nuxt
-.output
+# 사주라인 Frontend .dockerignore
+# Docker 빌드 시 제외할 파일/폴더들
+
+# Git 관련
 .git
 .gitignore
-README.md
-.env.*
-dist
-build
-coverage
-.nyc_output
+.gitattributes
+
+# IDE 관련
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# 의존성 및 빌드 결과물 (컨테이너에서 직접 생성)
+node_modules/
+.nuxt/
+.nitro/
+.output/
+dist/
+
+# 로그 파일
+logs/
 *.log
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+
+# 환경 파일
+.env
+.env.*
+!.env.example
+
+# 캐시 파일
+.npm/
+.yarn/
+.eslintcache
+.stylelintcache
+
+# 운영체제 관련
 .DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
 Thumbs.db
-.vscode
-.idea
+
+# 테스트 관련
+coverage/
+.nyc_output/
+test-results/
+playwright-report/
+
+# 기타 임시 파일
+*.tmp
+*.temp
+.cache/
+
+# README 및 문서 (선택적)
+README.md
+CHANGELOG.md
+LICENSE
+
+# Docker 관련
+Dockerfile*
+.dockerignore
+
+# Nuxt 관련 캐시
+.nuxt-analyze/
