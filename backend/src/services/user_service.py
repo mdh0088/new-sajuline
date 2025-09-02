@@ -10,8 +10,9 @@ from src.exceptions.custom_exceptions import NotFoundError, DuplicateError, Auth
 from src.common.logging import logger, get_logger_with_request_id
 
 from src.models.user_model import User, UserStatus, JoinType
-from src.schemas.user_schema import UserCreate, UserUpdate, UserResponse, UserListResponse, UserSignup
+from src.schemas.user_schema import UserResponse, UserSignup
 from src.repositories.user_repository import UserRepository
+from src.repositories.counselor_repository import CounselorRepository
 from src.repositories.ars.tm60_users_repository import Tm60UsersRepository
 from src.services.auth_service import AuthService
 from src.core.database import get_db_mssql
@@ -20,47 +21,17 @@ from src.core.database import get_db_mssql
 class UserService:
     """사용자 비즈니스 로직 서비스"""
     
-    def __init__(self, user_repo: UserRepository, auth_service: AuthService):
+    def __init__(
+        self, 
+        user_repo: UserRepository, 
+        counselor_repo: CounselorRepository, 
+        auth_service: AuthService,
+        event_service: Optional["EventService"] = None
+    ):
         self.user_repo = user_repo
+        self.counselor_repo = counselor_repo
         self.auth_service = auth_service
-    
-    async def create_user(self, user_data: UserCreate) -> UserResponse:
-        """
-        사용자 생성 비즈니스 로직
-        - 중복 검증
-        - 비밀번호 해싱
-        - 사용자 생성
-        """
-        log = get_logger_with_request_id()
-        log.info("Creating new user", user_id=user_data.user_id, email=user_data.email)
-        
-        # 테스트용 강제 서비스 레이어 오류 발생
-        if user_data.user_id == "create_user_error_test":
-            raise ValidationError("Service layer: 사용자 생성 비즈니스 로직 실패 테스트")
-        
-        # 중복 검증
-        if await self.user_repo.exists_by_user_id(user_data.user_id):
-            log.warning("User ID already exists", user_id=user_data.user_id)
-            raise DuplicateError("이미 존재하는 사용자 ID입니다.")
-        
-        if await self.user_repo.exists_by_email(user_data.email):
-            log.warning("Email already exists", email=user_data.email)
-            raise DuplicateError("이미 존재하는 이메일입니다.")
-        
-        if await self.user_repo.exists_by_phone(user_data.phone):
-            log.warning("Phone already exists", phone=user_data.phone)
-            raise DuplicateError("이미 존재하는 전화번호입니다.")
-        
-        # 비밀번호 해싱 (소셜 로그인이 아닌 경우)
-        password_hash = None
-        if user_data.password and user_data.join_type.value == "COMMON":
-            password_hash = self.auth_service.hash_password(user_data.password)
-        
-        # 사용자 생성
-        user = await self.user_repo.create(user_data, password_hash)
-        
-        log.info("User created successfully", user_id=user.user_id, email=user.email)
-        return UserResponse.model_validate(user)
+        self.event_service = event_service
     
     async def signup(self, signup_data: UserSignup) -> UserResponse:
         """
@@ -159,114 +130,66 @@ class UserService:
                 join_type=join_type.value,
                 is_social=is_social)
         
-        # 7. 응답 생성
-        return UserResponse.model_validate(user)
+        # 6. 회원가입 이벤트 포인트 지급 처리 (실패해도 회원가입은 성공)
+        signup_reward = None
+        if self.event_service:
+            try:
+                signup_reward = await self.event_service.process_signup_reward(user.user_id)
+                if signup_reward:
+                    log.info("Signup reward granted successfully", 
+                           user_id=user.user_id,
+                           reward_value=signup_reward.reward_value,
+                           balance_after=signup_reward.balance_after)
+            except Exception as e:
+                # 포인트 지급 실패해도 회원가입은 성공으로 처리
+                log.warning("Signup reward failed but signup succeeded", 
+                          user_id=user.user_id, 
+                          error=str(e))
+        
+        # 7. 응답 생성 (포인트 지급 정보 포함)
+        user_response = UserResponse.model_validate(user)
+        user_response.signup_reward = signup_reward
+        
+        return user_response
     
-    async def get_user(self, user_id: str) -> UserResponse:
-        """사용자 조회"""
-        # 테스트용 강제 서비스 레이어 오류 발생
-        if user_id == "get_user_error_test":
-            raise ValidationError("Service layer: 사용자 조회 비즈니스 로직 실패 테스트")
-        
-        user = await self.user_repo.get_by_id(user_id)
-        if not user:
-            raise NotFoundError("사용자를 찾을 수 없습니다.")
-        
-        return UserResponse.model_validate(user)
-    
-    async def get_user_by_email(self, email: str) -> UserResponse:
-        """이메일로 사용자 조회"""
-        # 테스트용 강제 서비스 레이어 오류 발생
-        if email == "get_user_by_email_error_test@test.com":
-            raise ValidationError("Service layer: 이메일 사용자 조회 비즈니스 로직 실패 테스트")
-        
-        user = await self.user_repo.get_by_email(email)
-        if not user:
-            raise NotFoundError("사용자를 찾을 수 없습니다.")
-        
-        return UserResponse.model_validate(user)
-    
-    async def update_user(self, user_id: str, user_data: UserUpdate) -> Optional[UserResponse]:
-        """
-        사용자 정보 수정 비즈니스 로직
-        - 존재 여부 확인
-        - 중복 검증 (닉네임, 전화번호 변경시)
-        - 정보 수정
-        """
-        # 테스트용 강제 서비스 레이어 오류 발생
-        if user_id == "update_user_error_test":
-            raise ValidationError("Service layer: 사용자 정보 수정 비즈니스 로직 실패 테스트")
-        
-        # 사용자 존재 여부 확인
-        existing_user = await self.user_repo.get_by_id(user_id)
-        if not existing_user:
-            raise NotFoundError("사용자를 찾을 수 없습니다.")
-        
-        # 전화번호 변경시 중복 검증
-        if user_data.phone and user_data.phone != existing_user.phone:
-            if await self.user_repo.exists_by_phone(user_data.phone):
-                raise DuplicateError("이미 존재하는 전화번호입니다.")
-        
-        # 사용자 정보 수정
-        updated_user = await self.user_repo.update(user_id, user_data)
-        
-        return UserResponse.model_validate(updated_user) if updated_user else None
-    
-    async def delete_user(self, user_id: str) -> bool:
-        """
-        사용자 삭제 비즈니스 로직
-        - 존재 여부 확인
-        - 삭제 처리
-        """
-        # 테스트용 강제 서비스 레이어 오류 발생
-        if user_id == "delete_user_error_test":
-            raise ValidationError("Service layer: 사용자 삭제 비즈니스 로직 실패 테스트")
-        
-        existing_user = await self.user_repo.get_by_id(user_id)
-        if not existing_user:
-            raise NotFoundError("사용자를 찾을 수 없습니다.")
-        
-        success = await self.user_repo.delete(user_id)
-        
-        return success
-    
-    async def get_user_list(
-        self, 
-        page: int = 1, 
-        size: int = 20,
-        user_status: Optional[str] = None
-    ) -> UserListResponse:
-        """
-        사용자 목록 조회 비즈니스 로직
-        - 페이징 처리
-        - 상태별 필터링
-        """
-        # 테스트용 강제 서비스 레이어 오류 발생
-        if user_status == "get_user_list_error_test":
-            raise ValidationError("Service layer: 사용자 목록 조회 비즈니스 로직 실패 테스트")
-        
-        if page < 1:
-            page = 1
-        if size < 1 or size > 100:
-            size = 20
-        
-        skip = (page - 1) * size
-        
-        # 상태 검증
-        if user_status and user_status not in [status.value for status in UserStatus]:
-            raise ValidationError("유효하지 않은 사용자 상태입니다.")
-        
-        users = await self.user_repo.get_list(skip, size, user_status)
-        total = await self.user_repo.get_count(user_status)
-        
-        user_responses = [UserResponse.model_validate(user) for user in users]
-        
-        return UserListResponse(
-            users=user_responses,
-            total=total,
-            page=page,
-            size=size
-        )
+# TODO: 사용자 목록 조회 - 추후 참고용
+    # async def get_user_list(
+    #     self, 
+    #     page: int = 1, 
+    #     size: int = 20,
+    #     user_status: Optional[str] = None
+    # ) -> UserListResponse:
+    #     """
+    #     사용자 목록 조회 비즈니스 로직
+    #     - 페이징 처리
+    #     - 상태별 필터링
+    #     """
+    #     # 테스트용 강제 서비스 레이어 오류 발생
+    #     if user_status == "get_user_list_error_test":
+    #         raise ValidationError("Service layer: 사용자 목록 조회 비즈니스 로직 실패 테스트")
+    #     
+    #     if page < 1:
+    #         page = 1
+    #     if size < 1 or size > 100:
+    #         size = 20
+    #     
+    #     skip = (page - 1) * size
+    #     
+    #     # 상태 검증
+    #     if user_status and user_status not in [status.value for status in UserStatus]:
+    #         raise ValidationError("유효하지 않은 사용자 상태입니다.")
+    #     
+    #     users = await self.user_repo.get_list(skip, size, user_status)
+    #     total = await self.user_repo.get_count(user_status)
+    #     
+    #     user_responses = [UserResponse.model_validate(user) for user in users]
+    #     
+    #     return UserListResponse(
+    #         users=user_responses,
+    #         total=total,
+    #         page=page,
+    #         size=size
+    #     )
     
     async def authenticate_user(self, user_id_or_email: str, password: str) -> UserResponse:
         """
@@ -348,3 +271,91 @@ class UserService:
         
         log.info("Login successful", user_id=user.user_id, email=user.email)
         return access_token, user_response
+    
+    async def check_email_availability(self, email: str) -> bool:
+        """
+        이메일 가용성 검사 (t_user + t_counselor 통합)
+        Return: True=사용가능, False=이미 존재함
+        """
+        log = get_logger_with_request_id()
+        log.info("Checking email availability across user and counselor tables", email=email)
+        
+        # t_user와 t_counselor 양쪽 테이블에서 이메일 존재 여부 확인
+        user_exists = await self.user_repo.exists_by_email(email)
+        counselor_exists = await self.counselor_repo.exists_by_counselor_id(email)  # counselor_id는 이메일 기반
+        
+        exists = user_exists or counselor_exists
+        available = not exists
+        
+        log.info("Email availability check completed", 
+                email=email, 
+                user_exists=user_exists, 
+                counselor_exists=counselor_exists, 
+                available=available)
+        return available
+    
+    async def check_user_id_availability(self, user_id: str) -> bool:
+        """
+        사용자 ID 가용성 검사 (t_user.user_id + t_counselor.counselor_id 통합)
+        Return: True=사용가능, False=이미 존재함
+        """
+        log = get_logger_with_request_id()
+        log.info("Checking user_id availability across user and counselor tables", user_id=user_id)
+        
+        # t_user.user_id와 t_counselor.counselor_id 양쪽에서 존재 여부 확인
+        user_exists = await self.user_repo.exists_by_user_id(user_id)
+        counselor_exists = await self.counselor_repo.exists_by_counselor_id(user_id)
+        
+        exists = user_exists or counselor_exists
+        available = not exists
+        
+        log.info("User ID availability check completed", 
+                user_id=user_id, 
+                user_exists=user_exists, 
+                counselor_exists=counselor_exists, 
+                available=available)
+        return available
+    
+    async def check_phone_availability(self, phone: str) -> bool:
+        """
+        전화번호 가용성 검사 (t_user + t_counselor 통합)
+        Return: True=사용가능, False=이미 존재함
+        """
+        log = get_logger_with_request_id()
+        log.info("Checking phone availability across user and counselor tables", phone=phone)
+        
+        # t_user와 t_counselor 양쪽 테이블에서 전화번호 존재 여부 확인
+        user_exists = await self.user_repo.exists_by_phone(phone)
+        counselor_exists = await self.counselor_repo.exists_by_phone(phone)
+        
+        exists = user_exists or counselor_exists
+        available = not exists
+        
+        log.info("Phone availability check completed", 
+                phone=phone, 
+                user_exists=user_exists, 
+                counselor_exists=counselor_exists, 
+                available=available)
+        return available
+    
+    async def check_nickname_availability(self, nickname: str) -> bool:
+        """
+        닉네임 가용성 검사 (t_user + t_counselor 통합)
+        Return: True=사용가능, False=이미 존재함
+        """
+        log = get_logger_with_request_id()
+        log.info("Checking nickname availability across user and counselor tables", nickname=nickname)
+        
+        # t_user와 t_counselor 양쪽 테이블에서 닉네임 존재 여부 확인
+        user_exists = await self.user_repo.exists_by_nickname(nickname)
+        counselor_exists = await self.counselor_repo.exists_by_nickname(nickname)
+        
+        exists = user_exists or counselor_exists
+        available = not exists
+        
+        log.info("Nickname availability check completed", 
+                nickname=nickname, 
+                user_exists=user_exists, 
+                counselor_exists=counselor_exists, 
+                available=available)
+        return available
