@@ -99,6 +99,7 @@ export default defineNuxtConfig({
     '@nuxtjs/tailwindcss', // Tailwind CSS
     '@pinia/nuxt',        // 상태 관리
     '@vueuse/nuxt',       // Vue 유틸리티 컬렉션
+    '@element-plus/nuxt', // Element Plus UI 라이브러리
     // '@nuxtjs/sentry',     // Nuxt 4 호환성 이슈로 임시 비활성화
     ...(process.env.NODE_ENV === 'development' ? [
       '@nuxt/test-utils',
@@ -203,13 +204,13 @@ export default defineNuxtConfig({
           // 청크 분할 최적화 (라이브러리별 분리)
           manualChunks: {
             vendor: ['vue', '@vue/runtime-core'],
-            ui: ['@tanstack/vue-query', '@vueuse/core']
+            ui: ['@tanstack/vue-query', '@vueuse/core', 'element-plus']
           }
         }
       }
     },
     optimizeDeps: {
-      include: ['@tanstack/vue-query', '@vueuse/core']
+      include: ['@tanstack/vue-query', '@vueuse/core', 'element-plus']
     }
   },
 

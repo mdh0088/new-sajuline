@@ -17,13 +17,17 @@ import type {
   UserListData,
   LoginRequest,
   LoginData,
+  RefreshTokenRequest,
+  TokenResponse,
   UserCreateResponse,
   UserDetailResponse,
   UserUpdateResponse,
   UserListResponse,
   LoginResponse,
   LogoutResponse,
-  AuthenticateResponse
+  RefreshTokenResponse,
+  AuthenticateResponse,
+  AvailabilityCheckResponse
 } from '~/types/user/models'
 import type { APIResponse, APIError } from '~/types/common/api'
 
@@ -147,6 +151,21 @@ const userApi = {
     }
   },
 
+  // 토큰 갱신
+  async refreshToken(refreshTokenData?: RefreshTokenRequest): Promise<TokenResponse> {
+    const { $api } = useNuxtApp()
+    const response = await $api<RefreshTokenResponse>('/users/refresh', {
+      method: 'POST',
+      body: refreshTokenData || {}
+    })
+    
+    if (!response.success || !response.data) {
+      throw new Error(response.error?.message || '토큰 갱신에 실패했습니다.')
+    }
+    
+    return response.data
+  },
+
   // 사용자 인증
   async authenticateUser(credentials: LoginRequest): Promise<UserResponse> {
     const { $api } = useNuxtApp()
@@ -160,6 +179,51 @@ const userApi = {
     }
     
     return response.data
+  },
+
+  // 중복 검사 API들
+  async checkEmailAvailability(email: string): Promise<boolean> {
+    const { $api } = useNuxtApp()
+    const response = await $api<AvailabilityCheckResponse>(`/users/check-availability/email?value=${encodeURIComponent(email)}`)
+    
+    if (!response.success) {
+      throw new Error(response.error?.message || '이메일 중복 검사에 실패했습니다.')
+    }
+    
+    return response.data ?? false
+  },
+
+  async checkUserIdAvailability(userId: string): Promise<boolean> {
+    const { $api } = useNuxtApp()
+    const response = await $api<AvailabilityCheckResponse>(`/users/check-availability/user-id?value=${encodeURIComponent(userId)}`)
+    
+    if (!response.success) {
+      throw new Error(response.error?.message || '사용자 ID 중복 검사에 실패했습니다.')
+    }
+    
+    return response.data ?? false
+  },
+
+  async checkPhoneAvailability(phone: string): Promise<boolean> {
+    const { $api } = useNuxtApp()
+    const response = await $api<AvailabilityCheckResponse>(`/users/check-availability/phone?value=${encodeURIComponent(phone)}`)
+    
+    if (!response.success) {
+      throw new Error(response.error?.message || '전화번호 중복 검사에 실패했습니다.')
+    }
+    
+    return response.data ?? false
+  },
+
+  async checkNicknameAvailability(nickname: string): Promise<boolean> {
+    const { $api } = useNuxtApp()
+    const response = await $api<AvailabilityCheckResponse>(`/users/check-availability/nickname?value=${encodeURIComponent(nickname)}`)
+    
+    if (!response.success) {
+      throw new Error(response.error?.message || '닉네임 중복 검사에 실패했습니다.')
+    }
+    
+    return response.data ?? false
   }
 }
 
@@ -206,6 +270,63 @@ export const useUserQueries = () => {
       queryKey: ['users', 'list', params],
       queryFn: () => userApi.getUserList(params),
       staleTime: 2 * 60 * 1000, // 2분 - 목록은 비교적 자주 업데이트
+      ...options
+    })
+  }
+
+  // 중복 검사 쿼리들 (실시간 검증용)
+  const useEmailAvailability = (
+    email: string,
+    options?: Partial<UseQueryOptions<boolean, APIError>>
+  ) => {
+    return useQuery({
+      queryKey: ['availability', 'email', email],
+      queryFn: () => userApi.checkEmailAvailability(email),
+      enabled: !!email && email.includes('@'), // 유효한 이메일 형식일 때만 실행
+      staleTime: 30 * 1000, // 30초 - 중복 검사는 짧은 캐시
+      retry: 1, // 재시도 최소화 (빠른 피드백)
+      ...options
+    })
+  }
+
+  const useUserIdAvailability = (
+    userId: string,
+    options?: Partial<UseQueryOptions<boolean, APIError>>
+  ) => {
+    return useQuery({
+      queryKey: ['availability', 'user-id', userId],
+      queryFn: () => userApi.checkUserIdAvailability(userId),
+      enabled: !!userId && userId.length >= 3, // 최소 3자 이상일 때만 실행
+      staleTime: 30 * 1000,
+      retry: 1,
+      ...options
+    })
+  }
+
+  const usePhoneAvailability = (
+    phone: string,
+    options?: Partial<UseQueryOptions<boolean, APIError>>
+  ) => {
+    return useQuery({
+      queryKey: ['availability', 'phone', phone],
+      queryFn: () => userApi.checkPhoneAvailability(phone),
+      enabled: !!phone && phone.length >= 10, // 최소 10자 이상일 때만 실행
+      staleTime: 30 * 1000,
+      retry: 1,
+      ...options
+    })
+  }
+
+  const useNicknameAvailability = (
+    nickname: string,
+    options?: Partial<UseQueryOptions<boolean, APIError>>
+  ) => {
+    return useQuery({
+      queryKey: ['availability', 'nickname', nickname],
+      queryFn: () => userApi.checkNicknameAvailability(nickname),
+      enabled: !!nickname && nickname.length >= 2, // 최소 2자 이상일 때만 실행
+      staleTime: 30 * 1000,
+      retry: 1,
       ...options
     })
   }
@@ -300,11 +421,31 @@ export const useUserQueries = () => {
     })
   }
 
+  // 토큰 갱신 뮤테이션
+  const useRefreshToken = (
+    options?: UseMutationOptions<TokenResponse, APIError, RefreshTokenRequest | undefined>
+  ) => {
+    return useMutation({
+      mutationFn: userApi.refreshToken,
+      onSuccess: (data) => {
+        // 토큰 갱신 성공 시 사용자 관련 쿼리들 무효화 (최신 정보 로드)
+        queryClient.invalidateQueries({ queryKey: ['user'] })
+      },
+      ...options
+    })
+  }
+
   return {
     // Queries
     useUserById,
     useUserByEmail, 
     useUserList,
+
+    // Availability Checks (실시간 검증용)
+    useEmailAvailability,
+    useUserIdAvailability,
+    usePhoneAvailability,
+    useNicknameAvailability,
 
     // Mutations
     useCreateUser,
@@ -312,6 +453,7 @@ export const useUserQueries = () => {
     useDeleteUser,
     useLogin,
     useLogout,
-    useAuthenticateUser
+    useAuthenticateUser,
+    useRefreshToken
   }
 }
