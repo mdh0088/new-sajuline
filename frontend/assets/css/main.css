@@ -20,6 +20,12 @@
     -moz-osx-font-smoothing: grayscale;
   }
 
+  /* 기본 배경색 설정 - 다크 테마 */
+  html, body {
+    background-color: #0a0a0f;
+    color: #ffffff;
+  }
+
   /* 기본 색상 변수 */
   :root {
     --color-primary: #6366f1;
@@ -104,4 +110,205 @@
   .safe-area-bottom {
     padding-bottom: env(safe-area-inset-bottom);
   }
+}
+
+/**
+ * Element Plus 다크 테마 커스터마이징
+ */
+/* MessageBox (모달) 스타일 */
+.sajuline-confirm-modal,
+.sajuline-alert-modal,
+.sajuline-prompt-modal {
+  --el-bg-color: #1a1a1f !important;
+  --el-text-color-primary: #ffffff !important;
+  --el-text-color-regular: #e5e7eb !important;
+  --el-border-color-light: #404040 !important;
+  --el-color-primary: #6366f1 !important;
+  --el-color-success: #10b981 !important;
+  --el-color-warning: #f59e0b !important;
+  --el-color-error: #ef4444 !important;
+  --el-messagebox-width: 420px !important;
+  
+  background-color: #1a1a1f !important;
+  border: 1px solid #404040 !important;
+  border-radius: 12px !important;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.8), 0 10px 10px -5px rgba(0, 0, 0, 0.6) !important;
+}
+
+.sajuline-confirm-modal .el-message-box__header,
+.sajuline-alert-modal .el-message-box__header,
+.sajuline-prompt-modal .el-message-box__header {
+  background-color: #2d2d35 !important;
+  border-bottom: 1px solid #404040 !important;
+  border-radius: 12px 12px 0 0 !important;
+  padding: 20px 24px 16px 24px !important;
+}
+
+.sajuline-confirm-modal .el-message-box__title,
+.sajuline-alert-modal .el-message-box__title,
+.sajuline-prompt-modal .el-message-box__title {
+  color: #ffffff !important;
+  font-weight: 600 !important;
+  font-size: 18px !important;
+}
+
+.sajuline-confirm-modal .el-message-box__content,
+.sajuline-alert-modal .el-message-box__content,
+.sajuline-prompt-modal .el-message-box__content {
+  color: #e5e7eb !important;
+  padding: 24px !important;
+  line-height: 1.6 !important;
+}
+
+.sajuline-confirm-modal .el-message-box__btns,
+.sajuline-alert-modal .el-message-box__btns,
+.sajuline-prompt-modal .el-message-box__btns {
+  padding: 16px 24px 24px 24px !important;
+  gap: 12px !important;
+}
+
+.sajuline-confirm-modal .el-button,
+.sajuline-alert-modal .el-button,
+.sajuline-prompt-modal .el-button {
+  border-radius: 8px !important;
+  font-weight: 500 !important;
+  padding: 10px 20px !important;
+}
+
+.sajuline-confirm-modal .el-button--primary,
+.sajuline-alert-modal .el-button--primary,
+.sajuline-prompt-modal .el-button--primary {
+  background-color: #6366f1 !important;
+  border-color: #6366f1 !important;
+}
+
+.sajuline-confirm-modal .el-button--primary:hover,
+.sajuline-alert-modal .el-button--primary:hover,
+.sajuline-prompt-modal .el-button--primary:hover {
+  background-color: #4f46e5 !important;
+  border-color: #4f46e5 !important;
+}
+
+.sajuline-confirm-modal .el-button--default,
+.sajuline-alert-modal .el-button--default,
+.sajuline-prompt-modal .el-button--default {
+  background-color: #374151 !important;
+  border-color: #404040 !important;
+  color: #e5e7eb !important;
+}
+
+.sajuline-confirm-modal .el-button--default:hover,
+.sajuline-alert-modal .el-button--default:hover,
+.sajuline-prompt-modal .el-button--default:hover {
+  background-color: #4b5563 !important;
+  border-color: #6b7280 !important;
+}
+
+/* Notification 스타일 */
+.sajuline-notification-success,
+.sajuline-notification-error,
+.sajuline-notification-warning,
+.sajuline-notification-info {
+  background-color: #1a1a1f !important;
+  border: 1px solid #404040 !important;
+  border-radius: 12px !important;
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.6), 0 4px 6px -2px rgba(0, 0, 0, 0.4) !important;
+}
+
+.sajuline-notification-success .el-notification__title,
+.sajuline-notification-error .el-notification__title,
+.sajuline-notification-warning .el-notification__title,
+.sajuline-notification-info .el-notification__title {
+  color: #ffffff !important;
+  font-weight: 600 !important;
+}
+
+.sajuline-notification-success .el-notification__content,
+.sajuline-notification-error .el-notification__content,
+.sajuline-notification-warning .el-notification__content,
+.sajuline-notification-info .el-notification__content {
+  color: #e5e7eb !important;
+  line-height: 1.5 !important;
+}
+
+.sajuline-notification-success {
+  border-left: 4px solid #10b981 !important;
+}
+
+.sajuline-notification-error {
+  border-left: 4px solid #ef4444 !important;
+}
+
+.sajuline-notification-warning {
+  border-left: 4px solid #f59e0b !important;
+}
+
+.sajuline-notification-info {
+  border-left: 4px solid #6366f1 !important;
+}
+
+/* Message (Toast) 스타일 */
+.sajuline-toast {
+  background-color: #1a1a1f !important;
+  border: 1px solid #404040 !important;
+  border-radius: 8px !important;
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.6), 0 4px 6px -2px rgba(0, 0, 0, 0.4) !important;
+  color: #e5e7eb !important;
+  font-weight: 500 !important;
+}
+
+.sajuline-toast-success {
+  border-left: 4px solid #10b981 !important;
+}
+
+.sajuline-toast-error {
+  border-left: 4px solid #ef4444 !important;
+}
+
+.sajuline-toast-warning {
+  border-left: 4px solid #f59e0b !important;
+}
+
+.sajuline-toast-info {
+  border-left: 4px solid #6366f1 !important;
+}
+
+.sajuline-toast-loading {
+  border-left: 4px solid #6366f1 !important;
+}
+
+/* Loading 스타일 */
+.sajuline-loading {
+  background-color: rgba(0, 0, 0, 0.8) !important;
+}
+
+.sajuline-loading .el-loading-text {
+  color: #ffffff !important;
+  font-weight: 500 !important;
+}
+
+.sajuline-loading .el-loading-spinner {
+  color: #6366f1 !important;
+}
+
+/* Input 필드 (프롬프트 모달용) */
+.sajuline-prompt-modal .el-input__wrapper {
+  background-color: #2d2d35 !important;
+  border: 1px solid #404040 !important;
+  border-radius: 8px !important;
+  box-shadow: none !important;
+}
+
+.sajuline-prompt-modal .el-input__inner {
+  color: #ffffff !important;
+  background-color: transparent !important;
+}
+
+.sajuline-prompt-modal .el-input__wrapper.is-focus {
+  border-color: #6366f1 !important;
+  box-shadow: 0 0 0 1px #6366f1 !important;
+}
+
+.sajuline-prompt-modal .el-input__wrapper:hover {
+  border-color: #6b7280 !important;
 }
