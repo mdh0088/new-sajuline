@@ -8,14 +8,19 @@ from sqlalchemy.ext.asyncio import AsyncSession
 # 레이트 리미팅 import 추가
 from src.common.middleware.rate_limit import limiter
 
-from src.core.database import get_db_maria
+from src.core.database import get_db_maria, get_db_mssql
 from src.core.redis import get_redis, get_token_blacklist_service
 from src.repositories.user_repository import UserRepository
+from src.repositories.counselor_repository import CounselorRepository
+from src.repositories.event_repository import EventRepository
+from src.repositories.point_transaction_repository import PointTransactionRepository
+from src.repositories.ars.tm60_users_repository import Tm60UsersRepository
 from src.services.user_service import UserService
 from src.services.auth_service import AuthService
+from src.services.event_service import EventService
+from src.services.point_transaction_service import PointTransactionService
 from src.schemas.user_schema import (
-    UserCreate, UserUpdate, UserResponse, UserListResponse, 
-    UserLogin, PasswordChange, UserSignup
+    UserResponse, UserSignup
 )
 from src.schemas.auth_schema import LoginRequest, LoginResponse, RefreshTokenRequest, TokenResponse
 from src.common.response import APIResponse, ok, fail
@@ -31,37 +36,59 @@ def get_user_repository(db: AsyncSession = Depends(get_db_maria)) -> UserReposit
     return UserRepository(db)
 
 
+def get_counselor_repository(db: AsyncSession = Depends(get_db_maria)) -> CounselorRepository:
+    """상담사 리포지토리 의존성 주입"""
+    return CounselorRepository(db)
+
+
 def get_auth_service() -> AuthService:
     """인증 서비스 의존성 주입"""
     return AuthService()
 
 
+def get_event_repository(db: AsyncSession = Depends(get_db_maria)) -> EventRepository:
+    """이벤트 리포지토리 의존성 주입"""
+    return EventRepository(db)
+
+
+def get_point_transaction_repository(db: AsyncSession = Depends(get_db_maria)) -> PointTransactionRepository:
+    """포인트 거래 리포지토리 의존성 주입"""
+    return PointTransactionRepository(db)
+
+
+def get_tm60_users_repository():
+    """TM60 사용자 리포지토리 의존성 주입"""
+    # MSSQL 세션 생성 및 첫 번째 세션 반환
+    for mssql_session in get_db_mssql():
+        return Tm60UsersRepository(mssql_session)
+
+
+def get_point_transaction_service(
+    point_transaction_repo: PointTransactionRepository = Depends(get_point_transaction_repository)
+) -> PointTransactionService:
+    """포인트 거래 서비스 의존성 주입"""
+    return PointTransactionService(point_transaction_repo)
+
+
+def get_event_service(
+    event_repo: EventRepository = Depends(get_event_repository),
+    point_transaction_service: PointTransactionService = Depends(get_point_transaction_service),
+    tm60_users_repo: Tm60UsersRepository = Depends(get_tm60_users_repository)
+) -> EventService:
+    """이벤트 서비스 의존성 주입"""
+    return EventService(event_repo, point_transaction_service, tm60_users_repo)
+
+
 def get_user_service(
     user_repo: UserRepository = Depends(get_user_repository),
-    auth_service: AuthService = Depends(get_auth_service)
+    counselor_repo: CounselorRepository = Depends(get_counselor_repository),
+    auth_service: AuthService = Depends(get_auth_service),
+    event_service: EventService = Depends(get_event_service)
 ) -> UserService:
     """사용자 서비스 의존성 주입"""
-    return UserService(user_repo, auth_service)
+    return UserService(user_repo, counselor_repo, auth_service, event_service)
 
 
-@router.post(
-    "/", 
-    response_model=UserResponse, 
-    status_code=status.HTTP_201_CREATED,
-    summary="사용자 생성",
-    responses={
-        201: {"description": "성공"},
-        400: {"description": "중복된 사용자 정보"}
-    }
-)
-@limiter.limit("3/hour")  # 시간당 3회 제한 (어뷰징 방지)
-async def create_user(
-    request: Request,  # ⭐ Request 파라미터 추가 필수
-    user_data: UserCreate,
-    user_service: UserService = Depends(get_user_service)
-):
-    """사용자 생성 - 중복 검증 및 비밀번호 해싱"""
-    return await user_service.create_user(user_data)
 
 
 @router.post(
@@ -76,7 +103,7 @@ async def create_user(
         429: {"description": "요청 한도 초과"}
     }
 )
-@limiter.limit("3/hour")  # 시간당 3회 제한 (어뷰징 방지)
+@limiter.limit("20/hour")  # 시간당 20회 제한 (어뷰징 방지)
 async def signup(
     request: Request,  # Rate Limiting 필수
     signup_data: UserSignup,
@@ -99,7 +126,7 @@ async def signup(
         429: {"description": "요청 한도 초과"}
     }
 )
-@limiter.limit("3/hour")  # 시간당 3회 제한 (어뷰징 방지)
+@limiter.limit("20/hour")  # 시간당 20회 제한 (어뷰징 방지)
 async def social_signup_with_login(
     request: Request,  # Rate Limiting 필수
     response: Response,
@@ -159,77 +186,30 @@ async def social_signup_with_login(
     return ok(data=result, message="소셜 회원가입 및 로그인이 완료되었습니다.")
 
 
-@router.get(
-    "/{user_id}", 
-    response_model=UserResponse,
-    summary="사용자 조회",
-    responses={404: {"description": "사용자 없음"}}
-)
-async def get_user(
-    user_id: str,
-    user_service: UserService = Depends(get_user_service)
-):
-    """사용자 ID로 조회"""
-    return await user_service.get_user(user_id)
 
 
-@router.get(
-    "/email/{email}", 
-    response_model=UserResponse,
-    summary="이메일로 사용자 조회",
-    responses={404: {"description": "사용자 없음"}}
-)
-async def get_user_by_email(
-    email: str,
-    user_service: UserService = Depends(get_user_service)
-):
-    """이메일로 사용자 조회"""
-    return await user_service.get_user_by_email(email)
 
 
-@router.put(
-    "/{user_id}", 
-    response_model=UserResponse,
-    summary="사용자 정보 수정",
-    responses={404: {"description": "사용자 없음"}}
-)
-async def update_user(
-    user_id: str,
-    user_data: UserUpdate,
-    user_service: UserService = Depends(get_user_service)
-):
-    """사용자 정보 수정 - 중복 검증 포함"""
-    return await user_service.update_user(user_id, user_data)
 
 
-@router.delete(
-    "/{user_id}", 
-    status_code=status.HTTP_204_NO_CONTENT,
-    summary="사용자 삭제",
-    responses={404: {"description": "사용자 없음"}}
-)
-async def delete_user(
-    user_id: str,
-    user_service: UserService = Depends(get_user_service)
-):
-    """사용자 삭제"""
-    await user_service.delete_user(user_id)
 
 
-@router.get(
-    "/", 
-    response_model=UserListResponse,
-    summary="사용자 목록 조회",
-    description="페이지네이션과 상태 필터 지원"
-)
-async def get_user_list(
-    page: int = Query(1, ge=1, description="페이지 번호"),
-    size: int = Query(20, ge=1, le=100, description="페이지 크기"),
-    user_status: Optional[str] = Query(None, description="사용자 상태 필터"),
-    user_service: UserService = Depends(get_user_service)
-):
-    """사용자 목록 조회 - 페이징 및 상태별 필터링"""
-    return await user_service.get_user_list(page, size, user_status)
+
+# TODO: 사용자 목록 조회 - 추후 참고용
+# @router.get(
+#     "/", 
+#     response_model=UserListResponse,
+#     summary="사용자 목록 조회",
+#     description="페이지네이션과 상태 필터 지원"
+# )
+# async def get_user_list(
+#     page: int = Query(1, ge=1, description="페이지 번호"),
+#     size: int = Query(20, ge=1, le=100, description="페이지 크기"),
+#     user_status: Optional[str] = Query(None, description="사용자 상태 필터"),
+#     user_service: UserService = Depends(get_user_service)
+# ):
+#     """사용자 목록 조회 - 페이징 및 상태별 필터링"""
+#     return await user_service.get_user_list(page, size, user_status)
 
 
 @router.post(
@@ -244,7 +224,7 @@ async def get_user_list(
 @limiter.limit("10/minute")  # 분당 10회 제한 (브루트포스 공격 방지)
 async def authenticate_user(
     request: Request,
-    login_data: UserLogin,
+    login_data: LoginRequest,
     user_service: UserService = Depends(get_user_service)
 ):
     """사용자 인증 - ID/이메일 및 비밀번호 검증"""
@@ -412,3 +392,92 @@ async def refresh_token(
     except Exception as e:
         log.error("Token refresh failed", error=str(e))
         raise
+
+
+# 중복 검사 API들
+@router.get(
+    "/check-availability/email",
+    response_model=APIResponse[bool],
+    summary="이메일 중복 검사",
+    description="입력된 이메일이 사용 가능한지 확인합니다.",
+    responses={
+        200: {"description": "검사 완료"},
+        429: {"description": "요청 한도 초과"}
+    }
+)
+@limiter.limit("30/minute")  # 분당 30회 제한 (실시간 검증용)
+async def check_email_availability(
+    request: Request,
+    value: str = Query(..., description="검사할 이메일"),
+    user_service: UserService = Depends(get_user_service)
+):
+    """이메일 중복 검사"""
+    available = await user_service.check_email_availability(value)
+    message = "사용 가능한 이메일입니다." if available else "이미 사용 중인 이메일입니다."
+    return ok(data=available, message=message)
+
+
+@router.get(
+    "/check-availability/user-id",
+    response_model=APIResponse[bool],
+    summary="사용자 ID 중복 검사",
+    description="입력된 사용자 ID가 사용 가능한지 확인합니다.",
+    responses={
+        200: {"description": "검사 완료"},
+        429: {"description": "요청 한도 초과"}
+    }
+)
+@limiter.limit("30/minute")  # 분당 30회 제한 (실시간 검증용)
+async def check_user_id_availability(
+    request: Request,
+    value: str = Query(..., description="검사할 사용자 ID"),
+    user_service: UserService = Depends(get_user_service)
+):
+    """사용자 ID 중복 검사"""
+    available = await user_service.check_user_id_availability(value)
+    message = "사용 가능한 ID입니다." if available else "이미 사용 중인 ID입니다."
+    return ok(data=available, message=message)
+
+
+@router.get(
+    "/check-availability/phone",
+    response_model=APIResponse[bool],
+    summary="전화번호 중복 검사",
+    description="입력된 전화번호가 사용 가능한지 확인합니다.",
+    responses={
+        200: {"description": "검사 완료"},
+        429: {"description": "요청 한도 초과"}
+    }
+)
+@limiter.limit("30/minute")  # 분당 30회 제한 (실시간 검증용)
+async def check_phone_availability(
+    request: Request,
+    value: str = Query(..., description="검사할 전화번호"),
+    user_service: UserService = Depends(get_user_service)
+):
+    """전화번호 중복 검사"""
+    available = await user_service.check_phone_availability(value)
+    message = "사용 가능한 전화번호입니다." if available else "이미 사용 중인 전화번호입니다."
+    return ok(data=available, message=message)
+
+
+@router.get(
+    "/check-availability/nickname",
+    response_model=APIResponse[bool],
+    summary="닉네임 중복 검사",
+    description="입력된 닉네임이 사용 가능한지 확인합니다.",
+    responses={
+        200: {"description": "검사 완료"},
+        429: {"description": "요청 한도 초과"}
+    }
+)
+@limiter.limit("30/minute")  # 분당 30회 제한 (실시간 검증용)
+async def check_nickname_availability(
+    request: Request,
+    value: str = Query(..., description="검사할 닉네임"),
+    user_service: UserService = Depends(get_user_service)
+):
+    """닉네임 중복 검사"""
+    available = await user_service.check_nickname_availability(value)
+    message = "사용 가능한 닉네임입니다." if available else "이미 사용 중인 닉네임입니다."
+    return ok(data=available, message=message)

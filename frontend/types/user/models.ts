@@ -134,13 +134,32 @@ export interface LoginRequest {
 
 /**
  * 로그인 응답 데이터 (HttpOnly 쿠키 환경)
- * Backend: LoginData 스키마 (auth_schema.py)
+ * Backend: LoginResponse 스키마 (auth_schema.py)
  */
 export interface LoginData {
   user_id: string
   email: string
   nickname: string
+  access_token_expires_in: number  // 액세스 토큰 만료시간(초)
+  refresh_token_expires_in: number // 리프레시 토큰 만료시간(초)
   // 주의: access_token은 HttpOnly 쿠키로 전송되어 여기에 포함되지 않음
+}
+
+/**
+ * 토큰 갱신 요청
+ * Backend: RefreshTokenRequest 스키마 (auth_schema.py)
+ */
+export interface RefreshTokenRequest {
+  refresh_token?: string           // 갱신용 토큰 (쿠키에서 자동 추출)
+}
+
+/**
+ * 토큰 응답 데이터
+ * Backend: TokenResponse 스키마 (auth_schema.py)
+ */
+export interface TokenResponse {
+  access_token_expires_in: number  // 액세스 토큰 만료시간(초)
+  refresh_token_expires_in: number // 리프레시 토큰 만료시간(초)
 }
 
 /**
@@ -152,6 +171,8 @@ export interface UserSession {
   nickname: string
   isAuthenticated: boolean
   loginAt: string                  // 로그인 시간
+  access_token_expires_at?: number // 액세스 토큰 만료 시간 (timestamp)
+  refresh_token_expires_at?: number // 리프레시 토큰 만료 시간 (timestamp)
 }
 
 // =============================================================================
@@ -165,3 +186,5 @@ export type UserListResponse = APIResponse<UserListData>
 export type AuthenticateResponse = APIResponse<UserResponse>
 export type LoginResponse = APIResponse<LoginData>
 export type LogoutResponse = APIResponse<null>
+export type RefreshTokenResponse = APIResponse<TokenResponse>
+export type AvailabilityCheckResponse = APIResponse<boolean>

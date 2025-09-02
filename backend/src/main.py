@@ -18,6 +18,7 @@ from slowapi.errors import RateLimitExceeded
 
 from src.config.settings import settings
 from src.api.v1.user_api import router as user_router
+from src.api.v1.counselor_api import router as counselor_router
 from src.common.response import fail
 from src.exceptions.custom_exceptions import BaseAppException
 from src.common.logging.config import setup_logging
@@ -41,6 +42,10 @@ app = FastAPI(
         {
             "name": "users",
             "description": "사용자 관리 - 회원가입, 로그인, 프로필 관리",
+        },
+        {
+            "name": "counselors",
+            "description": "상담사 관리 - 로그인, 상담사 전용 기능",
         },
         {
             "name": "health",
@@ -168,6 +173,7 @@ async def general_exception_handler(request: Request, exc: Exception):
 
 # API 라우터 등록
 app.include_router(user_router, prefix="/api/v1")
+app.include_router(counselor_router, prefix="/api/v1")
 
 
 class HealthResponse(BaseModel):

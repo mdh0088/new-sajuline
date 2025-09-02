@@ -113,3 +113,107 @@ class Tm60UsersRepository:
         except Exception as e:
             log.warning("TM60 user existence check failed", user_id=user_id, error=str(e))
             raise BaseAppException(f"ARS 시스템 사용자 존재 확인 실패: {str(e)}", status_code=500)
+    
+    @logger.catch(reraise=True)
+    async def update_user_points(self, user_id: str, point_amount: int) -> int:
+        """
+        TM60 사용자 포인트 업데이트
+        - 기존 u_point에 point_amount를 더함 (증가)
+        - 음수 point_amount로 차감도 가능
+        - 업데이트 후 새로운 포인트 잔액 반환
+        """
+        log = get_logger_with_request_id()
+        log.info("Updating TM60 user points", 
+                user_id=user_id, 
+                point_amount=point_amount)
+        
+        def _sync_update_user_points() -> int:
+            """동기 MSSQL 포인트 업데이트"""
+            try:
+                # 사용자 존재 확인
+                tm60_user = self.mssql_session.query(Tm60Users).filter(Tm60Users.u_id == user_id).first()
+                if not tm60_user:
+                    log.warning("TM60 user not found for point update", user_id=user_id)
+                    raise BaseAppException(f"포인트 업데이트 대상 사용자를 찾을 수 없습니다: {user_id}", status_code=404)
+                
+                # 현재 포인트 조회 및 업데이트
+                current_points = tm60_user.u_point or 0
+                new_points = current_points + point_amount
+                
+                if new_points < 0:
+                    log.warning("Insufficient points for update", 
+                              user_id=user_id, 
+                              current_points=current_points,
+                              point_amount=point_amount,
+                              new_points=new_points)
+                    raise BaseAppException(f"포인트가 부족합니다. 현재: {current_points}, 요청: {point_amount}", status_code=400)
+                
+                # 포인트 업데이트
+                tm60_user.u_point = new_points
+                self.mssql_session.flush()
+                self.mssql_session.commit()
+                
+                log.info("TM60 user points updated successfully", 
+                        user_id=user_id,
+                        current_points=current_points,
+                        point_amount=point_amount, 
+                        new_points=new_points,
+                        tm60_idx=tm60_user.idx)
+                return new_points
+                
+            except BaseAppException:
+                # 기존 예외는 그대로 재발생
+                self.mssql_session.rollback()
+                raise
+            except Exception as e:
+                log.warning("TM60 user points update failed", 
+                          user_id=user_id, 
+                          point_amount=point_amount,
+                          error=str(e))
+                self.mssql_session.rollback()
+                raise BaseAppException(f"ARS 시스템 포인트 업데이트 실패: {str(e)}", status_code=500)
+        
+        try:
+            # 스레드 풀에서 동기 작업 실행하여 이벤트 루프 블로킹 방지
+            return await asyncio.to_thread(_sync_update_user_points)
+        except BaseAppException:
+            # 기존 예외는 그대로 재발생
+            raise
+        except Exception as e:
+            log.warning("TM60 user points update failed", 
+                      user_id=user_id, 
+                      point_amount=point_amount,
+                      error=str(e))
+            raise BaseAppException(f"ARS 시스템 포인트 업데이트 실패: {str(e)}", status_code=500)
+    
+    @logger.catch(reraise=True)
+    async def get_user_points(self, user_id: str) -> int:
+        """TM60 사용자의 현재 포인트 조회"""
+        log = get_logger_with_request_id()
+        log.info("Getting TM60 user points", user_id=user_id)
+        
+        def _sync_get_user_points() -> int:
+            """동기 MSSQL 포인트 조회"""
+            try:
+                tm60_user = self.mssql_session.query(Tm60Users).filter(Tm60Users.u_id == user_id).first()
+                if not tm60_user:
+                    log.warning("TM60 user not found for points query", user_id=user_id)
+                    return 0
+                
+                current_points = tm60_user.u_point or 0
+                log.info("TM60 user points retrieved", 
+                        user_id=user_id, 
+                        points=current_points)
+                return current_points
+                
+            except Exception as e:
+                log.warning("TM60 user points query failed", user_id=user_id, error=str(e))
+                raise BaseAppException(f"ARS 시스템 포인트 조회 실패: {str(e)}", status_code=500)
+        
+        try:
+            return await asyncio.to_thread(_sync_get_user_points)
+        except BaseAppException:
+            raise
+        except Exception as e:
+            log.warning("TM60 user points query failed", user_id=user_id, error=str(e))
+            raise BaseAppException(f"ARS 시스템 포인트 조회 실패: {str(e)}", status_code=500)
