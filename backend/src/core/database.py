@@ -19,7 +19,7 @@ Base = declarative_base()
 # MariaDB 비동기 연결 (주 데이터베이스)
 # =============================================================================
 
-# 비동기 엔진 생성
+# 비동기 엔진 생성 (한국 시간대 설정 포함)
 async_engine = create_async_engine(
     settings.mariadb_url,
     echo=settings.mariadb_echo,
@@ -27,6 +27,9 @@ async_engine = create_async_engine(
     max_overflow=settings.mariadb_max_overflow,
     pool_pre_ping=True,
     pool_recycle=3600,  # MariaDB 연결 재활용 (1시간)
+    connect_args={
+        "init_command": "SET time_zone='+09:00'"  # 한국 시간대 설정
+    }
 )
 
 # 비동기 세션 팩토리
