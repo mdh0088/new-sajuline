@@ -10,6 +10,7 @@ import {
   type UseQueryOptions,
   type UseMutationOptions
 } from '@tanstack/vue-query'
+import { computed, unref, type ComputedRef, type Ref } from 'vue'
 import type { 
   UserCreateRequest, 
   UserUpdateRequest,
@@ -184,7 +185,7 @@ const userApi = {
   // 중복 검사 API들
   async checkEmailAvailability(email: string): Promise<boolean> {
     const { $api } = useNuxtApp()
-    const response = await $api<AvailabilityCheckResponse>(`/users/check-availability/email?value=${encodeURIComponent(email)}`)
+    const response = await $api<AvailabilityCheckResponse>(`/api/v1/users/check-availability/email?value=${encodeURIComponent(email)}`)
     
     if (!response.success) {
       throw new Error(response.error?.message || '이메일 중복 검사에 실패했습니다.')
@@ -195,7 +196,7 @@ const userApi = {
 
   async checkUserIdAvailability(userId: string): Promise<boolean> {
     const { $api } = useNuxtApp()
-    const response = await $api<AvailabilityCheckResponse>(`/users/check-availability/user-id?value=${encodeURIComponent(userId)}`)
+    const response = await $api<AvailabilityCheckResponse>(`/api/v1/users/check-availability/user-id?value=${encodeURIComponent(userId)}`)
     
     if (!response.success) {
       throw new Error(response.error?.message || '사용자 ID 중복 검사에 실패했습니다.')
@@ -206,7 +207,7 @@ const userApi = {
 
   async checkPhoneAvailability(phone: string): Promise<boolean> {
     const { $api } = useNuxtApp()
-    const response = await $api<AvailabilityCheckResponse>(`/users/check-availability/phone?value=${encodeURIComponent(phone)}`)
+    const response = await $api<AvailabilityCheckResponse>(`/api/v1/users/check-availability/phone?value=${encodeURIComponent(phone)}`)
     
     if (!response.success) {
       throw new Error(response.error?.message || '전화번호 중복 검사에 실패했습니다.')
@@ -217,7 +218,7 @@ const userApi = {
 
   async checkNicknameAvailability(nickname: string): Promise<boolean> {
     const { $api } = useNuxtApp()
-    const response = await $api<AvailabilityCheckResponse>(`/users/check-availability/nickname?value=${encodeURIComponent(nickname)}`)
+    const response = await $api<AvailabilityCheckResponse>(`/api/v1/users/check-availability/nickname?value=${encodeURIComponent(nickname)}`)
     
     if (!response.success) {
       throw new Error(response.error?.message || '닉네임 중복 검사에 실패했습니다.')
@@ -276,13 +277,19 @@ export const useUserQueries = () => {
 
   // 중복 검사 쿼리들 (실시간 검증용)
   const useEmailAvailability = (
-    email: string,
+    email: ComputedRef<string> | Ref<string> | string,
     options?: Partial<UseQueryOptions<boolean, APIError>>
   ) => {
     return useQuery({
       queryKey: ['availability', 'email', email],
-      queryFn: () => userApi.checkEmailAvailability(email),
-      enabled: !!email && email.includes('@'), // 유효한 이메일 형식일 때만 실행
+      queryFn: () => {
+        const emailValue = unref(email)
+        return userApi.checkEmailAvailability(emailValue)
+      },
+      enabled: computed(() => {
+        const emailValue = unref(email)
+        return !!emailValue && typeof emailValue === 'string' && emailValue.includes('@')
+      }),
       staleTime: 30 * 1000, // 30초 - 중복 검사는 짧은 캐시
       retry: 1, // 재시도 최소화 (빠른 피드백)
       ...options
@@ -290,13 +297,19 @@ export const useUserQueries = () => {
   }
 
   const useUserIdAvailability = (
-    userId: string,
+    userId: ComputedRef<string> | Ref<string> | string,
     options?: Partial<UseQueryOptions<boolean, APIError>>
   ) => {
     return useQuery({
       queryKey: ['availability', 'user-id', userId],
-      queryFn: () => userApi.checkUserIdAvailability(userId),
-      enabled: !!userId && userId.length >= 3, // 최소 3자 이상일 때만 실행
+      queryFn: () => {
+        const userIdValue = unref(userId)
+        return userApi.checkUserIdAvailability(userIdValue)
+      },
+      enabled: computed(() => {
+        const userIdValue = unref(userId)
+        return !!userIdValue && typeof userIdValue === 'string' && userIdValue.length >= 4
+      }),
       staleTime: 30 * 1000,
       retry: 1,
       ...options
@@ -304,13 +317,19 @@ export const useUserQueries = () => {
   }
 
   const usePhoneAvailability = (
-    phone: string,
+    phone: ComputedRef<string> | Ref<string> | string,
     options?: Partial<UseQueryOptions<boolean, APIError>>
   ) => {
     return useQuery({
       queryKey: ['availability', 'phone', phone],
-      queryFn: () => userApi.checkPhoneAvailability(phone),
-      enabled: !!phone && phone.length >= 10, // 최소 10자 이상일 때만 실행
+      queryFn: () => {
+        const phoneValue = unref(phone)
+        return userApi.checkPhoneAvailability(phoneValue)
+      },
+      enabled: computed(() => {
+        const phoneValue = unref(phone)
+        return !!phoneValue && typeof phoneValue === 'string' && /^01[0-9]\d{7,8}$/.test(phoneValue)
+      }),
       staleTime: 30 * 1000,
       retry: 1,
       ...options
@@ -318,13 +337,19 @@ export const useUserQueries = () => {
   }
 
   const useNicknameAvailability = (
-    nickname: string,
+    nickname: ComputedRef<string> | Ref<string> | string,
     options?: Partial<UseQueryOptions<boolean, APIError>>
   ) => {
     return useQuery({
       queryKey: ['availability', 'nickname', nickname],
-      queryFn: () => userApi.checkNicknameAvailability(nickname),
-      enabled: !!nickname && nickname.length >= 2, // 최소 2자 이상일 때만 실행
+      queryFn: () => {
+        const nicknameValue = unref(nickname)
+        return userApi.checkNicknameAvailability(nicknameValue)
+      },
+      enabled: computed(() => {
+        const nicknameValue = unref(nickname)
+        return !!nicknameValue && typeof nicknameValue === 'string' && nicknameValue.length >= 2
+      }),
       staleTime: 30 * 1000,
       retry: 1,
       ...options

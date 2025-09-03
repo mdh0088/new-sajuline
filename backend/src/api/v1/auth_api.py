@@ -1,0 +1,107 @@
+"""
+인증 관련 API 엔드포인트
+"""
+from fastapi import APIRouter, Depends, Request, Response, status
+from src.common.middleware.rate_limit import limiter
+from src.core.redis import get_redis
+from src.schemas.auth_schema import RefreshTokenRequest, TokenResponse
+from src.services.auth_service import AuthService
+from src.common.response import APIResponse, ok
+from src.common.logging import get_logger_with_request_id
+from src.exceptions.custom_exceptions import BaseAppException
+
+router = APIRouter(prefix="/auth", tags=["auth"])
+
+def get_auth_service() -> AuthService:
+    """인증 서비스 의존성 주입"""
+    return AuthService()
+
+@router.post(
+    "/refresh",
+    response_model=APIResponse[TokenResponse],
+    summary="토큰 갱신",
+    description="Refresh Token으로 새로운 Access Token과 Refresh Token 발급. 기존 Refresh Token은 블랙리스트 처리됩니다 (Refresh Token Rotation).",
+    responses={
+        200: {"description": "토큰 갱신 성공"},
+        401: {"description": "유효하지 않거나 만료된 Refresh Token"},
+        429: {"description": "요청 한도 초과"}
+    }
+)
+@limiter.limit("20/minute")  # 분당 20회 제한 (토큰 갱신 남용 방지)
+async def refresh_token(
+    request: Request,
+    refresh_request: RefreshTokenRequest,
+    response: Response,
+    auth_service: AuthService = Depends(get_auth_service),
+    redis_client = Depends(get_redis)
+):
+    """토큰 갱신 - Refresh Token Rotation으로 Access Token과 Refresh Token 모두 재발급"""
+    log = get_logger_with_request_id()
+    
+    try:
+        # 테스트용 강제 API 레이어 오류 발생
+        if refresh_request.refresh_token == "api_refresh_error_test":
+            raise BaseAppException("API layer: 토큰 갱신 처리 실패 테스트", status_code=500)
+        
+        # 쿠키에서 기존 Refresh Token 추출 (블랙리스트용)
+        old_refresh_token = request.cookies.get("refresh_token") or refresh_request.refresh_token
+        
+        # Refresh Token 검증 및 페이로드 추출
+        refresh_payload = await auth_service.verify_refresh_token(old_refresh_token, redis_client)
+        log.info("Refresh token validation successful", user_id=refresh_payload["sub"])
+        
+        # 새로운 Access Token 생성
+        new_access_token = auth_service.create_access_token(
+            user_id=refresh_payload["sub"],
+            email=refresh_payload["email"],
+            role=refresh_payload["role"]
+        )
+        
+        # 새로운 Refresh Token 생성 (Refresh Token Rotation)
+        new_refresh_token = auth_service.create_refresh_token(
+            user_id=refresh_payload["sub"],
+            email=refresh_payload["email"],
+            role=refresh_payload["role"]
+        )
+        
+        # 기존 Refresh Token 블랙리스트 처리 (보안)
+        from datetime import datetime
+        old_token_expires = datetime.fromtimestamp(refresh_payload["exp"])
+        await auth_service.blacklist_token(
+            jti=refresh_payload["jti"],
+            expires_at=old_token_expires,
+            redis_client=redis_client
+        )
+        
+        # HttpOnly 쿠키에 새로운 Access Token 설정
+        response.set_cookie(
+            key="access_token",
+            value=new_access_token,
+            httponly=True,
+            secure=True,  # HTTPS에서만 전송
+            samesite="lax",  # CSRF 보호
+            max_age=30 * 60  # 30분
+        )
+        
+        # HttpOnly 쿠키에 새로운 Refresh Token 설정
+        response.set_cookie(
+            key="refresh_token",
+            value=new_refresh_token,
+            httponly=True,
+            secure=True,  # HTTPS에서만 전송
+            samesite="lax",  # CSRF 보호
+            max_age=7 * 24 * 60 * 60  # 7일
+        )
+        
+        # 토큰 갱신 응답 데이터 생성
+        token_response = TokenResponse(
+            access_token_expires_in=30 * 60,  # 30분 (초 단위)
+            refresh_token_expires_in=7 * 24 * 60 * 60  # 7일 (초 단위)
+        )
+        
+        log.info("Token refresh completed successfully", user_id=refresh_payload["sub"])
+        return ok(data=token_response, message="토큰 갱신 성공")
+        
+    except Exception as e:
+        log.error("Token refresh failed", error=str(e))
+        raise

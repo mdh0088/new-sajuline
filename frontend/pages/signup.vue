@@ -28,36 +28,32 @@
       <form class="signup-form" @submit.prevent>
         <!-- Step 1: 계정 정보 -->
         <SignupStep1
-          v-show="currentStep === 1"
-          v-model:form="signupFormData"
-          :validator="formValidator"
+          v-if="currentStep === 1"
+          v-model:signupFormData="signupFormData"
         />
 
         <!-- Step 2: 기본 정보 -->
         <SignupStep2
-          v-show="currentStep === 2"
+          v-if="currentStep === 2"
           v-model:form="signupFormData"
-          :validator="formValidator"
-          @send-verification="sendVerificationCode"
         />
 
         <!-- Step 3: 생년월일시 -->
         <SignupStep3
-          v-show="currentStep === 3"
+          v-if="currentStep === 3"
           v-model:form="signupFormData"
-          :validator="formValidator"
         />
 
         <!-- Step 4: 약관 동의 -->
         <SignupStep4
-          v-show="currentStep === 4"
+          v-if="currentStep === 4"
           v-model:form="signupFormData"
           @open-terms="openTermsModal"
         />
 
         <!-- 완료 화면 -->
         <SignupCompletion
-          v-show="currentStep === 5"
+          v-if="currentStep === 5"
           @go-to-login="goToLogin"
         />
 
@@ -73,21 +69,19 @@
             v-if="currentStep < 4" 
             type="button" 
             class="next-button" 
-            :disabled="!isCurrentStepValid || formValidator.isChecking.value"
+            :disabled="!isCurrentStepValid"
             @click="nextStep"
           >
-            <span v-if="formValidator.isChecking.value">확인 중...</span>
-            <span v-else>다음</span>
+            다음
           </button>
           <button 
             v-if="currentStep === 4" 
             type="button" 
             class="next-button" 
-            :disabled="createUserMutation.isPending.value || !isCurrentStepValid"
+            :disabled="!isCurrentStepValid"
             @click="completeSignup"
           >
-            <span v-if="createUserMutation.isPending.value">가입 중...</span>
-            <span v-else>가입완료</span>
+            가입완료
           </button>
         </div>
       </form>
@@ -103,9 +97,8 @@
 </template>
 
 <script setup lang="ts">
-import { useValidation } from '~/composables/validation/useValidation'
-import { useUserQueries } from '~/composables/api/useUserQueries'
 import { useToast } from '~/composables/ui/useToast'
+import { useUserQueries } from '~/composables/api/useUserQueries'
 import { JoinType, Gender } from '~/types/user/models'
 import type { UserCreateRequest } from '~/types/user/models'
 import type { SignupFormData } from '~/types/auth/signup'
@@ -117,8 +110,6 @@ definePageMeta({
 })
 
 const router = useRouter()
-const { validateSignupForm } = useValidation()
-const { useCreateUser } = useUserQueries()
 const toast = useToast()
 
 // 반응형 데이터
@@ -152,48 +143,10 @@ const signupFormData = reactive<SignupFormData>({
   agreeMarketing: false
 })
 
-// 유효성 검사 설정
-const formValidator = validateSignupForm(signupFormData)
 
-// 회원가입 뮤테이션
-const createUserMutation = useCreateUser({
-  onSuccess: () => {
-    toast.success('회원가입이 완료되었습니다.')
-    currentStep.value = 5
-  },
-  onError: (error: any) => {
-    toast.error(error?.message || '회원가입에 실패했습니다.')
-  }
-})
-
-// 현재 단계 유효성 확인
+// 각 Step에서 자체 검증하므로 단순화
 const isCurrentStepValid = computed(() => {
-  switch (currentStep.value) {
-    case 1:
-      // Step 1: 이메일, 비밀번호 검증
-      return formValidator.emailValidator.result.value.isValid &&
-             formValidator.passwordValidator.passwordResult.value.isValid &&
-             formValidator.passwordValidator.confirmResult.value.isValid &&
-             !formValidator.isChecking.value
-    
-    case 2:
-      // Step 2: 사용자 ID, 닉네임, 휴대폰 검증
-      return formValidator.userIdValidator.result.value.isValid &&
-             formValidator.nicknameValidator.result.value.isValid &&
-             formValidator.phoneValidator.result.value.isValid &&
-             !formValidator.isChecking.value
-    
-    case 3:
-      // Step 3: 생년월일 검증
-      return formValidator.birthDateValidation.value.isValid
-    
-    case 4:
-      // Step 4: 약관 동의 확인
-      return signupFormData.agreeService && signupFormData.agreePrivacy
-    
-    default:
-      return true
-  }
+  return true // Step 컴포넌트에서 개별 검증
 })
 
 // 메서드
@@ -209,22 +162,8 @@ const prevStep = () => {
   }
 }
 
-const sendVerificationCode = () => {
-  if (formValidator.phoneValidator.result.value.isValid) {
-    toast.info('인증번호가 전송되었습니다.')
-    // TODO: 실제 SMS 인증 API 호출
-  } else {
-    toast.error('올바른 휴대폰 번호를 입력해주세요.')
-  }
-}
 
 const completeSignup = async () => {
-  // 최종 유효성 검사
-  if (!formValidator.isFormValid.value) {
-    toast.error('입력 정보를 확인해주세요.')
-    return
-  }
-
   if (!signupFormData.agreeService || !signupFormData.agreePrivacy) {
     toast.error('필수 약관에 동의해주세요.')
     return
@@ -254,8 +193,17 @@ const completeSignup = async () => {
     social_id: undefined
   }
 
-  // 회원가입 실행
-  await createUserMutation.mutateAsync(userData)
+  try {
+    // 회원가입 실행
+    const { useCreateUser } = useUserQueries()
+    const createUserMutation = useCreateUser()
+    await createUserMutation.mutateAsync(userData)
+    
+    toast.success('회원가입이 완료되었습니다.')
+    currentStep.value = 5
+  } catch (error: any) {
+    toast.error(error?.message || '회원가입에 실패했습니다.')
+  }
 }
 
 const goToLogin = () => {
