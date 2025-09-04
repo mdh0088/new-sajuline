@@ -9,6 +9,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from src.common.middleware.rate_limit import limiter
 
 from src.core.database import get_db_maria, get_db_mssql
+from src.core.redis import get_redis
 from src.repositories.user_repository import UserRepository
 from src.repositories.counselor_repository import CounselorRepository
 from src.repositories.event_repository import EventRepository
@@ -16,7 +17,7 @@ from src.repositories.point_transaction_repository import PointTransactionReposi
 from src.repositories.user_activity_log_repository import UserActivityLogRepository
 from src.repositories.ars.tm60_users_repository import Tm60UsersRepository
 from src.services.user_service import UserService
-from src.services.auth_service import AuthService
+from src.services.auth_service import AuthService, get_current_user, TokenPayload
 from src.services.event_service import EventService
 from src.services.point_transaction_service import PointTransactionService
 from src.services.user_activity_log_service import UserActivityLogService
@@ -335,8 +336,51 @@ async def login(
     description="현재 로그인된 사용자를 로그아웃하고 JWT 토큰 쿠키를 삭제",
     responses={200: {"description": "로그아웃 성공"}}
 )
-async def logout(response: Response):
+async def logout(
+    request: Request,
+    response: Response,
+    current_user: TokenPayload = Depends(get_current_user),
+    auth_service: AuthService = Depends(get_auth_service),
+    redis_client = Depends(get_redis)
+):
     """사용자 로그아웃"""
+    log = get_logger_with_request_id()
+    
+    try:
+        # 현재 토큰들을 블랙리스트에 추가 (보안 강화)
+        access_token = request.cookies.get("access_token")
+        refresh_token = request.cookies.get("refresh_token")
+        
+        # Access Token 블랙리스트 처리
+        if access_token:
+            from datetime import datetime
+            access_expires = datetime.fromtimestamp(current_user.exp)
+            await auth_service.blacklist_token(
+                jti=current_user.jti,
+                expires_at=access_expires,
+                redis_client=redis_client
+            )
+        
+        # Refresh Token 블랙리스트 처리
+        if refresh_token:
+            try:
+                refresh_payload = await auth_service.verify_refresh_token(refresh_token, redis_client)
+                refresh_expires = datetime.fromtimestamp(refresh_payload["exp"])
+                await auth_service.blacklist_token(
+                    jti=refresh_payload["jti"],
+                    expires_at=refresh_expires,
+                    redis_client=redis_client
+                )
+            except Exception as e:
+                # refresh token이 이미 만료되었거나 유효하지 않은 경우
+                log.warning("Failed to blacklist refresh token during logout", 
+                           user_id=current_user.sub, error=str(e))
+    
+    except Exception as e:
+        # 블랙리스트 처리 실패해도 로그아웃은 진행 (쿠키 삭제)
+        log.warning("Token blacklist failed during logout", 
+                   user_id=current_user.sub, error=str(e))
+    
     # HttpOnly 쿠키에서 JWT 토큰들 삭제
     response.delete_cookie(
         key="access_token",
@@ -352,6 +396,7 @@ async def logout(response: Response):
         samesite="lax"
     )
     
+    log.info("User logout successful", user_id=current_user.sub, email=current_user.email)
     return ok(data=None, message="로그아웃 성공")
 
 
