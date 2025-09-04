@@ -35,19 +35,19 @@
         <!-- Step 2: 기본 정보 -->
         <SignupStep2
           v-if="currentStep === 2"
-          v-model:form="signupFormData"
+          v-model:signupFormData="signupFormData"
         />
 
         <!-- Step 3: 생년월일시 -->
         <SignupStep3
           v-if="currentStep === 3"
-          v-model:form="signupFormData"
+          v-model:signupFormData="signupFormData"
         />
 
         <!-- Step 4: 약관 동의 -->
         <SignupStep4
           v-if="currentStep === 4"
-          v-model:form="signupFormData"
+          v-model:signupFormData="signupFormData"
           @open-terms="openTermsModal"
         />
 
