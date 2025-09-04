@@ -15,7 +15,17 @@
       "mcp__serena__search_for_pattern",
       "Bash(docker-compose up:*)",
       "Bash(mkdir:*)",
-      "Bash(docker exec:*)"
+      "Bash(docker exec:*)",
+      "mcp__playwright__playwright_screenshot",
+      "mcp__playwright__playwright_fill",
+      "mcp__playwright__playwright_get_visible_text",
+      "mcp__playwright__playwright_navigate",
+      "mcp__playwright__playwright_click",
+      "mcp__playwright__playwright_console_logs",
+      "mcp__playwright__playwright_evaluate",
+      "mcp__playwright__playwright_get_visible_html",
+      "Bash(docker-compose:*)",
+      "mcp__playwright__playwright_press_key"
     ],
     "deny": [],
     "ask": []

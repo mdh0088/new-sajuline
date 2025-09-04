@@ -10,11 +10,15 @@ from src.common.middleware.rate_limit import limiter
 
 from src.core.database import get_db_maria
 from src.repositories.counselor_repository import CounselorRepository
+from src.repositories.user_activity_log_repository import UserActivityLogRepository
 from src.services.counselor_service import CounselorService
 from src.services.auth_service import AuthService
+from src.services.user_activity_log_service import UserActivityLogService
 from src.schemas.auth_schema import LoginRequest, LoginResponse
+from src.schemas.user_activity_log_schema import UserType, DeviceType
 from src.common.response import APIResponse, ok, fail
 from src.common.logging import logger, get_logger_with_request_id
+from src.common.utils.client_info import extract_client_info
 from src.exceptions.custom_exceptions import BaseAppException
 
 router = APIRouter(prefix="/counselors", tags=["counselors"])
@@ -29,6 +33,18 @@ def get_counselor_repository(db: AsyncSession = Depends(get_db_maria)) -> Counse
 def get_auth_service() -> AuthService:
     """인증 서비스 의존성 주입"""
     return AuthService()
+
+
+def get_user_activity_log_repository(db: AsyncSession = Depends(get_db_maria)) -> UserActivityLogRepository:
+    """사용자 활동 로그 리포지토리 의존성 주입"""
+    return UserActivityLogRepository(db)
+
+
+def get_user_activity_log_service(
+    activity_repo: UserActivityLogRepository = Depends(get_user_activity_log_repository)
+) -> UserActivityLogService:
+    """사용자 활동 로그 서비스 의존성 주입"""
+    return UserActivityLogService(activity_repo)
 
 
 def get_counselor_service(
@@ -57,11 +73,15 @@ async def login(
     response: Response,
     db: AsyncSession = Depends(get_db_maria),
     counselor_service: CounselorService = Depends(get_counselor_service),
-    auth_service: AuthService = Depends(get_auth_service)
+    auth_service: AuthService = Depends(get_auth_service),
+    activity_log_service: UserActivityLogService = Depends(get_user_activity_log_service)
 ):
     """상담사 로그인"""
     log = get_logger_with_request_id()
     log.info("Counselor login attempt", counselor_id=login_request.user_id)
+    
+    # 클라이언트 정보 추출
+    ip_address, user_agent, device_type = extract_client_info(request)
     
     # 로그인 처리 (예외는 전역 핸들러에서 처리)
     access_token, counselor_response = await counselor_service.login(
@@ -105,6 +125,21 @@ async def login(
         access_token_expires_in=30 * 60,  # 30분 (초 단위)
         refresh_token_expires_in=7 * 24 * 60 * 60  # 7일 (초 단위)
     )
+    
+    # 상담사 로그인 성공 활동 로그 기록
+    try:
+        await activity_log_service.log_login_success(
+            user_id=counselor_response.counselor_id,
+            user_type=UserType.COUNSELOR,
+            ip_address=ip_address,
+            user_agent=user_agent,
+            device_type=device_type
+        )
+        log.info("Counselor activity log recorded", counselor_id=counselor_response.counselor_id)
+    except Exception as e:
+        log.warning("Counselor activity log failed but login succeeded", 
+                   counselor_id=counselor_response.counselor_id, 
+                   error=str(e))
     
     log.info("Counselor login successful", 
             counselor_id=counselor_response.counselor_id,

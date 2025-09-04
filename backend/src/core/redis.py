@@ -49,9 +49,12 @@ async def get_redis() -> AsyncGenerator[redis.Redis, None]:
     
     try:
         yield _redis_client
-    except Exception:
+    except Exception as e:
         # Redis 사용 중 오류 발생해도 재연결 시도
-        pass
+        log = get_logger_with_request_id()
+        log.error("Redis operation failed", error=str(e))
+        # 예외를 다시 발생시켜 FastAPI가 적절히 처리할 수 있도록 함
+        raise
 
 
 async def close_redis() -> None:

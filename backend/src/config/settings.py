@@ -133,6 +133,10 @@ class Settings(BaseSettings):
     @property
     def mariadb_url(self) -> str:
         """MariaDB 연결 URL 생성"""
+        # 기존: 시간대 설정 없음 (UTC로 저장)
+        # return f"mysql+aiomysql://{self.mariadb_user}:{self.mariadb_password}@{self.mariadb_host}:{self.mariadb_port}/{self.mariadb_db}?charset={self.mariadb_charset}"
+        
+        # aiomysql에서는 time_zone 파라미터 직접 지원하지 않음 - SQLAlchemy engine에서 connect_args로 처리
         return f"mysql+aiomysql://{self.mariadb_user}:{self.mariadb_password}@{self.mariadb_host}:{self.mariadb_port}/{self.mariadb_db}?charset={self.mariadb_charset}"
     
     @property

@@ -17,6 +17,7 @@ from slowapi import _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
 
 from src.config.settings import settings
+from src.api.v1.auth_api import router as auth_router
 from src.api.v1.user_api import router as user_router
 from src.api.v1.counselor_api import router as counselor_router
 from src.common.response import fail
@@ -39,6 +40,10 @@ app = FastAPI(
     redoc_url="/redoc" if settings.debug else None,
     debug=settings.debug,
     openapi_tags=[
+        {
+            "name": "auth",
+            "description": "인증 관리 - 토큰 갱신, 인증 관련 기능",
+        },
         {
             "name": "users",
             "description": "사용자 관리 - 회원가입, 로그인, 프로필 관리",
@@ -172,6 +177,7 @@ async def general_exception_handler(request: Request, exc: Exception):
     )
 
 # API 라우터 등록
+app.include_router(auth_router, prefix="/api/v1")
 app.include_router(user_router, prefix="/api/v1")
 app.include_router(counselor_router, prefix="/api/v1")
 

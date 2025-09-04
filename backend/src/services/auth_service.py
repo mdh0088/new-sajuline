@@ -136,7 +136,7 @@ class AuthService:
             log.warning("JWT decode failed", error=str(jwt_error))
             raise AuthenticationError("토큰이 유효하지 않습니다")
     
-    def verify_refresh_token(self, token: str) -> Dict[str, any]:
+    async def verify_refresh_token(self, token: str, redis_client=None) -> Dict[str, any]:
         """JWT 리프레시 토큰 검증"""
         log = get_logger_with_request_id()
         
@@ -158,6 +158,13 @@ class AuthService:
             if payload.get("token_type") != "refresh":
                 log.warning("Invalid token type for refresh", token_type=payload.get("token_type"))
                 raise AuthenticationError("리프레시 토큰이 아닙니다")
+            
+            # 블랙리스트 확인
+            if redis_client:
+                jti = payload.get("jti")
+                if jti and await self.is_token_blacklisted(jti, redis_client):
+                    log.warning("Blacklisted refresh token used", jti=jti)
+                    raise AuthenticationError("이미 사용된 토큰입니다")
             
             return payload
             

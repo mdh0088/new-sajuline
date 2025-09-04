@@ -216,15 +216,10 @@ export default defineNuxtConfig({
 
   // 개발 서버 프록시 설정 (CORS 해결) 및 보안 헤더 (즉시 적용 권장)
   nitro: {
-    devProxy: {
-      '/api': {
-        target: process.env.NUXT_PROXY_TARGET,
-        changeOrigin: true,
-        prependPath: true
-      }
-    },
-    // 보안 헤더 추가
     routeRules: {
+      '/api/**': { 
+        proxy: `${process.env.NUXT_PROXY_TARGET}/api/**`
+      },
       '/**': {
         headers: {
           'X-Frame-Options': 'DENY',

@@ -66,6 +66,7 @@ dependencies = [
     "email-validator==2.1.1",
     "phonenumbers==8.13.33",
     "pytz==2024.1",
+    "user-agents==2.2.0",  # User-Agent 파싱
     
     # 파일 처리
     "python-magic==0.4.27",

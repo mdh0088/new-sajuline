@@ -27,9 +27,8 @@ class RefreshTokenRequest(BaseModel):
 
 class TokenResponse(BaseModel):
     """토큰 응답 데이터"""
-    access_token: str = Field(..., description="새 액세스 토큰")
-    token_type: str = Field(default="bearer", description="토큰 타입")
-    expires_in: int = Field(..., description="만료 시간(초)")
+    access_token_expires_in: int = Field(..., description="액세스 토큰 만료시간(초)")
+    refresh_token_expires_in: int = Field(..., description="리프레시 토큰 만료시간(초)")
 
 
 class TokenPayload(BaseModel):
