@@ -7,7 +7,7 @@
       <label class="input-label">생년월일</label>
       <div class="birth-input">
         <input 
-          v-model.number="localForm.birthYear"
+          v-model.number="signupFormData.birthYear"
           type="number" 
           class="input-field birth-field" 
           placeholder="1990" 
@@ -16,7 +16,7 @@
         >
         <span class="birth-unit">년</span>
         <input 
-          v-model.number="localForm.birthMonth"
+          v-model.number="signupFormData.birthMonth"
           type="number" 
           class="input-field birth-field" 
           placeholder="1" 
@@ -25,7 +25,7 @@
         >
         <span class="birth-unit">월</span>
         <input 
-          v-model.number="localForm.birthDay"
+          v-model.number="signupFormData.birthDay"
           type="number" 
           class="input-field birth-field" 
           placeholder="1" 
@@ -34,13 +34,21 @@
         >
         <span class="birth-unit">일</span>
       </div>
+      <p v-if="validator.birthValidator.message" 
+         class="validation-text" 
+         :class="{ 
+           'error-text': !validator.birthValidator.isValid,
+           'success-text': validator.birthValidator.isValid && birthDateString
+         }">
+        {{ validator.birthValidator.message }}
+      </p>
     </div>
 
     <div class="input-group">
       <label class="input-label">태어난 시간 (선택)</label>
       <div class="birth-input">
         <input 
-          v-model.number="localForm.birthHour"
+          v-model.number="signupFormData.birthHour"
           type="number" 
           class="input-field birth-field" 
           placeholder="14" 
@@ -49,7 +57,7 @@
         >
         <span class="birth-unit">시</span>
         <input 
-          v-model.number="localForm.birthMinute"
+          v-model.number="signupFormData.birthMinute"
           type="number" 
           class="input-field birth-field" 
           placeholder="30" 
@@ -64,14 +72,46 @@
 </template>
 
 <script setup lang="ts">
-import type { SignupStepProps, SignupStep3Emits } from '~/types/auth/signup'
+import type { SignupFormData } from '~/types/auth/signup'
+import { useValidation } from '~/composables/validation/useValidation'
 
-const props = defineProps<SignupStepProps>()
-const emit = defineEmits<SignupStep3Emits>()
+// defineModel로 간단하게 처리
+const signupFormData = defineModel<SignupFormData>('signupFormData', { required: true })
 
-// 로컬 폼 데이터 (양방향 바인딩)
-const localForm = computed({
-  get: () => props.form,
-  set: (value) => emit('update:form', value)
+// Step3 자체 검증 로직
+const { validateBirthDate } = useValidation()
+
+// 생년월일 조합 및 검증
+const birthDateString = computed(() => {
+  const { birthYear, birthMonth, birthDay } = signupFormData.value
+  if (birthYear && birthMonth && birthDay) {
+    const year = birthYear.toString().padStart(4, '0')
+    const month = birthMonth.toString().padStart(2, '0')
+    const day = birthDay.toString().padStart(2, '0')
+    return `${year}-${month}-${day}`
+  }
+  return ''
 })
+
+// 생년월일 유효성 검증
+const birthValidator = computed(() => {
+  const { birthYear, birthMonth, birthDay } = signupFormData.value
+  
+  // 필수 필드 체크
+  if (!birthYear || !birthMonth || !birthDay) {
+    return {
+      isValid: false,
+      message: '생년월일을 모두 입력해주세요.'
+    }
+  }
+  
+  // 날짜 유효성 검증
+  return validateBirthDate(birthDateString.value)
+})
+
+// Step3 종합 검증 결과
+const validator = computed(() => ({
+  birthValidator,
+  isValid: birthValidator.value.isValid
+}))
 </script>

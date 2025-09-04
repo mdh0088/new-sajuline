@@ -15,8 +15,8 @@
         <div class="terms-item">
           <div 
             class="checkbox terms-check" 
-            :class="{ checked: localForm.agreeService }"
-            @click="localForm.agreeService = !localForm.agreeService"
+            :class="{ checked: signupFormData.agreeService }"
+            @click="signupFormData.agreeService = !signupFormData.agreeService"
           ></div>
           <div class="terms-text">
             서비스 이용약관 동의
@@ -28,8 +28,8 @@
         <div class="terms-item">
           <div 
             class="checkbox terms-check" 
-            :class="{ checked: localForm.agreePrivacy }"
-            @click="localForm.agreePrivacy = !localForm.agreePrivacy"
+            :class="{ checked: signupFormData.agreePrivacy }"
+            @click="signupFormData.agreePrivacy = !signupFormData.agreePrivacy"
           ></div>
           <div class="terms-text">
             개인정보 수집 및 이용 동의
@@ -41,8 +41,8 @@
         <div class="terms-item">
           <div 
             class="checkbox terms-check" 
-            :class="{ checked: localForm.agreeMarketing }"
-            @click="localForm.agreeMarketing = !localForm.agreeMarketing"
+            :class="{ checked: signupFormData.agreeMarketing }"
+            @click="signupFormData.agreeMarketing = !signupFormData.agreeMarketing"
           ></div>
           <div class="terms-text">
             마케팅 정보 수신 동의
@@ -51,36 +51,66 @@
           <a href="#" class="terms-link" @click.prevent="openTermsModal('marketing')">보기</a>
         </div>
       </div>
+      
+      <!-- 필수 약관 동의 검증 메시지 -->
+      <p v-if="validator.requiredTermsValidator.message" 
+         class="validation-text" 
+         :class="{ 
+           'error-text': !validator.requiredTermsValidator.isValid,
+           'success-text': validator.requiredTermsValidator.isValid
+         }">
+        {{ validator.requiredTermsValidator.message }}
+      </p>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import type { SignupStepProps, SignupStep4Emits } from '~/types/auth/signup'
+import type { SignupFormData } from '~/types/auth/signup'
 
-const props = defineProps<SignupStepProps>()
-const emit = defineEmits<SignupStep4Emits>()
+// defineModel로 간단하게 처리
+const signupFormData = defineModel<SignupFormData>('signupFormData', { required: true })
 
-// 로컬 폼 데이터 (양방향 바인딩)
-const localForm = computed({
-  get: () => props.form,
-  set: (value) => emit('update:form', value)
-})
+// 이벤트 emit 정의
+interface Emits {
+  'open-terms': [type: string]
+}
+const emit = defineEmits<Emits>()
 
 // 전체 약관 동의 여부
 const allTermsAgreed = computed(() => {
-  return localForm.value.agreeService && localForm.value.agreePrivacy && localForm.value.agreeMarketing
+  return signupFormData.value.agreeService && signupFormData.value.agreePrivacy && signupFormData.value.agreeMarketing
 })
+
+// 필수 약관 동의 검증
+const requiredTermsValidator = computed(() => {
+  const hasServiceAgree = signupFormData.value.agreeService
+  const hasPrivacyAgree = signupFormData.value.agreePrivacy
+  
+  if (!hasServiceAgree || !hasPrivacyAgree) {
+    return {
+      isValid: false,
+      message: '필수 약관에 동의해주세요.'
+    }
+  }
+  
+  return {
+    isValid: true,
+    message: '필수 약관 동의가 완료되었습니다.'
+  }
+})
+
+// Step4 종합 검증 결과
+const validator = computed(() => ({
+  requiredTermsValidator,
+  isValid: requiredTermsValidator.value.isValid
+}))
 
 const toggleAllTerms = () => {
   const newValue = !allTermsAgreed.value
-  const updatedForm = {
-    ...localForm.value,
-    agreeService: newValue,
-    agreePrivacy: newValue,
-    agreeMarketing: newValue
-  }
-  emit('update:form', updatedForm)
+  signupFormData.value.agreeService = newValue
+  signupFormData.value.agreePrivacy = newValue
+  signupFormData.value.agreeMarketing = newValue
 }
 
 const openTermsModal = (type: string) => {
