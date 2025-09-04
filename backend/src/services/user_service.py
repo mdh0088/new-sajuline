@@ -15,6 +15,8 @@ from src.repositories.user_repository import UserRepository
 from src.repositories.counselor_repository import CounselorRepository
 from src.repositories.ars.tm60_users_repository import Tm60UsersRepository
 from src.services.auth_service import AuthService
+from src.services.user_activity_log_service import UserActivityLogService
+from src.schemas.user_activity_log_schema import DeviceType, UserType
 from src.core.database import get_db_mssql
 
 
@@ -26,11 +28,13 @@ class UserService:
         user_repo: UserRepository, 
         counselor_repo: CounselorRepository, 
         auth_service: AuthService,
+        activity_log_service: Optional[UserActivityLogService] = None,
         event_service: Optional["EventService"] = None
     ):
         self.user_repo = user_repo
         self.counselor_repo = counselor_repo
         self.auth_service = auth_service
+        self.activity_log_service = activity_log_service
         self.event_service = event_service
     
     async def signup(self, signup_data: UserSignup) -> UserResponse:
@@ -222,7 +226,14 @@ class UserService:
         
         return UserResponse.model_validate(user)
     
-    async def login(self, user_id_or_email: str, password: str) -> Tuple[str, UserResponse]:
+    async def login(
+        self, 
+        user_id_or_email: str, 
+        password: str,
+        client_ip: Optional[str] = None,
+        user_agent: Optional[str] = None,
+        device_type: Optional[DeviceType] = None
+    ) -> Tuple[str, UserResponse]:
         """
         사용자 로그인 비즈니스 로직
         - 사용자 인증
@@ -268,6 +279,21 @@ class UserService:
         
         # 마지막 로그인 시간 업데이트
         await self.user_repo.update_last_login(user.user_id)
+        
+        # 로그인 성공 활동 로그 기록
+        if self.activity_log_service:
+            try:
+                await self.activity_log_service.log_login_success(
+                    user_id=user.user_id,
+                    user_type=UserType.USER,
+                    ip_address=client_ip,
+                    user_agent=user_agent,
+                    device_type=device_type
+                )
+            except Exception as e:
+                # 활동 로그 실패해도 로그인은 성공으로 처리
+                log.warning("Activity log failed but login succeeded", 
+                          user_id=user.user_id, error=str(e))
         
         log.info("Login successful", user_id=user.user_id, email=user.email)
         return access_token, user_response

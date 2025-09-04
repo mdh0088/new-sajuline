@@ -9,22 +9,24 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from src.common.middleware.rate_limit import limiter
 
 from src.core.database import get_db_maria, get_db_mssql
-from src.core.redis import get_redis, get_token_blacklist_service
 from src.repositories.user_repository import UserRepository
 from src.repositories.counselor_repository import CounselorRepository
 from src.repositories.event_repository import EventRepository
 from src.repositories.point_transaction_repository import PointTransactionRepository
+from src.repositories.user_activity_log_repository import UserActivityLogRepository
 from src.repositories.ars.tm60_users_repository import Tm60UsersRepository
 from src.services.user_service import UserService
 from src.services.auth_service import AuthService
 from src.services.event_service import EventService
 from src.services.point_transaction_service import PointTransactionService
+from src.services.user_activity_log_service import UserActivityLogService
 from src.schemas.user_schema import (
     UserResponse, UserSignup
 )
-from src.schemas.auth_schema import LoginRequest, LoginResponse, RefreshTokenRequest, TokenResponse
+from src.schemas.auth_schema import LoginRequest, LoginResponse
 from src.common.response import APIResponse, ok, fail
 from src.common.logging import logger, get_logger_with_request_id
+from src.common.utils.client_info import extract_client_info
 from src.exceptions.custom_exceptions import BaseAppException
 
 router = APIRouter(prefix="/users", tags=["users"])
@@ -63,11 +65,23 @@ def get_tm60_users_repository():
         return Tm60UsersRepository(mssql_session)
 
 
+def get_user_activity_log_repository(db: AsyncSession = Depends(get_db_maria)) -> UserActivityLogRepository:
+    """사용자 활동 로그 리포지토리 의존성 주입"""
+    return UserActivityLogRepository(db)
+
+
 def get_point_transaction_service(
     point_transaction_repo: PointTransactionRepository = Depends(get_point_transaction_repository)
 ) -> PointTransactionService:
     """포인트 거래 서비스 의존성 주입"""
     return PointTransactionService(point_transaction_repo)
+
+
+def get_user_activity_log_service(
+    activity_log_repo: UserActivityLogRepository = Depends(get_user_activity_log_repository)
+) -> UserActivityLogService:
+    """사용자 활동 로그 서비스 의존성 주입"""
+    return UserActivityLogService(activity_log_repo)
 
 
 def get_event_service(
@@ -83,10 +97,11 @@ def get_user_service(
     user_repo: UserRepository = Depends(get_user_repository),
     counselor_repo: CounselorRepository = Depends(get_counselor_repository),
     auth_service: AuthService = Depends(get_auth_service),
-    event_service: EventService = Depends(get_event_service)
+    event_service: EventService = Depends(get_event_service),
+    activity_log_service: UserActivityLogService = Depends(get_user_activity_log_service)
 ) -> UserService:
     """사용자 서비스 의존성 주입"""
-    return UserService(user_repo, counselor_repo, auth_service, event_service)
+    return UserService(user_repo, counselor_repo, auth_service, activity_log_service, event_service)
 
 
 
@@ -260,10 +275,16 @@ async def login(
     if login_request.user_id == "api_error_test":
         raise BaseAppException("API layer: 예상치 못한 시스템 오류 테스트", status_code=500)
     
+    # 클라이언트 정보 추출
+    client_ip, user_agent, device_type = extract_client_info(request)
+    
     # 로그인 처리 (예외는 전역 핸들러에서 처리)
     access_token, user_response = await user_service.login(
         user_id_or_email=login_request.user_id,
-        password=login_request.password
+        password=login_request.password,
+        client_ip=client_ip,
+        user_agent=user_agent,
+        device_type=device_type
     )
     
     # Refresh Token 생성
@@ -332,66 +353,6 @@ async def logout(response: Response):
     )
     
     return ok(data=None, message="로그아웃 성공")
-
-@router.post(
-    "/refresh",
-    response_model=APIResponse[TokenResponse],
-    summary="토큰 갱신",
-    description="Refresh Token으로 새로운 Access Token 발급. 기존 토큰은 블랙리스트 처리됩니다.",
-    responses={
-        200: {"description": "토큰 갱신 성공"},
-        401: {"description": "유효하지 않거나 만료된 Refresh Token"},
-        429: {"description": "요청 한도 초과"}
-    }
-)
-@limiter.limit("20/minute")  # 분당 20회 제한 (토큰 갱신 남용 방지)
-async def refresh_token(
-    request: Request,
-    refresh_request: RefreshTokenRequest,
-    response: Response,
-    auth_service: AuthService = Depends(get_auth_service)
-):
-    """토큰 갱신 - Refresh Token으로 새로운 Access Token 발급"""
-    log = get_logger_with_request_id()
-    
-    try:
-        # 테스트용 강제 API 레이어 오류 발생
-        if refresh_request.refresh_token == "api_refresh_error_test":
-            raise BaseAppException("API layer: 토큰 갱신 처리 실패 테스트", status_code=500)
-        
-        # Refresh Token 검증 및 페이로드 추출
-        refresh_payload = auth_service.verify_refresh_token(refresh_request.refresh_token)
-        log.info("Refresh token validation successful", user_id=refresh_payload["sub"])
-        
-        # 새로운 Access Token 생성
-        new_access_token = auth_service.create_access_token(
-            user_id=refresh_payload["sub"],
-            email=refresh_payload["email"],
-            role=refresh_payload["role"]
-        )
-        
-        # HttpOnly 쿠키에 새로운 Access Token 설정
-        response.set_cookie(
-            key="access_token",
-            value=new_access_token,
-            httponly=True,
-            secure=True,  # HTTPS에서만 전송
-            samesite="lax",  # CSRF 보호
-            max_age=30 * 60  # 30분
-        )
-        
-        # 토큰 갱신 응답 데이터 생성
-        token_response = TokenResponse(
-            access_token_expires_in=30 * 60,  # 30분 (초 단위)
-            refresh_token_expires_in=7 * 24 * 60 * 60  # 7일 (초 단위)
-        )
-        
-        log.info("Token refresh completed successfully", user_id=refresh_payload["sub"])
-        return ok(data=token_response, message="토큰 갱신 성공")
-        
-    except Exception as e:
-        log.error("Token refresh failed", error=str(e))
-        raise
 
 
 # 중복 검사 API들

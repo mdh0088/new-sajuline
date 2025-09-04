@@ -6,8 +6,8 @@
  */
 import { ref, computed, watch } from 'vue'
 import { debounce } from 'lodash-es'
-import { useUserQueries } from '~/composables/api/useUserQueries'
 import type { JoinType } from '~/types/user/models'
+import type { UseQueryReturnType } from '@tanstack/vue-query'
 
 /**
  * 비밀번호 강도 측정
@@ -35,18 +35,11 @@ interface ValidationResult {
  * 실시간 유효성 검증 훅
  */
 export const useValidation = () => {
-  // Vue Query 훅들
-  const {
-    useEmailAvailability,
-    useUserIdAvailability, 
-    usePhoneAvailability,
-    useNicknameAvailability
-  } = useUserQueries()
 
   /**
-   * 이메일 검증
+   * 이메일 검증 (Vue Query 결과를 외부에서 받아옴)
    */
-  const validateEmail = (email: string) => {
+  const validateEmail = (email: string, availabilityQuery?: any) => {
     const emailRef = ref(email)
     
     // 기본 이메일 형식 검증
@@ -63,30 +56,25 @@ export const useValidation = () => {
       return { isValid: true, message: '' }
     })
     
-    // Backend 중복 검사 (디바운싱)
-    const { data: isAvailable, isLoading, error } = useEmailAvailability(emailRef.value, {
-      enabled: computed(() => basicValidation.value.isValid)
-    })
-    
-    // 최종 검증 결과
+    // 최종 검증 결과 (외부 Vue Query 결과 활용)
     const result = computed((): ValidationResult => {
       if (!basicValidation.value.isValid) {
         return basicValidation.value
       }
       
-      if (isLoading.value) {
+      if (availabilityQuery?.isLoading?.value) {
         return { isValid: true, message: '', isChecking: true }
       }
       
-      if (error.value) {
+      if (availabilityQuery?.error?.value) {
         return { isValid: false, message: '이메일 중복 검사 중 오류가 발생했습니다.' }
       }
       
-      if (isAvailable.value === false) {
+      if (availabilityQuery?.data?.value === false) {
         return { isValid: false, message: '이미 사용 중인 이메일입니다.' }
       }
       
-      if (isAvailable.value === true) {
+      if (availabilityQuery?.data?.value === true) {
         return { isValid: true, message: '사용 가능한 이메일입니다.' }
       }
       
@@ -100,9 +88,9 @@ export const useValidation = () => {
   }
 
   /**
-   * 사용자 ID 검증
+   * 사용자 ID 검증 (Vue Query 결과를 외부에서 받아옴)
    */
-  const validateUserId = (userId: string) => {
+  const validateUserId = (userId: string, availabilityQuery?: any) => {
     const userIdRef = ref(userId)
     
     // 기본 형식 검증
@@ -123,30 +111,25 @@ export const useValidation = () => {
       return { isValid: true, message: '' }
     })
     
-    // Backend 중복 검사
-    const { data: isAvailable, isLoading, error } = useUserIdAvailability(userIdRef.value, {
-      enabled: computed(() => basicValidation.value.isValid)
-    })
-    
     // 최종 검증 결과
     const result = computed((): ValidationResult => {
       if (!basicValidation.value.isValid) {
         return basicValidation.value
       }
       
-      if (isLoading.value) {
+      if (availabilityQuery?.isLoading?.value) {
         return { isValid: true, message: '', isChecking: true }
       }
       
-      if (error.value) {
+      if (availabilityQuery?.error?.value) {
         return { isValid: false, message: '사용자 ID 중복 검사 중 오류가 발생했습니다.' }
       }
       
-      if (isAvailable.value === false) {
+      if (availabilityQuery?.data?.value === false) {
         return { isValid: false, message: '이미 사용 중인 사용자 ID입니다.' }
       }
       
-      if (isAvailable.value === true) {
+      if (availabilityQuery?.data?.value === true) {
         return { isValid: true, message: '사용 가능한 사용자 ID입니다.' }
       }
       
@@ -162,7 +145,7 @@ export const useValidation = () => {
   /**
    * 전화번호 검증 (01012345678 형식)
    */
-  const validatePhone = (phone: string) => {
+  const validatePhone = (phone: string, availabilityQuery?: any) => {
     const phoneRef = ref(phone)
     
     // 기본 형식 검증
@@ -179,30 +162,25 @@ export const useValidation = () => {
       return { isValid: true, message: '' }
     })
     
-    // Backend 중복 검사
-    const { data: isAvailable, isLoading, error } = usePhoneAvailability(phoneRef.value, {
-      enabled: computed(() => basicValidation.value.isValid)
-    })
-    
     // 최종 검증 결과
     const result = computed((): ValidationResult => {
       if (!basicValidation.value.isValid) {
         return basicValidation.value
       }
       
-      if (isLoading.value) {
+      if (availabilityQuery?.isLoading?.value) {
         return { isValid: true, message: '', isChecking: true }
       }
       
-      if (error.value) {
+      if (availabilityQuery?.error?.value) {
         return { isValid: false, message: '전화번호 중복 검사 중 오류가 발생했습니다.' }
       }
       
-      if (isAvailable.value === false) {
+      if (availabilityQuery?.data?.value === false) {
         return { isValid: false, message: '이미 사용 중인 전화번호입니다.' }
       }
       
-      if (isAvailable.value === true) {
+      if (availabilityQuery?.data?.value === true) {
         return { isValid: true, message: '사용 가능한 전화번호입니다.' }
       }
       
@@ -218,7 +196,7 @@ export const useValidation = () => {
   /**
    * 닉네임 검증
    */
-  const validateNickname = (nickname: string) => {
+  const validateNickname = (nickname: string, availabilityQuery?: any) => {
     const nicknameRef = ref(nickname)
     
     // 기본 형식 검증
@@ -239,30 +217,25 @@ export const useValidation = () => {
       return { isValid: true, message: '' }
     })
     
-    // Backend 중복 검사
-    const { data: isAvailable, isLoading, error } = useNicknameAvailability(nicknameRef.value, {
-      enabled: computed(() => basicValidation.value.isValid)
-    })
-    
     // 최종 검증 결과
     const result = computed((): ValidationResult => {
       if (!basicValidation.value.isValid) {
         return basicValidation.value
       }
       
-      if (isLoading.value) {
+      if (availabilityQuery?.isLoading?.value) {
         return { isValid: true, message: '', isChecking: true }
       }
       
-      if (error.value) {
+      if (availabilityQuery?.error?.value) {
         return { isValid: false, message: '닉네임 중복 검사 중 오류가 발생했습니다.' }
       }
       
-      if (isAvailable.value === false) {
+      if (availabilityQuery?.data?.value === false) {
         return { isValid: false, message: '이미 사용 중인 닉네임입니다.' }
       }
       
-      if (isAvailable.value === true) {
+      if (availabilityQuery?.data?.value === true) {
         return { isValid: true, message: '사용 가능한 닉네임입니다.' }
       }
       
@@ -420,11 +393,16 @@ export const useValidation = () => {
     birth_date?: string
     join_type: JoinType
     is_marketing_agreed: boolean
+  }, availabilityQueries?: {
+    email?: any
+    userId?: any
+    phone?: any
+    nickname?: any
   }) => {
-    const emailValidator = validateEmail(formData.email)
-    const userIdValidator = validateUserId(formData.user_id)
-    const phoneValidator = validatePhone(formData.phone)
-    const nicknameValidator = validateNickname(formData.nickname)
+    const emailValidator = validateEmail(formData.email, availabilityQueries?.email)
+    const userIdValidator = validateUserId(formData.user_id, availabilityQueries?.userId)
+    const phoneValidator = validatePhone(formData.phone, availabilityQueries?.phone)
+    const nicknameValidator = validateNickname(formData.nickname, availabilityQueries?.nickname)
     const passwordValidator = validatePassword(formData.password, formData.confirmPassword)
     
     const birthDateValidation = computed(() => 
