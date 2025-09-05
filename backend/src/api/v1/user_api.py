@@ -16,13 +16,23 @@ from src.repositories.event_repository import EventRepository
 from src.repositories.point_transaction_repository import PointTransactionRepository
 from src.repositories.user_activity_log_repository import UserActivityLogRepository
 from src.repositories.ars.tm60_users_repository import Tm60UsersRepository
+from src.repositories.user_bookmark_repository import UserBookmarkRepository
+from src.repositories.consultation_review_repository import ConsultationReviewRepository
+from src.repositories.payment_repository import PaymentRepository
+from src.repositories.grade_repository import GradeRepository
+from src.repositories.ars.tm60_chatlog_repository import Tm60ChatlogRepository
 from src.services.user_service import UserService
 from src.services.auth_service import AuthService, get_current_user, TokenPayload
 from src.services.event_service import EventService
 from src.services.point_transaction_service import PointTransactionService
 from src.services.user_activity_log_service import UserActivityLogService
+from src.services.user_bookmark_service import UserBookmarkService
+from src.services.consultation_review_service import ConsultationReviewService
+from src.services.payment_service import PaymentService
+from src.services.grade_service import GradeService
+from src.services.ars.tm60_chatlog_service import Tm60ChatlogService
 from src.schemas.user_schema import (
-    UserResponse, UserSignup
+    UserResponse, UserSignup, UserMypageResponse
 )
 from src.schemas.auth_schema import LoginRequest, LoginResponse
 from src.common.response import APIResponse, ok, fail
@@ -103,6 +113,67 @@ def get_user_service(
 ) -> UserService:
     """사용자 서비스 의존성 주입"""
     return UserService(user_repo, counselor_repo, auth_service, activity_log_service, event_service)
+
+
+# 마이페이지용 추가 의존성 주입 함수들
+def get_user_bookmark_repository(db: AsyncSession = Depends(get_db_maria)) -> UserBookmarkRepository:
+    """사용자 북마크 리포지토리 의존성 주입"""
+    return UserBookmarkRepository(db)
+
+
+def get_consultation_review_repository(db: AsyncSession = Depends(get_db_maria)) -> ConsultationReviewRepository:
+    """상담 후기 리포지토리 의존성 주입"""
+    return ConsultationReviewRepository(db)
+
+
+def get_payment_repository(db: AsyncSession = Depends(get_db_maria)) -> PaymentRepository:
+    """결제 리포지토리 의존성 주입"""
+    return PaymentRepository(db)
+
+
+def get_grade_repository(db: AsyncSession = Depends(get_db_maria)) -> GradeRepository:
+    """등급 리포지토리 의존성 주입"""
+    return GradeRepository(db)
+
+
+def get_tm60_chatlog_repository():
+    """TM60 채팅로그 리포지토리 의존성 주입"""
+    for mssql_session in get_db_mssql():
+        return Tm60ChatlogRepository(mssql_session)
+
+
+def get_user_bookmark_service(
+    bookmark_repo: UserBookmarkRepository = Depends(get_user_bookmark_repository)
+) -> UserBookmarkService:
+    """사용자 북마크 서비스 의존성 주입"""
+    return UserBookmarkService(bookmark_repo)
+
+
+def get_consultation_review_service(
+    review_repo: ConsultationReviewRepository = Depends(get_consultation_review_repository)
+) -> ConsultationReviewService:
+    """상담 후기 서비스 의존성 주입"""
+    return ConsultationReviewService(review_repo)
+
+
+def get_payment_service(
+    payment_repo: PaymentRepository = Depends(get_payment_repository)
+) -> PaymentService:
+    """결제 서비스 의존성 주입"""
+    return PaymentService(payment_repo)
+
+
+def get_grade_service(
+    grade_repo: GradeRepository = Depends(get_grade_repository)
+) -> GradeService:
+    """등급 서비스 의존성 주입"""
+    return GradeService(grade_repo)
+
+
+def get_tm60_chatlog_service() -> Tm60ChatlogService:
+    """TM60 채팅로그 서비스 의존성 주입"""
+    for mssql_session in get_db_mssql():
+        return Tm60ChatlogService(mssql_session)
 
 
 
@@ -487,3 +558,93 @@ async def check_nickname_availability(
     available = await user_service.check_nickname_availability(value)
     message = "사용 가능한 닉네임입니다." if available else "이미 사용 중인 닉네임입니다."
     return ok(data=available, message=message)
+
+
+@router.get(
+    "/mypage",
+    response_model=APIResponse[UserMypageResponse],
+    summary="사용자 마이페이지 정보 조회",
+    description="로그인한 사용자의 마이페이지에 필요한 통합 정보를 조회합니다.",
+    responses={
+        200: {"description": "마이페이지 정보 조회 성공"},
+        401: {"description": "인증 필요"},
+        404: {"description": "사용자 정보 없음"},
+        500: {"description": "서버 오류"}
+    }
+)
+@limiter.limit("100/minute")  # 분당 100회 제한 (마이페이지는 자주 조회될 수 있음)
+async def get_user_mypage(
+    request: Request,
+    current_user: TokenPayload = Depends(get_current_user),
+    user_service: UserService = Depends(get_user_service),
+    bookmark_service: UserBookmarkService = Depends(get_user_bookmark_service),
+    review_service: ConsultationReviewService = Depends(get_consultation_review_service),
+    payment_service: PaymentService = Depends(get_payment_service),
+    grade_service: GradeService = Depends(get_grade_service),
+    tm60_chatlog_service: Tm60ChatlogService = Depends(get_tm60_chatlog_service),
+    tm60_users_repo: Tm60UsersRepository = Depends(get_tm60_users_repository)
+) -> APIResponse[UserMypageResponse]:
+    """사용자 마이페이지 통합 정보 조회"""
+    log = get_logger_with_request_id()
+    user_id = current_user.sub
+    log.info("Getting user mypage info", user_id=user_id)
+    
+    try:
+        # 1. 기본 사용자 정보 조회
+        user_info = await user_service.user_repo.get_by_id(user_id)
+        if not user_info:
+            log.warning("User not found for mypage", user_id=user_id)
+            raise BaseAppException("사용자 정보를 찾을 수 없습니다.", status_code=404)
+        
+        user_response = UserResponse.model_validate(user_info)
+        
+        # 2. 상담 수 조회 (tm60_chatlog)
+        consultation_count = await tm60_chatlog_service.get_user_consultation_count(user_id)
+        
+        # 3. 즐겨찾기 수 조회 (t_user_bookmark)
+        bookmark_count_response = await bookmark_service.get_bookmark_count_by_user(user_id)
+        bookmark_count = bookmark_count_response.bookmark_count
+        
+        # 4. 후기 수 조회 (t_consultation_review)
+        review_count_response = await review_service.get_user_review_count(user_id)
+        review_count = review_count_response.review_count
+        
+        # 5. 포인트 조회 (tm60_users)
+        current_points = await tm60_users_repo.get_user_points(user_id)
+        
+        # 6. 등급 정보 조회 (t_grade)
+        grade_info = await grade_service.get_next_grade_info(user_info.grade_code)
+        
+        # 7. 이번 달 결제 총액 조회 (t_payment)
+        monthly_payment_total = await payment_service.get_user_monthly_total_payment_amount(user_id)
+        
+        # 8. 통합 응답 생성
+        mypage_response = UserMypageResponse(
+            user_info=user_response,
+            total_consultation_count=consultation_count,
+            total_bookmark_count=bookmark_count,
+            total_review_count=review_count,
+            current_points=current_points,
+            grade_info=grade_info,
+            monthly_payment_total=monthly_payment_total
+        )
+        
+        log.info("User mypage info retrieved successfully", 
+                user_id=user_id,
+                consultation_count=consultation_count,
+                bookmark_count=bookmark_count,
+                review_count=review_count,
+                current_points=current_points,
+                current_grade=grade_info.current_grade.grade_name,
+                monthly_payment=monthly_payment_total)
+        
+        return ok(data=mypage_response, message="마이페이지 정보 조회 성공")
+        
+    except BaseAppException:
+        # 이미 정의된 예외는 그대로 재발생
+        raise
+    except Exception as e:
+        log.warning("Mypage info retrieval failed", 
+                   user_id=user_id, 
+                   error=str(e))
+        raise BaseAppException(f"마이페이지 정보 조회 중 오류가 발생했습니다: {str(e)}", status_code=500)

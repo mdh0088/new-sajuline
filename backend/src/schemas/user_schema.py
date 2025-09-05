@@ -3,9 +3,11 @@
 """
 from datetime import datetime, date
 from typing import Optional
+from decimal import Decimal
 from pydantic import BaseModel, EmailStr, Field, ConfigDict
 
 from src.models.user_model import JoinType, UserStatus, Gender
+from src.schemas.grade_schema import NextGradeInfo
 
 
 class UserBase(BaseModel):
@@ -57,6 +59,34 @@ class SignupRewardInfo(BaseModel):
     reward_value: int = Field(..., description="지급된 포인트")
     balance_after: int = Field(..., description="지급 후 포인트 잔액")
     message: str = Field(..., description="보상 메시지")
+
+
+class UserMypageResponse(BaseModel):
+    """사용자 마이페이지 통합 응답 스키마"""
+    
+    # 1. 기본 사용자 정보
+    user_info: UserResponse = Field(..., description="사용자 기본 정보")
+    
+    # 2. 상담 관련 통계
+    total_consultation_count: int = Field(..., ge=0, description="총 상담 수 (tm60_chatlog)")
+    
+    # 3. 즐겨찾기 통계
+    total_bookmark_count: int = Field(..., ge=0, description="총 즐겨찾기 수 (t_user_bookmark)")
+    
+    # 4. 후기 통계
+    total_review_count: int = Field(..., ge=0, description="총 후기 작성 수 (t_consultation_review)")
+    
+    # 5. 포인트 정보
+    current_points: int = Field(..., ge=0, description="현재 보유 포인트 (tm60_users)")
+    
+    # 6. 등급 정보
+    grade_info: NextGradeInfo = Field(..., description="현재 등급 및 다음 등급 정보 (t_grade)")
+    
+    # 7. 결제 정보
+    monthly_payment_total: Decimal = Field(..., ge=0, description="이번 달 결제 총액 (t_payment)")
+    
+    # 통계 요약 정보
+    data_updated_at: datetime = Field(default_factory=datetime.utcnow, description="데이터 조회 시점")
 
 
 # TODO: 추후 필요시 참고용 스키마들

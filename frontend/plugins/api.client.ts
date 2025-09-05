@@ -11,8 +11,31 @@ export default defineNuxtPlugin(() => {
   const config = useRuntimeConfig()
   const apiBase = (config.public.apiBase ?? '/api') as string
 
+  // 동시성 제어: 간단한 Promise 공유
+  let refreshPromise: Promise<any> | null = null
+
+  // refresh token 요청 함수 (중복 요청 방지)
+  const refreshToken = async (): Promise<any> => {
+    // 이미 진행 중인 refresh가 있으면 그것을 기다림
+    if (refreshPromise) {
+      return await refreshPromise
+    }
+
+    // 새로운 refresh 시작
+    refreshPromise = $fetch('/auth/refresh', {
+      baseURL: apiBase,
+      method: 'POST' as const,
+      credentials: 'include',
+      body: {}
+    }).finally(() => {
+      refreshPromise = null // 완료 후 초기화
+    })
+
+    return await refreshPromise
+  }
+
   // 커스텀 $fetch 인스턴스 생성 (HttpOnly 쿠키 환경)
-  const api = $fetch.create({
+  const api: typeof $fetch = $fetch.create({
     baseURL: apiBase,
     credentials: 'include', // HttpOnly 쿠키 자동 전송 (중요!)
     
@@ -73,7 +96,7 @@ export default defineNuxtPlugin(() => {
     },
 
     // 응답 에러 인터셉터
-    async onResponseError({ response, request }) {
+    async onResponseError({ response, request, options }): Promise<any> {
       // 에러 로깅
       console.error('❌ API Error:', {
         status: response.status,
@@ -82,16 +105,74 @@ export default defineNuxtPlugin(() => {
         timestamp: new Date().toISOString()
       })
 
-      // 인증 에러 처리 (401)
+      // 인증 에러 처리 (401) - 토큰 만료 또는 유효하지 않음
       if (response.status === 401) {
-        // HttpOnly 쿠키는 서버에서 자동 삭제됨
-        // 클라이언트에서 별도 처리 불필요
-        
-        // 로그인 페이지로 리다이렉트
-        if (process.client) {
-          await navigateTo('/login', { replace: true })
+        // 로그인 API 호출인 경우 토큰 갱신 시도하지 않고 바로 에러 메시지 반환
+        if (request.toString().includes('/login')) {
+          const errorData = response._data
+          const errorMessage = errorData?.message || errorData?.error?.message || '아이디 또는 비밀번호가 올바르지 않습니다.'
+          
+          throw createError({
+            statusCode: response.status,
+            statusMessage: errorMessage,
+            data: errorData
+          })
         }
-        return
+        
+        // refresh API 호출이 아닌 경우에만 토큰 갱신 시도
+        if (!request.toString().includes('/auth/refresh')) {
+          try {
+            console.log('🔄 토큰 만료 감지, 자동 갱신 시도...')
+            
+            // refresh token 호출 (순환 참조 방지)
+            const refreshResponse = await refreshToken()
+
+            if (refreshResponse.success) {
+              console.log('✅ 토큰 갱신 성공, 원래 요청 재시도...')
+              
+              // 원시 $fetch로 원래 요청 재시도 (순환 참조 방지)
+              return await $fetch(request as string, {
+                baseURL: apiBase,
+                credentials: 'include',
+                method: options.method as any,
+                body: options.body,
+                headers: options.headers
+              })
+            }
+          } catch (refreshError) {
+            console.error('❌ 토큰 갱신 실패:', refreshError)
+          }
+        }
+        
+        // 토큰 갱신 실패 - 사용자 친화적 처리
+        console.log('🚪 로그인이 만료되어 로그인 페이지로 이동합니다.')
+        
+        if (process.client) {
+          // 사용자에게 상황 설명
+          const userChoice = confirm(
+            '로그인이 만료되었습니다.\n\n' +
+            '확인: 로그인 페이지로 이동\n' +
+            '취소: 현재 페이지에서 계속 (일부 기능 제한)'
+          )
+          
+          if (userChoice) {
+            // 로그인 페이지로 이동
+            await navigateTo('/login', { replace: true })
+          } else {
+            // 현재 페이지 유지 (사용자 선택권 제공)
+            console.log('사용자가 현재 페이지 유지를 선택했습니다.')
+          }
+        }
+        
+        // 토큰 갱신 실패 시에도 적절한 에러 메시지 반환
+        const errorData = response._data
+        const errorMessage = errorData?.message || errorData?.error?.message || '인증이 필요합니다.'
+        
+        throw createError({
+          statusCode: response.status,
+          statusMessage: errorMessage,
+          data: errorData
+        })
       }
 
       // 권한 에러 (403)

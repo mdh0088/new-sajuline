@@ -81,7 +81,7 @@
 
         <!-- 로그인 폼 컴포넌트 -->
         <LoginForm 
-          @submit="handleLogin"
+          @success="handleLoginSuccess"
           @forgot-password="handleForgotPassword"
         />
 
@@ -112,7 +112,7 @@
 
 <script setup lang="ts">
 // 인증 도메인 CSS 로드
-import '~/assets/css/auth.css'
+import '~/assets/css/login/common.css'
 
 // SEO 및 메타 데이터 설정
 useHead({
@@ -129,10 +129,10 @@ const goBack = () => {
   navigateTo('/')
 }
 
-// 로그인 처리
-const handleLogin = async () => {
-  console.log('로그인 요청')
-  // TODO: 백엔드 API 연동
+// 로그인 성공 처리
+const handleLoginSuccess = () => {
+  // 로그인 성공 시 메인 페이지로 이동
+  navigateTo('/')
 }
 
 // 소셜 로그인 핸들러들

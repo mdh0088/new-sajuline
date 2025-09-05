@@ -17,15 +17,9 @@ export interface SignupFormData {
   nickname: string
   phone: string
   gender: Gender
-  birth_date: string
+  birth_date: string  // YYYY-MM-DD HH:MM 형식 (예: "1993-06-19 14:30")
   join_type: JoinType
   is_marketing_agreed: boolean
-  // 단계별 데이터
-  birthYear: number | null
-  birthMonth: number | null
-  birthDay: number | null
-  birthHour: number | null
-  birthMinute: number | null
   // 약관 동의
   agreeService: boolean
   agreePrivacy: boolean

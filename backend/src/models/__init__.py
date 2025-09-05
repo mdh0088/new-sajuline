@@ -6,10 +6,14 @@ from .point_transaction_model import PointTransaction, TransactionType, Currency
 from .event_model import Event
 from .event_participation_model import EventParticipationLog
 from .user_activity_log_model import UserActivityLog
+from .grade_model import Grade
+from .user_bookmark_model import UserBookmark
 
 __all__ = [
     "User", "JoinType", "UserStatus", "Gender",
     "PointTransaction", "TransactionType", "CurrencyType", "ReferenceType",
     "Event", "EventParticipationLog",
-    "UserActivityLog"
+    "UserActivityLog",
+    "Grade",
+    "UserBookmark"
 ]

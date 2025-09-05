@@ -12,19 +12,19 @@
           class="input-field" 
           placeholder="닉네임을 입력해주세요"
           :class="{ 
-            error: !validator.nicknameValidator.result.value.isValid && signupFormData.name,
-            success: validator.nicknameValidator.result.value.isValid && signupFormData.name
+            error: !validator.nicknameValidator.value.result.value.isValid && signupFormData.nickname,
+            success: validator.nicknameValidator.value.result.value.isValid && signupFormData.nickname
           }"
         >
-        <span v-if="validator.nicknameValidator.result.value.isChecking" class="checking-indicator">확인 중...</span>
+        <span v-if="validator.nicknameValidator.value.result.value.isChecking" class="checking-indicator">확인 중...</span>
       </div>
-      <p v-if="validator.nicknameValidator.result.value.message" 
+      <p v-if="validator.nicknameValidator.value.result.value.message" 
          class="validation-text" 
          :class="{ 
-           'error-text': !validator.nicknameValidator.result.value.isValid,
-           'success-text': validator.nicknameValidator.result.value.isValid && signupFormData.nickname
+           'error-text': !validator.nicknameValidator.value.result.value.isValid,
+           'success-text': validator.nicknameValidator.value.result.value.isValid && signupFormData.nickname
          }">
-        {{ validator.nicknameValidator.result.value.message }}
+        {{ validator.nicknameValidator.value.result.value.message }}
       </p>
     </div>
 
@@ -39,20 +39,20 @@
           maxlength="11" 
           @input="handlePhoneInput"
           :class="{ 
-            error: !validator.phoneValidator.result.value.isValid && signupFormData.phone,
-            success: validator.phoneValidator.result.value.isValid && signupFormData.phone
+            error: !validator.phoneValidator.value.result.value.isValid && signupFormData.phone,
+            success: validator.phoneValidator.value.result.value.isValid && signupFormData.phone
           }"
         >
         <button type="button" class="verify-button" @click="sendVerificationCode">인증하기</button>
-        <span v-if="validator.phoneValidator.result.value.isChecking" class="checking-indicator">확인 중...</span>
+        <span v-if="validator.phoneValidator.value.result.value.isChecking" class="checking-indicator">확인 중...</span>
       </div>
-      <p v-if="validator.phoneValidator.result.value.message" 
+      <p v-if="validator.phoneValidator.value.result.value.message" 
          class="validation-text" 
          :class="{ 
-           'error-text': !validator.phoneValidator.result.value.isValid,
-           'success-text': validator.phoneValidator.result.value.isValid && signupFormData.phone
+           'error-text': !validator.phoneValidator.value.result.value.isValid,
+           'success-text': validator.phoneValidator.value.result.value.isValid && signupFormData.phone
          }">
-        {{ validator.phoneValidator.result.value.message }}
+        {{ validator.phoneValidator.value.result.value.message }}
       </p>
     </div>
 
@@ -133,3 +133,8 @@ const sendVerificationCode = () => {
 }
 
 </script>
+
+<style>
+@import '~/assets/css/signup/common.css';
+@import '~/assets/css/signup/signup_step2.css';
+</style>
