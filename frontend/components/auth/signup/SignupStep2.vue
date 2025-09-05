@@ -133,3 +133,8 @@ const sendVerificationCode = () => {
 }
 
 </script>
+
+<style>
+@import '~/assets/css/signup/common.css';
+@import '~/assets/css/signup/signup_step2.css';
+</style>

@@ -53,3 +53,7 @@ const handleGoogleLogin = () => {
   emit('googleLogin')
 }
 </script>
+
+<style>
+@import '~/assets/css/login/common.css';
+</style>

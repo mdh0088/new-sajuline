@@ -47,6 +47,8 @@ class Settings(BaseSettings):
     mssql_password: str = Field(..., env="MSSQL_PASSWORD")
     mssql_dev_driver: str = Field(..., env="MSSQL_DEV_DRIVER")
     mssql_prod_driver: str = Field(..., env="MSSQL_PROD_DRIVER")
+    mssql_pool_size: int = Field(default=10, env="MSSQL_POOL_SIZE")
+    mssql_max_overflow: int = Field(default=20, env="MSSQL_MAX_OVERFLOW")
     
     # Redis 설정
     redis_url: str = Field(..., env="REDIS_URL")

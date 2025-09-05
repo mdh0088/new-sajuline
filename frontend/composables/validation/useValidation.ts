@@ -441,6 +441,28 @@ export const useValidation = () => {
     }
   }
 
+  /**
+   * 간단한 필수 값 검증
+   */
+  const validateRequired = (value: string): boolean => {
+    return !!(value && value.trim())
+  }
+
+  /**
+   * 최소 길이 검증
+   */
+  const validateMinLength = (value: string, minLength: number): boolean => {
+    return !!(value && value.length >= minLength)
+  }
+
+  /**
+   * 이메일 형식 검증 (간단한 버전)
+   */
+  const validateEmailFormat = (email: string): boolean => {
+    const emailPattern = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/
+    return emailPattern.test(email)
+  }
+
   return {
     // 개별 검증 함수들
     validateEmail,
@@ -454,6 +476,11 @@ export const useValidation = () => {
     validateSignupForm,
     
     // 유틸리티
-    calculatePasswordStrength
+    calculatePasswordStrength,
+    
+    // 간단한 헬퍼 함수들 (로그인 폼 등에서 사용)
+    validateRequired,
+    validateMinLength,
+    validateEmailFormat
   }
 }
