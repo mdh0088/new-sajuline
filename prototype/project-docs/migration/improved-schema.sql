@@ -853,3 +853,23 @@ WHERE u.user_status = 'ACTIVE';
 -- =====================================================
 -- 끝
 -- =====================================================
+
+
+-- == 2025-09-05 추가 스키마 ==
+
+
+
+CREATE TABLE `t_user_bookmark` (
+  `bookmark_id` int(11) NOT NULL AUTO_INCREMENT,
+  `user_id` varchar(100) NOT NULL COMMENT '유저 id',
+  `counselor_id` varchar(100) NOT NULL COMMENT '상담사 id',
+  `created_at` datetime NOT NULL DEFAULT current_timestamp() COMMENT '등록일',
+  PRIMARY KEY (`bookmark_id`),
+  KEY `t_user_bookmark_user_id_IDX` (`user_id`) USING BTREE,
+  KEY `t_user_bookmark_counselor_id_IDX` (`counselor_id`) USING BTREE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+
+
+
+

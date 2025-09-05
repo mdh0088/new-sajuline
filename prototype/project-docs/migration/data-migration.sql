@@ -1080,3 +1080,26 @@ ON DUPLICATE KEY UPDATE
 -- =====================================================
 -- 끝
 -- =====================================================
+
+-- == 2025-09-05 추가 데이터 마이그레이션 ==
+INSERT INTO t_user_bookmark
+(
+	user_id, counselor_id, created_at
+)
+SELECT
+	user_id,
+	counselor_id,
+	created_at
+FROM (
+SELECT
+	(SELECT USER_ID FROM TBL_USER WHERE IDX = TUB.USER_IDX ) AS user_id,
+	(SELECT EMAIL FROM TBL_CS WHERE IDX = TUB.CS_IDX ) AS counselor_id,
+	TUB.REGIST_DATE AS created_at
+FROM TBL_USER_BOOKMARK TUB
+) T1 WHERE
+	user_id is not null
+	and T1.counselor_id is not null;
+
+
+
+

@@ -1,0 +1,298 @@
+/**
+ * SignupStep3 전용 스타일
+ * 생년월일, 태어난 시간 입력 (Element Plus DatePicker 포함)
+ */
+
+/* 기존 생년월일 입력 스타일 (레거시) */
+.birth-input {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.birth-field {
+  flex: 1;
+  text-align: center;
+}
+
+.birth-unit {
+  font-size: 14px;
+  color: rgba(255, 255, 255, 0.6);
+}
+
+/* Element Plus DatePicker 및 TimePicker 컨테이너 */
+.date-picker-container,
+.time-input-container {
+  @apply w-full;
+}
+
+/* Element Plus 컴포넌트 기본 스타일 */
+.birth-date-picker,
+.birth-time-picker {
+  @apply w-full;
+}
+
+/* Element Plus DatePicker/TimePicker 커스텀 스타일 - input-field와 완전 일치 */
+.custom-date-input {
+  --el-input-bg-color: rgba(255, 255, 255, 0.05);
+  --el-input-border-color: rgba(255, 255, 255, 0.1);
+  --el-input-focus-border-color: rgba(147, 51, 234, 0.5);
+  --el-input-text-color: rgba(255, 255, 255, 0.9);
+  --el-input-placeholder-color: rgba(255, 255, 255, 0.4);
+  --el-input-hover-border-color: rgba(255, 255, 255, 0.2);
+  
+  width: 100% !important;
+  display: block !important;
+}
+
+.custom-date-input :deep(.el-input__wrapper) {
+  width: 100% !important;
+  height: auto !important;
+  background: var(--el-input-bg-color) !important;
+  border: 1px solid var(--el-input-border-color) !important;
+  border-radius: 12px !important;
+  /* 기존 input-field와 정확히 동일한 패딩 */
+  padding: 16px 20px !important;
+  box-sizing: border-box !important;
+  box-shadow: none !important;
+  transition: all 0.3s ease !important;
+  display: flex !important;
+  align-items: center !important;
+  /* 기존 input-field와 정확히 동일한 최소 높이 */
+  min-height: calc(1em * 1.5 + 32px) !important; /* font-size * line-height + vertical padding */
+}
+
+.custom-date-input :deep(.el-input__wrapper:hover) {
+  border-color: var(--el-input-hover-border-color) !important;
+}
+
+.custom-date-input :deep(.el-input__wrapper.is-focus) {
+  border-color: var(--el-input-focus-border-color) !important;
+  background-color: rgba(255, 255, 255, 0.08) !important;
+  box-shadow: none !important;
+}
+
+.custom-date-input :deep(.el-input__inner) {
+  color: var(--el-input-text-color) !important;
+  font-size: 16px !important;
+  line-height: 1.5 !important;
+  background: transparent !important;
+  border: none !important;
+  /* Element Plus 기본 padding 완전 제거 - wrapper에서 이미 적용됨 */
+  padding: 0 !important;
+  margin: 0 !important;
+  height: auto !important;
+  flex: 1 !important;
+  outline: none !important;
+  box-shadow: none !important;
+}
+
+.custom-date-input :deep(.el-input__inner::placeholder) {
+  color: var(--el-input-placeholder-color) !important;
+}
+
+.custom-date-input :deep(.el-input__suffix),
+.custom-date-input :deep(.el-input__prefix) {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  color: rgba(255, 255, 255, 0.6) !important;
+  /* Element Plus 기본 여백 완전 제거 */
+  margin: 0 !important;
+  padding: 0 !important;
+  height: auto !important;
+  min-width: auto !important;
+}
+
+.custom-date-input :deep(.el-input__suffix-inner),
+.custom-date-input :deep(.el-input__prefix-inner) {
+  color: rgba(255, 255, 255, 0.6) !important;
+  display: flex !important;
+  align-items: center !important;
+}
+
+.custom-date-input :deep(.el-input__suffix-inner:hover),
+.custom-date-input :deep(.el-input__prefix-inner:hover) {
+  color: rgba(255, 255, 255, 0.8) !important;
+}
+
+/* Element Plus 기본 패딩/마진/크기 완전 제거 */
+.custom-date-input :deep(.el-input),
+.custom-date-input :deep(.el-date-editor),
+.custom-date-input :deep(.el-time-picker) {
+  margin: 0 !important;
+  padding: 0 !important;
+  width: 100% !important;
+  height: auto !important;
+  line-height: normal !important;
+  box-sizing: border-box !important;
+}
+
+/* Element Plus 컴포넌트 루트 레벨도 정리 */
+.custom-date-input.el-date-editor,
+.custom-date-input.el-time-picker {
+  margin: 0 !important;
+  padding: 0 !important;
+  width: 100% !important;
+  display: block !important;
+}
+
+/* Element Plus 아이콘 추가 스타일링 */
+.custom-date-input :deep(.el-icon) {
+  color: rgba(255, 255, 255, 0.6) !important;
+  font-size: 18px !important;
+}
+
+.custom-date-input :deep(.el-icon:hover) {
+  color: rgba(255, 255, 255, 0.8) !important;
+}
+
+/* Element Plus 팝업 패널 스타일 - 다크 테마 일관성 */
+:deep(.el-picker-panel) {
+  background: rgba(10, 10, 15, 0.95);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.5), 0 10px 10px -5px rgba(0, 0, 0, 0.2);
+}
+
+:deep(.el-date-picker__header) {
+  color: white;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  background: transparent;
+}
+
+:deep(.el-picker-panel__content) {
+  color: white;
+  background: transparent;
+}
+
+:deep(.el-date-table th) {
+  color: rgba(255, 255, 255, 0.6);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+:deep(.el-date-table td) {
+  color: rgba(255, 255, 255, 0.8);
+  border: none;
+}
+
+:deep(.el-date-table td.available:hover) {
+  background: rgba(147, 51, 234, 0.2);
+  border-radius: 8px;
+}
+
+:deep(.el-date-table td.current:not(.disabled)) {
+  background: rgba(147, 51, 234, 1);
+  color: white;
+  border-radius: 8px;
+}
+
+:deep(.el-date-table td.today) {
+  color: rgba(147, 51, 234, 1);
+  font-weight: 600;
+}
+
+/* TimePicker 스피너 스타일 */
+:deep(.el-time-spinner__list) {
+  background: transparent;
+}
+
+:deep(.el-time-spinner__item) {
+  color: rgba(255, 255, 255, 0.8);
+  background: transparent;
+}
+
+:deep(.el-time-spinner__item:hover) {
+  background: rgba(147, 51, 234, 0.2);
+}
+
+:deep(.el-time-spinner__item.active:not(.disabled)) {
+  background: rgba(147, 51, 234, 1);
+  color: white;
+  font-weight: 600;
+}
+
+/* Element Plus 버튼 스타일 - 프로젝트 일관성 */
+:deep(.el-picker-panel__footer .el-button--primary) {
+  background: linear-gradient(135deg, #9333EA 0%, #7C3AED 100%);
+  border: none;
+  border-radius: 8px;
+  color: white;
+  font-weight: 600;
+  padding: 8px 16px;
+  transition: all 0.3s ease;
+}
+
+:deep(.el-picker-panel__footer .el-button--primary:hover) {
+  background: linear-gradient(135deg, #7C3AED 0%, #6D28D9 100%);
+  transform: translateY(-1px);
+}
+
+:deep(.el-picker-panel__footer .el-button--default) {
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: rgba(255, 255, 255, 0.8);
+  border-radius: 8px;
+  padding: 8px 16px;
+  transition: all 0.3s ease;
+}
+
+:deep(.el-picker-panel__footer .el-button--default:hover) {
+  background: rgba(255, 255, 255, 0.15);
+  color: white;
+}
+
+/* 년/월 선택 네비게이션 버튼 */
+:deep(.el-date-picker__prev-btn),
+:deep(.el-date-picker__next-btn) {
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 16px;
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  transition: all 0.3s ease;
+}
+
+:deep(.el-date-picker__prev-btn:hover),
+:deep(.el-date-picker__next-btn:hover) {
+  color: white;
+  background: rgba(147, 51, 234, 0.2);
+}
+
+:deep(.el-date-picker__header-label) {
+  color: white;
+  font-weight: 600;
+  padding: 6px 12px;
+  border-radius: 6px;
+  transition: all 0.3s ease;
+}
+
+:deep(.el-date-picker__header-label:hover) {
+  color: rgba(147, 51, 234, 1);
+  background: rgba(147, 51, 234, 0.1);
+}
+
+/* Element Plus 스크롤바 커스텀 */
+:deep(.el-scrollbar__wrap) {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(147, 51, 234, 0.3) transparent;
+}
+
+:deep(.el-scrollbar__wrap::-webkit-scrollbar) {
+  width: 6px;
+}
+
+:deep(.el-scrollbar__wrap::-webkit-scrollbar-track) {
+  background: transparent;
+}
+
+:deep(.el-scrollbar__wrap::-webkit-scrollbar-thumb) {
+  background-color: rgba(147, 51, 234, 0.3);
+  border-radius: 3px;
+}
+
+:deep(.el-scrollbar__wrap::-webkit-scrollbar-thumb:hover) {
+  background-color: rgba(147, 51, 234, 0.5);
+}

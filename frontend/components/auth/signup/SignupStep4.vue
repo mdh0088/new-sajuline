@@ -117,3 +117,8 @@ const openTermsModal = (type: string) => {
   emit('open-terms', type)
 }
 </script>
+
+<style>
+@import '~/assets/css/signup/common.css';
+@import '~/assets/css/signup/signup_step4.css';
+</style>

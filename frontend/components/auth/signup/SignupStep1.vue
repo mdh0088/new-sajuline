@@ -115,3 +115,8 @@ const validator = computed(() => ({
            passwordValidator.value.confirmResult.value.isValid
 }))
 </script>
+
+<style>
+@import '~/assets/css/signup/common.css';
+@import '~/assets/css/signup/signup_step1.css';
+</style>

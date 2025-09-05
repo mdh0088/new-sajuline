@@ -103,7 +103,7 @@ import { JoinType, Gender } from '~/types/user/models'
 import type { UserCreateRequest } from '~/types/user/models'
 import type { SignupFormData } from '~/types/auth/signup'
 // CSS 파일 import
-import '~/assets/css/signup.css'
+import '~/assets/css/signup/common.css'
 
 definePageMeta({
   layout: false
@@ -131,12 +131,6 @@ const signupFormData = reactive<SignupFormData>({
   birth_date: '',
   join_type: JoinType.COMMON,
   is_marketing_agreed: false,
-  // 단계별 데이터
-  birthYear: null,
-  birthMonth: null,  
-  birthDay: null,
-  birthHour: null,
-  birthMinute: null,
   // 약관 동의
   agreeService: false,
   agreePrivacy: false,
@@ -169,13 +163,7 @@ const completeSignup = async () => {
     return
   }
 
-  // 생년월일 조합
-  if (signupFormData.birthYear && signupFormData.birthMonth && signupFormData.birthDay) {
-    const year = signupFormData.birthYear.toString().padStart(4, '0')
-    const month = signupFormData.birthMonth.toString().padStart(2, '0')
-    const day = signupFormData.birthDay.toString().padStart(2, '0')
-    signupFormData.birth_date = `${year}-${month}-${day}`
-  }
+  // SignupStep3에서 이미 birth_date 형식으로 통합되어 별도 처리 불필요
 
   // 회원가입 데이터 생성
   const userData: UserCreateRequest = {

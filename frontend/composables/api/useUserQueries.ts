@@ -128,7 +128,7 @@ const userApi = {
   // 로그인
   async login(credentials: LoginRequest): Promise<LoginData> {
     const { $api } = useNuxtApp()
-    const response = await $api<LoginResponse>('/users/login', {
+    const response = await $api<LoginResponse>('/api/v1/users/login', {
       method: 'POST',
       body: credentials
     })
