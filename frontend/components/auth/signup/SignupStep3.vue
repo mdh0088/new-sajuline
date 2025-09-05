@@ -34,13 +34,13 @@
         >
         <span class="birth-unit">일</span>
       </div>
-      <p v-if="validator.birthValidator.message" 
+      <p v-if="validator.birthValidator.value.message" 
          class="validation-text" 
          :class="{ 
-           'error-text': !validator.birthValidator.isValid,
-           'success-text': validator.birthValidator.isValid && birthDateString
+           'error-text': !validator.birthValidator.value.isValid,
+           'success-text': validator.birthValidator.value.isValid && birthDateString
          }">
-        {{ validator.birthValidator.message }}
+        {{ validator.birthValidator.value.message }}
       </p>
     </div>
 

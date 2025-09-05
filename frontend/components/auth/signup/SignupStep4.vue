@@ -53,13 +53,13 @@
       </div>
       
       <!-- 필수 약관 동의 검증 메시지 -->
-      <p v-if="validator.requiredTermsValidator.message" 
+      <p v-if="validator.requiredTermsValidator.value.message" 
          class="validation-text" 
          :class="{ 
-           'error-text': !validator.requiredTermsValidator.isValid,
-           'success-text': validator.requiredTermsValidator.isValid
+           'error-text': !validator.requiredTermsValidator.value.isValid,
+           'success-text': validator.requiredTermsValidator.value.isValid
          }">
-        {{ validator.requiredTermsValidator.message }}
+        {{ validator.requiredTermsValidator.value.message }}
       </p>
     </div>
   </div>
