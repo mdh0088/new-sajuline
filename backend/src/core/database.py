@@ -83,13 +83,9 @@ def _build_mssql_url(host: str, port: int, db: str, user: str, password: str, dr
         return f"mssql+pyodbc:///?odbc_connect={urllib.parse.quote_plus(odbc_conn)}"
 
 
-def get_db_mssql() -> Generator[Session, None, None]:
-    """
-    MSSQL 동기 세션 의존성 (외부 ARS 시스템 연동용)
-    
-    필요할 때마다 엔진과 세션을 생성
-    """
-    # MSSQL 엔진 생성
+# MSSQL 엔진 및 세션 팩토리 생성 (전역, 한 번만 생성)
+def _create_mssql_engine():
+    """MSSQL 엔진 생성 함수"""
     driver = settings.mssql_prod_driver if settings.is_production else settings.mssql_dev_driver
     url = _build_mssql_url(
         settings.mssql_host,
@@ -104,26 +100,36 @@ def get_db_mssql() -> Generator[Session, None, None]:
     if driver.lower() == "pymssql" and settings.is_production:
         connect_args = {"tds_version": "7.1", "login_timeout": 30, "timeout": 30}
     
-    engine = create_engine(
+    return create_engine(
         url,
         echo=settings.mariadb_echo,
-        pool_size=settings.mariadb_pool_size,
-        max_overflow=settings.mariadb_max_overflow,
+        pool_size=settings.mssql_pool_size,  # MSSQL 전용 설정
+        max_overflow=settings.mssql_max_overflow,  # MSSQL 전용 설정  
         pool_pre_ping=True,
-        pool_recycle=3600,
+        pool_recycle=3600,  # MSSQL 연결 재활용 (1시간)
+        pool_timeout=30,    # 연결 대기 시간
         connect_args=connect_args,
     )
+
+
+# 전역 MSSQL 엔진 및 세션 팩토리
+mssql_engine = _create_mssql_engine()
+MSSQLSessionLocal = sessionmaker(
+    bind=mssql_engine,
+    class_=Session,
+    expire_on_commit=False,
+    autocommit=False,
+    autoflush=False,
+)
+
+
+def get_db_mssql() -> Generator[Session, None, None]:
+    """
+    MSSQL 동기 세션 의존성 (외부 ARS 시스템 연동용)
     
-    # 세션 팩토리 생성 및 세션 제공
-    SessionLocal = sessionmaker(
-        bind=engine,
-        class_=Session,
-        expire_on_commit=False,
-        autocommit=False,
-        autoflush=False,
-    )
-    
-    db = SessionLocal()
+    전역 엔진을 사용하여 세션만 생성/관리
+    """
+    db = MSSQLSessionLocal()
     try:
         yield db
         db.commit()
@@ -132,7 +138,6 @@ def get_db_mssql() -> Generator[Session, None, None]:
         raise
     finally:
         db.close()
-        engine.dispose()
 
 
 async def close_db() -> None:
@@ -141,6 +146,7 @@ async def close_db() -> None:
     애플리케이션 종료 시 호출
     """
     await async_engine.dispose()
+    mssql_engine.dispose()  # MSSQL 엔진도 정리
 
 
 # 별칭 (명확한 네이밍)

@@ -233,17 +233,17 @@ class Tm60Chatlog(ARSBase):
         default=0,
         comment="수수료"
     )
-    money: Mapped[int] = mapped_column(
+    t_money: Mapped[int] = mapped_column(
         Integer, 
         nullable=False, 
         default=0,
-        comment="금액"
+        comment="상담사 수익"
     )
     t2_money: Mapped[float] = mapped_column(
         Float, 
         nullable=False, 
         default=0.0,
-        comment="T2 금액"
+        comment="추가 수익"
     )
     
     # 상태 정보
@@ -405,7 +405,7 @@ class Tm60Chatlog(ARSBase):
             "realchattm": self.realchattm,
             "usepoint": self.usepoint,
             "fee": self.fee,
-            "money": self.money,
+            "t_money": self.t_money,
             "t2_money": self.t2_money,
             "success": self.success,
             "u_chk": self.u_chk,
