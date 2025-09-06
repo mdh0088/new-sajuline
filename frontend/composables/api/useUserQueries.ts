@@ -83,16 +83,16 @@ const userApi = {
     return response.data
   },
 
-  // 사용자 생성
-  async createUser(userData: UserCreateRequest): Promise<UserResponse> {
+  // 회원가입
+  async signupUser(userData: UserCreateRequest): Promise<UserResponse> {
     const { $api } = useNuxtApp()
-    const response = await $api<UserCreateResponse>('/users', {
+    const response = await $api<UserCreateResponse>('/api/v1/users/signup', {
       method: 'POST',
       body: userData
     })
     
     if (!response.success || !response.data) {
-      throw new Error(response.error?.message || '사용자 생성에 실패했습니다.')
+      throw new Error(response.error?.message || '회원가입에 실패했습니다.')
     }
     
     return response.data
@@ -356,12 +356,12 @@ export const useUserQueries = () => {
     })
   }
 
-  // 사용자 생성 뮤테이션
-  const useCreateUser = (
+  // 회원가입 뮤테이션
+  const useSignupUser = (
     options?: UseMutationOptions<UserResponse, APIError, UserCreateRequest>
   ) => {
     return useMutation({
-      mutationFn: userApi.createUser,
+      mutationFn: userApi.signupUser,
       onSuccess: (data) => {
         // 사용자 목록 쿼리 무효화
         queryClient.invalidateQueries({ queryKey: ['users', 'list'] })
@@ -473,7 +473,7 @@ export const useUserQueries = () => {
     useNicknameAvailability,
 
     // Mutations
-    useCreateUser,
+    useSignupUser,
     useUpdateUser,
     useDeleteUser,
     useLogin,

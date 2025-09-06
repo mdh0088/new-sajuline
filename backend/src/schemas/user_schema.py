@@ -19,7 +19,7 @@ class UserBase(BaseModel):
     social_provider: Optional[str] = Field(None, description="소셜 제공자")
     social_id: Optional[str] = Field(None, description="소셜 고유 ID")
     profile_image_url: Optional[str] = Field(None, description="프로필 이미지 URL")
-    birth_date: Optional[date] = Field(None, description="생년월일")
+    birth_date: Optional[str] = Field(None, description="생년월일시 (YYYY-MM-DD HH:MM 형식)")
     gender: Optional[Gender] = Field(None, description="성별")
     is_marketing_agreed: bool = Field(default=False, description="마케팅 동의")
 
@@ -29,9 +29,7 @@ class UserSignup(UserBase):
     user_id: str = Field(..., min_length=4, max_length=20, description="사용자 ID")
     password: Optional[str] = Field(None, min_length=8, max_length=128, description="비밀번호 (일반 회원가입시 필수)")
     
-    # 약관 동의 (필수)
-    agree_terms: bool = Field(True, description="이용약관 동의")
-    agree_privacy: bool = Field(True, description="개인정보처리방침 동의")
+    # 필수 약관 동의는 프론트엔드에서만 검증, 서버로는 전송하지 않음
     # is_marketing_agreed, social_provider, social_id는 UserBase에서 상속
 
 

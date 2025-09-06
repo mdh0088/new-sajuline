@@ -41,8 +41,8 @@
         <div class="terms-item">
           <div 
             class="checkbox terms-check" 
-            :class="{ checked: signupFormData.agreeMarketing }"
-            @click="signupFormData.agreeMarketing = !signupFormData.agreeMarketing"
+            :class="{ checked: signupFormData.is_marketing_agreed }"
+            @click="signupFormData.is_marketing_agreed = !signupFormData.is_marketing_agreed"
           ></div>
           <div class="terms-text">
             마케팅 정보 수신 동의
@@ -79,7 +79,7 @@ const emit = defineEmits<Emits>()
 
 // 전체 약관 동의 여부
 const allTermsAgreed = computed(() => {
-  return signupFormData.value.agreeService && signupFormData.value.agreePrivacy && signupFormData.value.agreeMarketing
+  return signupFormData.value.agreeService && signupFormData.value.agreePrivacy && signupFormData.value.is_marketing_agreed
 })
 
 // 필수 약관 동의 검증
@@ -110,7 +110,7 @@ const toggleAllTerms = () => {
   const newValue = !allTermsAgreed.value
   signupFormData.value.agreeService = newValue
   signupFormData.value.agreePrivacy = newValue
-  signupFormData.value.agreeMarketing = newValue
+  signupFormData.value.is_marketing_agreed = newValue
 }
 
 const openTermsModal = (type: string) => {

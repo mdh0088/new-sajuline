@@ -105,10 +105,10 @@ class User(Base):
         nullable=True,
         comment="프로필 이미지 URL"
     )
-    birth_date: Mapped[Optional[date]] = mapped_column(
-        Date, 
+    birth_date: Mapped[Optional[str]] = mapped_column(
+        String(30), 
         nullable=True,
-        comment="생년월일"
+        comment="생년월일시 (YYYY-MM-DD HH:MM 형식)"
     )
     gender: Mapped[Optional[str]] = mapped_column(
         String(10), 

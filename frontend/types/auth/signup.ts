@@ -20,10 +20,9 @@ export interface SignupFormData {
   birth_date: string  // YYYY-MM-DD HH:MM 형식 (예: "1993-06-19 14:30")
   join_type: JoinType
   is_marketing_agreed: boolean
-  // 약관 동의
+  // 약관 동의 (필수 약관은 프론트엔드에서만 검증)
   agreeService: boolean
   agreePrivacy: boolean
-  agreeMarketing: boolean
 }
 
 /**
