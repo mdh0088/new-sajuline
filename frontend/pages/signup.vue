@@ -112,6 +112,10 @@ definePageMeta({
 const router = useRouter()
 const toast = useToast()
 
+// Vue Query 훅을 setup 컨텍스트에서 초기화
+const { useSignupUser } = useUserQueries()
+const signupUserMutation = useSignupUser()
+
 // 반응형 데이터
 const currentStep = ref(1)
 const totalSteps = ref(4)
@@ -131,10 +135,9 @@ const signupFormData = reactive<SignupFormData>({
   birth_date: '',
   join_type: JoinType.COMMON,
   is_marketing_agreed: false,
-  // 약관 동의
+  // 약관 동의 (필수 약관은 프론트엔드에서만 검증)
   agreeService: false,
-  agreePrivacy: false,
-  agreeMarketing: false
+  agreePrivacy: false
 })
 
 
@@ -183,9 +186,7 @@ const completeSignup = async () => {
 
   try {
     // 회원가입 실행
-    const { useCreateUser } = useUserQueries()
-    const createUserMutation = useCreateUser()
-    await createUserMutation.mutateAsync(userData)
+    await signupUserMutation.mutateAsync(userData)
     
     toast.success('회원가입이 완료되었습니다.')
     currentStep.value = 5
