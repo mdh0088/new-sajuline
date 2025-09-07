@@ -7,6 +7,8 @@
 import { ref, computed, onMounted, watch, readonly } from 'vue'
 import { useRouter } from 'vue-router'
 import { useUserQueries } from '~/composables/api/useUserQueries'
+import { useCounselorQueries } from '~/composables/api/useCounselorQueries'
+import { isEmailFormat } from '~/composables/utils/validation'
 import type { LoginRequest, LoginData, UserSession } from '~/types/user/models'
 
 /**
@@ -14,7 +16,8 @@ import type { LoginRequest, LoginData, UserSession } from '~/types/user/models'
  */
 export const useAuth = () => {
   const router = useRouter()
-  const { useLogin, useLogout, useRefreshToken } = useUserQueries()
+  const { useLogin: useUserLogin, useLogout: useUserLogout, useRefreshToken } = useUserQueries()
+  const { useLogin: useCounselorLogin, useLogout: useCounselorLogout } = useCounselorQueries()
   
   // 사용자 세션 상태
   const userSession = ref<UserSession | null>(null)
@@ -72,45 +75,79 @@ export const useAuth = () => {
   }
   
   /**
-   * 로그인 뮤테이션 설정
+   * 세션 저장 성공 핸들러
    */
-  const loginMutation = useLogin({
-    onSuccess: (data: LoginData) => {
-      const now = Date.now()
-      const session: UserSession = {
-        user_id: data.user_id,
-        email: data.email,
-        nickname: data.nickname,
-        isAuthenticated: true,
-        loginAt: new Date().toISOString(),
-        access_token_expires_at: now + (data.access_token_expires_in * 1000),
-        refresh_token_expires_at: now + (data.refresh_token_expires_in * 1000)
-      }
-      
-      saveSession(session)
-      
-      // 성공 메시지 (옵션)
-      if (process.client) {
-        // toast나 다른 알림 시스템이 있다면 여기서 사용
-        console.log(`${data.nickname}님, 환영합니다!`)
-      }
-    },
-    onError: (error) => {
-      console.error('Login failed:', error)
-      clearSession()
+  const handleLoginSuccess = (data: LoginData) => {
+    const now = Date.now()
+    const session: UserSession = {
+      user_id: data.user_id,
+      email: data.email,
+      nickname: data.nickname,
+      isAuthenticated: true,
+      loginAt: new Date().toISOString(),
+      access_token_expires_at: now + (data.access_token_expires_in * 1000),
+      refresh_token_expires_at: now + (data.refresh_token_expires_in * 1000)
     }
+    
+    saveSession(session)
+    
+    // 성공 메시지 (옵션)
+    if (process.client) {
+      // toast나 다른 알림 시스템이 있다면 여기서 사용
+      console.log(`${data.nickname}님, 환영합니다!`)
+    }
+  }
+
+  /**
+   * 로그인 실패 핸들러
+   */
+  const handleLoginError = (error: any) => {
+    console.error('Login failed:', error)
+    clearSession()
+  }
+
+  /**
+   * 사용자 로그인 뮤테이션
+   */
+  const userLoginMutation = useUserLogin({
+    onSuccess: handleLoginSuccess,
+    onError: handleLoginError
+  })
+
+  /**
+   * 상담사 로그인 뮤테이션
+   */
+  const counselorLoginMutation = useCounselorLogin({
+    onSuccess: handleLoginSuccess,
+    onError: handleLoginError
   })
   
   /**
-   * 로그아웃 뮤테이션 설정
+   * 사용자 로그아웃 뮤테이션
    */
-  const logoutMutation = useLogout({
+  const userLogoutMutation = useUserLogout({
     onSuccess: () => {
       clearSession()
       router.push('/login')
     },
     onError: (error) => {
-      console.error('Logout failed:', error)
+      console.error('User logout failed:', error)
+      // 로그아웃 실패해도 로컬 세션은 클리어
+      clearSession()
+      router.push('/login')
+    }
+  })
+
+  /**
+   * 상담사 로그아웃 뮤테이션
+   */
+  const counselorLogoutMutation = useCounselorLogout({
+    onSuccess: () => {
+      clearSession()
+      router.push('/login')
+    },
+    onError: (error) => {
+      console.error('Counselor logout failed:', error)
       // 로그아웃 실패해도 로컬 세션은 클리어
       clearSession()
       router.push('/login')
@@ -140,11 +177,18 @@ export const useAuth = () => {
   })
   
   /**
-   * 로그인 실행
+   * 로그인 실행 (이메일 형식에 따른 API 분기)
    */
   const login = async (credentials: LoginRequest) => {
     try {
-      await loginMutation.mutateAsync(credentials)
+      // 이메일 형식 체크하여 적절한 API 호출
+      if (isEmailFormat(credentials.user_id)) {
+        // 이메일 형식이면 상담사 로그인 API 사용
+        await counselorLoginMutation.mutateAsync(credentials)
+      } else {
+        // 이메일 형식이 아니면 사용자 로그인 API 사용
+        await userLoginMutation.mutateAsync(credentials)
+      }
       return { success: true }
     } catch (error) {
       return { 
@@ -159,7 +203,10 @@ export const useAuth = () => {
    */
   const logout = async () => {
     try {
-      await logoutMutation.mutateAsync()
+      // 현재 세션이 상담사인지 사용자인지에 따라 적절한 API 호출
+      // 일반적으로는 토큰에서 role을 확인하거나, 현재 세션 타입을 판단
+      // 현재는 사용자 로그아웃을 기본으로 사용 (추후 role 기반 분기 가능)
+      await userLogoutMutation.mutateAsync()
       return { success: true }
     } catch (error) {
       return { 
@@ -299,8 +346,8 @@ export const useAuth = () => {
     isAuthChecking,
     
     // 로딩 상태
-    isLoginLoading: computed(() => loginMutation.isPending.value),
-    isLogoutLoading: computed(() => logoutMutation.isPending.value),
+    isLoginLoading: computed(() => userLoginMutation.isPending.value || counselorLoginMutation.isPending.value),
+    isLogoutLoading: computed(() => userLogoutMutation.isPending.value || counselorLogoutMutation.isPending.value),
     isRefreshLoading: computed(() => refreshMutation.isPending.value),
     
     // 메서드
