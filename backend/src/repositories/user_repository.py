@@ -178,3 +178,11 @@ class UserRepository:
         result = await self.db.execute(stmt)
         return result.rowcount > 0
     
+    @logger.catch(reraise=True)
+    async def delete_by_user_id(self, user_id: str) -> bool:
+        """사용자 완전 삭제 (회원가입 실패시 보상 트랜잭션용)"""
+        stmt = delete(User).where(User.user_id == user_id)
+        result = await self.db.execute(stmt)
+        await self.db.commit()
+        return result.rowcount > 0
+    

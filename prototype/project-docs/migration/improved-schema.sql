@@ -26,7 +26,7 @@ CREATE TABLE t_user (
     user_status VARCHAR(20) NOT NULL DEFAULT 'ACTIVE' COMMENT '상태: ACTIVE, DORMANT, WITHDRAWN',
     grade_code VARCHAR(20) NOT NULL DEFAULT 'WHITE' COMMENT '등급코드',
     profile_image_url VARCHAR(500) DEFAULT NULL COMMENT '프로필 이미지 URL',
-    birth_date DATE DEFAULT NULL COMMENT '생년월일',
+    birth_date varchar(30) DEFAULT NULL COMMENT '생년월일',
     gender VARCHAR(10) DEFAULT NULL COMMENT '성별: MALE, FEMALE',
     is_marketing_agreed TINYINT(1) DEFAULT 1 COMMENT '마케팅 동의',
     password_changed_at DATETIME DEFAULT NULL COMMENT '비밀번호 변경일시',
@@ -692,9 +692,7 @@ CREATE TABLE t_event_participation_log (
     PRIMARY KEY (log_id),
     UNIQUE KEY uk_event_user (event_id, user_id),
     KEY idx_user_id (user_id),
-    KEY idx_created_at (created_at),
-    CONSTRAINT fk_participation_event FOREIGN KEY (event_id) REFERENCES t_event(event_id),
-    CONSTRAINT fk_participation_user FOREIGN KEY (user_id) REFERENCES t_user(user_id)
+    KEY idx_created_at (created_at)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci COMMENT='이벤트 참여 로그';
 
 -- 9.4 등급 변경 로그
