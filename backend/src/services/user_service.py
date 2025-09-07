@@ -86,14 +86,15 @@ class UserService:
         if signup_data.password and join_type == JoinType.COMMON:
             password_hash = self.auth_service.hash_password(signup_data.password)
         
-        # 5. 이중 DB 저장 (MariaDB + MSSQL) - 둘 다 성공해야 함
+        # 5. 단순한 이중 DB 저장 (MariaDB 먼저 커밋 → MSSQL 저장 → 실패시 보상)
+        user = None
         try:
-            # 5-1. MariaDB에 사용자 생성 (flush만 수행, 커밋 지연)
+            # 5-1. MariaDB에 사용자 생성 및 즉시 커밋
             user = await self.user_repo.create_from_signup(signup_data, password_hash, join_type)
-            log.info("MariaDB user created (not committed yet)", user_id=user.user_id)
+            await self.user_repo.db.commit()
+            log.info("MariaDB user created and committed", user_id=user.user_id)
             
             # 5-2. MSSQL(TM60)에 사용자 생성 시도
-            # MSSQL 세션 생성 및 TM60UsersRepository 인스턴스화
             for mssql_session in get_db_mssql():
                 tm60_repo = Tm60UsersRepository(mssql_session)
                 tm60_success = await tm60_repo.create(
@@ -103,23 +104,22 @@ class UserService:
                 )
                 
                 if not tm60_success:
-                    # TM60 실패시 MariaDB도 롤백
-                    await self.user_repo.db.rollback()
-                    log.warning("TM60 user creation failed, rolling back MariaDB", user_id=user.user_id)
+                    # 5-3. MSSQL 실패시 MariaDB에서 사용자 완전 삭제 (보상 트랜잭션)
+                    await self.user_repo.delete_by_user_id(user.user_id)
+                    log.warning("TM60 user creation failed, deleted MariaDB user", user_id=user.user_id)
                     raise ValidationError("외부 시스템 연동 오류로 회원가입에 실패했습니다.")
                 break  # 첫 번째 세션만 사용
             
-            # 5-3. 둘 다 성공한 경우에만 MariaDB 커밋
-            await self.user_repo.db.commit()
             log.info("Both databases updated successfully", user_id=user.user_id)
             
         except ValidationError:
             # ValidationError는 그대로 재발생
             raise
         except Exception as e:
-            # 기타 예외시 MariaDB 롤백
-            await self.user_repo.db.rollback()
-            log.warning("User creation failed, rolling back", user_id=signup_data.user_id, error=str(e))
+            # 기타 예외시 보상 트랜잭션 실행 (MariaDB 사용자가 생성된 경우)
+            if user:
+                await self.user_repo.delete_by_user_id(user.user_id)
+                log.warning("User creation failed, deleted MariaDB user", user_id=user.user_id, error=str(e))
             raise ValidationError(f"회원가입 처리 중 오류가 발생했습니다: {str(e)}")
         
         log.info("Signup completed successfully", 

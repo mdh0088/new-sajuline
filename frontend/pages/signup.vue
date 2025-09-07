@@ -8,9 +8,9 @@
       </div>
     </header>
 
-    <!-- 진행 표시 -->
-    <div class="progress-bar">
-      <div class="progress-fill" :style="`width: ${(currentStep / totalSteps) * 100}%`"></div>
+    <!-- 진행 표시 (완료 단계에서는 숨김) -->
+    <div class="progress-bar" v-if="currentStep < 5">
+      <div class="progress-fill" :style="`width: ${(Math.min(currentStep, totalSteps) / totalSteps) * 100}%`"></div>
     </div>
 
     <!-- 메인 콘텐츠 -->
