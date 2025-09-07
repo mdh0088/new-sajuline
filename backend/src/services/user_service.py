@@ -66,13 +66,7 @@ class UserService:
             join_type = JoinType.COMMON
             log.info("Regular signup detected", user_id=signup_data.user_id)
         
-        # 2. 약관 동의 검증
-        if not signup_data.agree_terms or not signup_data.agree_privacy:
-            log.warning("Terms agreement required", 
-                       user_id=signup_data.user_id, 
-                       agree_terms=signup_data.agree_terms, 
-                       agree_privacy=signup_data.agree_privacy)
-            raise ValidationError("필수 약관에 동의해주세요.")
+        # 2. 필수 약관 동의는 프론트엔드에서 검증하므로 서버에서는 생략
         
         # 3. 중복 검증
         if await self.user_repo.exists_by_user_id(signup_data.user_id):

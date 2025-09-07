@@ -4,6 +4,27 @@
     <p class="section-subtitle">로그인에 사용할 정보를 입력해주세요</p>
 
     <div class="input-group">
+      <label class="input-label">사용자 ID</label>
+      <div class="input-wrapper">
+        <input 
+          v-model="signupFormData.user_id"
+          type="text" 
+          class="input-field" 
+          placeholder="4-20자 영문, 숫자, 밑줄(_) 조합"
+        >
+        <span v-if="validator.userIdValidator.value.result.value.isChecking" class="checking-indicator">확인 중...</span>
+      </div>
+      <p v-if="validator.userIdValidator.value.result.value.message" 
+         class="validation-text" 
+         :class="{ 
+           'error-text': !validator.userIdValidator.value.result.value.isValid,
+           'success-text': validator.userIdValidator.value.result.value.isValid && signupFormData.user_id
+         }">
+        {{ validator.userIdValidator.value.result.value.message }}
+      </p>
+    </div>
+
+    <div class="input-group">
       <label class="input-label">이메일</label>
       <div class="input-wrapper">
         <input 
@@ -94,23 +115,30 @@ import { useUserQueries } from '~/composables/api/useUserQueries'
 const signupFormData = defineModel<SignupFormData>('signupFormData', { required: true })
 
 // Step1 자체 검증 로직
-const { validateEmail, validatePassword } = useValidation()
-const { useEmailAvailability } = useUserQueries()
+const { validateEmail, validateUserId, validatePassword } = useValidation()
+const { useEmailAvailability, useUserIdAvailability } = useUserQueries()
 
-// 이메일 중복 검사
+// 중복 검사 쿼리들
 const emailAvailabilityQuery = useEmailAvailability(computed(() => signupFormData.value.email || ''), {
   enabled: computed(() => !!signupFormData.value.email && signupFormData.value.email.includes('@'))
 })
 
+const userIdAvailabilityQuery = useUserIdAvailability(computed(() => signupFormData.value.user_id || ''), {
+  enabled: computed(() => !!signupFormData.value.user_id && signupFormData.value.user_id.length >= 4)
+})
+
 // 개별 필드 검증
+const userIdValidator = computed(() => validateUserId(signupFormData.value.user_id, userIdAvailabilityQuery))
 const emailValidator = computed(() => validateEmail(signupFormData.value.email, emailAvailabilityQuery))
 const passwordValidator = computed(() => validatePassword(signupFormData.value.password, signupFormData.value.confirmPassword))
 
 // Step1 종합 검증 결과
 const validator = computed(() => ({
+  userIdValidator,
   emailValidator,
   passwordValidator,
-  isValid: emailValidator.value.result.value.isValid && 
+  isValid: userIdValidator.value.result.value.isValid &&
+           emailValidator.value.result.value.isValid && 
            passwordValidator.value.passwordResult.value.isValid && 
            passwordValidator.value.confirmResult.value.isValid
 }))
