@@ -25,7 +25,12 @@
       "mcp__playwright__playwright_evaluate",
       "mcp__playwright__playwright_get_visible_html",
       "Bash(docker-compose:*)",
-      "mcp__playwright__playwright_press_key"
+      "mcp__playwright__playwright_press_key",
+      "mcp__playwright__browser_type",
+      "mcp__playwright__browser_click",
+      "mcp__playwright__browser_snapshot",
+      "mcp__playwright__browser_console_messages",
+      "mcp__playwright__browser_navigate"
     ],
     "deny": [],
     "ask": []
