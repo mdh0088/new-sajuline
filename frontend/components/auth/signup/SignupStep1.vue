@@ -10,10 +10,11 @@
           v-model="signupFormData.user_id"
           type="text" 
           class="input-field" 
-          placeholder="4-20자 영문, 숫자, 밑줄(_) 조합"
+          placeholder="4-20자 영문, 숫자, 밑줄(_) 조합 (이메일 형식 불가)"
         >
         <span v-if="validator.userIdValidator.value.result.value.isChecking" class="checking-indicator">확인 중...</span>
       </div>
+      <p class="help-text">영문, 숫자, 밑줄(_)만 사용 가능하며, 이메일 형식은 사용할 수 없습니다</p>
       <p v-if="validator.userIdValidator.value.result.value.message" 
          class="validation-text" 
          :class="{ 

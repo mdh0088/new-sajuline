@@ -103,6 +103,12 @@ export const useValidation = () => {
         return { isValid: false, message: '사용자 ID는 4-20자 사이로 입력해주세요.' }
       }
       
+      // 이메일 형식 금지 검사
+      const emailPattern = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/
+      if (emailPattern.test(userIdRef.value)) {
+        return { isValid: false, message: '사용자 ID에는 이메일 형식을 사용할 수 없습니다.' }
+      }
+      
       const userIdPattern = /^[a-zA-Z0-9_]+$/
       if (!userIdPattern.test(userIdRef.value)) {
         return { isValid: false, message: '영문, 숫자, 밑줄(_)만 사용 가능합니다.' }
