@@ -1,0 +1,83 @@
+---
+globs: backend/src/**/*.py
+description: Rules for the FastAPI backend API→Service→Repository pattern, including ORM Model and Pydantic Schema layers. Summary only, no code samples.
+---
+
+## Backend Layer Pattern (API → Service → Repository)
+
+- Goal: Strictly separate Controller (API), Business Logic (Service), and Data Access (Repository) to improve testability and maintainability.
+
+### 1) Common Principles
+- One-way dependency: API → Service → Repository.
+- Dependency Injection: Use FastAPI `Depends`. Inject DB sessions via `get_db_maria` (AsyncSession) or `get_db_mssql` (Session).
+- Transaction Boundary: Service owns commit/rollback; Repository limits to `flush/refresh`.
+- Exceptions: Services raise domain errors (`ValidationError`, `NotFoundError`, `DuplicateError`, etc.). Repositories re-raise after logging.
+- Logging: Use request-scoped logger (`get_logger_with_request_id`). Log meaningfully; never log secrets/PII.
+- Schema Transform: Convert ORM entities to Pydantic with `model_validate` (`from_attributes=True`). API responses use `APIResponse` (`ok`/`fail`).
+
+### 2) API Layer
+- Responsibilities: parameter binding/validation, DI, rate limiting, authN/Z hooks, cookie/header I/O. No business rules.
+- Routing: `APIRouter` with domain `prefix` and `tags`.
+- DI factories: `get_xxx_repository(db=Depends(get_db_maria)) -> XxxRepository`, `get_xxx_service(repo=Depends(get_xxx_repository)) -> XxxService`.
+- Error propagation: Let `BaseAppException`-derived errors bubble to the global handler.
+- Security/Rate limit: Apply `@limiter.limit(...)` and role guards (`verify_user_role`, `verify_counselor_role`, `verify_role`).
+
+### 3) Service Layer
+- Responsibilities: business rules, domain validation, multi-repository orchestration, external integrations, transaction boundaries.
+- Transactions: call `repo.db.commit()` on success and `repo.db.rollback()` on failure. For multi-DB (Maria + MSSQL), implement compensation.
+- Validation & Errors: `ValidationError`, `NotFoundError`, `DuplicateError` with user-friendly messages.
+- Returns: Convert to response schemas; lists return `(items, page, size, total)` meta.
+- External I/O: Offload sync MSSQL work to thread pool; implement compensation logic.
+
+### 4) Repository Layer
+- Responsibilities: pure data access. Build queries, CRUD entities, simple reads.
+- Session: Inject `AsyncSession`/`Session` in `__init__`. Never commit; use `flush/refresh` for mutations.
+- Queries: `select(...)` for reads; use SQLAlchemy expressions (`and_`, `func`) for conditions.
+- Logging/Errors: Decorate with `@logger.catch(reraise=True)` (or equivalent) and re-raise; mask sensitive data.
+
+## Model (ORM) Layer
+
+### 5) Model Rules
+- Role: Define tables, constraints, and indexes. No business logic.
+- Unified Base: Use `src.core.database.Base`; do not redefine `declarative_base()` inside model files.
+- Table naming: `t_` prefix + snake_case (e.g., `t_user`, `t_grade`).
+- Primary keys: integer auto-increment (`BigInteger` preferred) for logs/transactions; allow natural keys (e.g., `user_id`) when domain-appropriate.
+- Column types: length-bound strings, `DECIMAL` for money/ratios, `BigInteger` for large numeric keys, `Text` for body, `JSON` for structured data, `DateTime` for timestamps. Add `comment` for each column.
+- Timestamps: require `created_at`; prefer `updated_at`. Use UTC for defaults; API returns ISO 8601.
+- Indexes/constraints: declare `idx_*` and `chk_*` in `__table_args__`. Store enums as strings with check constraints.
+- Enums: Python `str, Enum` stored as strings; reuse in schemas.
+- Relationships/loading: prefer explicit joins/loading and avoid N+1 (`selectin`, etc.).
+- `__repr__`: include identifiers only; never PII/secrets.
+
+## Schema (Pydantic) Layer
+
+### 6) Schema Rules
+- `from_attributes`: set `ConfigDict(from_attributes=True)` for ORM conversion.
+- Field transformation: parse JSON-string fields via `@field_validator(..., mode='before')`.
+- Request/Response split: separate `Create/Update` (write) from `Response` (read). API responses use envelope.
+- Naming: `XxxBase`, `XxxCreate`, `XxxUpdate`, `XxxResponse`, list filters as `XxxListParams`.
+- Types: `EmailStr` for emails, `Decimal` for money, `int` for counts/pagination, `datetime` for timestamps. Use `Field(ge/le, min_length/max_length)` bounds.
+- Enum reuse: import model enums to keep a single source of truth.
+- Sensitive data: exclude secrets like `password_hash` from responses.
+- Pagination/meta: include `(items, page, size, total)` with list responses.
+
+## Database/Observability/Security
+
+### 7) DB/Session Policy
+- MariaDB (primary): `get_db_maria()` async session via DI; Services control commit/rollback.
+- MSSQL (external): `get_db_mssql()` sync session via generator; run off main event loop.
+- Lifetime: manage sessions via DI; do not allocate sessions ad-hoc inside layers.
+
+### 8) Logging/Exceptions
+- Correlation: `LoggingMiddleware` supplies `request_id` across layers.
+- Global handler: `BaseAppException` logger with call-site context; unexpected exceptions go to Sentry and return HTTP 500.
+
+### 9) Naming/Structure
+- Files/classes: `xxx_api.py` (router), `xxx_service.py` (service), `xxx_repository.py` (repo), `xxx_model.py` (ORM), `xxx_schema.py` (Pydantic).
+- Factories: `get_xxx_repository`, `get_xxx_service` naming.
+- Layout: API under `src/api/v1`, Services under `src/services`, Repositories under `src/repositories`, Schemas under `src/schemas`, Models under `src/models`.
+
+### 10) Performance/Scalability
+- Always paginate list queries, index hot fields, and avoid N+1 (`selectin`/`joinload`).
+- Allow multi-repository injection and service composition; never put business logic in API endpoints.
+

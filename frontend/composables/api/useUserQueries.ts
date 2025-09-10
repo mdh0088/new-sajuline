@@ -18,15 +18,12 @@ import type {
   UserListData,
   LoginRequest,
   LoginData,
-  RefreshTokenRequest,
-  TokenResponse,
   UserCreateResponse,
   UserDetailResponse,
   UserUpdateResponse,
   UserListResponse,
   LoginResponse,
   LogoutResponse,
-  RefreshTokenResponse,
   AuthenticateResponse,
   AvailabilityCheckResponse
 } from '~/types/user/models'
@@ -39,7 +36,7 @@ const userApi = {
   // 사용자 조회 (ID)
   async getUserById(userId: string): Promise<UserResponse> {
     const { $api } = useNuxtApp()
-    const response = await $api<UserDetailResponse>(`/users/${userId}`)
+    const response = await $api<UserDetailResponse>(`/api/v1/users/${userId}`)
     
     if (!response.success || !response.data) {
       throw new Error(response.error?.message || '사용자 정보를 찾을 수 없습니다.')
@@ -51,7 +48,7 @@ const userApi = {
   // 사용자 조회 (이메일)
   async getUserByEmail(email: string): Promise<UserResponse> {
     const { $api } = useNuxtApp()
-    const response = await $api<UserDetailResponse>(`/users/email/${email}`)
+    const response = await $api<UserDetailResponse>(`/api/v1/users/email/${email}`)
     
     if (!response.success || !response.data) {
       throw new Error(response.error?.message || '사용자 정보를 찾을 수 없습니다.')
@@ -73,7 +70,7 @@ const userApi = {
     if (params.size) queryParams.append('size', params.size.toString())
     if (params.user_status) queryParams.append('user_status', params.user_status)
     
-    const url = queryParams.toString() ? `/users?${queryParams}` : '/users'
+    const url = queryParams.toString() ? `/api/v1/users?${queryParams}` : '/api/v1/users'
     const response = await $api<UserListResponse>(url)
     
     if (!response.success || !response.data) {
@@ -98,33 +95,6 @@ const userApi = {
     return response.data
   },
 
-  // 사용자 정보 수정
-  async updateUser(userId: string, userData: UserUpdateRequest): Promise<UserResponse> {
-    const { $api } = useNuxtApp()
-    const response = await $api<UserUpdateResponse>(`/users/${userId}`, {
-      method: 'PUT',
-      body: userData
-    })
-    
-    if (!response.success || !response.data) {
-      throw new Error(response.error?.message || '사용자 정보 수정에 실패했습니다.')
-    }
-    
-    return response.data
-  },
-
-  // 사용자 삭제
-  async deleteUser(userId: string): Promise<void> {
-    const { $api } = useNuxtApp()
-    const response = await $api<APIResponse<null>>(`/users/${userId}`, {
-      method: 'DELETE'
-    })
-    
-    if (!response.success) {
-      throw new Error(response.error?.message || '사용자 삭제에 실패했습니다.')
-    }
-  },
-
   // 로그인
   async login(credentials: LoginRequest): Promise<LoginData> {
     const { $api } = useNuxtApp()
@@ -143,7 +113,7 @@ const userApi = {
   // 로그아웃
   async logout(): Promise<void> {
     const { $api } = useNuxtApp()
-    const response = await $api<LogoutResponse>('/users/logout', {
+    const response = await $api<LogoutResponse>('/api/v1/users/logout', {
       method: 'POST'
     })
     
@@ -152,25 +122,10 @@ const userApi = {
     }
   },
 
-  // 토큰 갱신
-  async refreshToken(refreshTokenData?: RefreshTokenRequest): Promise<TokenResponse> {
-    const { $api } = useNuxtApp()
-    const response = await $api<RefreshTokenResponse>('/users/refresh', {
-      method: 'POST',
-      body: refreshTokenData || {}
-    })
-    
-    if (!response.success || !response.data) {
-      throw new Error(response.error?.message || '토큰 갱신에 실패했습니다.')
-    }
-    
-    return response.data
-  },
-
   // 사용자 인증
   async authenticateUser(credentials: LoginRequest): Promise<UserResponse> {
     const { $api } = useNuxtApp()
-    const response = await $api<AuthenticateResponse>('/users/authenticate', {
+    const response = await $api<AuthenticateResponse>('/api/v1/users/authenticate', {
       method: 'POST',
       body: credentials
     })
@@ -225,6 +180,33 @@ const userApi = {
     }
     
     return response.data ?? false
+  },
+
+  // 사용자 정보 수정
+  async updateUser(userId: string, userData: UserUpdateRequest): Promise<UserResponse> {
+    const { $api } = useNuxtApp()
+    const response = await $api<UserUpdateResponse>(`/api/v1/users/${userId}`, {
+      method: 'PUT',
+      body: userData
+    })
+    
+    if (!response.success || !response.data) {
+      throw new Error(response.error?.message || '사용자 정보 수정에 실패했습니다.')
+    }
+    
+    return response.data
+  },
+
+  // 사용자 삭제
+  async deleteUser(userId: string): Promise<void> {
+    const { $api } = useNuxtApp()
+    const response = await $api<APIResponse<null>>(`/api/v1/users/${userId}`, {
+      method: 'DELETE'
+    })
+    
+    if (!response.success) {
+      throw new Error(response.error?.message || '사용자 삭제에 실패했습니다.')
+    }
   }
 }
 
@@ -447,18 +429,7 @@ export const useUserQueries = () => {
   }
 
   // 토큰 갱신 뮤테이션
-  const useRefreshToken = (
-    options?: UseMutationOptions<TokenResponse, APIError, RefreshTokenRequest | undefined>
-  ) => {
-    return useMutation({
-      mutationFn: userApi.refreshToken,
-      onSuccess: (data) => {
-        // 토큰 갱신 성공 시 사용자 관련 쿼리들 무효화 (최신 정보 로드)
-        queryClient.invalidateQueries({ queryKey: ['user'] })
-      },
-      ...options
-    })
-  }
+  // (이전 위치에서 이동됨) refreshToken은 useAuthQueries로 분리됨
 
   return {
     // Queries
@@ -478,7 +449,6 @@ export const useUserQueries = () => {
     useDeleteUser,
     useLogin,
     useLogout,
-    useAuthenticateUser,
-    useRefreshToken
+    useAuthenticateUser
   }
 }

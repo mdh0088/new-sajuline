@@ -5,7 +5,8 @@ from fastapi import APIRouter, Depends, Request, Response, status
 from src.common.middleware.rate_limit import limiter
 from src.core.redis import get_redis
 from src.schemas.auth_schema import RefreshTokenRequest, TokenResponse
-from src.services.auth_service import AuthService
+from src.schemas.auth_schema import TokenPayload as TokenPayloadSchema
+from src.services.auth_service import AuthService, get_current_user, TokenPayload as ServiceTokenPayload
 from src.common.response import APIResponse, ok
 from src.common.logging import get_logger_with_request_id
 from src.exceptions.custom_exceptions import BaseAppException
@@ -105,3 +106,26 @@ async def refresh_token(
     except Exception as e:
         log.error("Token refresh failed", error=str(e))
         raise
+
+
+@router.get(
+    "/me",
+    response_model=APIResponse[TokenPayloadSchema],
+    summary="현재 인증된 사용자 토큰 정보",
+    description="HttpOnly Access Token에서 추출한 사용자 식별자와 역할 정보를 반환합니다.",
+)
+async def who_am_i(
+    request: Request,
+    current_user: ServiceTokenPayload = Depends(get_current_user)
+):
+    """현재 사용자 토큰 페이로드 반환"""
+    payload = TokenPayloadSchema(
+        sub=current_user.sub,
+        email=current_user.email,
+        role=current_user.role,
+        exp=current_user.exp,
+        iat=current_user.iat,
+        jti=current_user.jti,
+        token_type="access"
+    )
+    return ok(data=payload, message="현재 사용자 정보")

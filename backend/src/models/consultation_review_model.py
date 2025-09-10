@@ -4,11 +4,10 @@
 from datetime import datetime
 from typing import Optional
 
-from sqlalchemy import String, DateTime, Text, Integer, Boolean, Index, ForeignKey
-from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy import String, DateTime, Text, Integer, Boolean, Index, CheckConstraint
 from sqlalchemy.orm import Mapped, mapped_column
 
-Base = declarative_base()
+from src.core.database import Base
 
 
 class ConsultationReview(Base):
@@ -24,23 +23,20 @@ class ConsultationReview(Base):
         comment="후기 ID"
     )
     
-    # 외래키
+    # 관계 필드
     session_id: Mapped[int] = mapped_column(
         Integer,
-        ForeignKey("t_consultation_session.session_id"),
         unique=True,
         nullable=False,
         comment="상담 세션 ID"
     )
     user_id: Mapped[str] = mapped_column(
         String(100),
-        ForeignKey("t_user.user_id"),
         nullable=False,
         comment="사용자 ID"
     )
     counselor_id: Mapped[str] = mapped_column(
         String(100),
-        ForeignKey("t_counselor.counselor_id"),
         nullable=False,
         comment="상담사 ID"
     )
@@ -65,16 +61,19 @@ class ConsultationReview(Base):
     # 상태 및 표시 설정
     is_best: Mapped[bool] = mapped_column(
         Boolean,
+        nullable=False,
         default=False,
         comment="베스트 후기"
     )
     is_visible: Mapped[bool] = mapped_column(
         Boolean,
+        nullable=False,
         default=True,
         comment="공개 여부"
     )
     like_count: Mapped[int] = mapped_column(
         Integer,
+        nullable=False,
         default=0,
         comment="좋아요 수"
     )

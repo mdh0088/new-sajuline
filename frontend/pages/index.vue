@@ -1,36 +1,5 @@
 <template>
   <div class="min-h-screen bg-slate-950 text-white">
-    <!-- 성공 메시지 토스트 -->
-    <Transition
-      enter-active-class="transition-all duration-300 ease-out"
-      enter-from-class="transform translate-y-[-100%] opacity-0"
-      enter-to-class="transform translate-y-0 opacity-100"
-      leave-active-class="transition-all duration-300 ease-in"
-      leave-from-class="transform translate-y-0 opacity-100"
-      leave-to-class="transform translate-y-[-100%] opacity-0"
-    >
-      <div 
-        v-if="successMessage" 
-        class="fixed top-20 right-4 z-[100] bg-green-500 text-white px-6 py-3 rounded-lg shadow-lg"
-      >
-        <div class="flex items-center justify-between">
-          <div class="flex items-center">
-            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-            </svg>
-            {{ successMessage }}
-          </div>
-          <button 
-            @click="successMessage = ''"
-            class="ml-4 text-white hover:text-green-200 transition-colors"
-          >
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
-            </svg>
-          </button>
-        </div>
-      </div>
-    </Transition>
 
     <!-- 헤더 컴포넌트 -->
     <AppHeader />
@@ -165,6 +134,9 @@
 // Vue 및 Nuxt imports
 import { ref, onMounted } from 'vue'
 import { useHead, useRoute, navigateTo } from 'nuxt/app'
+import { useNotify } from '~/composables/utils/useNotify'
+
+const { notifySuccess, notifyInfo } = useNotify()
 
 // SEO 및 메타 데이터 설정
 useHead({
@@ -185,23 +157,15 @@ const liveStats = ref([
   { number: '89', label: '실시간 접속자' }
 ])
 
-// 성공 메시지 처리
+// 라우트 처리
 const route = useRoute()
-const successMessage = ref('')
 
-// 페이지 로드 시 쿼리 파라미터 확인
+// 페이지 로드 시 쿼리 파라미터 확인 - Notivue로 환영 메시지 표시
 onMounted(() => {
   if (route.query.message === 'login_success') {
-    successMessage.value = '로그인되었습니다! 환영합니다.'
+    notifySuccess('🎉 사주라인에 오신 것을 환영합니다!')
   } else if (route.query.message === 'social_login_success') {
-    successMessage.value = '소셜 로그인이 완료되었습니다!'
-  }
-  
-  // 성공 메시지 자동 숨김 (3초 후)
-  if (successMessage.value) {
-    setTimeout(() => {
-      successMessage.value = ''
-    }, 3000)
+    notifySuccess('🚀 간편하게 로그인되었습니다!')
   }
 })
 
@@ -226,18 +190,12 @@ const quickCategories = ref([
 // 컴포넌트 이벤트 핸들러들
 function handleAIFortuneRequest() {
   console.log('AI 운세 요청')
-  successMessage.value = 'AI 운세를 준비 중입니다...'
-  setTimeout(() => {
-    successMessage.value = ''
-  }, 2000)
+  notifyInfo('🤖 AI 운세를 준비 중입니다...')
 }
 
 function handleExpertConsultRequest() {
   console.log('전문가 상담 요청')
-  successMessage.value = '전문가 상담 예약 페이지로 이동합니다...'
-  setTimeout(() => {
-    successMessage.value = ''
-  }, 2000)
+  notifyInfo('👨‍🏫 전문가 상담 예약 페이지로 이동합니다...')
 }
 
 // 기존 호환성을 위한 별칭
