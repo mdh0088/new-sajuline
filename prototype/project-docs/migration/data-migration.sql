@@ -102,6 +102,7 @@ WHERE mb.AVAILABLE_MILEAGE IS NOT NULL;
 -- =====================================================
 
 -- 2.1 승인된 상담사 마이그레이션 (EMAIL을 PK로 사용)
+
 INSERT INTO t_counselor (
     counselor_id,  -- EMAIL을 PK로 사용
     counselor_code,
@@ -127,7 +128,9 @@ INSERT INTO t_counselor (
     approved_at,
     created_at,
     updated_at,
-    last_login_at
+    last_login_at,
+    specialty_types,
+    keywords
 )
 SELECT 
     EMAIL,  -- EMAIL을 PK로 사용 (counselor_id = EMAIL)
@@ -159,7 +162,15 @@ SELECT
     CS_DATE,
     IFNULL(CS_DATE, RECRUIT_DATE),
     UPDATE_DATE,
-    LAST_LOGIN
+    LAST_LOGIN,
+    CONCAT('[',
+        CASE WHEN TYPE LIKE '%1%' THEN '"TARO",' ELSE '' END,
+        CASE WHEN TYPE LIKE '%2%' THEN '"FORTUNE",' ELSE '' END,
+        CASE WHEN TYPE LIKE '%3%' THEN '"EASY",' ELSE '' END,
+        CASE WHEN TYPE LIKE '%4%' THEN '"SAJU",' ELSE '' END,
+        '""'
+    , ']'),
+    CS_KEYWORD
 FROM TBL_CS
 WHERE APPROVAL_YN = 'Y' AND OUT_YN = 'N' AND EMAIL IS NOT NULL AND PASSWORD !='';
 
@@ -176,7 +187,9 @@ INSERT INTO t_counselor_application (
     selected_image_url,
     application_status,
     created_at,
-    updated_at
+    updated_at,
+    specialty_types,
+    keywords
 )
 SELECT 
     IDX,
@@ -743,61 +756,97 @@ WHERE ADMIN_CONT IS NOT NULL;
 
 -- 6.5 1:1 문의 마이그레이션
 -- 상담사 문의
-INSERT INTO t_inquiry (
-    inquiry_code,
-    inquirer_type,
-    inquirer_id,  -- COUNSELOR의 EMAIL로 매핑
-    category,
-    title,
-    content,
-    attachments,
-    inquiry_status,
-    admin_id,
-    admin_reply,
-    answered_at,
-    created_at
+
+INSERT INTO t_inquiry
+(
+	inquirer_type, inquirer_id, counselor_id, category, title, content, is_read, reply_content, answered_at,created_at
 )
-SELECT 
-    CONCAT('INQ_CS_', f.IDX),
-    'COUNSELOR',
-    (SELECT EMAIL FROM TBL_CS WHERE IDX = f.CS_IDX),  -- EMAIL로 매핑
-    'GENERAL',
-    CONCAT('상담사 문의 #', f.IDX),
-    f.CS_CONT,
-    CASE WHEN f.ATTACH_FILE IS NOT NULL 
-        THEN JSON_ARRAY(JSON_OBJECT('url', f.ATTACH_FILE))
-        ELSE NULL 
-    END,
-    CASE WHEN f.ADMIN_CONT IS NOT NULL THEN 'ANSWERED' ELSE 'PENDING' END,
-    f.ADMIN_IDX,
-    f.ADMIN_CONT,
-    f.ADMIN_REGIST_DATE,
-    f.CS_REGIST_DATE
-FROM TBL_CS_ADMIN_FAQ f
-WHERE EXISTS (SELECT 1 FROM TBL_CS WHERE IDX = f.CS_IDX);
+SELECT
+	'COUNSELOR' AS inquirer_type,
+	(SELECT EMAIL FROM TBL_CS WHERE IDX = T1.CS_IDX ) AS inquirer_id,
+	NULL AS counselor_id,
+	'CS_TO_ADMIN' AS category,
+	NULL AS title,
+	T1.CS_CONT AS content,
+	1 AS is_read,
+	T1.ADMIN_CONT  AS reply_content,
+	T1.ADMIN_REGIST_DATE AS answered_at,
+	T1.CS_REGIST_DATE AS created_at
+FROM TBL_CS_ADMIN_FAQ  T1 WHERE
+	(SELECT EMAIL FROM TBL_CS WHERE IDX = T1.CS_IDX ) IS NOT NULL;
+
+INSERT INTO t_inquiry
+(
+	inquirer_type, inquirer_id, counselor_id, category, title, content, is_read, reply_content, answered_at,created_at
+)
+SELECT
+	'USER' AS inquirer_type,
+	(SELECT USER_ID FROM TBL_USER WHERE IDX = T1.USER_IDX ) AS inquirer_id,
+	(SELECT EMAIL FROM TBL_CS WHERE IDX = T1.CS_IDX ) AS counselor_id,
+	'USER_TO_CS' AS category,
+	NULL AS title,
+	T1.USER_CONT AS content,
+	1 as is_read,
+	T1.CS_CONT AS reply_content,
+	T1.CS_REGIST_DATE AS created_at,
+	T1.USER_REGIST_DATE AS updated_at
+FROM TBL_CS_FAQ T1;
+
+-- INSERT INTO t_inquiry (
+--     inquiry_code,
+--     inquirer_type,
+--     inquirer_id,  -- COUNSELOR의 EMAIL로 매핑
+--     category,
+--     title,
+--     content,
+--     attachments,
+--     inquiry_status,
+--     admin_id,
+--     admin_reply,
+--     answered_at,
+--     created_at
+-- )
+-- SELECT 
+--     CONCAT('INQ_CS_', f.IDX),
+--     'COUNSELOR',
+--     (SELECT EMAIL FROM TBL_CS WHERE IDX = f.CS_IDX),  -- EMAIL로 매핑
+--     'GENERAL',
+--     CONCAT('상담사 문의 #', f.IDX),
+--     f.CS_CONT,
+--     CASE WHEN f.ATTACH_FILE IS NOT NULL 
+--         THEN JSON_ARRAY(JSON_OBJECT('url', f.ATTACH_FILE))
+--         ELSE NULL 
+--     END,
+--     CASE WHEN f.ADMIN_CONT IS NOT NULL THEN 'ANSWERED' ELSE 'PENDING' END,
+--     f.ADMIN_IDX,
+--     f.ADMIN_CONT,
+--     f.ADMIN_REGIST_DATE,
+--     f.CS_REGIST_DATE
+-- FROM TBL_CS_ADMIN_FAQ f
+-- WHERE EXISTS (SELECT 1 FROM TBL_CS WHERE IDX = f.CS_IDX);
 
 -- 사용자 문의
-INSERT INTO t_inquiry (
-    inquiry_code,
-    inquirer_type,
-    inquirer_id,  -- USER의 USER_ID로 매핑
-    category,
-    title,
-    content,
-    inquiry_status,
-    created_at
-)
-SELECT 
-    CONCAT('INQ_USER_', q.IDX),
-    'USER',
-    (SELECT USER_ID FROM TBL_USER WHERE IDX = q.USER_IDX),  -- USER_ID로 매핑
-    'GENERAL',
-    CONCAT('사용자 문의 #', q.IDX),
-    q.USER_CONT,
-    CASE WHEN q.CS_CONT IS NOT NULL THEN 'ANSWERED' ELSE 'PENDING' END,
-    q.USER_REGIST_DATE
-FROM TBL_CS_FAQ q
-WHERE EXISTS (SELECT 1 FROM TBL_USER WHERE IDX = q.USER_IDX);
+-- INSERT INTO t_inquiry (
+--     inquiry_code,
+--     inquirer_type,
+--     inquirer_id,  -- USER의 USER_ID로 매핑
+--     category,
+--     title,
+--     content,
+--     inquiry_status,
+--     created_at
+-- )
+-- SELECT 
+--     CONCAT('INQ_USER_', q.IDX),
+--     'USER',
+--     (SELECT USER_ID FROM TBL_USER WHERE IDX = q.USER_IDX),  -- USER_ID로 매핑
+--     'GENERAL',
+--     CONCAT('사용자 문의 #', q.IDX),
+--     q.USER_CONT,
+--     CASE WHEN q.CS_CONT IS NOT NULL THEN 'ANSWERED' ELSE 'PENDING' END,
+--     q.USER_REGIST_DATE
+-- FROM TBL_CS_FAQ q
+-- WHERE EXISTS (SELECT 1 FROM TBL_USER WHERE IDX = q.USER_IDX);
 
 -- 6.6 배너 마이그레이션
 INSERT INTO t_banner (
