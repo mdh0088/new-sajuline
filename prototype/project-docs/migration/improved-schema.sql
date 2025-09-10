@@ -276,11 +276,7 @@ CREATE TABLE t_consultation_review (
     KEY idx_user_id (user_id),
     KEY idx_counselor_id (counselor_id),
     KEY idx_is_best_visible (is_best, is_visible),
-    KEY idx_created_at (created_at DESC),
-    CONSTRAINT fk_review_session FOREIGN KEY (session_id) 
-        REFERENCES t_consultation_session(session_id),
-    CONSTRAINT fk_review_user FOREIGN KEY (user_id) REFERENCES t_user(user_id),
-    CONSTRAINT fk_review_counselor FOREIGN KEY (counselor_id) REFERENCES t_counselor(counselor_id)
+    KEY idx_created_at (created_at DESC)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci COMMENT='상담 후기';
 
 -- 4.2 후기 좋아요
@@ -567,30 +563,46 @@ CREATE TABLE t_faq (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci COMMENT='FAQ';
 
 -- 8.3 1:1 문의
-CREATE TABLE t_inquiry (
-    inquiry_id INT(11) NOT NULL AUTO_INCREMENT,
-    inquiry_code VARCHAR(50) NOT NULL COMMENT '문의 코드',
-    inquirer_type VARCHAR(20) NOT NULL COMMENT '문의자 타입: USER, COUNSELOR, GUEST',
-    inquirer_id VARCHAR(100) DEFAULT NULL COMMENT '문의자 ID (회원인 경우)',
-    inquirer_email VARCHAR(100) DEFAULT NULL COMMENT '문의자 이메일 (비회원)',
-    inquirer_phone VARCHAR(20) DEFAULT NULL COMMENT '문의자 전화번호 (비회원)',
-    category VARCHAR(30) NOT NULL COMMENT '문의 카테고리',
-    title VARCHAR(200) NOT NULL COMMENT '제목',
-    content TEXT NOT NULL COMMENT '내용',
-    attachments JSON DEFAULT NULL COMMENT '첨부파일',
-    inquiry_status VARCHAR(20) NOT NULL DEFAULT 'PENDING' COMMENT '상태',
-    admin_id INT(11) DEFAULT NULL COMMENT '담당 관리자',
-    admin_reply TEXT DEFAULT NULL COMMENT '관리자 답변',
-    answered_at DATETIME DEFAULT NULL COMMENT '답변 시간',
-    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    updated_at DATETIME DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP,
-    PRIMARY KEY (inquiry_id),
-    UNIQUE KEY uk_inquiry_code (inquiry_code),
-    KEY idx_inquirer (inquirer_type, inquirer_id),
-    KEY idx_status (inquiry_status),
-    KEY idx_created_at (created_at DESC),
-    CONSTRAINT fk_inquiry_admin FOREIGN KEY (admin_id) REFERENCES t_admin(admin_id)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci COMMENT='1:1 문의';
+-- CREATE TABLE t_inquiry (
+--     inquiry_id INT(11) NOT NULL AUTO_INCREMENT,
+--     inquiry_code VARCHAR(50) NOT NULL COMMENT '문의 코드',
+--     inquirer_type VARCHAR(20) NOT NULL COMMENT '문의자 타입: USER, COUNSELOR, GUEST',
+--     inquirer_id VARCHAR(100) DEFAULT NULL COMMENT '문의자 ID (회원인 경우)',
+--     inquirer_email VARCHAR(100) DEFAULT NULL COMMENT '문의자 이메일 (비회원)',
+--     inquirer_phone VARCHAR(20) DEFAULT NULL COMMENT '문의자 전화번호 (비회원)',
+--     category VARCHAR(30) NOT NULL COMMENT '문의 카테고리',
+--     title VARCHAR(200) NOT NULL COMMENT '제목',
+--     content TEXT NOT NULL COMMENT '내용',
+--     attachments JSON DEFAULT NULL COMMENT '첨부파일',
+--     inquiry_status VARCHAR(20) NOT NULL DEFAULT 'PENDING' COMMENT '상태',
+--     admin_id INT(11) DEFAULT NULL COMMENT '담당 관리자',
+--     admin_reply TEXT DEFAULT NULL COMMENT '관리자 답변',
+--     answered_at DATETIME DEFAULT NULL COMMENT '답변 시간',
+--     created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+--     updated_at DATETIME DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP,
+--     PRIMARY KEY (inquiry_id),
+--     UNIQUE KEY uk_inquiry_code (inquiry_code),
+--     KEY idx_inquirer (inquirer_type, inquirer_id),
+--     KEY idx_status (inquiry_status),
+--     KEY idx_created_at (created_at DESC),
+--     CONSTRAINT fk_inquiry_admin FOREIGN KEY (admin_id) REFERENCES t_admin(admin_id)
+-- ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci COMMENT='1:1 문의';
+-- 2025-09-10 수정 버전
+CREATE TABLE `t_inquiry` (
+  `inquiry_id` int(11) NOT NULL AUTO_INCREMENT,
+  `inquirer_type` varchar(20) NOT NULL COMMENT '문의자 타입: USER, COUNSELOR, GUEST',
+  `inquirer_id` varchar(100) DEFAULT NULL COMMENT '문의자 ID',
+  `counselor_id` varchar(100) DEFAULT NULL COMMENT '문의 상담사 id',
+  `category` varchar(30) DEFAULT NULL COMMENT '문의 카테고리',
+  `title` varchar(200) DEFAULT NULL COMMENT '제목',
+  `content` text NOT NULL COMMENT '내용',
+  `is_read` tinyint(1) DEFAULT 0 COMMENT '읽음 상태',
+  `reply_content` text DEFAULT NULL COMMENT '관리자 답변',
+  `answered_at` datetime DEFAULT NULL COMMENT '답변 시간',
+  `created_at` datetime NOT NULL DEFAULT current_timestamp(),
+  `updated_at` datetime DEFAULT NULL ON UPDATE current_timestamp(),
+  PRIMARY KEY (`inquiry_id`)
+) ENGINE=InnoDB AUTO_INCREMENT=3415 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci COMMENT='1:1 문의';
 
 -- 8.4 배너
 CREATE TABLE t_banner (
@@ -775,8 +787,7 @@ CREATE TABLE t_review_dummy (
     created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     PRIMARY KEY (dummy_id),
     KEY idx_counselor_id (counselor_id),
-    KEY idx_display_order (display_order),
-    CONSTRAINT fk_dummy_counselor FOREIGN KEY (counselor_id) REFERENCES t_counselor(counselor_id)
+    KEY idx_display_order (display_order)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci COMMENT='더미 후기';
 
 -- =====================================================
