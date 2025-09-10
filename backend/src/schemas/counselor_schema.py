@@ -2,9 +2,10 @@
 상담사 관련 Pydantic 스키마
 """
 from datetime import datetime, date
-from typing import Optional
+from typing import Optional, List, Any
 from decimal import Decimal
-from pydantic import BaseModel, EmailStr, Field, ConfigDict
+from pydantic import BaseModel, EmailStr, Field, ConfigDict, field_validator
+import json
 
 from src.models.counselor_model import CounselorStatus, CounselorGrade
 
@@ -20,6 +21,8 @@ class CounselorBase(BaseModel):
     career_info: Optional[str] = Field(None, description="경력사항")
     counselor_status: CounselorStatus = Field(default=CounselorStatus.WAITING, description="상담사 상태")
     grade: Optional[CounselorGrade] = Field(default=CounselorGrade.BRONZE, description="상담사 등급")
+    specialty_types: Optional[List[str]] = Field(None, description="전문 분야 (예: ['TARO', 'SAJU'])")
+    keywords: Optional[str] = Field(None, description="키워드")
 
 
 class CounselorSignup(CounselorBase):
@@ -49,6 +52,26 @@ class CounselorResponse(CounselorBase):
     withdrawn_at: Optional[datetime] = Field(None, description="탈퇴일시")
     
     model_config = ConfigDict(from_attributes=True)
+    
+    @field_validator('specialty_types', mode='before')
+    @classmethod
+    def parse_specialty_types(cls, v: Any) -> Optional[List[str]]:
+        """DB에서 JSON 문자열로 저장된 specialty_types를 파싱"""
+        if v is None:
+            return None
+        if isinstance(v, str):
+            try:
+                parsed = json.loads(v)
+                # 빈 문자열 필터링
+                if isinstance(parsed, list):
+                    return [item for item in parsed if item]
+                return parsed
+            except (json.JSONDecodeError, TypeError):
+                return None
+        if isinstance(v, list):
+            # 빈 문자열 필터링
+            return [item for item in v if item]
+        return v
 
 
 # TODO: 추후 필요시 참고용 스키마들
