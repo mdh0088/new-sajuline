@@ -11,12 +11,16 @@ from src.common.middleware.rate_limit import limiter
 from src.core.database import get_db_maria
 from src.repositories.counselor_repository import CounselorRepository
 from src.repositories.user_activity_log_repository import UserActivityLogRepository
+from src.repositories.consultation_review_repository import ConsultationReviewRepository
+from src.repositories.inquiry_repository import InquiryRepository
 from src.services.counselor_service import CounselorService
 from src.services.auth_service import AuthService
 from src.services.user_activity_log_service import UserActivityLogService
+from src.services.consultation_review_service import ConsultationReviewService
+from src.services.inquiry_service import InquiryService
 from src.schemas.auth_schema import LoginRequest, LoginResponse
 from src.schemas.user_activity_log_schema import UserType, DeviceType
-from src.common.response import APIResponse, ok, fail
+from src.common.response import APIResponse, APIResponseBuilder, ok, fail
 from src.common.logging import logger, get_logger_with_request_id
 from src.common.utils.client_info import extract_client_info
 from src.exceptions.custom_exceptions import BaseAppException
@@ -45,6 +49,30 @@ def get_user_activity_log_service(
 ) -> UserActivityLogService:
     """사용자 활동 로그 서비스 의존성 주입"""
     return UserActivityLogService(activity_repo)
+
+
+def get_consultation_review_repository(db: AsyncSession = Depends(get_db_maria)) -> ConsultationReviewRepository:
+    """상담 후기 리포지토리 의존성 주입"""
+    return ConsultationReviewRepository(db)
+
+
+def get_consultation_review_service(
+    review_repo: ConsultationReviewRepository = Depends(get_consultation_review_repository)
+) -> ConsultationReviewService:
+    """상담 후기 서비스 의존성 주입"""
+    return ConsultationReviewService(review_repo)
+
+
+def get_inquiry_repository(db: AsyncSession = Depends(get_db_maria)) -> InquiryRepository:
+    """1:1 문의 리포지토리 의존성 주입"""
+    return InquiryRepository(db)
+
+
+def get_inquiry_service(
+    inquiry_repo: InquiryRepository = Depends(get_inquiry_repository)
+) -> InquiryService:
+    """1:1 문의 서비스 의존성 주입"""
+    return InquiryService(inquiry_repo)
 
 
 def get_counselor_service(
@@ -146,3 +174,145 @@ async def login(
             nickname=counselor_response.nickname)
     
     return ok(login_response, "상담사 로그인이 성공했습니다")
+
+
+@router.get("/{counselor_id}/reviews", response_model=APIResponse, summary="상담사별 후기 목록 조회")
+async def get_counselor_reviews(
+    counselor_id: str,
+    page: int = Query(1, ge=1, description="페이지 번호"),
+    limit: int = Query(20, ge=1, le=100, description="페이지당 항목 수"),
+    visible_only: bool = Query(True, description="공개 후기만 조회"),
+    review_service: ConsultationReviewService = Depends(get_consultation_review_service)
+) -> APIResponse:
+    """
+    상담사별 후기 목록을 조회합니다.
+    
+    - **counselor_id**: 상담사 ID
+    - **page**: 페이지 번호 (기본값: 1)
+    - **limit**: 페이지당 항목 수 (기본값: 20, 최대: 100)
+    - **visible_only**: 공개 후기만 조회 여부 (기본값: true)
+    """
+    log = get_logger_with_request_id()
+    log.info("API: Getting counselor reviews", 
+            counselor_id=counselor_id, 
+            page=page, 
+            limit=limit, 
+            visible_only=visible_only)
+    
+    # 서비스 호출 (tuple 반환)
+    reviews, page, limit, total = await review_service.get_counselor_reviews(
+        counselor_id=counselor_id,
+        page=page,
+        limit=limit,
+        visible_only=visible_only
+    )
+    
+    log.info("API: Counselor reviews retrieved successfully", 
+            counselor_id=counselor_id,
+            count=len(reviews), 
+            total=total, 
+            page=page, 
+            limit=limit)
+    
+    # APIResponseBuilder.paginated 사용
+    return APIResponseBuilder.paginated(
+        data=reviews,
+        page=page,
+        limit=limit,
+        total=total,
+        message="상담사 후기 목록 조회 성공"
+    )
+
+
+@router.get("/inquiries/users", response_model=APIResponse, summary="상담문의 목록 조회")
+async def get_counselor_user_inquiries(
+    page: int = Query(1, ge=1, description="페이지 번호"),
+    limit: int = Query(20, ge=1, le=100, description="페이지당 항목 수"),
+    counselor_service: CounselorService = Depends(get_counselor_service),
+    inquiry_service: InquiryService = Depends(get_inquiry_service)
+) -> APIResponse:
+    """
+    상담문의 목록을 조회합니다.
+    inquirer_type='USER' AND counselor_id=#{counselor_id}
+    
+    - **page**: 페이지 번호 (기본값: 1)
+    - **limit**: 페이지당 항목 수 (기본값: 20, 최대: 100)
+    """
+    log = get_logger_with_request_id()
+    log.info("API: Getting counselor user inquiries", 
+            page=page, 
+            limit=limit)
+    
+    # TODO: 현재 로그인된 상담사 ID 가져오기 (JWT 토큰에서)
+    # 임시로 하드코딩된 counselor_id 사용
+    counselor_id = "temp_counselor_id"
+    
+    # 서비스 호출 (tuple 반환)
+    inquiries, page, limit, total = await inquiry_service.get_counselor_user_inquiries(
+        counselor_id=counselor_id,
+        page=page,
+        limit=limit
+    )
+    
+    log.info("API: Counselor user inquiries retrieved successfully", 
+            counselor_id=counselor_id,
+            count=len(inquiries), 
+            total=total, 
+            page=page, 
+            limit=limit)
+    
+    # APIResponseBuilder.paginated 사용
+    return APIResponseBuilder.paginated(
+        data=inquiries,
+        page=page,
+        limit=limit,
+        total=total,
+        message="상담문의 목록 조회 성공"
+    )
+
+
+@router.get("/inquiries/admin", response_model=APIResponse, summary="관리자 문의 목록 조회")
+async def get_counselor_admin_inquiries(
+    page: int = Query(1, ge=1, description="페이지 번호"),
+    limit: int = Query(20, ge=1, le=100, description="페이지당 항목 수"),
+    counselor_service: CounselorService = Depends(get_counselor_service),
+    inquiry_service: InquiryService = Depends(get_inquiry_service)
+) -> APIResponse:
+    """
+    관리자 문의 목록을 조회합니다.
+    inquirer_type='COUNSELOR' AND inquirer_id=#{counselor_id}
+    
+    - **page**: 페이지 번호 (기본값: 1)
+    - **limit**: 페이지당 항목 수 (기본값: 20, 최대: 100)
+    """
+    log = get_logger_with_request_id()
+    log.info("API: Getting counselor admin inquiries", 
+            page=page, 
+            limit=limit)
+    
+    # TODO: 현재 로그인된 상담사 ID 가져오기 (JWT 토큰에서)
+    # 임시로 하드코딩된 counselor_id 사용
+    counselor_id = "temp_counselor_id"
+    
+    # 서비스 호출 (tuple 반환)
+    inquiries, page, limit, total = await inquiry_service.get_counselor_admin_inquiries(
+        counselor_id=counselor_id,
+        page=page,
+        limit=limit
+    )
+    
+    log.info("API: Counselor admin inquiries retrieved successfully", 
+            counselor_id=counselor_id,
+            count=len(inquiries), 
+            total=total, 
+            page=page, 
+            limit=limit)
+    
+    # APIResponseBuilder.paginated 사용
+    return APIResponseBuilder.paginated(
+        data=inquiries,
+        page=page,
+        limit=limit,
+        total=total,
+        message="관리자 문의 목록 조회 성공"
+    )

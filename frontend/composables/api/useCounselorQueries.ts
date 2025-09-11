@@ -38,7 +38,7 @@ const counselorApi = {
   // 상담사 로그아웃
   async logout(): Promise<void> {
     const { $api } = useNuxtApp()
-    const response = await $api<LogoutResponse>('/counselors/logout', {
+    const response = await $api<LogoutResponse>('/api/v1/counselors/logout', {
       method: 'POST'
     })
     

@@ -16,7 +16,7 @@
         <span class="text-xl">💬</span>
         <span class="text-xs font-medium">상담</span>
       </NuxtLink>
-      <NuxtLink to="/profile" class="flex flex-col items-center gap-1 text-white/60 hover:text-white/80 transition-colors">
+      <NuxtLink :to="mypagePath" class="flex flex-col items-center gap-1 text-white/60 hover:text-white/80 transition-colors">
         <span class="text-xl">👤</span>
         <span class="text-xs font-medium">마이페이지</span>
       </NuxtLink>
@@ -25,11 +25,16 @@
 </template>
 
 <script setup lang="ts">
+import { computed } from 'vue'
+import { useAuth } from '~/composables/auth/useAuth'
+
+const { isCounselor } = useAuth()
+const mypagePath = computed(() => isCounselor.value ? '/counselor/mypage' : '/mypage')
 // 네비게이션 클릭 처리
 const handleNavClick = (tab: 'home' | 'fortune' | 'chat' | 'profile') => {
   if (tab === 'home') return
   if (tab === 'fortune') return navigateTo('/fortune')
   if (tab === 'chat') return navigateTo('/chat')  
-  if (tab === 'profile') return navigateTo('/profile')
+  if (tab === 'profile') return navigateTo(mypagePath.value)
 }
 </script>

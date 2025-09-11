@@ -6,10 +6,12 @@
  * - 에러 핸들링
  */
 import { defineNuxtPlugin, useRuntimeConfig, navigateTo, createError } from 'nuxt/app'
+import { useNotify } from '~/composables/utils/useNotify'
 
 export default defineNuxtPlugin(() => {
   const config = useRuntimeConfig()
   const apiBase = (config.public.apiBase ?? '/api') as string
+  const { notifyError } = useNotify()
 
   // 동시성 제어: 간단한 Promise 공유
   let refreshPromise: Promise<any> | null = null
@@ -22,7 +24,7 @@ export default defineNuxtPlugin(() => {
     }
 
     // 새로운 refresh 시작
-    refreshPromise = $fetch('/auth/refresh', {
+    refreshPromise = $fetch('/v1/auth/refresh', {
       baseURL: apiBase,
       method: 'POST' as const,
       credentials: 'include',
@@ -120,7 +122,7 @@ export default defineNuxtPlugin(() => {
         }
         
         // refresh API 호출이 아닌 경우에만 토큰 갱신 시도
-        if (!request.toString().includes('/auth/refresh')) {
+        if (!request.toString().includes('/v1/auth/refresh')) {
           try {
             console.log('🔄 토큰 만료 감지, 자동 갱신 시도...')
             
@@ -148,20 +150,13 @@ export default defineNuxtPlugin(() => {
         console.log('🚪 로그인이 만료되어 로그인 페이지로 이동합니다.')
         
         if (process.client) {
-          // 사용자에게 상황 설명
-          const userChoice = confirm(
-            '로그인이 만료되었습니다.\n\n' +
-            '확인: 로그인 페이지로 이동\n' +
-            '취소: 현재 페이지에서 계속 (일부 기능 제한)'
-          )
+          // Notivue로 알림 표시
+          notifyError('⏱️ 로그인이 만료되었습니다. 3초 후 로그인 페이지로 이동합니다.')
           
-          if (userChoice) {
-            // 로그인 페이지로 이동
+          // 3초 후 자동으로 로그인 페이지로 이동
+          setTimeout(async () => {
             await navigateTo('/login', { replace: true })
-          } else {
-            // 현재 페이지 유지 (사용자 선택권 제공)
-            console.log('사용자가 현재 페이지 유지를 선택했습니다.')
-          }
+          }, 3000)
         }
         
         // 토큰 갱신 실패 시에도 적절한 에러 메시지 반환

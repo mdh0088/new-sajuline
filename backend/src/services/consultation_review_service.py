@@ -2,7 +2,7 @@
 상담 후기 서비스 클래스
 비즈니스 로직과 트랜잭션 관리
 """
-from typing import Optional, List
+from typing import Optional, List, Tuple
 from datetime import datetime
 
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -150,26 +150,26 @@ class ConsultationReviewService:
         self,
         counselor_id: str,
         page: int = 1,
-        size: int = 20,
+        limit: int = 20,
         visible_only: bool = True
-    ) -> ConsultationReviewListResponse:
+    ) -> Tuple[List[ConsultationReviewSummary], int, int, int]:
         """
-        상담사별 후기 목록 조회
-        - 페이징 처리
-        - 공개 후기만 조회 (기본)
+        상담사별 후기 목록 조회 (APIResponseBuilder.paginated용)
+        Returns: (reviews, page, limit, total)
         """
         log = get_logger_with_request_id()
         log.info("Getting counselor reviews", 
                 counselor_id=counselor_id, 
                 page=page, 
-                size=size)
+                limit=limit)
         
+        # 파라미터 유효성 검사
         if page < 1:
             page = 1
-        if size < 1 or size > 100:
-            size = 20
+        if limit < 1 or limit > 100:
+            limit = 20
         
-        skip = (page - 1) * size
+        skip = (page - 1) * limit
         is_visible = True if visible_only else None
         
         # 후기 목록 조회
@@ -177,7 +177,7 @@ class ConsultationReviewService:
             counselor_id=counselor_id,
             is_visible=is_visible,
             skip=skip,
-            limit=size
+            limit=limit
         )
         
         # 전체 개수 조회
@@ -198,12 +198,7 @@ class ConsultationReviewService:
                 count=len(review_summaries), 
                 total=total)
         
-        return ConsultationReviewListResponse(
-            reviews=review_summaries,
-            total=total,
-            page=page,
-            size=size
-        )
+        return review_summaries, page, limit, total
     
     async def update_review(
         self,
