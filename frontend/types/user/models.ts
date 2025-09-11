@@ -173,6 +173,7 @@ export interface UserSession {
   loginAt: string                  // 로그인 시간
   access_token_expires_at?: number // 액세스 토큰 만료 시간 (timestamp)
   refresh_token_expires_at?: number // 리프레시 토큰 만료 시간 (timestamp)
+  role: 'user' | 'counselor'       // 현재 세션 역할
 }
 
 // =============================================================================

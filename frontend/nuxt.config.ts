@@ -81,6 +81,10 @@ export default defineNuxtConfig({
   },
 
   // 전역 CSS 파일은 app.vue에서 import (빌드 캐시 경로 이슈 회피)
+  css: [
+    'notivue/notification.css',     // 기본 알림 스타일
+    'notivue/animations.css'        // 알림 애니메이션
+  ],
   
   // 컴포넌트 자동 import 설정
   components: [
@@ -100,12 +104,26 @@ export default defineNuxtConfig({
     '@pinia/nuxt',        // 상태 관리
     '@vueuse/nuxt',       // Vue 유틸리티 컬렉션
     '@element-plus/nuxt', // Element Plus UI 라이브러리
+    'notivue/nuxt',       // Notivue 알림 시스템
     // '@nuxtjs/sentry',     // Nuxt 4 호환성 이슈로 임시 비활성화
     ...(process.env.NODE_ENV === 'development' ? [
       '@nuxt/test-utils',
       '@nuxt/devtools' // 개발자 도구 강화
     ] : [])
   ],
+
+  // Notivue 알림 시스템 설정
+  notivue: {
+    position: 'top-right',        // 알림 위치: 오른쪽 상단 (top-left, top-center, top-right, bottom-left, bottom-center, bottom-right)
+    limit: 4,                     // 동시에 표시할 수 있는 최대 알림 개수
+    enqueue: true,                // 알림이 많을 때 대기열에 추가 (false면 새 알림이 기존 알림을 밀어냄)
+    avoidDuplicates: true,        // 중복 알림 방지 (같은 내용의 알림이 연속으로 나타나는 것을 방지)
+    notifications: {
+      global: {
+        duration: 4000            // 기본 알림 표시 시간 (밀리초, 4초)
+      }
+    }
+  },
 
   // 이미지 최적화 설정 (즉시 적용 권장)
   image: {

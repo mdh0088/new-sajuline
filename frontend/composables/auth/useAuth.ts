@@ -6,18 +6,23 @@
  */
 import { ref, computed, onMounted, watch, readonly } from 'vue'
 import { useRouter } from 'vue-router'
+import { useNotify } from '~/composables/utils/useNotify'
 import { useUserQueries } from '~/composables/api/useUserQueries'
 import { useCounselorQueries } from '~/composables/api/useCounselorQueries'
+import { useAuthQueries } from '~/composables/api/useAuthQueries'
 import { isEmailFormat } from '~/composables/utils/validation'
-import type { LoginRequest, LoginData, UserSession } from '~/types/user/models'
+import type { LoginRequest, LoginData, UserSession, TokenResponse } from '~/types/user/models'
+import type { APIError } from '~/types/common/api'
 
 /**
  * 인증 상태 관리 컴포저블
  */
 export const useAuth = () => {
   const router = useRouter()
-  const { useLogin: useUserLogin, useLogout: useUserLogout, useRefreshToken } = useUserQueries()
+  const { notifySuccess } = useNotify()
+  const { useLogin: useUserLogin, useLogout: useUserLogout } = useUserQueries()
   const { useLogin: useCounselorLogin, useLogout: useCounselorLogout } = useCounselorQueries()
+  const { useRefreshToken } = useAuthQueries()
   
   // 사용자 세션 상태
   const userSession = ref<UserSession | null>(null)
@@ -25,6 +30,9 @@ export const useAuth = () => {
   
   // 컴퓨티드 속성들
   const isAuthenticated = computed(() => !!userSession.value?.isAuthenticated)
+  const role = computed<('user' | 'counselor') | null>(() => userSession.value?.role ?? null)
+  const isUser = computed(() => role.value === 'user')
+  const isCounselor = computed(() => role.value === 'counselor')
   const currentUser = computed(() => userSession.value)
   
   /**
@@ -77,7 +85,7 @@ export const useAuth = () => {
   /**
    * 세션 저장 성공 핸들러
    */
-  const handleLoginSuccess = (data: LoginData) => {
+  const handleLoginSuccessWithRole = (data: LoginData, sessionRole: 'user' | 'counselor') => {
     const now = Date.now()
     const session: UserSession = {
       user_id: data.user_id,
@@ -86,15 +94,16 @@ export const useAuth = () => {
       isAuthenticated: true,
       loginAt: new Date().toISOString(),
       access_token_expires_at: now + (data.access_token_expires_in * 1000),
-      refresh_token_expires_at: now + (data.refresh_token_expires_in * 1000)
+      refresh_token_expires_at: now + (data.refresh_token_expires_in * 1000),
+      role: sessionRole
     }
     
     saveSession(session)
     
     // 성공 메시지 (옵션)
     if (process.client) {
-      // toast나 다른 알림 시스템이 있다면 여기서 사용
-      console.log(`${data.nickname}님, 환영합니다!`)
+      // 유틸리티 함수로 간편하게 환영 알림 표시
+      notifySuccess(`🎉 ${data.nickname}님, 환영합니다!`)
     }
   }
 
@@ -110,7 +119,7 @@ export const useAuth = () => {
    * 사용자 로그인 뮤테이션
    */
   const userLoginMutation = useUserLogin({
-    onSuccess: handleLoginSuccess,
+    onSuccess: (data) => handleLoginSuccessWithRole(data, 'user'),
     onError: handleLoginError
   })
 
@@ -118,7 +127,7 @@ export const useAuth = () => {
    * 상담사 로그인 뮤테이션
    */
   const counselorLoginMutation = useCounselorLogin({
-    onSuccess: handleLoginSuccess,
+    onSuccess: (data) => handleLoginSuccessWithRole(data, 'counselor'),
     onError: handleLoginError
   })
   
@@ -158,7 +167,7 @@ export const useAuth = () => {
    * 토큰 갱신 뮤테이션 설정
    */
   const refreshMutation = useRefreshToken({
-    onSuccess: (data) => {
+    onSuccess: (data: TokenResponse) => {
       if (userSession.value) {
         const now = Date.now()
         const updatedSession: UserSession = {
@@ -169,7 +178,7 @@ export const useAuth = () => {
         saveSession(updatedSession)
       }
     },
-    onError: (error) => {
+    onError: (error: APIError) => {
       console.error('Token refresh failed:', error)
       clearSession()
       router.push('/login')
@@ -203,10 +212,11 @@ export const useAuth = () => {
    */
   const logout = async () => {
     try {
-      // 현재 세션이 상담사인지 사용자인지에 따라 적절한 API 호출
-      // 일반적으로는 토큰에서 role을 확인하거나, 현재 세션 타입을 판단
-      // 현재는 사용자 로그아웃을 기본으로 사용 (추후 role 기반 분기 가능)
-      await userLogoutMutation.mutateAsync()
+      if (userSession.value?.role === 'counselor') {
+        await counselorLogoutMutation.mutateAsync()
+      } else {
+        await userLogoutMutation.mutateAsync()
+      }
       return { success: true }
     } catch (error) {
       return { 
@@ -316,6 +326,18 @@ export const useAuth = () => {
       startTokenCheck()
     }
   })
+
+  /** 세션 역할 설정 (API 호출 없이 세션만 갱신) */
+  const setRole = (newRole: 'user' | 'counselor') => {
+    if (userSession.value) {
+      const updated: UserSession = { ...userSession.value, role: newRole }
+      saveSession(updated)
+    }
+  }
+
+  /** 간단 권한 체크 유틸 */
+  const hasRole = (required: 'user' | 'counselor') => role.value === required
+  const getCurrentRole = () => role.value
   
   /**
    * 사용자 정보 업데이트 (프로필 수정 후 등)
@@ -344,6 +366,9 @@ export const useAuth = () => {
     isAuthenticated,
     currentUser,
     isAuthChecking,
+    role,
+    isUser,
+    isCounselor,
     
     // 로딩 상태
     isLoginLoading: computed(() => userLoginMutation.isPending.value || counselorLoginMutation.isPending.value),
@@ -356,6 +381,9 @@ export const useAuth = () => {
     attemptTokenRefresh,
     checkTokenExpiry,
     updateUserInfo,
+    setRole,
+    hasRole,
+    getCurrentRole,
     
     // 가드 함수들
     requireAuth,

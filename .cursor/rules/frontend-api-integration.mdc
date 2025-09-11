@@ -1,0 +1,60 @@
+---
+globs: frontend/**/*.{ts,tsx,vue}
+description: Rules for frontend API integration in Nuxt 3 + Vue Query with HttpOnly cookie auth. Summary only, no code samples.
+---
+
+## Frontend API Integration Pattern (Nuxt 3 + Vue Query)
+
+- Goal: Provide a consistent, resilient path from UI components to backend APIs via a single API client, domain composables, and typed DTOs.
+
+### 1) Global API Client (plugin)
+- Build `$api` on `$fetch.create` with:
+  - `baseURL` from `runtimeConfig.public.apiBase`.
+  - Versioning policy: If `apiBase` ends with `/api`, the client MUST append `/v1` so the final base becomes `/api/v1`.
+  - `credentials: 'include'` for HttpOnly cookies.
+  - Interceptors:
+    - onRequest: set `Content-Type`, `Accept`, `X-Requested-With`; attach CSRF meta if present.
+    - onResponse: dev logging, update CSRF meta from `x-csrf-token`.
+    - onResponseError: 401→single-flight refresh retry; 403 and 5xx mapped to friendly errors; notify + navigate to `/login` on refresh failure.
+- Path conventions:
+  - Call sites MUST use resource-relative paths (e.g., `/users`, `/auth/refresh`, `/counselors/login`).
+  - Do NOT prefix `/api` or `/v1` at call sites; the client ensures `/api/v1` based on `apiBase`.
+  - Refresh endpoint is `/auth/refresh` (relative to base). Never include `/v1` manually.
+
+### 2) State & Caching (Vue Query plugin)
+- Provide `QueryClient` via plugin with SSR de/rehydration.
+- Defaults: reasonable stale/gc times, refetch policies, backoff retries; do not retry 401/403/404.
+
+### 3) Domain Composables (`composables/api`)
+- Two layers:
+  - `xxxApi` functions: call `$api`, unwrap `APIResponse<T>`, return `T` or throw `Error`.
+  - Hooks: `useQuery`/`useMutation` with stable `queryKey`s and side effects for cache sync.
+- Keys: `['user', id]`, `['users','list', params]`, etc. Mutations invalidate or `setQueryData`/`removeQueries` as needed.
+- Enable queries conditionally (validate inputs); short `staleTime` for availability checks.
+
+### 4) Types & DTOs (`types/`)
+- Use `APIResponse<T>` envelope; define per-domain request/response DTOs.
+- `$api` wrappers should return plain `T` or throw server error messages consistently.
+
+### 5) Error/Auth Handling
+- Centralize error handling in the client; surfacing typed errors in composables.
+- 401 handling: skip refresh on login endpoints; otherwise single-flight refresh then retry original request once.
+- 403: throw; 5xx: generic retriable error; users see consistent error pages via `createError`.
+
+### 6) Pages/Components Integration
+- Pages use composables; do not call `$api` directly.
+- SSR-friendly data via `useQuery` in `setup()`; prefer `enabled` and route guards.
+- Mutations: toasts and navigation in page layer; cache updates in composables.
+
+### 7) Security & CSRF
+- Cookie-based auth only; never store tokens in web storage.
+- If CSRF is used, read from meta and update from response header.
+
+### 8) Performance & UX
+- Debounce inputs for availability checks; tune `staleTime` appropriately.
+- Avoid refetch-on-focus for heavy queries; rely on targeted invalidation.
+
+### 9) Naming & Structure
+- Files: `plugins/api.client.ts`, `plugins/vue-query.ts`, `composables/api/useXxxQueries.ts`.
+- Mutations named `useCreateXxx`, `useUpdateXxx`, `useDeleteXxx`, `useLogin`, `useLogout`.
+
