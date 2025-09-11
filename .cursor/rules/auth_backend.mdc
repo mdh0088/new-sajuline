@@ -1,0 +1,27 @@
+---
+alwaysApply: false
+description: "Auth와 관련된 개발을 할 때 아래의 규칙을 참조."
+---
+
+# Backend Auth Domain Rules
+
+## Routes
+- POST /api/v1/auth/refresh: 토큰 갱신(Access/Refresh 재발급 + 기존 Refresh 블랙리스트)
+- GET /api/v1/auth/me: 현재 인증된 사용자 토큰 페이로드 조회
+
+## Schemas
+- POST /auth/refresh: 요청 [RefreshTokenRequest](mdc:backend/src/schemas/auth_schema.py), 응답 APIResponse[TokenResponse]
+- GET /auth/me: 응답 APIResponse[TokenPayload]
+
+## Models
+- (ORM 없음) — JWT 페이로드, Redis 블랙리스트 사용
+
+## Services
+- [AuthService.verify_refresh_token](mdc:backend/src/services/auth_service.py)
+- [AuthService.create_access_token](mdc:backend/src/services/auth_service.py)
+- [AuthService.create_refresh_token](mdc:backend/src/services/auth_service.py)
+- [AuthService.blacklist_token](mdc:backend/src/services/auth_service.py)
+- [get_current_user](mdc:backend/src/services/auth_service.py)
+
+## Repositories
+- (전용 레포 없음) — Redis와 JWT 라이브러리 사용

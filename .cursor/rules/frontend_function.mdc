@@ -1,0 +1,123 @@
+---
+globs: frontend/**/*.ts,frontend/**/*.vue
+description: Frontend 공용/패칭 함수 아키텍처 및 사용 규칙 ($api, APIResponse, vue-query, 쿼리 키, 캐시, 알림/모달, 인증 상태)
+---
+
+# Frontend Function Rules (Sajuline)
+
+이 규칙은 프론트엔드에서 공용 함수/데이터 패칭을 일관되게 구현하기 위한 가이드입니다. 실제 구현 예시는 아래 참조 파일 링크를 확인하세요.
+
+## 핵심 원칙
+- HTTP 호출은 반드시 전역 `$api`를 사용합니다. 화면/컴포저블에서는 원시 `$fetch`를 직접 호출하지 않습니다.
+- API 반환 타입은 `APIResponse<T>`를 기본으로 삼고, `success && data` 검증 후에만 데이터를 사용합니다.
+- 데이터 패칭은 도메인별 컴포저블(`useXxxQueries`)에서만 정의하고, 컴포넌트는 해당 훅만 사용합니다.
+- vue-query 쿼리 키는 도메인 중심으로 규칙적으로 구성합니다.
+- 변이(mutation) 성공 후에는 관련 캐시 무효화/제거/갱신을 일관되게 수행합니다.
+
+참조: [frontend/plugins/api.client.ts](mdc:frontend/plugins/api.client.ts), [frontend/plugins/vue-query.ts](mdc:frontend/plugins/vue-query.ts), [frontend/types/common/api.ts](mdc:frontend/types/common/api.ts)
+
+## HTTP 계층 규칙
+- `$api`는 [frontend/plugins/api.client.ts](mdc:frontend/plugins/api.client.ts)에서 제공됩니다.
+  - 공통 헤더, HttpOnly 쿠키 전송, CSRF 토큰, 로깅, 에러 표준화, 401 자동 리프레시(동시성 제어) 포함
+- 규칙
+  - 화면/컴포저블/스토어 레이어에서는 `$api`만 사용 (예외: 플러그인 내부 재시도 용도로만 원시 `$fetch` 허용)
+  - 에러는 플러그인 표준 처리에 위임하고, 화면에서는 사용자 피드백에 집중
+
+예시 패턴
+```ts
+const { $api } = useNuxtApp()
+const res = await $api<APIResponse<T>>('/api/v1/endpoint')
+if (!res.success || !res.data) throw new Error(res.error?.message ?? '요청 실패')
+return res.data
+```
+
+## 타입 규약
+- 모든 HTTP 응답은 `APIResponse<T>` 전제
+- 에러는 `APIError` 형태로 다루되, 플러그인에서 throw되는 `createError({ statusCode, statusMessage, data })`를 화면단에서 메시지로 변환하여 사용
+
+참조: [frontend/types/common/api.ts](mdc:frontend/types/common/api.ts)
+
+## vue-query 규칙
+- 전역 설정: [frontend/plugins/vue-query.ts](mdc:frontend/plugins/vue-query.ts)
+  - queries: `staleTime=5m`, `gcTime=30m`, `refetchOnWindowFocus=false`, `refetchOnMount='always'`, `refetchOnReconnect=true`
+  - retry: 4xx(401/403/404) 미재시도, 5xx는 지수 백오프로 최대 3회
+  - SSR: 서버 dehydrate → 클라이언트 hydrate
+- 도메인 컴포저블 구조
+  - 내부 `api` 오브젝트에 실제 호출(모든 함수는 순수 Promise<T> 반환)
+  - 외부 `useXxxQueries`가 `useQuery/useMutation` 훅을 노출
+
+스켈레톤
+```ts
+const api = {
+  async getSomething(id: string): Promise<T> {
+    const { $api } = useNuxtApp()
+    const res = await $api<APIResponse<T>>(`/api/v1/something/${id}`)
+    if (!res.success || !res.data) throw new Error(res.error?.message ?? '조회 실패')
+    return res.data
+  }
+}
+
+export const useSomethingQueries = () => {
+  const queryClient = useQueryClient()
+
+  const useSomethingById = (id: string, options?: Partial<UseQueryOptions<T, APIError>>) =>
+    useQuery({ queryKey: ['something', id], queryFn: () => api.getSomething(id), ...options })
+
+  const useUpdateSomething = (options?: UseMutationOptions<T, APIError, Payload>) =>
+    useMutation({
+      mutationFn: api.updateSomething,
+      onSuccess: (data, variables) => {
+        queryClient.invalidateQueries({ queryKey: ['something', variables.id] })
+      },
+      ...options
+    })
+
+  return { useSomethingById, useUpdateSomething }
+}
+```
+
+## 쿼리 키 네이밍
+- 단건: `['user', userId]`, `['counselor', counselorId]`
+- 목록: `['users', 'list', params]`
+- 서브리소스: `['user', userId, 'posts']`
+- 가용성/검증: `['availability', fieldName, value]`
+- 인증: `['auth', 'me']`
+
+참조: [frontend/composables/api/useUserQueries.ts](mdc:frontend/composables/api/useUserQueries.ts), [frontend/composables/api/useAuthQueries.ts](mdc:frontend/composables/api/useAuthQueries.ts), [frontend/composables/api/useCounselorQueries.ts](mdc:frontend/composables/api/useCounselorQueries.ts)
+
+## 캐시 무효화/갱신 규칙
+- 생성/수정 후: 관련 단건 쿼리 무효화 + 목록 무효화, 필요시 `setQueryData`로 최신화
+- 삭제 후: 관련 쿼리 `removeQueries`로 제거 + 목록 무효화
+- 인증 성공/로그아웃: 관련 도메인 키(예: `['user']`, `['users']`, `['counselor']`) 무효화/제거
+
+구현 예시: [frontend/composables/api/useUserQueries.ts](mdc:frontend/composables/api/useUserQueries.ts)
+
+## 공용 유틸 사용 가이드
+- 전역/시스템 알림: `useNotify`(Notivue) 사용 권장
+- 뷰/위젯 로컬 피드백: `useToast`(Element Plus) 사용
+- 모달/확인/프롬프트/로딩: `useModal`
+- 간단 검증: `isEmailFormat`
+
+참조: [frontend/composables/utils/useNotify.ts](mdc:frontend/composables/utils/useNotify.ts), [frontend/composables/ui/useToast.ts](mdc:frontend/composables/ui/useToast.ts), [frontend/composables/ui/useModal.ts](mdc:frontend/composables/ui/useModal.ts), [frontend/composables/utils/validation.ts](mdc:frontend/composables/utils/validation.ts)
+
+## 인증 상태/흐름 규칙
+- 인증 상태는 `useAuth`로만 관리 (세션 저장/복원, 역할 관리, 토큰 자동 갱신, 가드)
+- 로그인 분기: 이메일 형식이면 상담사, 아니면 사용자 API (도메인 정책 유지)
+- 토큰 만료 5분 이내 자동 갱신 시도, 1분 주기 체크
+
+참조: [frontend/composables/auth/useAuth.ts](mdc:frontend/composables/auth/useAuth.ts)
+
+## Do / Don't
+- Do: `$api` + `APIResponse<T>` + vue-query 훅 패턴 준수
+- Do: 쿼리 키/캐시 무효화 규칙 일관 유지
+- Do: 전역 에러/알림은 플러그인/유틸 레이어에서 처리
+- Don't: 화면/훅에서 원시 `$fetch` 직접 호출 금지(플러그인 내부 제외)
+- Don't: `success`/`data` 체크 없이 `data` 사용 금지
+
+## 빠른 체크리스트
+- [ ] `$api` 사용했는가?
+- [ ] `APIResponse<T>` 기반 `success && data` 검증했는가?
+- [ ] 쿼리 키 네이밍이 규칙을 따르는가?
+- [ ] 뮤테이션 후 캐시 무효화/제거/갱신이 적절한가?
+- [ ] 전역 알림/토스트/모달 사용 위치가 적절한가?
+- [ ] 인증 관련 기능은 `useAuth`/`useAuthQueries`를 사용했는가?
