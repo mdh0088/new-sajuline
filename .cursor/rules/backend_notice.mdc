@@ -1,0 +1,25 @@
+---
+alwaysApply: false
+description: "Notice와 관련된 개발을 할 때 아래의 규칙을 참조"
+---
+
+# Backend Notice Domain Rules
+
+## Routes
+- GET /api/v1/notices: 공지사항 목록 조회(필터/검색/페이지네이션)
+- GET /api/v1/notices/{notice_id}: 공지사항 단일 조회
+
+## Schemas
+- GET /notices: 쿼리 [NoticeListParams](mdc:backend/src/schemas/notice_schema.py), 응답 APIResponse[Paginated[NoticeResponse]]
+- GET /notices/{id}: 응답 APIResponse[NoticeResponse]
+
+## Models
+- [Notice](mdc:backend/src/models/notice_model.py)
+
+## Services
+- [NoticeService.get_notice_list](mdc:backend/src/services/notice_service.py)
+- [NoticeService.get_notice_by_id](mdc:backend/src/services/notice_service.py)
+
+## Repositories
+- [NoticeRepository.get_list](mdc:backend/src/repositories/notice_repository.py)
+- [NoticeRepository.get_by_id](mdc:backend/src/repositories/notice_repository.py)

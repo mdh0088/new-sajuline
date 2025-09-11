@@ -1,0 +1,73 @@
+---
+description: "Nuxt 4 frontend directory structure guide for navigation and onboarding"
+globs: frontend/**
+---
+
+## Purpose
+Provide a concise, always-available map of the Nuxt 4 (Vue 3) frontend to help contributors and AI agents quickly locate files, follow conventions, and add new features consistently.
+
+## Entry Points and Key Config
+- [nuxt.config.ts](mdc:frontend/nuxt.config.ts): SSR, route rules, modules (Tailwind, Pinia, VueUse, Element Plus, Notivue), security headers, Vite build, runtime config
+- [app.vue](mdc:frontend/app.vue): Global layout, Notivue mount, global CSS import
+- [tailwind.config.js](mdc:frontend/tailwind.config.js): Tailwind scan paths, theme extensions (colors, fonts)
+- [tsconfig.json](mdc:frontend/tsconfig.json): Nuxt-generated TS references
+- Additional docs: [FRONT_DIRECTORT_README.md](mdc:frontend/FRONT_DIRECTORT_README.md), [FRONT_FUNCTION_README.md](mdc:FRONT_FUNCTION_README.md), [FRONT_PAGE_README.md](mdc:FRONT_PAGE_README.md)
+
+## Directory Map (overview)
+```text
+frontend/
+├─ app.vue
+├─ assets/
+│  └─ css/
+│     ├─ main.css
+│     ├─ login/
+│     └─ signup/
+├─ components/
+│  ├─ common/  ├─ home/
+│  ├─ auth/
+│  │  ├─ login/ └─ signup/
+│  ├─ chat/ ├─ fortune/ └─ profile/
+├─ composables/
+│  ├─ api/ ├─ auth/ ├─ ui/ ├─ utils/ └─ validation/
+├─ pages/
+│  ├─ auth/ ├─ categories/ └─ counselor/
+│  └─ index.vue, login.vue, signup.vue, chat.vue, fortune.vue, mypage.vue, profile.vue
+├─ plugins/ (api.client.ts, vue-query.ts)
+├─ public/ (favicon, robots.txt, site.webmanifest)
+├─ types/ (auth/, common/, user/)
+└─ nuxt.config.ts, tailwind.config.js, tsconfig.json, package.json
+```
+
+## Conventions
+- Components: group by domain under `components/`; auto-import is enabled with `pathPrefix: false`. Use PascalCase filenames and shallow nesting where possible.
+- Pages (routing): file-based routes under `pages/` (dynamic routes via `[slug].vue`). Default SSR is enabled; specific CSR/SWR/prerender rules live in `nuxt.config.ts` `routeRules`.
+- Composables: place fetch/logic hooks in `composables/` with `useXxx.ts` naming. API queries in `composables/api`, validation in `composables/validation`.
+- Styling: global CSS is in `assets/css/main.css` and imported in `app.vue`. Tailwind is the primary utility layer.
+- Types: colocate shared TypeScript types in `types/` (e.g., `types/common/api.ts`, `types/auth/signup.ts`, `types/user/models.ts`).
+- Plugins: initialize integrations under `plugins/` (e.g., `api.client.ts`, `vue-query.ts`). Remember that `*.client.ts` plugins run on client only.
+- State: Pinia is enabled via `@pinia/nuxt`. If/when stores are added, follow Nuxt `stores/` convention (not present at the moment).
+
+## Rendering and Caching (from nuxt.config.ts)
+- SSR: enabled by default; page-based routing active
+- Prerender (production): `/`, `/about`, `/terms`, `/privacy`
+- SWR cache: `/horoscope/**` (1h)
+- Realtime (no-cache): `/chat/**`
+- CSR-only: `/profile/**`, `/settings/**`
+
+## Security and Networking
+- Proxy: `/api/**` → `NUXT_PROXY_TARGET`
+- Security headers applied to all routes (X-Frame-Options, X-Content-Type-Options, Referrer-Policy, Permissions-Policy, X-XSS-Protection)
+
+## Quick How-To
+- New page: add a `.vue` file under `pages/` (or nested dir)
+- New UI block: add under `components/<domain>/`
+- New API call: add composable under `composables/api/`
+- New validation/util: add under `composables/validation` or `composables/utils`
+- New types: add under `types/<area>/`
+- New plugin: add under `plugins/` and restart dev server
+
+## Cross-References
+For a fuller narrative overview and component/page specifics, see:
+- [FRONT_DIRECTORT_README.md](mdc:frontend/FRONT_DIRECTORT_README.md)
+- [FRONT_FUNCTION_README.md](mdc:FRONT_FUNCTION_README.md)
+- [FRONT_PAGE_README.md](mdc:FRONT_PAGE_README.md)

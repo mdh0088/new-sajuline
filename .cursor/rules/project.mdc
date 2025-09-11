@@ -1,0 +1,44 @@
+---
+description: "Always read this rule at the start of any new conversation. It summarizes the project's overview and key paths from [README.md](mdc:README.md) to orient the assistant quickly."
+alwaysApply: false
+---
+## Project Overview
+Sajuline renewal monorepo for a hybrid fortune-telling platform where AI and experts collaborate. Frontend is a Nuxt 4 SSR web app; backend is a FastAPI async API. Local development is orchestrated with Docker Compose.
+
+### Primary References
+- Project overview and high-level docs: [README.md](mdc:README.md)
+- Backend entrypoint and app init: [backend/src/main.py](mdc:backend/src/main.py)
+- Backend settings and env keys: [backend/src/config/settings.py](mdc:backend/src/config/settings.py)
+- Infra (dev compose stack): [infra/docker-compose.yml](mdc:infra/docker-compose.yml)
+- Frontend configuration: [frontend/nuxt.config.ts](mdc:frontend/nuxt.config.ts)
+- Frontend scripts/deps: [frontend/package.json](mdc:frontend/package.json)
+- Backend packaging/deps: [backend/pyproject.toml](mdc:backend/pyproject.toml)
+- Backend Dockerfile(s): [backend/Dockerfile](mdc:backend/Dockerfile)
+
+### Architecture at a Glance
+- Frontend: Nuxt 4 + Vue 3 + TypeScript (SSR by default; mixes SWR/CSR on select routes)
+- Backend: FastAPI + Uvicorn, layered (API/services/repositories/schemas)
+- Data: MariaDB (primary), MSSQL (ARS integration)
+- Cache: Redis
+- Observability/Safety: Sentry, structured logging (Loguru+JSON), rate-limiting (SlowAPI), CORS, Trusted Host
+
+### Run/Develop
+- Dev stack (recommended):
+  - cd infra → `docker compose up --build -d`
+  - Health: backend `http://localhost:8000/health`, frontend `http://localhost:3000/`
+- Local, without Compose:
+  - Frontend: `cd frontend && npm install && npm run dev`
+  - Backend: `cd backend && pip install uv && uv pip install -r pyproject.toml --extra dev && uvicorn src.main:app --reload`
+
+### API Surface
+- Base path: `/api/v1/*`
+- Health: `GET /health`, readiness: `GET /readiness`
+- Functional domains: `auth`, `users`, `counselors`, `notices`
+
+### Conventions for This Workspace
+- Prefer readability and correctness; avoid placeholders/TODOs in committed code.
+- Keep environment variable names consistent with [backend/src/config/settings.py](mdc:backend/src/config/settings.py).
+- Follow tooling: black/isort/flake8/mypy/pytest; keep logs under `backend/logs/`.
+- Treat KCP binaries and secrets as sensitive; never hardcode credentials.
+- When in doubt about project intent, consult [README.md](mdc:README.md) first.
+- Default communication language with the user is Korean unless explicitly requested otherwise.
