@@ -1,0 +1,32 @@
+---
+globs: frontend/**/*.vue,frontend/**/*.ts,frontend/nuxt.config.ts
+---
+
+## Frontend 페이지 렌더링 현황 (현재 설정 기준)
+
+- 참조: [frontend/nuxt.config.ts](mdc:frontend/nuxt.config.ts), [FRONT_PAGE_README.md](mdc:FRONT_PAGE_README.md)
+
+### 전역 설정
+- **SSR**: 활성 (`ssr: true`)
+- **파일 기반 라우팅**: 활성 (`pages: true`)
+- **routeRules (Nuxt)**
+  - 프리렌더(프로덕션): `'/'`, `'/about'`, `'/terms'`, `'/privacy'`
+  - SWR 캐시: `'/horoscope/**'` → `swr: 3600`, 헤더 `Cache-Control: max-age=3600`
+  - 실시간 헤더: `'/chat/**'` → 헤더 `Cache-Control: no-cache`
+  - CSR 강제: `'/profile/**'`, `'/settings/**'` → `ssr: false`
+- **routeRules (Nitro)**
+  - `'/api/**'` → `proxy: ${NUXT_PROXY_TARGET}/api/**`
+  - `'/**'` → 전역 보안 헤더 적용 (`X-Frame-Options: DENY`, `X-Content-Type-Options: nosniff`, 등)
+
+### 페이지별 렌더링 상태
+- `pages/index.vue` → `/` : SSR, 프로덕션 프리렌더
+- `pages/login.vue` → `/login` : SSR(기본)
+- `pages/signup.vue` → `/signup` : SSR(기본) — `definePageMeta({ layout: false })`
+- `pages/mypage.vue` → `/mypage` : SSR(기본)
+- `pages/counselor/mypage.vue` → `/counselor/mypage` : SSR(기본)
+- `pages/profile.vue` → `/profile` : CSR (전역 `routeRules`에 의해 `ssr: false`)
+- `pages/chat.vue` → `/chat` : SSR(기본), 전역 헤더 `Cache-Control: no-cache`
+- `pages/fortune.vue` → `/fortune` : SSR(기본)
+- `pages/categories/index.vue` → `/categories` : SSR(기본)
+- `pages/categories/[slug].vue` → `/categories/:slug` : SSR(기본)
+- `pages/auth/role.vue` → `/auth/role` : SSR(기본)
