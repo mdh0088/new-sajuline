@@ -96,13 +96,18 @@
 </template>
 
 <script setup lang="ts">
+definePageMeta({
+  middleware: ['auth'],
+  requiresAuth: true,
+  requireRole: 'user'
+})
 import AppHeader from '~/components/common/AppHeader.vue'
 import AppBottomNavi from '~/components/common/AppBottomNavi.vue'
 import { computed } from 'vue'
 import { useAuth } from '~/composables/auth/useAuth'
 
 const { currentUser, requireAuth } = useAuth()
-requireAuth()
+await requireAuth()
 
 const nickname = computed(() => currentUser.value?.nickname ?? '사용자')
 const email = computed(() => currentUser.value?.email ?? '')

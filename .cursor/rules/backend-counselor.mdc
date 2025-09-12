@@ -10,11 +10,15 @@ description: "Counselor와 관련된 개발을 할 때 아래의 규칙을 참�
 - GET /api/v1/counselors/{counselor_id}/reviews: 상담사 후기 목록 조회(페이지네이션)
 - GET /api/v1/counselors/inquiries/users: 상담문의 목록 조회(USER→counselor, 페이지네이션)
 - GET /api/v1/counselors/inquiries/admin: 관리자 문의 목록 조회(COUNSELOR가 보낸, 페이지네이션)
+ - GET /api/v1/counselors/mypage: 상담사 마이페이지 요약 조회 (본인 기준)
+ - PATCH /api/v1/counselors/mypage: 상담사 마이페이지 부분 수정 (상태/업무시간/소개/인사말/경력)
 
 ## Schemas
 - POST /counselors/login: 요청 [LoginRequest](mdc:backend/src/schemas/auth_schema.py), 응답 APIResponse[LoginResponse]
 - GET /counselors/{id}/reviews: 응답 APIResponse[List[ConsultationReviewResponse]]
 - GET /counselors/inquiries/users|admin: 응답 APIResponse[Paginated]
+ - GET /counselors/mypage: 응답 APIResponse[CounselorResponse]
+ - PATCH /counselors/mypage: 요청 [CounselorMypageUpdate](mdc:backend/src/schemas/counselor_schema.py), 응답 APIResponse[CounselorResponse]
 
 ## Models
 - 로그인: [Counselor](mdc:backend/src/models/counselor_model.py)
@@ -25,8 +29,14 @@ description: "Counselor와 관련된 개발을 할 때 아래의 규칙을 참�
 - 로그인: [CounselorService](mdc:backend/src/services/counselor_service.py); [UserActivityLogService](mdc:backend/src/services/user_activity_log_service.py)
 - 후기: [ConsultationReviewService](mdc:backend/src/services/consultation_review_service.py)
 - 문의: [InquiryService](mdc:backend/src/services/inquiry_service.py)
+ - ARS(TM60): [Tm60MemberService](mdc:backend/src/services/ars/tm60_member_service.py) — 상담사 상태 변경 시 `tm60_member.m_state` 동기화 (1=WAITING, 2=CONSULTING, 3=ABSENT)
 
 ## Repositories
 - 로그인: [CounselorRepository](mdc:backend/src/repositories/counselor_repository.py)
 - 후기: [ConsultationReviewRepository](mdc:backend/src/repositories/consultation_review_repository.py)
 - 문의: [InquiryRepository](mdc:backend/src/repositories/inquiry_repository.py)
+ - ARS(TM60): [Tm60MemberRepository](mdc:backend/src/repositories/ars/tm60_member_repository.py) — `m_id` 기준 `m_state` 업데이트
+
+## DI Notes
+- `get_tm60_member_service()`: `get_db_mssql()` → `Tm60MemberRepository` → `Tm60MemberService` 체인으로 생성하여 `CounselorService`에 주입
+- `CounselorService`는 상태 변경 시 주입된 `Tm60MemberService.sync_state_from_counselor_status(...)` 호출로 외부 DB 동기화

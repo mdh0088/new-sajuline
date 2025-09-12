@@ -6,6 +6,7 @@
  */
 import { ref, computed, onMounted, watch, readonly } from 'vue'
 import { useRouter } from 'vue-router'
+import { useState } from 'nuxt/app'
 import { useNotify } from '~/composables/utils/useNotify'
 import { useUserQueries } from '~/composables/api/useUserQueries'
 import { useCounselorQueries } from '~/composables/api/useCounselorQueries'
@@ -38,28 +39,47 @@ export const useAuth = () => {
   /**
    * 세션 정보를 로컬스토리지에서 복원
    */
-  const restoreSession = () => {
-    if (process.client) {
-      try {
+  const restoreSession = async () => {
+    try {
+      // SSR: 서버에서 프리로드된 세션(useState)에 우선 의존
+      if (process.server) {
+        const ssrSession = useState<UserSession | null>('user_session')
+        if (ssrSession.value?.isAuthenticated) {
+          userSession.value = ssrSession.value
+          return
+        }
+      }
+
+      // CSR: 하이드레이션된 세션이 있으면 우선 사용 → 없으면 localStorage → 필요 시 refresh
+      if (process.client) {
+        const hydrated = useState<UserSession | null>('user_session')
+        if (hydrated.value?.isAuthenticated) {
+          userSession.value = hydrated.value
+          // 로컬 저장소 동기화(초기 로드 시 공백 방지)
+          localStorage.setItem('user_session', JSON.stringify(hydrated.value))
+          return
+        }
+
         const stored = localStorage.getItem('user_session')
         if (stored) {
           const session = JSON.parse(stored) as UserSession
-          
+
           // 토큰 만료 시간 확인
           const now = Date.now()
           if (session.access_token_expires_at && session.access_token_expires_at > now) {
             userSession.value = session
           } else {
-            // 액세스 토큰이 만료된 경우 리프레시 토큰으로 갱신 시도
-            attemptTokenRefresh()
+            // 액세스 토큰이 만료된 경우 리프레시 토큰으로 갱신 시도 (대기)
+            await attemptTokenRefresh()
           }
         }
-      } catch (error) {
-        console.error('Failed to restore session:', error)
-        clearSession()
       }
+    } catch (error) {
+      console.error('Failed to restore session:', error)
+      clearSession()
+    } finally {
+      isAuthChecking.value = false
     }
-    isAuthChecking.value = false
   }
   
   /**
@@ -230,18 +250,8 @@ export const useAuth = () => {
    * 토큰 갱신 시도
    */
   const attemptTokenRefresh = async () => {
-    if (!userSession.value?.refresh_token_expires_at) {
-      clearSession()
-      return false
-    }
-    
-    const now = Date.now()
-    if (userSession.value.refresh_token_expires_at <= now) {
-      clearSession()
-      return false
-    }
-    
     try {
+      // HttpOnly 쿠키 환경에서는 Refresh 토큰의 클라이언트 만료 추적 대신 서버에 위임
       await refreshMutation.mutateAsync({})
       return true
     } catch (error) {
@@ -273,7 +283,10 @@ export const useAuth = () => {
   /**
    * 인증이 필요한 페이지 가드
    */
-  const requireAuth = () => {
+  const requireAuth = async () => {
+    if (isAuthChecking.value) {
+      await restoreSession()
+    }
     if (!isAuthenticated.value) {
       router.push('/login')
       return false
@@ -321,6 +334,7 @@ export const useAuth = () => {
    * 컴포넌트 마운트 시 초기화
    */
   onMounted(() => {
+    // 세션 복원은 비동기 수행 (중복 호출 방지)
     restoreSession()
     if (isAuthenticated.value) {
       startTokenCheck()

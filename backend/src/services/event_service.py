@@ -7,6 +7,7 @@ from datetime import datetime
 from src.repositories.event_repository import EventRepository
 from src.repositories.point_transaction_repository import PointTransactionRepository
 from src.repositories.ars.tm60_users_repository import Tm60UsersRepository
+from src.services.ars.tm60_users_service import Tm60UsersService
 from src.services.point_transaction_service import PointTransactionService
 from src.models.point_transaction_model import TransactionType, CurrencyType, ReferenceType
 from src.common.logging import logger, get_logger_with_request_id
@@ -21,11 +22,11 @@ class EventService:
         self, 
         event_repo: EventRepository,
         point_transaction_service: PointTransactionService,
-        tm60_users_repo: Tm60UsersRepository
+        tm60_users_service: Tm60UsersService
     ):
         self.event_repo = event_repo
         self.point_transaction_service = point_transaction_service
-        self.tm60_users_repo = tm60_users_repo
+        self.tm60_users_service = tm60_users_service
     
     async def process_signup_reward(self, user_id: str) -> Optional[SignupRewardInfo]:
         """
@@ -64,8 +65,8 @@ class EventService:
             
             # 3. TM60(MSSQL)에 포인트 지급
             try:
-                new_balance = await self.tm60_users_repo.update_user_points(
-                    user_id=user_id, 
+                new_balance = await self.tm60_users_service.update_user_points(
+                    user_id=user_id,
                     point_amount=event.reward_value
                 )
             except BaseAppException as e:

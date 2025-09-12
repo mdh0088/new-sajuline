@@ -4,7 +4,7 @@
 """
 from typing import Optional
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select
+from sqlalchemy import select, update
 
 from src.models.counselor_model import Counselor
 from src.common.logging import logger, get_logger_with_request_id
@@ -63,6 +63,43 @@ class CounselorRepository:
                 last_login_at=datetime.utcnow(),
                 updated_at=datetime.utcnow()
             )
+            .execution_options(synchronize_session="evaluate")
+        )
+        result = await self.db.execute(stmt)
+        return result.rowcount > 0
+
+    @logger.catch(reraise=True)
+    async def partial_update(
+        self,
+        counselor_id: str,
+        *,
+        counselor_status: Optional[str] = None,
+        work_time: Optional[str] = None,
+        introduction_short: Optional[str] = None,
+        greeting_message: Optional[str] = None,
+        career_info: Optional[str] = None
+    ) -> bool:
+        """전달된 값만 부분 업데이트"""
+        from src.models.counselor_model import Counselor
+        update_values = {}
+        if counselor_status is not None:
+            update_values[Counselor.counselor_status.key] = counselor_status
+        if work_time is not None:
+            update_values[Counselor.work_time.key] = work_time
+        if introduction_short is not None:
+            update_values[Counselor.introduction_short.key] = introduction_short
+        if greeting_message is not None:
+            update_values[Counselor.greeting_message.key] = greeting_message
+        if career_info is not None:
+            update_values[Counselor.career_info.key] = career_info
+
+        if not update_values:
+            return False
+
+        stmt = (
+            update(Counselor)
+            .where(Counselor.counselor_id == counselor_id)
+            .values(**update_values)
             .execution_options(synchronize_session="evaluate")
         )
         result = await self.db.execute(stmt)

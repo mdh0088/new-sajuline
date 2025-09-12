@@ -101,16 +101,23 @@ class Counselor(Base):
         comment="등급: BRONZE, SILVER, GOLD"
     )
     
-    # 전문 분야 및 키워드
+    # 전문 분야 
     specialty_types: Mapped[Optional[str]] = mapped_column(
         Text, 
         nullable=True, 
         comment="전문 분야 (JSON 배열 형식 예: [\"TARO\",\"SAJU\"])"
     )
+    # 키워드
     keywords: Mapped[Optional[str]] = mapped_column(
         Text, 
         nullable=True, 
         comment="키워드"
+    )
+    # 업무 시간
+    work_time: Mapped[Optional[str]] = mapped_column(
+        Text, 
+        nullable=True, 
+        comment="업무 시간"
     )
     
     # 평가 및 통계
