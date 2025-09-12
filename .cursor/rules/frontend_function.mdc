@@ -1,8 +1,8 @@
 ---
-globs: frontend/**/*.ts,frontend/**/*.vue
-description: Frontend 공용/패칭 함수 아키텍처 및 사용 규칙 ($api, APIResponse, vue-query, 쿼리 키, 캐시, 알림/모달, 인증 상태)
+description: Frontend 공용/패칭 함수 아키텍처 및 사용 규칙 ($api, APIResponse, vue-query, 쿼리 키, 캐시, 알림/모달, 인증 상태) 관련 작업을 할 때 아래의 규칙을 참조.
+#globs: frontend/**/*.{ts,tsx,vue}
+alwaysApply: false
 ---
-
 # Frontend Function Rules (Sajuline)
 
 이 규칙은 프론트엔드에서 공용 함수/데이터 패칭을 일관되게 구현하기 위한 가이드입니다. 실제 구현 예시는 아래 참조 파일 링크를 확인하세요.

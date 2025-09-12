@@ -1,8 +1,7 @@
 ---
-globs: backend/src/**/*.py
-description: Rules for the FastAPI backend API→Service→Repository pattern, including ORM Model and Pydantic Schema layers. Summary only, no code samples.
+description: FastAPI backend API→Service→Repository pattern, including ORM Model and Pydantic Schema layers. 관련 작업을 할 때 아래의 규칙을 참조.
+alwaysApply: false
 ---
-
 ## Backend Layer Pattern (API → Service → Repository)
 
 - Goal: Strictly separate Controller (API), Business Logic (Service), and Data Access (Repository) to improve testability and maintainability.

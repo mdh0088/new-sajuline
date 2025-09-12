@@ -1,5 +1,6 @@
 ---
 description: "Always read this rule at the start of any new conversation. It summarizes the project's overview and key paths from [README.md](mdc:README.md) to orient the assistant quickly."
+globs: backend/**, frontend/**, infra/**, README.md
 alwaysApply: false
 ---
 ## Project Overview
