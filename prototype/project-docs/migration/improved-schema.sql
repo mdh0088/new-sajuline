@@ -58,8 +58,8 @@ CREATE TABLE t_user_point_balance (
     total_earned_mileage INT(11) NOT NULL DEFAULT 0 COMMENT '총 적립 마일리지',
     total_used_mileage INT(11) NOT NULL DEFAULT 0 COMMENT '총 사용 마일리지',
     updated_at DATETIME DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP,
-    PRIMARY KEY (user_id),
-    CONSTRAINT fk_point_balance_user FOREIGN KEY (user_id) REFERENCES t_user(user_id) ON DELETE CASCADE
+    PRIMARY KEY (user_id)
+    --CONSTRAINT fk_point_balance_user FOREIGN KEY (user_id) REFERENCES t_user(user_id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci COMMENT='포인트/마일리지 잔액';
 
 -- 1.3 사용자 선호도 설정
@@ -69,8 +69,8 @@ CREATE TABLE t_user_preference (
     prefer_counselor_styles JSON DEFAULT NULL COMMENT '선호 상담 스타일',
     notification_settings JSON DEFAULT NULL COMMENT '알림 설정',
     updated_at DATETIME DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP,
-    PRIMARY KEY (user_id),
-    CONSTRAINT fk_preference_user FOREIGN KEY (user_id) REFERENCES t_user(user_id) ON DELETE CASCADE
+    PRIMARY KEY (user_id)
+    --CONSTRAINT fk_preference_user FOREIGN KEY (user_id) REFERENCES t_user(user_id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci COMMENT='사용자 선호도 설정';
 
 -- =====================================================
@@ -91,6 +91,9 @@ CREATE TABLE t_counselor (
     career_info TEXT DEFAULT NULL COMMENT '경력사항',
     counselor_status VARCHAR(20) NOT NULL DEFAULT 'WAITING' COMMENT '상태: WAITING, CONSULTING, ABSENT',
     grade VARCHAR(20) DEFAULT 'BRONZE' COMMENT '등급: BRONZE, SILVER, GOLD',
+    specialty_types longtext DEFAULT NULL,
+    keywords text DEFAULT NULL,
+    work_time text DEFAULT NULL COMMENT '업무 시간',
     rating_avg DECIMAL(3,2) DEFAULT 0.00 COMMENT '평균 평점',
     rating_count INT(11) DEFAULT 0 COMMENT '평점 개수',
     consultation_count INT(11) DEFAULT 0 COMMENT '총 상담 횟수',
@@ -148,9 +151,8 @@ CREATE TABLE t_counselor_application_image (
     is_selected TINYINT(1) DEFAULT 0 COMMENT '선택 여부',
     uploaded_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     PRIMARY KEY (image_id),
-    KEY idx_application_id (application_id),
-    CONSTRAINT fk_app_image_application FOREIGN KEY (application_id) 
-        REFERENCES t_counselor_application(application_id) ON DELETE CASCADE
+    KEY idx_application_id (application_id)
+    --CONSTRAINT fk_app_image_application FOREIGN KEY (application_id) REFERENCES t_counselor_application(application_id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci COMMENT='상담사 신청 이미지';
 
 -- 2.4 상담사 전문분야
@@ -161,9 +163,8 @@ CREATE TABLE t_counselor_specialty (
     experience_years INT(11) DEFAULT 0 COMMENT '경력 연수',
     created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     PRIMARY KEY (counselor_id, specialty_code),
-    KEY idx_specialty_code (specialty_code),
-    CONSTRAINT fk_specialty_counselor FOREIGN KEY (counselor_id) 
-        REFERENCES t_counselor(counselor_id) ON DELETE CASCADE
+    KEY idx_specialty_code (specialty_code)
+    --CONSTRAINT fk_specialty_counselor FOREIGN KEY (counselor_id) REFERENCES t_counselor(counselor_id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci COMMENT='상담사 전문분야';
 
 -- 2.5 상담사 근무시간
@@ -177,9 +178,8 @@ CREATE TABLE t_counselor_schedule (
     created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at DATETIME DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP,
     PRIMARY KEY (schedule_id),
-    UNIQUE KEY uk_counselor_day_time (counselor_id, day_of_week, start_time),
-    CONSTRAINT fk_schedule_counselor FOREIGN KEY (counselor_id) 
-        REFERENCES t_counselor(counselor_id) ON DELETE CASCADE
+    UNIQUE KEY uk_counselor_day_time (counselor_id, day_of_week, start_time)
+    --CONSTRAINT fk_schedule_counselor FOREIGN KEY (counselor_id) REFERENCES t_counselor(counselor_id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci COMMENT='상담사 근무시간';
 
 -- =====================================================
@@ -208,10 +208,10 @@ CREATE TABLE t_consultation_session (
     KEY idx_user_id_created (user_id, created_at DESC),
     KEY idx_counselor_id_created (counselor_id, created_at DESC),
     KEY idx_session_status (session_status),
-    KEY idx_started_at (started_at),
-    CONSTRAINT fk_session_user FOREIGN KEY (user_id) REFERENCES t_user(user_id),
-    CONSTRAINT fk_session_counselor FOREIGN KEY (counselor_id) REFERENCES t_counselor(counselor_id),
-    CONSTRAINT chk_session_status CHECK (session_status IN ('WAITING', 'IN_PROGRESS', 'COMPLETED', 'CANCELLED'))
+    KEY idx_started_at (started_at)
+    --CONSTRAINT fk_session_user FOREIGN KEY (user_id) REFERENCES t_user(user_id),
+    --CONSTRAINT fk_session_counselor FOREIGN KEY (counselor_id) REFERENCES t_counselor(counselor_id),
+    --CONSTRAINT chk_session_status CHECK (session_status IN ('WAITING', 'IN_PROGRESS', 'COMPLETED', 'CANCELLED'))
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci COMMENT='상담 세션';
 
 -- 3.2 채팅 메시지
@@ -228,9 +228,8 @@ CREATE TABLE t_chat_message (
     created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     PRIMARY KEY (message_id),
     KEY idx_session_id_created (session_id, created_at),
-    KEY idx_sender (sender_type, sender_id),
-    CONSTRAINT fk_message_session FOREIGN KEY (session_id) 
-        REFERENCES t_consultation_session(session_id) ON DELETE CASCADE
+    KEY idx_sender (sender_type, sender_id)
+    --CONSTRAINT fk_message_session FOREIGN KEY (session_id) REFERENCES t_consultation_session(session_id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci COMMENT='채팅 메시지';
 
 -- 3.3 상담 대기열
@@ -247,9 +246,9 @@ CREATE TABLE t_consultation_queue (
     PRIMARY KEY (queue_id),
     UNIQUE KEY uk_user_counselor_waiting (user_id, counselor_id, queue_status),
     KEY idx_counselor_status (counselor_id, queue_status),
-    KEY idx_queued_at (queued_at),
-    CONSTRAINT fk_queue_user FOREIGN KEY (user_id) REFERENCES t_user(user_id),
-    CONSTRAINT fk_queue_counselor FOREIGN KEY (counselor_id) REFERENCES t_counselor(counselor_id)
+    KEY idx_queued_at (queued_at)
+    --CONSTRAINT fk_queue_user FOREIGN KEY (user_id) REFERENCES t_user(user_id),
+    --CONSTRAINT fk_queue_counselor FOREIGN KEY (counselor_id) REFERENCES t_counselor(counselor_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci COMMENT='상담 대기열';
 
 -- =====================================================
@@ -284,10 +283,9 @@ CREATE TABLE t_review_like (
     user_id VARCHAR(100) NOT NULL,
     review_id INT(11) NOT NULL,
     created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    PRIMARY KEY (user_id, review_id),
-    CONSTRAINT fk_like_user FOREIGN KEY (user_id) REFERENCES t_user(user_id),
-    CONSTRAINT fk_like_review FOREIGN KEY (review_id) 
-        REFERENCES t_consultation_review(review_id) ON DELETE CASCADE
+    PRIMARY KEY (user_id, review_id)
+    --CONSTRAINT fk_like_user FOREIGN KEY (user_id) REFERENCES t_user(user_id),
+    --CONSTRAINT fk_like_review FOREIGN KEY (review_id) REFERENCES t_consultation_review(review_id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci COMMENT='후기 좋아요';
 
 -- 4.3 신고
@@ -367,9 +365,9 @@ CREATE TABLE t_payment (
     UNIQUE KEY uk_order_no (order_no),
     KEY idx_user_id_status (user_id, payment_status),
     KEY idx_paid_at (paid_at),
-    KEY idx_created_at (created_at DESC),
-    CONSTRAINT fk_payment_user FOREIGN KEY (user_id) REFERENCES t_user(user_id),
-    CONSTRAINT fk_payment_product FOREIGN KEY (product_id) REFERENCES t_point_product(product_id)
+    KEY idx_created_at (created_at DESC)
+    --CONSTRAINT fk_payment_user FOREIGN KEY (user_id) REFERENCES t_user(user_id),
+    --CONSTRAINT fk_payment_product FOREIGN KEY (product_id) REFERENCES t_point_product(product_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci COMMENT='결제 내역';
 
 -- 5.3 포인트/마일리지 거래 내역 (통합)
@@ -389,8 +387,8 @@ CREATE TABLE t_point_transaction (
     PRIMARY KEY (transaction_id),
     KEY idx_user_currency_created (user_id, currency_type, created_at DESC),
     KEY idx_reference (reference_type, reference_id),
-    KEY idx_expires_at (expires_at),
-    CONSTRAINT fk_transaction_user FOREIGN KEY (user_id) REFERENCES t_user(user_id)
+    KEY idx_expires_at (expires_at)
+    --CONSTRAINT fk_transaction_user FOREIGN KEY (user_id) REFERENCES t_user(user_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci COMMENT='포인트/마일리지 거래 내역';
 
 -- 5.4 외부 포인트 동기화 로그
@@ -409,10 +407,9 @@ CREATE TABLE t_external_point_sync (
     PRIMARY KEY (sync_id),
     KEY idx_user_id_status (user_id, sync_status),
     KEY idx_session_id (session_id),
-    KEY idx_created_at (created_at),
-    CONSTRAINT fk_sync_user FOREIGN KEY (user_id) REFERENCES t_user(user_id),
-    CONSTRAINT fk_sync_session FOREIGN KEY (session_id) 
-        REFERENCES t_consultation_session(session_id)
+    KEY idx_created_at (created_at)
+    --CONSTRAINT fk_sync_user FOREIGN KEY (user_id) REFERENCES t_user(user_id),
+    --CONSTRAINT fk_sync_session FOREIGN KEY (session_id) REFERENCES t_consultation_session(session_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci COMMENT='외부 포인트 동기화 로그';
 
 -- =====================================================
@@ -513,9 +510,8 @@ CREATE TABLE t_notification_log (
     PRIMARY KEY (log_id),
     KEY idx_recipient (recipient_type, recipient_id),
     KEY idx_send_status (send_status),
-    KEY idx_created_at (created_at DESC),
-    CONSTRAINT fk_notification_template FOREIGN KEY (template_id) 
-        REFERENCES t_notification_template(template_id)
+    KEY idx_created_at (created_at DESC)
+    --CONSTRAINT fk_notification_template FOREIGN KEY (template_id) REFERENCES t_notification_template(template_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci COMMENT='알림 발송 로그';
 
 -- =====================================================
@@ -540,8 +536,8 @@ CREATE TABLE t_notice (
     PRIMARY KEY (notice_id),
     KEY idx_type_active (notice_type, is_active),
     KEY idx_target_audience (target_audience),
-    KEY idx_created_at (created_at DESC),
-    CONSTRAINT fk_notice_admin FOREIGN KEY (created_by) REFERENCES t_admin(admin_id)
+    KEY idx_created_at (created_at DESC)
+    --CONSTRAINT fk_notice_admin FOREIGN KEY (created_by) REFERENCES t_admin(admin_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci COMMENT='공지사항';
 
 -- 8.2 FAQ
@@ -719,9 +715,9 @@ CREATE TABLE t_grade_change_log (
     created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     PRIMARY KEY (log_id),
     KEY idx_user_id (user_id),
-    KEY idx_created_at (created_at),
-    CONSTRAINT fk_grade_log_user FOREIGN KEY (user_id) REFERENCES t_user(user_id),
-    CONSTRAINT fk_grade_log_admin FOREIGN KEY (admin_id) REFERENCES t_admin(admin_id)
+    KEY idx_created_at (created_at)
+    --CONSTRAINT fk_grade_log_user FOREIGN KEY (user_id) REFERENCES t_user(user_id),
+    --CONSTRAINT fk_grade_log_admin FOREIGN KEY (admin_id) REFERENCES t_admin(admin_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci COMMENT='등급 변경 로그';
 
 -- 9.5 배치 실행 로그
@@ -755,8 +751,8 @@ CREATE TABLE t_grade_batch_config (
     last_executed_at DATETIME DEFAULT NULL COMMENT '마지막 실행일',
     updated_by INT(11) DEFAULT NULL,
     updated_at DATETIME DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP,
-    PRIMARY KEY (config_id),
-    CONSTRAINT fk_grade_config_admin FOREIGN KEY (updated_by) REFERENCES t_admin(admin_id)
+    PRIMARY KEY (config_id)
+    --CONSTRAINT fk_grade_config_admin FOREIGN KEY (updated_by) REFERENCES t_admin(admin_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci COMMENT='등급 배치 설정';
 
 -- 10.2 마일리지 설정
@@ -766,8 +762,8 @@ CREATE TABLE t_mileage_config (
     description VARCHAR(500) DEFAULT NULL COMMENT '설명',
     updated_by INT(11) DEFAULT NULL,
     updated_at DATETIME DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP,
-    PRIMARY KEY (config_key),
-    CONSTRAINT fk_mileage_config_admin FOREIGN KEY (updated_by) REFERENCES t_admin(admin_id)
+    PRIMARY KEY (config_key)
+    --CONSTRAINT fk_mileage_config_admin FOREIGN KEY (updated_by) REFERENCES t_admin(admin_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci COMMENT='마일리지 설정';
 
 -- =====================================================

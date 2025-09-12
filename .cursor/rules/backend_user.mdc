@@ -16,6 +16,7 @@ description: "User와 관련된 개발을 할 때 아래의 규칙을 참조."
 - GET /api/v1/users/check-availability/phone: 전화번호 중복 검사
 - GET /api/v1/users/check-availability/nickname: 닉네임 중복 검사
 - GET /api/v1/users/mypage: 마이페이지 통합 정보 조회(북마크/후기/포인트/등급/월결제)
+  - TM60 포인트 조회는 `Tm60UsersService` 주입 사용
 
 ## Schemas
 - POST /users/signup: 요청 [UserSignup](mdc:backend/src/schemas/user_schema.py), 응답 APIResponse[UserResponse]
@@ -33,7 +34,13 @@ description: "User와 관련된 개발을 할 때 아래의 규칙을 참조."
 ## Services
 - 회원가입/인증/로그인: [UserService](mdc:backend/src/services/user_service.py), [AuthService](mdc:backend/src/services/auth_service.py)
 - 마이페이지 집계: [UserBookmarkService](mdc:backend/src/services/user_bookmark_service.py), [ConsultationReviewService](mdc:backend/src/services/consultation_review_service.py), [PaymentService](mdc:backend/src/services/payment_service.py), [GradeService](mdc:backend/src/services/grade_service.py), [Tm60ChatlogService](mdc:backend/src/services/ars/tm60_chatlog_service.py)
+ - ARS(TM60): [Tm60UsersService](mdc:backend/src/services/ars/tm60_users_service.py) — TM60 사용자 생성/포인트 업데이트/조회
+ - 이벤트: [EventService](mdc:backend/src/services/event_service.py) — 회원가입 포인트 지급 시 `Tm60UsersService` 주입 사용
 
 ## Repositories
 - 사용자: [UserRepository](mdc:backend/src/repositories/user_repository.py)
 - 보조(마이페이지): [ConsultationReviewRepository](mdc:backend/src/repositories/consultation_review_repository.py), [InquiryRepository](mdc:backend/src/repositories/inquiry_repository.py), [UserBookmarkRepository](mdc:backend/src/repositories/user_bookmark_repository.py), [PaymentRepository](mdc:backend/src/repositories/payment_repository.py), [GradeRepository](mdc:backend/src/repositories/grade_repository.py), [Tm60UsersRepository](mdc:backend/src/repositories/ars/tm60_users_repository.py)
+
+## DI Notes
+- `get_tm60_users_service()`: `get_db_mssql()` → `Tm60UsersRepository` → `Tm60UsersService` 체인으로 생성하여 `EventService`, `UserService`, `GET /users/mypage`에 주입
+- `EventService`는 TM60 포인트 적립 시 `Tm60UsersService.update_user_points(...)`를 통해 외부 DB 연동

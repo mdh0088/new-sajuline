@@ -16,6 +16,7 @@ from src.repositories.event_repository import EventRepository
 from src.repositories.point_transaction_repository import PointTransactionRepository
 from src.repositories.user_activity_log_repository import UserActivityLogRepository
 from src.repositories.ars.tm60_users_repository import Tm60UsersRepository
+from src.services.ars.tm60_users_service import Tm60UsersService
 from src.repositories.user_bookmark_repository import UserBookmarkRepository
 from src.repositories.consultation_review_repository import ConsultationReviewRepository
 from src.repositories.payment_repository import PaymentRepository
@@ -69,11 +70,11 @@ def get_point_transaction_repository(db: AsyncSession = Depends(get_db_maria)) -
     return PointTransactionRepository(db)
 
 
-def get_tm60_users_repository():
-    """TM60 사용자 리포지토리 의존성 주입"""
-    # MSSQL 세션 생성 및 첫 번째 세션 반환
+def get_tm60_users_service():
+    """TM60 사용자 서비스 의존성 주입"""
     for mssql_session in get_db_mssql():
-        return Tm60UsersRepository(mssql_session)
+        repo = Tm60UsersRepository(mssql_session)
+        return Tm60UsersService(repo)
 
 
 def get_user_activity_log_repository(db: AsyncSession = Depends(get_db_maria)) -> UserActivityLogRepository:
@@ -98,10 +99,10 @@ def get_user_activity_log_service(
 def get_event_service(
     event_repo: EventRepository = Depends(get_event_repository),
     point_transaction_service: PointTransactionService = Depends(get_point_transaction_service),
-    tm60_users_repo: Tm60UsersRepository = Depends(get_tm60_users_repository)
+    tm60_users_service: Tm60UsersService = Depends(get_tm60_users_service)
 ) -> EventService:
     """이벤트 서비스 의존성 주입"""
-    return EventService(event_repo, point_transaction_service, tm60_users_repo)
+    return EventService(event_repo, point_transaction_service, tm60_users_service)
 
 
 def get_user_service(
@@ -109,10 +110,11 @@ def get_user_service(
     counselor_repo: CounselorRepository = Depends(get_counselor_repository),
     auth_service: AuthService = Depends(get_auth_service),
     event_service: EventService = Depends(get_event_service),
-    activity_log_service: UserActivityLogService = Depends(get_user_activity_log_service)
+    activity_log_service: UserActivityLogService = Depends(get_user_activity_log_service),
+    tm60_users_service: Tm60UsersService = Depends(get_tm60_users_service)
 ) -> UserService:
     """사용자 서비스 의존성 주입"""
-    return UserService(user_repo, counselor_repo, auth_service, activity_log_service, event_service)
+    return UserService(user_repo, counselor_repo, auth_service, activity_log_service, event_service, tm60_users_service)
 
 
 # 마이페이지용 추가 의존성 주입 함수들
@@ -582,7 +584,7 @@ async def get_user_mypage(
     payment_service: PaymentService = Depends(get_payment_service),
     grade_service: GradeService = Depends(get_grade_service),
     tm60_chatlog_service: Tm60ChatlogService = Depends(get_tm60_chatlog_service),
-    tm60_users_repo: Tm60UsersRepository = Depends(get_tm60_users_repository)
+    tm60_users_service: Tm60UsersService = Depends(get_tm60_users_service)
 ) -> APIResponse[UserMypageResponse]:
     """사용자 마이페이지 통합 정보 조회"""
     log = get_logger_with_request_id()
@@ -610,7 +612,7 @@ async def get_user_mypage(
         review_count = review_count_response.review_count
         
         # 5. 포인트 조회 (tm60_users)
-        current_points = await tm60_users_repo.get_user_points(user_id)
+        current_points = await tm60_users_service.get_user_points(user_id)
         
         # 6. 등급 정보 조회 (t_grade)
         grade_info = await grade_service.get_next_grade_info(user_info.grade_code)
