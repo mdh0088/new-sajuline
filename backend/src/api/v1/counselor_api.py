@@ -20,6 +20,7 @@ from src.services.user_activity_log_service import UserActivityLogService
 from src.services.consultation_review_service import ConsultationReviewService
 from src.services.inquiry_service import InquiryService
 from src.services.ars.tm60_member_service import Tm60MemberService
+from src.services.ars.tm60_chatlog_service import Tm60ChatlogService
 from src.schemas.auth_schema import LoginRequest, LoginResponse
 from src.schemas.counselor_schema import CounselorResponse, CounselorMypageUpdate
 from src.schemas.user_activity_log_schema import UserType, DeviceType
@@ -82,6 +83,10 @@ def get_inquiry_service(
 def get_tm60_member_service(mssql = Depends(get_db_mssql)) -> Tm60MemberService:
     repo = Tm60MemberRepository(mssql)
     return Tm60MemberService(repo)
+
+def get_tm60_chatlog_service() -> Tm60ChatlogService:
+    for mssql in get_db_mssql():
+        return Tm60ChatlogService(mssql)
 
 
 def get_counselor_service(
@@ -382,3 +387,33 @@ async def update_counselor_mypage(
 
     data = await counselor_service.update_mypage(counselor_id, updates)
     return ok(data=data, message="상담사 마이페이지 수정 성공")
+
+
+@router.get(
+    "/consultation-time",
+    response_model=APIResponse,
+    summary="상담시간/포인트 월 합계",
+    description="tm60_chatlog에서 counselor_code(m_code) 기준 yyyy, mm 조건으로 합계를 조회"
+)
+async def get_monthly_consultation_stats(
+    yyyy: str = Query(..., min_length=4, max_length=4, description="연도 (YYYY)"),
+    mm: str = Query(..., min_length=2, max_length=2, description="월 (MM)"),
+    current_user: TokenPayload = Depends(get_current_user),
+    counselor_service: CounselorService = Depends(get_counselor_service),
+    chatlog_service: Tm60ChatlogService = Depends(get_tm60_chatlog_service)
+):
+    """현재 로그인 상담사의 `counselor_code`로 tm60_chatlog 집계 조회"""
+    verify_counselor_role(current_user)
+    counselor = await counselor_service.counselor_repo.get_by_id(current_user.sub)
+    if not counselor:
+        raise BaseAppException("상담사 정보를 찾을 수 없습니다", status_code=404)
+    m_code = counselor.counselor_code
+    sum_realchattm, sum_usepoint = await chatlog_service.get_monthly_stats_by_m_code(m_code, yyyy, mm)
+    data = {
+        "m_code": m_code,
+        "yyyy": yyyy,
+        "mm": mm,
+        "sum_realchattm": sum_realchattm,
+        "sum_usepoint": sum_usepoint
+    }
+    return ok(data=data, message="상담시간/포인트 합계 조회 성공")

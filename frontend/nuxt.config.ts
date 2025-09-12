@@ -138,7 +138,9 @@ export default defineNuxtConfig({
       xl: 1280,  // 데스크톱
       xxl: 1536  // 대형 데스크톱
     },
-    domains: [], // 외부 이미지 도메인 (CDN 등)
+    // 외부 이미지 도메인 (CDN 등)
+    // CDN 베이스는 런타임에 주입되지만, nuxt-image 도메인 허용을 위해 고정 도메인도 등록
+    domains: ['cdn.sajuline.com'],
     presets: {
       avatar: {
         modifiers: {
@@ -190,7 +192,8 @@ export default defineNuxtConfig({
       kakaoClientId: process.env.NUXT_PUBLIC_KAKAO_CLIENT_ID,
       naverClientId: process.env.NUXT_PUBLIC_NAVER_CLIENT_ID,
       siteUrl: process.env.NUXT_PUBLIC_SITE_URL,
-      sentryDsn: process.env.NUXT_PUBLIC_SENTRY_DSN
+      sentryDsn: process.env.NUXT_PUBLIC_SENTRY_DSN,
+      cdnBase: process.env.NUXT_PUBLIC_CDN_BASE 
     }
   },
 

@@ -47,3 +47,15 @@ class Tm60ChatlogService:
         )
         
         return count
+
+    async def get_monthly_stats_by_m_code(self, m_code: str, yyyy: str, mm: str) -> tuple[int, int]:
+        """m_code, yyyy, mm 기준 월별 합계 (realchattm, usepoint)"""
+        log = get_logger_with_request_id()
+        log.info("Getting monthly stats by m_code", m_code=m_code, yyyy=yyyy, mm=mm)
+
+        if not m_code or not yyyy or not mm:
+            raise ValidationError("m_code, yyyy, mm는 필수입니다")
+        if len(yyyy) != 4 or len(mm) != 2:
+            raise ValidationError("yyyy는 4자리, mm는 2자리여야 합니다")
+
+        return await self.repository.get_monthly_stats_by_m_code(m_code, yyyy, mm)

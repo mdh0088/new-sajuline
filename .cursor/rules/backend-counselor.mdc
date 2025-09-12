@@ -12,6 +12,7 @@ description: "Counselor와 관련된 개발을 할 때 아래의 규칙을 참�
 - GET /api/v1/counselors/inquiries/admin: 관리자 문의 목록 조회(COUNSELOR가 보낸, 페이지네이션)
  - GET /api/v1/counselors/mypage: 상담사 마이페이지 요약 조회 (본인 기준)
  - PATCH /api/v1/counselors/mypage: 상담사 마이페이지 부분 수정 (상태/업무시간/소개/인사말/경력)
+ - GET /api/v1/counselors/consultation-time: 상담시간/포인트 월 합계 조회 (쿼리: yyyy, mm)
 
 ## Schemas
 - POST /counselors/login: 요청 [LoginRequest](mdc:backend/src/schemas/auth_schema.py), 응답 APIResponse[LoginResponse]
@@ -19,6 +20,7 @@ description: "Counselor와 관련된 개발을 할 때 아래의 규칙을 참�
 - GET /counselors/inquiries/users|admin: 응답 APIResponse[Paginated]
  - GET /counselors/mypage: 응답 APIResponse[CounselorResponse]
  - PATCH /counselors/mypage: 요청 [CounselorMypageUpdate](mdc:backend/src/schemas/counselor_schema.py), 응답 APIResponse[CounselorResponse]
+ - GET /counselors/consultation-time: 응답 APIResponse (data: { m_code, yyyy, mm, sum_realchattm, sum_usepoint })
 
 ## Models
 - 로그인: [Counselor](mdc:backend/src/models/counselor_model.py)
@@ -30,13 +32,16 @@ description: "Counselor와 관련된 개발을 할 때 아래의 규칙을 참�
 - 후기: [ConsultationReviewService](mdc:backend/src/services/consultation_review_service.py)
 - 문의: [InquiryService](mdc:backend/src/services/inquiry_service.py)
  - ARS(TM60): [Tm60MemberService](mdc:backend/src/services/ars/tm60_member_service.py) — 상담사 상태 변경 시 `tm60_member.m_state` 동기화 (1=WAITING, 2=CONSULTING, 3=ABSENT)
+ - ARS(TM60) 집계: [Tm60ChatlogService](mdc:backend/src/services/ars/tm60_chatlog_service.py) — `m_code`(= `t_counselor.counselor_code`)와 `yyyy`, `mm`로 월 합계 조회
 
 ## Repositories
 - 로그인: [CounselorRepository](mdc:backend/src/repositories/counselor_repository.py)
 - 후기: [ConsultationReviewRepository](mdc:backend/src/repositories/consultation_review_repository.py)
 - 문의: [InquiryRepository](mdc:backend/src/repositories/inquiry_repository.py)
  - ARS(TM60): [Tm60MemberRepository](mdc:backend/src/repositories/ars/tm60_member_repository.py) — `m_id` 기준 `m_state` 업데이트
+ - ARS(TM60) 집계: [Tm60ChatlogRepository](mdc:backend/src/repositories/ars/tm60_chatlog_repository.py) — 월별 합계 집계 (realchattm, usepoint)
 
 ## DI Notes
 - `get_tm60_member_service()`: `get_db_mssql()` → `Tm60MemberRepository` → `Tm60MemberService` 체인으로 생성하여 `CounselorService`에 주입
 - `CounselorService`는 상태 변경 시 주입된 `Tm60MemberService.sync_state_from_counselor_status(...)` 호출로 외부 DB 동기화
+ - `get_tm60_chatlog_service()`: `get_db_mssql()` → `Tm60ChatlogRepository` → `Tm60ChatlogService` 체인으로 생성하여 상담시간 집계 API에 주입

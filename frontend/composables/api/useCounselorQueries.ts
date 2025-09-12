@@ -10,13 +10,19 @@ import {
   type UseMutationOptions,
   type UseQueryOptions
 } from '@tanstack/vue-query'
+import { computed, unref, type Ref } from 'vue'
 import type { 
   LoginRequest,
   LoginData,
   LoginResponse,
   LogoutResponse
 } from '~/types/user/models'
-import type { APIResponse, APIError } from '~/types/common/api'
+import type { APIResponse, APIError, PaginatedResult } from '~/types/common/api'
+import type { NoticeListItem } from '~/types/counselor/notice'
+import type { ReviewSummary } from '~/types/counselor/review'
+import type { InquirySummary, CounselorMypageUpdatePayload } from '~/types/counselor/inquiry'
+
+// 타입은 counselor 전용 디렉터리에서 관리합니다.
 
 /**
  * 상담사 API 호출 함수들 (Vue Query에서 사용)
@@ -59,6 +65,123 @@ const counselorApi = {
       throw new Error(response.error?.message || '마이페이지 정보를 가져오지 못했습니다.')
     }
     return response.data
+  },
+
+  // 월간 상담시간/포인트 합계 조회
+  async getMonthlyConsultationStats(params: { yyyy: string; mm: string }) {
+    const { $api } = useNuxtApp()
+    const search = new URLSearchParams({ yyyy: params.yyyy, mm: params.mm }).toString()
+    const response = await $api<APIResponse<{ m_code: string; yyyy: string; mm: string; sum_realchattm: number; sum_usepoint: number }>>(`/api/v1/counselors/consultation-time?${search}`, {
+      method: 'GET'
+    })
+    if (!response.success || !response.data) {
+      throw new Error(response.error?.message || '월간 상담 통계를 가져오지 못했습니다.')
+    }
+    return response.data
+  },
+
+  // 상담사 마이페이지 부분 업데이트
+  async updateMypage(payload: CounselorMypageUpdatePayload) {
+    const { $api } = useNuxtApp()
+    const response = await $api<APIResponse<any>>('/api/v1/counselors/mypage', {
+      method: 'PATCH',
+      body: payload
+    })
+    if (!response.success || !response.data) {
+      throw new Error(response.error?.message || '마이페이지 변경에 실패했습니다.')
+    }
+    return response.data
+  },
+
+  // 공지사항 목록 (상담사 대상)
+  async getNoticeList(params: { page?: number; limit?: number; notice_type?: string; target_audience?: string; is_active?: boolean; is_important?: boolean; search?: string }): Promise<PaginatedResult<NoticeListItem>> {
+    const { $api } = useNuxtApp()
+    const query = new URLSearchParams()
+    query.set('page', String(params.page ?? 1))
+    query.set('limit', String(params.limit ?? 10))
+    // 기본적으로 상담사 대상, 활성 공지
+    query.set('target_audience', String(params.target_audience ?? 'COUNSELOR'))
+    if (params.notice_type) query.set('notice_type', params.notice_type)
+    if (params.is_active ?? true) query.set('is_active', String(params.is_active ?? true))
+    if (params.is_important !== undefined) query.set('is_important', String(params.is_important))
+    if (params.search) query.set('search', params.search)
+
+    const response = await $api<APIResponse<NoticeListItem[]>>(`/api/v1/notices?${query.toString()}`, { method: 'GET' })
+    if (!response.success) {
+      throw new Error(response.error?.message || '공지사항을 불러오지 못했습니다.')
+    }
+    const pagination = response.meta?.pagination
+    return {
+      items: response.data ?? [],
+      page: pagination?.page ?? (params.page ?? 1),
+      limit: pagination?.limit ?? (params.limit ?? 10),
+      total: pagination?.total ?? (response.data?.length ?? 0),
+      total_pages: pagination?.total_pages ?? 1
+    }
+  },
+
+  // 상담사 후기 목록
+  async getCounselorReviews(params: { page?: number; limit?: number; visible_only?: boolean }): Promise<PaginatedResult<ReviewSummary>> {
+    const { $api } = useNuxtApp()
+    const query = new URLSearchParams()
+    query.set('page', String(params.page ?? 1))
+    query.set('limit', String(params.limit ?? 20))
+    if (params.visible_only !== undefined) query.set('visible_only', String(params.visible_only))
+
+    const response = await $api<APIResponse<ReviewSummary[]>>(`/api/v1/counselors/inquiries/reviews?${query.toString()}`, { method: 'GET' })
+    if (!response.success) {
+      throw new Error(response.error?.message || '고객 후기를 불러오지 못했습니다.')
+    }
+    const pagination = response.meta?.pagination
+    return {
+      items: response.data ?? [],
+      page: pagination?.page ?? (params.page ?? 1),
+      limit: pagination?.limit ?? (params.limit ?? 20),
+      total: pagination?.total ?? (response.data?.length ?? 0),
+      total_pages: pagination?.total_pages ?? 1
+    }
+  },
+
+  // 상담문의 목록 (사용자 → 상담사)
+  async getCounselorUserInquiries(params: { page?: number; limit?: number }): Promise<PaginatedResult<InquirySummary>> {
+    const { $api } = useNuxtApp()
+    const query = new URLSearchParams()
+    query.set('page', String(params.page ?? 1))
+    query.set('limit', String(params.limit ?? 20))
+
+    const response = await $api<APIResponse<InquirySummary[]>>(`/api/v1/counselors/inquiries/users?${query.toString()}`, { method: 'GET' })
+    if (!response.success) {
+      throw new Error(response.error?.message || '상담문의를 불러오지 못했습니다.')
+    }
+    const pagination = response.meta?.pagination
+    return {
+      items: response.data ?? [],
+      page: pagination?.page ?? (params.page ?? 1),
+      limit: pagination?.limit ?? (params.limit ?? 20),
+      total: pagination?.total ?? (response.data?.length ?? 0),
+      total_pages: pagination?.total_pages ?? 1
+    }
+  },
+
+  // 관리자문의 목록 (상담사 → 관리자)
+  async getCounselorAdminInquiries(params: { page?: number; limit?: number }): Promise<PaginatedResult<InquirySummary>> {
+    const { $api } = useNuxtApp()
+    const query = new URLSearchParams()
+    query.set('page', String(params.page ?? 1))
+    query.set('limit', String(params.limit ?? 20))
+
+    const response = await $api<APIResponse<InquirySummary[]>>(`/api/v1/counselors/inquiries/admin?${query.toString()}`, { method: 'GET' })
+    if (!response.success) {
+      throw new Error(response.error?.message || '관리자문의를 불러오지 못했습니다.')
+    }
+    const pagination = response.meta?.pagination
+    return {
+      items: response.data ?? [],
+      page: pagination?.page ?? (params.page ?? 1),
+      limit: pagination?.limit ?? (params.limit ?? 20),
+      total: pagination?.total ?? (response.data?.length ?? 0),
+      total_pages: pagination?.total_pages ?? 1
+    }
   }
 }
 
@@ -67,6 +190,8 @@ const counselorApi = {
  */
 export const useCounselorQueries = () => {
   const queryClient = useQueryClient()
+  // 사용자 옵션 타입: 내부에서 queryKey/queryFn을 설정하므로 외부 옵션에서는 제외
+  type QueryOpts<T> = Omit<UseQueryOptions<T, APIError, T, any>, 'queryKey' | 'queryFn'>
 
   // 상담사 로그인 뮤테이션
   const useLogin = (
@@ -108,11 +233,112 @@ export const useCounselorQueries = () => {
     })
   }
 
+  // 월간 상담시간/포인트 합계 쿼리
+  const useMonthlyConsultationStats = (
+    yyyy: string | Ref<string>,
+    mm: string | Ref<string>,
+    options?: UseQueryOptions<any, APIError, any>
+  ) => {
+    return useQuery({
+      queryKey: computed(() => ['counselor', 'consultation-time', unref(yyyy), unref(mm)]),
+      queryFn: () => counselorApi.getMonthlyConsultationStats({ yyyy: String(unref(yyyy)), mm: String(unref(mm)) }),
+      staleTime: 1000 * 60, // 1분
+      ...options
+    })
+  }
+
+  // 상담사 마이페이지 업데이트 뮤테이션
+  const useUpdateMypage = (
+    options?: UseMutationOptions<any, APIError, CounselorMypageUpdatePayload>
+  ) => {
+    return useMutation({
+      mutationFn: counselorApi.updateMypage,
+      onSuccess: () => {
+        // 업데이트 후 최신 정보로 갱신
+        queryClient.invalidateQueries({ queryKey: ['counselor', 'mypage'] })
+      },
+      ...options
+    })
+  }
+
+  // 공지사항 목록 쿼리
+  const useNoticeList = (
+    page: number | Ref<number> = 1,
+    limit: number | Ref<number> = 10,
+    filters?: { notice_type?: string; target_audience?: string; is_active?: boolean; is_important?: boolean; search?: string },
+    options?: QueryOpts<PaginatedResult<NoticeListItem>>
+  ) => {
+    const p = computed(() => Number(unref(page)))
+    const l = computed(() => Number(unref(limit)))
+    return useQuery({
+      queryKey: computed(() => ['notices', p.value, l.value, filters?.notice_type ?? '', filters?.target_audience ?? 'COUNSELOR', String(filters?.is_active ?? true), String(filters?.is_important ?? ''), filters?.search ?? '']),
+      queryFn: () => counselorApi.getNoticeList({ page: p.value, limit: l.value, ...filters }),
+      staleTime: 1000 * 60,
+      ...options
+    })
+  }
+
+  // 고객 후기 목록 쿼리
+  const useCounselorReviews = (
+    page: number | Ref<number> = 1,
+    limit: number | Ref<number> = 20,
+    visibleOnly: boolean | Ref<boolean> = true,
+    options?: QueryOpts<PaginatedResult<ReviewSummary>>
+  ) => {
+    const p = computed(() => Number(unref(page)))
+    const l = computed(() => Number(unref(limit)))
+    const v = computed(() => Boolean(unref(visibleOnly)))
+    return useQuery({
+      queryKey: computed(() => ['counselor', 'reviews', p.value, l.value, v.value]),
+      queryFn: () => counselorApi.getCounselorReviews({ page: p.value, limit: l.value, visible_only: v.value }),
+      staleTime: 1000 * 60,
+      ...options
+    })
+  }
+
+  // 상담문의 목록 쿼리 (사용자→상담사)
+  const useCounselorUserInquiries = (
+    page: number | Ref<number> = 1,
+    limit: number | Ref<number> = 20,
+    options?: QueryOpts<PaginatedResult<InquirySummary>>
+  ) => {
+    const p = computed(() => Number(unref(page)))
+    const l = computed(() => Number(unref(limit)))
+    return useQuery({
+      queryKey: computed(() => ['counselor', 'inquiries', 'users', p.value, l.value]),
+      queryFn: () => counselorApi.getCounselorUserInquiries({ page: p.value, limit: l.value }),
+      staleTime: 1000 * 60,
+      ...options
+    })
+  }
+
+  // 관리자문의 목록 쿼리 (상담사→관리자)
+  const useCounselorAdminInquiries = (
+    page: number | Ref<number> = 1,
+    limit: number | Ref<number> = 20,
+    options?: QueryOpts<PaginatedResult<InquirySummary>>
+  ) => {
+    const p = computed(() => Number(unref(page)))
+    const l = computed(() => Number(unref(limit)))
+    return useQuery({
+      queryKey: computed(() => ['counselor', 'inquiries', 'admin', p.value, l.value]),
+      queryFn: () => counselorApi.getCounselorAdminInquiries({ page: p.value, limit: l.value }),
+      staleTime: 1000 * 60,
+      ...options
+    })
+  }
+
   return {
     // Mutations
     useLogin,
     useLogout,
+    useUpdateMypage,
     // Queries
-    useMypage
+    useMypage,
+    useMonthlyConsultationStats,
+    useNoticeList,
+    useCounselorReviews,
+    useCounselorUserInquiries,
+    useCounselorAdminInquiries
   }
 }
