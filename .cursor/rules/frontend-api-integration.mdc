@@ -1,6 +1,7 @@
 ---
-globs: frontend/**/*.{ts,tsx,vue}
-description: Rules for frontend API integration in Nuxt 3 + Vue Query with HttpOnly cookie auth. Summary only, no code samples.
+alwaysApply: false
+description: Frontend API 통합 관련 작업을 할 때 아래의 규칙을 참조.
+#globs: frontend/**/*.{ts,tsx,vue}
 ---
 
 ## Frontend API Integration Pattern (Nuxt 3 + Vue Query)

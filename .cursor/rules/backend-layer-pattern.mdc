@@ -1,8 +1,7 @@
 ---
-globs: backend/src/**/*.py
-description: Rules for the FastAPI backend API→Service→Repository pattern, including ORM Model and Pydantic Schema layers. Summary only, no code samples.
+description: FastAPI backend API→Service→Repository pattern, including ORM Model and Pydantic Schema layers. 관련 작업을 할 때 아래의 규칙을 참조.
+alwaysApply: false
 ---
-
 ## Backend Layer Pattern (API → Service → Repository)
 
 - Goal: Strictly separate Controller (API), Business Logic (Service), and Data Access (Repository) to improve testability and maintainability.
@@ -19,19 +18,20 @@ description: Rules for the FastAPI backend API→Service→Repository pattern, i
 - Responsibilities: parameter binding/validation, DI, rate limiting, authN/Z hooks, cookie/header I/O. No business rules.
 - Routing: `APIRouter` with domain `prefix` and `tags`.
 - DI factories: `get_xxx_repository(db=Depends(get_db_maria)) -> XxxRepository`, `get_xxx_service(repo=Depends(get_xxx_repository)) -> XxxService`.
+- Cross-DB services: For MSSQL adapters, create `get_db_mssql()` → repo → service chain and inject into domain services (e.g., `get_tm60_users_service()` → `EventService`, `UserService`; `get_tm60_member_service()` → `CounselorService`).
 - Error propagation: Let `BaseAppException`-derived errors bubble to the global handler.
 - Security/Rate limit: Apply `@limiter.limit(...)` and role guards (`verify_user_role`, `verify_counselor_role`, `verify_role`).
 
 ### 3) Service Layer
 - Responsibilities: business rules, domain validation, multi-repository orchestration, external integrations, transaction boundaries.
-- Transactions: call `repo.db.commit()` on success and `repo.db.rollback()` on failure. For multi-DB (Maria + MSSQL), implement compensation.
+- Transactions: call `repo.db.commit()` on success and `repo.db.rollback()` on failure. For multi-DB (Maria + MSSQL), implement compensation. External MSSQL writes are invoked via injected ARS services and offloaded to thread pool (repo handles sync session).
 - Validation & Errors: `ValidationError`, `NotFoundError`, `DuplicateError` with user-friendly messages.
 - Returns: Convert to response schemas; lists return `(items, page, size, total)` meta.
 - External I/O: Offload sync MSSQL work to thread pool; implement compensation logic.
 
 ### 4) Repository Layer
 - Responsibilities: pure data access. Build queries, CRUD entities, simple reads.
-- Session: Inject `AsyncSession`/`Session` in `__init__`. Never commit; use `flush/refresh` for mutations.
+- Session: Inject `AsyncSession`/`Session` in `__init__`. Never commit; use `flush/refresh` for mutations. MSSQL repositories accept a sync `Session` from `get_db_mssql()`.
 - Queries: `select(...)` for reads; use SQLAlchemy expressions (`and_`, `func`) for conditions.
 - Logging/Errors: Decorate with `@logger.catch(reraise=True)` (or equivalent) and re-raise; mask sensitive data.
 

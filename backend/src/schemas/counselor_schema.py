@@ -23,6 +23,8 @@ class CounselorBase(BaseModel):
     grade: Optional[CounselorGrade] = Field(default=CounselorGrade.BRONZE, description="상담사 등급")
     specialty_types: Optional[List[str]] = Field(None, description="전문 분야 (예: ['TARO', 'SAJU'])")
     keywords: Optional[str] = Field(None, description="키워드")
+    profile_image_url: Optional[str] = Field(None, description="프로필 이미지")
+    work_time: Optional[str] = Field(None, description="업무 시간")
 
 
 class CounselorSignup(CounselorBase):
@@ -75,6 +77,15 @@ class CounselorResponse(CounselorBase):
 
 
 # TODO: 추후 필요시 참고용 스키마들
+# 부분 업데이트 요청 스키마 (마이페이지 편집)
+class CounselorMypageUpdate(BaseModel):
+    """상담사 마이페이지 부분 업데이트 요청 스키마"""
+    counselor_status: Optional[CounselorStatus] = Field(None, description="상담사 상태: WAITING/CONSULTING/ABSENT")
+    work_time: Optional[str] = Field(None, description="업무 시간")
+    introduction_short: Optional[str] = Field(None, description="짧은 소개")
+    greeting_message: Optional[str] = Field(None, description="인사말")
+    career_info: Optional[str] = Field(None, description="경력사항")
+
 # class CounselorLogin(BaseModel):
 #     """상담사 로그인 요청 스키마"""  
 #     counselor_id: str = Field(..., description="상담사 ID")

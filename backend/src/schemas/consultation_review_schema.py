@@ -56,7 +56,7 @@ class ConsultationReviewSummary(BaseModel):
     is_best: bool = Field(..., description="베스트 후기")
     like_count: int = Field(..., description="좋아요 수")
     created_at: datetime = Field(..., description="생성일시")
-    has_reply: bool = Field(..., description="상담사 답변 여부")
+    has_reply: bool = Field(False, description="상담사 답변 여부")
     
     model_config = ConfigDict(from_attributes=True)
 

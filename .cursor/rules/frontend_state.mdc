@@ -1,0 +1,81 @@
+---
+description: Frontend 상태/인증/영속성/네임스페이스 및 API 경로 관련 작업을 할 때 아래의 규칙을 참조.
+#globs: frontend/**/*.{ts,tsx,vue}
+alwaysApply: false
+---
+# Frontend 상태/인증 규칙
+
+본 규칙은 Nuxt + Vue Query 기반 프런트엔드의 상태/인증/네임스페이스/경로 사용을 표준화합니다. 상세 구현은 [frontend/plugins/api.client.ts](mdc:frontend/plugins/api.client.ts), [frontend/plugins/vue-query.ts](mdc:frontend/plugins/vue-query.ts), [frontend/plugins/session.server.ts](mdc:frontend/plugins/session.server.ts), [frontend/middleware/auth.ts](mdc:frontend/middleware/auth.ts), [frontend/composables/auth/useAuth.ts](mdc:frontend/composables/auth/useAuth.ts), [frontend/composables/api/useAuthQueries.ts](mdc:frontend/composables/api/useAuthQueries.ts), [frontend/composables/api/useUserQueries.ts](mdc:frontend/composables/api/useUserQueries.ts), [frontend/composables/api/useCounselorQueries.ts](mdc:frontend/composables/api/useCounselorQueries.ts)를 참조하세요.
+
+## 1) API 호출 규칙 ($api)
+- 항상 전역 `$api` 인스턴스를 사용합니다: [frontend/plugins/api.client.ts](mdc:frontend/plugins/api.client.ts)
+  - `baseURL = runtimeConfig.public.apiBase`
+  - `credentials: 'include'`로 HttpOnly 쿠키 자동 포함
+  - 요청 전 공통 헤더 설정 및 CSRF 메타 연동
+  - 응답 에러 처리 표준화(`createError`) 및 401 자동 리프레시 단일-비행(single-flight)
+- 경로 규칙
+  - 호출부 경로는 절대 경로 `/api/v1/...`를 사용합니다. (현재 코드 기준에 맞춤)
+  - Refresh 엔드포인트는 반드시 `/api/v1/auth/refresh`를 사용합니다. (플러그인 내부 포함)
+  - 다음 사용 금지: `/v1/auth/refresh` (구 구현 경로)
+  - 추가 엔드포인트: SSR 세션 프리로드 전용으로 `/api/v1/auth/me` 사용 (서버 플러그인)
+
+## 2) 인증/세션 관리
+- 토큰 저장
+  - Access/Refresh 토큰은 서버가 설정하는 HttpOnly 쿠키로만 보관(프런트 JS로 접근 금지)
+- 세션 메타 저장(영속)
+  - `localStorage('user_session')`에 세션 메타만 저장/복원: 사용자 식별, 닉네임, 역할, 로그인 시각, 토큰 만료 시각 등
+  - 구현: [frontend/composables/auth/useAuth.ts](mdc:frontend/composables/auth/useAuth.ts)
+  - SSR 세션 프리로드: 서버 플러그인에서 쿠키를 이용해 `/api/v1/auth/me` 호출 후 `useState('user_session')`에 저장
+    - 구현: [frontend/plugins/session.server.ts](mdc:frontend/plugins/session.server.ts)
+    - 헤더: `useRequestHeaders(['cookie'])`로 쿠키 전달, `credentials: 'include'`
+    - 주의: SSR 단계의 닉네임 등 상세 메타는 빈 값일 수 있으며 CSR에서 보강
+- 리프레시 정책
+  - 자동: `$api` 인터셉터가 401 수신 시 `/api/v1/auth/refresh`로 단일-비행 갱신 후 원요청 재시도
+  - 수동/사전: 만료 임박 시 `useAuthQueries().useRefreshToken()` 호출(동일 경로 사용)
+- 접근 가드
+  - `requireAuth()`, `requireGuest()`를 사용하여 라우트 보호
+  - 라우트 메타: `requiresAuth`, `requireRole('user'|'counselor')`를 페이지에서 선언
+  - 미들웨어 동작: [frontend/middleware/auth.ts](mdc:frontend/middleware/auth.ts)
+    - SSR: 세션 프리로드를 우선 사용, 즉시 `/login` 리다이렉트를 최소화 (CSR에서 최종 판단)
+    - CSR: 비인증 시 `/login`으로 리다이렉트, 역할 불일치 시 역할별 기본 마이페이지로 분기(`/counselor/mypage` 또는 `/mypage`)
+  - 세션 복원 우선순위
+    - SSR: `useState('user_session')` → (필요 시) 이후 단계에서 갱신
+    - CSR: `useState('user_session')`(hydration) → `localStorage('user_session')` → `/api/v1/auth/refresh`
+
+## 3) 서버 상태(Vue Query)
+- 플러그인: [frontend/plugins/vue-query.ts](mdc:frontend/plugins/vue-query.ts)
+  - SSR de/hydration: `useState('vue-query')` 키 사용
+  - 기본 옵션: `staleTime=5m`, `gcTime=30m`, mount 시 always refetch, reconnect refetch, 401/403/404는 재시도 안 함
+- 디스크 영속화 금지
+  - 서버 데이터는 로컬스토리지 등 영구 저장 금지(캐시=메모리, SSR로만 초기화)
+
+## 4) 도메인 컴포저블 규칙
+- 인증 API: [frontend/composables/api/useAuthQueries.ts](mdc:frontend/composables/api/useAuthQueries.ts)
+  - `useWhoAmI()` → `['auth','me']`
+  - `useRefreshToken()` → `POST /api/v1/auth/refresh`
+- 사용자 API: [frontend/composables/api/useUserQueries.ts](mdc:frontend/composables/api/useUserQueries.ts)
+  - 단건/목록/중복검사/CRUD/로그인/로그아웃 일체 `/api/v1/users/...`
+- 상담사 API: [frontend/composables/api/useCounselorQueries.ts](mdc:frontend/composables/api/useCounselorQueries.ts)
+  - 로그인/로그아웃 `/api/v1/counselors/...`
+
+## 5) 네임스페이스(쿼리 키/스토리지 키)
+- Vue Query 키 표준
+  - 단건: `['user', userId]`
+  - 목록: `['users','list', params]`
+  - 가용성 검사: `['availability','email', email]`, `['availability','user-id', userId]`, ...
+  - 인증: `['auth','me']`
+- SSR 상태 키: `useState('vue-query')`
+- 로컬 스토리지 키: `'user_session'`
+  - SSR 상태 키(세션): `useState('user_session')` (서버 플러그인 프리로드)
+
+## 6) 금지/권장 사항
+- 금지
+  - 토큰을 JS 영역(localStorage/sessionStorage/IndexedDB)에 기록
+  - `$api` 이외의 직접 `fetch/$fetch`로 백엔드 호출
+  - Refresh 경로로 `/v1/auth/refresh` 사용
+  - 예외: 서버 전용 SSR 프리로드 플러그인([frontend/plugins/session.server.ts](mdc:frontend/plugins/session.server.ts))은 초기화 순서와 쿠키 포워딩 요구로 인해 네이티브 `$fetch` 사용 허용
+    - 조건: `credentials: 'include'`, `headers.cookie` 포워딩, 경로는 반드시 `/api/v1/auth/me`
+- 권장
+  - 서버 데이터는 Vue Query 캐시로만 관리하고, 변경 시 invalidate/setQueryData를 통해 일관성 유지
+  - 인증 만료 임박 시 사전 갱신(`useAuth`의 주기 체크 또는 수동 호출)으로 UX 유지
+

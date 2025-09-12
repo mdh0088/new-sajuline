@@ -14,6 +14,7 @@ from src.schemas.user_schema import UserResponse, UserSignup
 from src.repositories.user_repository import UserRepository
 from src.repositories.counselor_repository import CounselorRepository
 from src.repositories.ars.tm60_users_repository import Tm60UsersRepository
+from src.services.ars.tm60_users_service import Tm60UsersService
 from src.services.auth_service import AuthService
 from src.services.user_activity_log_service import UserActivityLogService
 from src.schemas.user_activity_log_schema import DeviceType, UserType
@@ -29,13 +30,15 @@ class UserService:
         counselor_repo: CounselorRepository, 
         auth_service: AuthService,
         activity_log_service: Optional[UserActivityLogService] = None,
-        event_service: Optional["EventService"] = None
+        event_service: Optional["EventService"] = None,
+        tm60_users_service: Optional[Tm60UsersService] = None
     ):
         self.user_repo = user_repo
         self.counselor_repo = counselor_repo
         self.auth_service = auth_service
         self.activity_log_service = activity_log_service
         self.event_service = event_service
+        self.tm60_users_service = tm60_users_service
     
     async def signup(self, signup_data: UserSignup) -> UserResponse:
         """
@@ -94,21 +97,19 @@ class UserService:
             await self.user_repo.db.commit()
             log.info("MariaDB user created and committed", user_id=user.user_id)
             
-            # 5-2. MSSQL(TM60)에 사용자 생성 시도
-            for mssql_session in get_db_mssql():
-                tm60_repo = Tm60UsersRepository(mssql_session)
-                tm60_success = await tm60_repo.create(
-                    user_id=user.user_id,
-                    phone=user.phone or "",
-                    nickname=user.nickname or ""
-                )
-                
-                if not tm60_success:
-                    # 5-3. MSSQL 실패시 MariaDB에서 사용자 완전 삭제 (보상 트랜잭션)
-                    await self.user_repo.delete_by_user_id(user.user_id)
-                    log.warning("TM60 user creation failed, deleted MariaDB user", user_id=user.user_id)
-                    raise ValidationError("외부 시스템 연동 오류로 회원가입에 실패했습니다.")
-                break  # 첫 번째 세션만 사용
+            # 5-2. MSSQL(TM60)에 사용자 생성 시도 (주입된 서비스 사용)
+            if not self.tm60_users_service:
+                raise ValidationError("외부 시스템 연동 서비스가 초기화되지 않았습니다.")
+            tm60_success = await self.tm60_users_service.create_user(
+                user_id=user.user_id,
+                phone=user.phone,
+                nickname=user.nickname
+            )
+            if not tm60_success:
+                # 5-3. MSSQL 실패시 MariaDB에서 사용자 완전 삭제 (보상 트랜잭션)
+                await self.user_repo.delete_by_user_id(user.user_id)
+                log.warning("TM60 user creation failed, deleted MariaDB user", user_id=user.user_id)
+                raise ValidationError("외부 시스템 연동 오류로 회원가입에 실패했습니다.")
             
             log.info("Both databases updated successfully", user_id=user.user_id)
             

@@ -1,10 +1,11 @@
 ---
-globs: frontend/**/*.vue,frontend/**/*.ts,frontend/nuxt.config.ts
+description: Frontend 페이지 렌더링 현황 관련 작업을 할 때 아래의 규칙을 참조.
+#globs: frontend/**/*.{vue}
+alwaysApply: false
 ---
-
 ## Frontend 페이지 렌더링 현황 (현재 설정 기준)
 
-- 참조: [frontend/nuxt.config.ts](mdc:frontend/nuxt.config.ts), [FRONT_PAGE_README.md](mdc:FRONT_PAGE_README.md)
+- 참조: [frontend/nuxt.config.ts](mdc:frontend/nuxt.config.ts)
 
 ### 전역 설정
 - **SSR**: 활성 (`ssr: true`)

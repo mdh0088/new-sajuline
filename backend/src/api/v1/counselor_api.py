@@ -8,21 +8,26 @@ from sqlalchemy.ext.asyncio import AsyncSession
 # 레이트 리미팅 import 추가
 from src.common.middleware.rate_limit import limiter
 
-from src.core.database import get_db_maria
+from src.core.database import get_db_maria, get_db_mssql
 from src.repositories.counselor_repository import CounselorRepository
 from src.repositories.user_activity_log_repository import UserActivityLogRepository
 from src.repositories.consultation_review_repository import ConsultationReviewRepository
 from src.repositories.inquiry_repository import InquiryRepository
+from src.repositories.ars.tm60_member_repository import Tm60MemberRepository
 from src.services.counselor_service import CounselorService
-from src.services.auth_service import AuthService
+from src.services.auth_service import AuthService, get_current_user, TokenPayload
 from src.services.user_activity_log_service import UserActivityLogService
 from src.services.consultation_review_service import ConsultationReviewService
 from src.services.inquiry_service import InquiryService
+from src.services.ars.tm60_member_service import Tm60MemberService
+from src.services.ars.tm60_chatlog_service import Tm60ChatlogService
 from src.schemas.auth_schema import LoginRequest, LoginResponse
+from src.schemas.counselor_schema import CounselorResponse, CounselorMypageUpdate
 from src.schemas.user_activity_log_schema import UserType, DeviceType
 from src.common.response import APIResponse, APIResponseBuilder, ok, fail
 from src.common.logging import logger, get_logger_with_request_id
 from src.common.utils.client_info import extract_client_info
+from src.common.utils.auth_utils import verify_counselor_role
 from src.exceptions.custom_exceptions import BaseAppException
 
 router = APIRouter(prefix="/counselors", tags=["counselors"])
@@ -75,12 +80,22 @@ def get_inquiry_service(
     return InquiryService(inquiry_repo)
 
 
+def get_tm60_member_service(mssql = Depends(get_db_mssql)) -> Tm60MemberService:
+    repo = Tm60MemberRepository(mssql)
+    return Tm60MemberService(repo)
+
+def get_tm60_chatlog_service() -> Tm60ChatlogService:
+    for mssql in get_db_mssql():
+        return Tm60ChatlogService(mssql)
+
+
 def get_counselor_service(
     counselor_repo: CounselorRepository = Depends(get_counselor_repository),
-    auth_service: AuthService = Depends(get_auth_service)
+    auth_service: AuthService = Depends(get_auth_service),
+    tm60_member_service: Tm60MemberService = Depends(get_tm60_member_service)
 ) -> CounselorService:
     """상담사 서비스 의존성 주입"""
-    return CounselorService(counselor_repo, auth_service)
+    return CounselorService(counselor_repo, auth_service, tm60_member_service)
 
 
 @router.post(
@@ -176,39 +191,42 @@ async def login(
     return ok(login_response, "상담사 로그인이 성공했습니다")
 
 
-@router.get("/{counselor_id}/reviews", response_model=APIResponse, summary="상담사별 후기 목록 조회")
+@router.get("/inquiries/reviews", response_model=APIResponse, summary="상담사별 후기 목록 조회")
 async def get_counselor_reviews(
-    counselor_id: str,
     page: int = Query(1, ge=1, description="페이지 번호"),
     limit: int = Query(20, ge=1, le=100, description="페이지당 항목 수"),
     visible_only: bool = Query(True, description="공개 후기만 조회"),
+    current_user: TokenPayload = Depends(get_current_user),
     review_service: ConsultationReviewService = Depends(get_consultation_review_service)
 ) -> APIResponse:
     """
-    상담사별 후기 목록을 조회합니다.
+    상담사별 후기 목록을 조회합니다. (현재 로그인한 상담사 기준)
     
-    - **counselor_id**: 상담사 ID
     - **page**: 페이지 번호 (기본값: 1)
     - **limit**: 페이지당 항목 수 (기본값: 20, 최대: 100)
     - **visible_only**: 공개 후기만 조회 여부 (기본값: true)
     """
+    # 권한 확인: 상담사만 접근
+    verify_counselor_role(current_user)
+    target_counselor_id = current_user.sub
+    
     log = get_logger_with_request_id()
     log.info("API: Getting counselor reviews", 
-            counselor_id=counselor_id, 
+            counselor_id=target_counselor_id, 
             page=page, 
             limit=limit, 
             visible_only=visible_only)
     
     # 서비스 호출 (tuple 반환)
     reviews, page, limit, total = await review_service.get_counselor_reviews(
-        counselor_id=counselor_id,
+        counselor_id=target_counselor_id,
         page=page,
         limit=limit,
         visible_only=visible_only
     )
     
     log.info("API: Counselor reviews retrieved successfully", 
-            counselor_id=counselor_id,
+            counselor_id=target_counselor_id,
             count=len(reviews), 
             total=total, 
             page=page, 
@@ -228,7 +246,7 @@ async def get_counselor_reviews(
 async def get_counselor_user_inquiries(
     page: int = Query(1, ge=1, description="페이지 번호"),
     limit: int = Query(20, ge=1, le=100, description="페이지당 항목 수"),
-    counselor_service: CounselorService = Depends(get_counselor_service),
+    current_user: TokenPayload = Depends(get_current_user),
     inquiry_service: InquiryService = Depends(get_inquiry_service)
 ) -> APIResponse:
     """
@@ -238,14 +256,15 @@ async def get_counselor_user_inquiries(
     - **page**: 페이지 번호 (기본값: 1)
     - **limit**: 페이지당 항목 수 (기본값: 20, 최대: 100)
     """
+    # 권한 확인: 상담사만 접근
+    verify_counselor_role(current_user)
+    counselor_id = current_user.sub
+    
     log = get_logger_with_request_id()
     log.info("API: Getting counselor user inquiries", 
+            counselor_id=counselor_id,
             page=page, 
             limit=limit)
-    
-    # TODO: 현재 로그인된 상담사 ID 가져오기 (JWT 토큰에서)
-    # 임시로 하드코딩된 counselor_id 사용
-    counselor_id = "temp_counselor_id"
     
     # 서비스 호출 (tuple 반환)
     inquiries, page, limit, total = await inquiry_service.get_counselor_user_inquiries(
@@ -275,7 +294,7 @@ async def get_counselor_user_inquiries(
 async def get_counselor_admin_inquiries(
     page: int = Query(1, ge=1, description="페이지 번호"),
     limit: int = Query(20, ge=1, le=100, description="페이지당 항목 수"),
-    counselor_service: CounselorService = Depends(get_counselor_service),
+    current_user: TokenPayload = Depends(get_current_user),
     inquiry_service: InquiryService = Depends(get_inquiry_service)
 ) -> APIResponse:
     """
@@ -285,14 +304,15 @@ async def get_counselor_admin_inquiries(
     - **page**: 페이지 번호 (기본값: 1)
     - **limit**: 페이지당 항목 수 (기본값: 20, 최대: 100)
     """
+    # 권한 확인: 상담사만 접근
+    verify_counselor_role(current_user)
+    counselor_id = current_user.sub
+    
     log = get_logger_with_request_id()
     log.info("API: Getting counselor admin inquiries", 
+            counselor_id=counselor_id,
             page=page, 
             limit=limit)
-    
-    # TODO: 현재 로그인된 상담사 ID 가져오기 (JWT 토큰에서)
-    # 임시로 하드코딩된 counselor_id 사용
-    counselor_id = "temp_counselor_id"
     
     # 서비스 호출 (tuple 반환)
     inquiries, page, limit, total = await inquiry_service.get_counselor_admin_inquiries(
@@ -316,3 +336,84 @@ async def get_counselor_admin_inquiries(
         total=total,
         message="관리자 문의 목록 조회 성공"
     )
+
+
+@router.get(
+    "/mypage",
+    response_model=APIResponse[CounselorResponse],
+    summary="상담사 마이페이지 정보",
+    description="현재 로그인한 상담사의 요약 정보를 반환합니다."
+)
+async def get_counselor_mypage(
+    current_user: TokenPayload = Depends(get_current_user),
+    counselor_service: CounselorService = Depends(get_counselor_service)
+):
+    """
+    상담사 마이페이지 정보 조회 (t_counselor 단일 행 반환)
+    - counselor_id, nickname, profile_image_url, introduction_short, greeting_message,
+      career_info, counselor_status, grade, specialty_types, keywords, work_time,
+      rating_avg, rating_count, consultation_count, consultation_time_total,
+      after_amount, before_amount
+    """
+    verify_counselor_role(current_user)
+    counselor_id = current_user.sub
+    log = get_logger_with_request_id()
+    log.info("API: Getting counselor mypage info", counselor_id=counselor_id)
+
+    data = await counselor_service.get_mypage_info(counselor_id)
+    return ok(data=data, message="상담사 마이페이지 조회 성공")
+
+
+@router.patch(
+    "/mypage",
+    response_model=APIResponse[CounselorResponse],
+    summary="상담사 마이페이지 부분 수정",
+    description="전달된 필드만 부분 업데이트하며, 상태 변경 시 MSSQL tm60_member.m_state를 동기화합니다."
+)
+async def update_counselor_mypage(
+    updates: CounselorMypageUpdate,
+    current_user: TokenPayload = Depends(get_current_user),
+    counselor_service: CounselorService = Depends(get_counselor_service)
+):
+    """
+    - 변경 대상 필드 (옵셔널):
+      counselor_status, work_time, introduction_short, greeting_message, career_info
+    - 상태 변경 시 MSSQL 매핑: WAITING→1, CONSULTING→2, ABSENT→3
+    """
+    verify_counselor_role(current_user)
+    counselor_id = current_user.sub
+    log = get_logger_with_request_id()
+    log.info("API: Updating counselor mypage", counselor_id=counselor_id)
+
+    data = await counselor_service.update_mypage(counselor_id, updates)
+    return ok(data=data, message="상담사 마이페이지 수정 성공")
+
+
+@router.get(
+    "/consultation-time",
+    response_model=APIResponse,
+    summary="상담시간/포인트 월 합계",
+    description="tm60_chatlog에서 counselor_code(m_code) 기준 yyyy, mm 조건으로 합계를 조회"
+)
+async def get_monthly_consultation_stats(
+    yyyy: str = Query(..., min_length=4, max_length=4, description="연도 (YYYY)"),
+    mm: str = Query(..., min_length=2, max_length=2, description="월 (MM)"),
+    current_user: TokenPayload = Depends(get_current_user),
+    counselor_service: CounselorService = Depends(get_counselor_service),
+    chatlog_service: Tm60ChatlogService = Depends(get_tm60_chatlog_service)
+):
+    """현재 로그인 상담사의 `counselor_code`로 tm60_chatlog 집계 조회"""
+    verify_counselor_role(current_user)
+    counselor = await counselor_service.counselor_repo.get_by_id(current_user.sub)
+    if not counselor:
+        raise BaseAppException("상담사 정보를 찾을 수 없습니다", status_code=404)
+    m_code = counselor.counselor_code
+    sum_realchattm, sum_usepoint = await chatlog_service.get_monthly_stats_by_m_code(m_code, yyyy, mm)
+    data = {
+        "m_code": m_code,
+        "yyyy": yyyy,
+        "mm": mm,
+        "sum_realchattm": sum_realchattm,
+        "sum_usepoint": sum_usepoint
+    }
+    return ok(data=data, message="상담시간/포인트 합계 조회 성공")
