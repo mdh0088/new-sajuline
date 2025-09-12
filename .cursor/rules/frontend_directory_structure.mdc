@@ -1,8 +1,8 @@
 ---
-description: "Nuxt 4 frontend directory structure guide for navigation and onboarding"
-globs: frontend/**
+description: "Frontend 디렉터리 구조 가이드 작업을 할 때 아래의 규칙을 참조."
+#globs: frontend/**
+alwaysApply: false
 ---
-
 ## Purpose
 Provide a concise, always-available map of the Nuxt 4 (Vue 3) frontend to help contributors and AI agents quickly locate files, follow conventions, and add new features consistently.
 
@@ -11,7 +11,6 @@ Provide a concise, always-available map of the Nuxt 4 (Vue 3) frontend to help c
 - [app.vue](mdc:frontend/app.vue): Global layout, Notivue mount, global CSS import
 - [tailwind.config.js](mdc:frontend/tailwind.config.js): Tailwind scan paths, theme extensions (colors, fonts)
 - [tsconfig.json](mdc:frontend/tsconfig.json): Nuxt-generated TS references
-- Additional docs: [FRONT_DIRECTORT_README.md](mdc:frontend/FRONT_DIRECTORT_README.md), [FRONT_FUNCTION_README.md](mdc:FRONT_FUNCTION_README.md), [FRONT_PAGE_README.md](mdc:FRONT_PAGE_README.md)
 
 ## Directory Map (overview)
 ```text
@@ -65,9 +64,3 @@ frontend/
 - New validation/util: add under `composables/validation` or `composables/utils`
 - New types: add under `types/<area>/`
 - New plugin: add under `plugins/` and restart dev server
-
-## Cross-References
-For a fuller narrative overview and component/page specifics, see:
-- [FRONT_DIRECTORT_README.md](mdc:frontend/FRONT_DIRECTORT_README.md)
-- [FRONT_FUNCTION_README.md](mdc:FRONT_FUNCTION_README.md)
-- [FRONT_PAGE_README.md](mdc:FRONT_PAGE_README.md)

@@ -179,9 +179,7 @@ await updateUser.mutateAsync({ userId, userData }) // 성공 시 관련 캐시 i
 ---
 
 ## 11) 현재 구현상 주의사항(일관성)
-- API 경로 패턴이 두 가지 공존
-  - `$api` 자동 리프레시: `{apiBase}/v1/auth/refresh`
-  - 명시 리프레시 훅: `{apiBase}/api/v1/auth/refresh`
+- 토큰 리프레시 경로를 `/api/v1/auth/refresh`로 통일했습니다. `$api` 인터셉터와 `useAuthQueries` 모두 동일 경로를 사용합니다.
 - `@pinia/nuxt`는 로드되나, `frontend` 디렉터리 내 실제 Pinia 스토어는 현재 없음(향후 도메인 스토어 도입 시 기준 합의 필요).
 
 이 문서는 코드 기준 실제 동작을 정리했으며, 이후 일관성 정비(경로 규칙, 스토어 도입 등)는 별도 결정에 따릅니다.

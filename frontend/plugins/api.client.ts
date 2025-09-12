@@ -24,7 +24,7 @@ export default defineNuxtPlugin(() => {
     }
 
     // 새로운 refresh 시작
-    refreshPromise = $fetch('/v1/auth/refresh', {
+    refreshPromise = $fetch('/api/v1/auth/refresh', {
       baseURL: apiBase,
       method: 'POST' as const,
       credentials: 'include',
@@ -122,7 +122,7 @@ export default defineNuxtPlugin(() => {
         }
         
         // refresh API 호출이 아닌 경우에만 토큰 갱신 시도
-        if (!request.toString().includes('/v1/auth/refresh')) {
+        if (!request.toString().includes('/api/v1/auth/refresh')) {
           try {
             console.log('🔄 토큰 만료 감지, 자동 갱신 시도...')
             
