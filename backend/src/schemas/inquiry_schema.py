@@ -56,7 +56,7 @@ class InquirySummary(BaseModel):
     category: Optional[str] = Field(None, description="문의 카테고리")
     title: Optional[str] = Field(None, description="제목")
     is_read: bool = Field(..., description="읽음 상태")
-    has_reply: bool = Field(..., description="답변 여부")
+    has_reply: bool = Field(False, description="답변 여부")
     created_at: datetime = Field(..., description="생성일시")
     
     model_config = ConfigDict(from_attributes=True)

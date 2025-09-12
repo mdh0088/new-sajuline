@@ -119,7 +119,9 @@ async def app_exception_handler(request: Request, exc: BaseAppException):
     user_agent_info = getattr(request.state, 'user_agent_info', {})
     
     if exc.status_code >= 500:
-        log.error(f"{type(exc).__name__}: {exc.message}",
+        # 안전한 포매팅: 키워드 충돌/KeyError 방지 위해 message를 args로 분리하지 않음
+        log.error("%s: %s",
+                 type(exc).__name__, exc.message,
                  path=request.url.path,
                  method=request.method,
                  status_code=exc.status_code,
@@ -132,7 +134,8 @@ async def app_exception_handler(request: Request, exc: BaseAppException):
                  call_stack=app_frames if len(app_frames) > 1 else None,
                  request_body=request_body)
     else:
-        log.warning(f"{type(exc).__name__}: {exc.message}",
+        log.warning("%s: %s",
+                   type(exc).__name__, exc.message,
                    path=request.url.path,
                    method=request.method,
                    status_code=exc.status_code,

@@ -333,13 +333,15 @@ export const useAuth = () => {
   /**
    * 컴포넌트 마운트 시 초기화
    */
-  onMounted(() => {
-    // 세션 복원은 비동기 수행 (중복 호출 방지)
-    restoreSession()
-    if (isAuthenticated.value) {
-      startTokenCheck()
-    }
-  })
+  if (process.client) {
+    onMounted(() => {
+      // 세션 복원은 비동기 수행 (중복 호출 방지)
+      restoreSession()
+      if (isAuthenticated.value) {
+        startTokenCheck()
+      }
+    })
+  }
 
   /** 세션 역할 설정 (API 호출 없이 세션만 갱신) */
   const setRole = (newRole: 'user' | 'counselor') => {

@@ -57,6 +57,18 @@ export interface APIError {
 }
 
 /**
+ * 페이지네이션 공통 결과 타입
+ * - meta.pagination을 편히 쓰기 위한 전개형 구조
+ */
+export interface PaginatedResult<T> {
+  items: T[]
+  page: number
+  limit: number
+  total: number
+  total_pages: number
+}
+
+/**
  * 페이지네이션 요청 파라미터
  */
 export interface PaginationParams {

@@ -23,6 +23,7 @@ class CounselorBase(BaseModel):
     grade: Optional[CounselorGrade] = Field(default=CounselorGrade.BRONZE, description="상담사 등급")
     specialty_types: Optional[List[str]] = Field(None, description="전문 분야 (예: ['TARO', 'SAJU'])")
     keywords: Optional[str] = Field(None, description="키워드")
+    profile_image_url: Optional[str] = Field(None, description="프로필 이미지")
     work_time: Optional[str] = Field(None, description="업무 시간")
 
 

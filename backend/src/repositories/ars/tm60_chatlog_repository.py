@@ -75,3 +75,37 @@ class Tm60ChatlogRepository:
                 f"상담 내역 수 조회 실패: {str(e)}", 
                 status_code=500
             )
+
+    @logger.catch(reraise=True)
+    async def get_monthly_stats_by_m_code(self, m_code: str, yyyy: str, mm: str) -> tuple[int, int]:
+        """
+        멤버 코드(m_code)와 연월(yyyy, mm)로 월별 합계 집계
+        - 조건: usepoint > 0
+        Returns: (sum_realchattm, sum_usepoint)
+        """
+        log = get_logger_with_request_id()
+        log.info("Getting monthly stats by m_code", m_code=m_code, yyyy=yyyy, mm=mm)
+
+        def _sync_get_stats() -> tuple[int, int]:
+            try:
+                sum_realchattm, sum_usepoint = (
+                    self.mssql_session.query(
+                        func.coalesce(func.sum(Tm60Chatlog.realchattm), 0),
+                        func.coalesce(func.sum(Tm60Chatlog.usepoint), 0)
+                    )
+                    .filter(
+                        and_(
+                            Tm60Chatlog.usepoint > 0,
+                            Tm60Chatlog.m_code == m_code,
+                            Tm60Chatlog.yyyy == yyyy,
+                            Tm60Chatlog.mm == mm,
+                        )
+                    )
+                    .one()
+                )
+                return int(sum_realchattm or 0), int(sum_usepoint or 0)
+            except Exception as e:
+                log.warning("Failed to get monthly stats by m_code", m_code=m_code, yyyy=yyyy, mm=mm, error=str(e))
+                raise BaseAppException(f"월별 상담 통계 조회 실패: {str(e)}", status_code=500)
+
+        return await asyncio.to_thread(_sync_get_stats)
