@@ -50,16 +50,34 @@
             <h3 class="text-base font-semibold">활동시간</h3>
             <button class="px-3 py-2 rounded-xl bg-gradient-to-r from-purple-600 to-purple-700 text-sm font-semibold active:scale-95" @click="notifySaved">변경하기</button>
           </div>
-          <input type="text" class="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10" placeholder="매일 04:00~밤 새벽 1:00" v-model="activeTime" />
+          <input type="text" class="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10" placeholder="매일 04:00~밤 새벽 1:00" v-model="workTime" />
         </div>
 
-        <!-- 오늘의 공지 -->
+        <!-- 짧은 소개글 -->
         <div class="mt-5 rounded-2xl border border-white/10 bg-white/5 p-5">
           <div class="flex items-center justify-between mb-3">
-            <h3 class="text-base font-semibold">오늘의 공지</h3>
+            <h3 class="text-base font-semibold">짧은 소개글</h3>
             <button class="px-3 py-2 rounded-xl bg-gradient-to-r from-purple-600 to-purple-700 text-sm font-semibold active:scale-95" @click="notifySaved">변경하기</button>
           </div>
-          <textarea rows="4" class="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10" v-model="todayNotice" />
+          <textarea rows="3" class="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10" v-model="shortIntro" placeholder="간단한 소개글을 입력해주세요" />
+        </div>
+
+        <!-- 인사말 -->
+        <div class="mt-5 rounded-2xl border border-white/10 bg-white/5 p-5">
+          <div class="flex items-center justify-between mb-3">
+            <h3 class="text-base font-semibold">인사말</h3>
+            <button class="px-3 py-2 rounded-xl bg-gradient-to-r from-purple-600 to-purple-700 text-sm font-semibold active:scale-95" @click="notifySaved">변경하기</button>
+          </div>
+          <textarea rows="4" class="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10" v-model="greeting" placeholder="고객에게 전할 인사말을 입력해주세요" />
+        </div>
+
+        <!-- 경력사항 -->
+        <div class="mt-5 rounded-2xl border border-white/10 bg-white/5 p-5">
+          <div class="flex items-center justify-between mb-3">
+            <h3 class="text-base font-semibold">경력사항</h3>
+            <button class="px-3 py-2 rounded-xl bg-gradient-to-r from-purple-600 to-purple-700 text-sm font-semibold active:scale-95" @click="notifySaved">변경하기</button>
+          </div>
+          <textarea rows="5" class="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10" v-model="career" placeholder="상담 경력 및 전문 분야를 입력해주세요" />
         </div>
 
         <!-- 탭 섹션 -->
@@ -96,25 +114,43 @@
 </template>
 
 <script setup lang="ts">
+import auth from '~/middleware/auth'
+
+definePageMeta({
+  middleware: [auth],
+  requiresAuth: true,
+  requireRole: 'counselor'
+})
 import AppHeader from '~/components/common/AppHeader.vue'
 import AppBottomNavi from '~/components/common/AppBottomNavi.vue'
-import { computed, ref } from 'vue'
+import { computed, ref, watchEffect } from 'vue'
+import { useCounselorQueries } from '~/composables/api/useCounselorQueries'
 import { useAuth } from '~/composables/auth/useAuth'
 import { useNotify } from '~/composables/utils/useNotify'
 
 const { requireAuth, isCounselor, currentUser } = useAuth()
 const { notifySuccess } = useNotify()
-requireAuth()
+await requireAuth()
 
-// 상담사만 접근하도록 간단 보호
-if (!isCounselor.value) {
-  navigateTo('/mypage')
-}
+const { useMypage } = useCounselorQueries()
+const { data: mypage } = useMypage()
 
-const nickname = computed(() => currentUser.value?.nickname ?? '상담사')
+const nickname = ref<string | undefined>(undefined)
+const shortIntro = ref<string | undefined>(undefined)
+const greeting = ref<string | undefined>(undefined)
+const career = ref<string | undefined>(undefined)
+const workTime = ref<string | undefined>(undefined)
+
+watchEffect(() => {
+  if (mypage.value) {
+    nickname.value = mypage.value.nickname
+    shortIntro.value = mypage.value.introduction_short
+    greeting.value = mypage.value.greeting_message
+    career.value = mypage.value.career_info
+    workTime.value = mypage.value.work_time
+  }
+})
 const status = ref<'ready' | 'away'>('away')
-const activeTime = ref('매일 04:00~밤 새벽 1:00')
-const todayNotice = ref('중간중간 상황에따라 부재중일때도 있으니 상시 매일 상담 가능합니다')
 const tab = ref<'notice' | 'review' | 'inquiry' | 'admin'>('notice')
 
 const notifySaved = () => notifySuccess('💾 변경 사항이 저장되었습니다.')
@@ -126,7 +162,7 @@ const saveStatus = () => notifySuccess(`✅ 상태가 '${status.value === 'ready
 .list-item-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
 .list-item-title{font-size:15px;font-weight:600}
 .list-item-date{font-size:12px;color:rgba(255,255,255,.5)}
-.list-item-content{font-size:14px;color:rgba(255,255,255,.7);line-height:1.5;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.list-item-content{font-size:14px;color:rgba(255,255,255,.7);line-height:1.5;display:-webkit-box;line-clamp:2;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
 </style>
 
 

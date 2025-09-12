@@ -130,7 +130,8 @@ INSERT INTO t_counselor (
     updated_at,
     last_login_at,
     specialty_types,
-    keywords
+    keywords,
+    work_time
 )
 SELECT 
     EMAIL,  -- EMAIL을 PK로 사용 (counselor_id = EMAIL)
@@ -170,7 +171,8 @@ SELECT
         CASE WHEN TYPE LIKE '%4%' THEN '"SAJU",' ELSE '' END,
         '""'
     , ']'),
-    CS_KEYWORD
+    CS_KEYWORD,
+    WORK_TIME
 FROM TBL_CS
 WHERE APPROVAL_YN = 'Y' AND OUT_YN = 'N' AND EMAIL IS NOT NULL AND PASSWORD !='';
 

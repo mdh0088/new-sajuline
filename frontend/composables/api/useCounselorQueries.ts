@@ -6,7 +6,9 @@
 import { 
   useMutation, 
   useQueryClient,
-  type UseMutationOptions
+  useQuery,
+  type UseMutationOptions,
+  type UseQueryOptions
 } from '@tanstack/vue-query'
 import type { 
   LoginRequest,
@@ -45,6 +47,18 @@ const counselorApi = {
     if (!response.success) {
       throw new Error(response.error?.message || '상담사 로그아웃에 실패했습니다.')
     }
+  },
+
+  // 상담사 마이페이지 정보 조회
+  async getMypage() {
+    const { $api } = useNuxtApp()
+    const response = await $api<APIResponse<any>>('/api/v1/counselors/mypage', {
+      method: 'GET'
+    })
+    if (!response.success || !response.data) {
+      throw new Error(response.error?.message || '마이페이지 정보를 가져오지 못했습니다.')
+    }
+    return response.data
   }
 }
 
@@ -82,9 +96,23 @@ export const useCounselorQueries = () => {
     })
   }
 
+  // 상담사 마이페이지 조회 쿼리
+  const useMypage = (
+    options?: UseQueryOptions<any, APIError, any>
+  ) => {
+    return useQuery({
+      queryKey: ['counselor', 'mypage'],
+      queryFn: counselorApi.getMypage,
+      staleTime: 1000 * 60, // 1분
+      ...options
+    })
+  }
+
   return {
     // Mutations
     useLogin,
-    useLogout
+    useLogout,
+    // Queries
+    useMypage
   }
 }
