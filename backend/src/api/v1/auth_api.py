@@ -1,7 +1,7 @@
 """
 인증 관련 API 엔드포인트
 """
-from fastapi import APIRouter, Depends, Request, Response, status
+from fastapi import APIRouter, Depends, Request, Response, status, HTTPException
 from src.common.middleware.rate_limit import limiter
 from src.core.redis import get_redis
 from src.schemas.auth_schema import RefreshTokenRequest, TokenResponse
@@ -9,7 +9,8 @@ from src.schemas.auth_schema import TokenPayload as TokenPayloadSchema
 from src.services.auth_service import AuthService, get_current_user, TokenPayload as ServiceTokenPayload
 from src.common.response import APIResponse, ok
 from src.common.logging import get_logger_with_request_id
-from src.exceptions.custom_exceptions import BaseAppException
+from src.exceptions.custom_exceptions import BaseAppException, AuthenticationError
+from src.config.settings import settings
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
@@ -46,6 +47,8 @@ async def refresh_token(
         
         # 쿠키에서 기존 Refresh Token 추출 (블랙리스트용)
         old_refresh_token = request.cookies.get("refresh_token") or refresh_request.refresh_token
+        if not old_refresh_token:
+            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="리프레시 토큰이 없습니다")
         
         # Refresh Token 검증 및 페이로드 추출
         refresh_payload = await auth_service.verify_refresh_token(old_refresh_token, redis_client)
@@ -75,11 +78,12 @@ async def refresh_token(
         )
         
         # HttpOnly 쿠키에 새로운 Access Token 설정
+        secure_cookie = settings.is_production
         response.set_cookie(
             key="access_token",
             value=new_access_token,
             httponly=True,
-            secure=True,  # HTTPS에서만 전송
+            secure=secure_cookie,  # 개발환경에서는 False로 전달
             samesite="lax",  # CSRF 보호
             max_age=30 * 60  # 30분
         )
@@ -89,7 +93,7 @@ async def refresh_token(
             key="refresh_token",
             value=new_refresh_token,
             httponly=True,
-            secure=True,  # HTTPS에서만 전송
+            secure=secure_cookie,  # 개발환경에서는 False로 전달
             samesite="lax",  # CSRF 보호
             max_age=7 * 24 * 60 * 60  # 7일
         )
@@ -103,9 +107,15 @@ async def refresh_token(
         log.info("Token refresh completed successfully", user_id=refresh_payload["sub"])
         return ok(data=token_response, message="토큰 갱신 성공")
         
+    except AuthenticationError as e:
+        log.warning("Token refresh failed (auth)", error=str(e))
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=str(e))
+    except BaseAppException as e:
+        log.error("Token refresh failed (app)", error=str(e))
+        raise HTTPException(status_code=getattr(e, "status_code", status.HTTP_400_BAD_REQUEST), detail=str(e))
     except Exception as e:
         log.error("Token refresh failed", error=str(e))
-        raise
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="토큰 갱신 중 서버 오류")
 
 
 @router.get(

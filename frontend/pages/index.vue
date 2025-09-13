@@ -5,7 +5,7 @@
     <AppHeader />
 
     <!-- 메인 콘텐츠 -->
-    <main class="pt-[60px] pb-20">
+    <main class="pt-[60px] pb-24">
       <!-- 히어로 섹션 컴포넌트 -->
       <HeroSection 
         @ai-fortune-request="handleAIFortuneRequest"

@@ -50,7 +50,7 @@ export const useAuth = () => {
         }
       }
 
-      // CSR: 하이드레이션된 세션이 있으면 우선 사용 → 없으면 localStorage → 필요 시 refresh
+      // CSR: 하이드레이션된 세션이 있으면 우선 사용 → 없으면 localStorage 로드 (자동 refresh 제거)
       if (process.client) {
         const hydrated = useState<UserSession | null>('user_session')
         if (hydrated.value?.isAuthenticated) {
@@ -63,15 +63,8 @@ export const useAuth = () => {
         const stored = localStorage.getItem('user_session')
         if (stored) {
           const session = JSON.parse(stored) as UserSession
-
-          // 토큰 만료 시간 확인
-          const now = Date.now()
-          if (session.access_token_expires_at && session.access_token_expires_at > now) {
-            userSession.value = session
-          } else {
-            // 액세스 토큰이 만료된 경우 리프레시 토큰으로 갱신 시도 (대기)
-            await attemptTokenRefresh()
-          }
+          // 자동 refresh는 하지 않고 세션만 복원 (만료 여부는 내비게이션 시 판단)
+          userSession.value = session
         }
       }
     } catch (error) {
@@ -199,9 +192,9 @@ export const useAuth = () => {
       }
     },
     onError: (error: APIError) => {
+      // 내비게이션 미들웨어에서 리디렉션을 담당하므로 여기서는 세션만 정리
       console.error('Token refresh failed:', error)
       clearSession()
-      router.push('/login')
     }
   })
   
@@ -260,24 +253,11 @@ export const useAuth = () => {
     }
   }
   
-  /**
-   * 토큰 만료 확인 및 자동 갱신
-   */
+  // 내비게이션 기반 정책으로 전환: 주기적 자동 체크 제거
   const checkTokenExpiry = async () => {
-    if (!userSession.value?.access_token_expires_at) {
-      return false
-    }
-    
+    if (!userSession.value?.access_token_expires_at) return false
     const now = Date.now()
-    const expiresAt = userSession.value.access_token_expires_at
-    const timeUntilExpiry = expiresAt - now
-    
-    // 토큰이 5분 이내에 만료되는 경우 갱신 시도
-    if (timeUntilExpiry <= 5 * 60 * 1000) {
-      return await attemptTokenRefresh()
-    }
-    
-    return true
+    return userSession.value.access_token_expires_at > now
   }
   
   /**
@@ -305,30 +285,9 @@ export const useAuth = () => {
     return true
   }
   
-  /**
-   * 정기적인 토큰 만료 체크 설정
-   */
-  let tokenCheckInterval: NodeJS.Timeout | null = null
-  
-  const startTokenCheck = () => {
-    if (tokenCheckInterval) {
-      clearInterval(tokenCheckInterval)
-    }
-    
-    // 1분마다 토큰 만료 체크
-    tokenCheckInterval = setInterval(() => {
-      if (isAuthenticated.value) {
-        checkTokenExpiry()
-      }
-    }, 60 * 1000)
-  }
-  
-  const stopTokenCheck = () => {
-    if (tokenCheckInterval) {
-      clearInterval(tokenCheckInterval)
-      tokenCheckInterval = null
-    }
-  }
+  // 내비게이션 시에만 판단하므로 주기적 체크 제거
+  const startTokenCheck = () => {}
+  const stopTokenCheck = () => {}
   
   /**
    * 컴포넌트 마운트 시 초기화

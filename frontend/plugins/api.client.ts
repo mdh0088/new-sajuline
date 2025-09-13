@@ -5,7 +5,7 @@
  * - 요청/응답 인터셉터 구성
  * - 에러 핸들링
  */
-import { defineNuxtPlugin, useRuntimeConfig, navigateTo, createError } from 'nuxt/app'
+import { defineNuxtPlugin, useRuntimeConfig, createError } from 'nuxt/app'
 import { useNotify } from '~/composables/utils/useNotify'
 
 export default defineNuxtPlugin(() => {
@@ -107,10 +107,11 @@ export default defineNuxtPlugin(() => {
         timestamp: new Date().toISOString()
       })
 
-      // 인증 에러 처리 (401) - 토큰 만료 또는 유효하지 않음
+      // 인증 에러 처리 (401) - 토큰 만료 또는 유효하지 않음 (자동 리프레시/리디렉션 금지)
       if (response.status === 401) {
+        const isLoginRequest = request.toString().includes('/login')
         // 로그인 API 호출인 경우 토큰 갱신 시도하지 않고 바로 에러 메시지 반환
-        if (request.toString().includes('/login')) {
+        if (isLoginRequest) {
           const errorData = response._data
           const errorMessage = errorData?.message || errorData?.error?.message || '아이디 또는 비밀번호가 올바르지 않습니다.'
           
@@ -121,43 +122,7 @@ export default defineNuxtPlugin(() => {
           })
         }
         
-        // refresh API 호출이 아닌 경우에만 토큰 갱신 시도
-        if (!request.toString().includes('/api/v1/auth/refresh')) {
-          try {
-            console.log('🔄 토큰 만료 감지, 자동 갱신 시도...')
-            
-            // refresh token 호출 (순환 참조 방지)
-            const refreshResponse = await refreshToken()
-
-            if (refreshResponse.success) {
-              console.log('✅ 토큰 갱신 성공, 원래 요청 재시도...')
-              
-              // 원시 $fetch로 원래 요청 재시도 (순환 참조 방지)
-              return await $fetch(request as string, {
-                baseURL: apiBase,
-                credentials: 'include',
-                method: options.method as any,
-                body: options.body,
-                headers: options.headers
-              })
-            }
-          } catch (refreshError) {
-            console.error('❌ 토큰 갱신 실패:', refreshError)
-          }
-        }
-        
-        // 토큰 갱신 실패 - 사용자 친화적 처리
-        console.log('🚪 로그인이 만료되어 로그인 페이지로 이동합니다.')
-        
-        if (process.client) {
-          // Notivue로 알림 표시
-          notifyError('⏱️ 로그인이 만료되었습니다. 3초 후 로그인 페이지로 이동합니다.')
-          
-          // 3초 후 자동으로 로그인 페이지로 이동
-          setTimeout(async () => {
-            await navigateTo('/login', { replace: true })
-          }, 3000)
-        }
+        // 정책: 자동 리프레시/리디렉션은 하지 않고 에러만 전달 (페이지 이동 시 미들웨어에서 처리)
         
         // 토큰 갱신 실패 시에도 적절한 에러 메시지 반환
         const errorData = response._data

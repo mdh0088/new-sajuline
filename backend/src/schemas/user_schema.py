@@ -2,7 +2,7 @@
 사용자 관련 Pydantic 스키마
 """
 from datetime import datetime, date
-from typing import Optional
+from typing import Optional, List, Literal
 from decimal import Decimal
 from pydantic import BaseModel, EmailStr, Field, ConfigDict
 
@@ -86,6 +86,35 @@ class UserMypageResponse(BaseModel):
     # 통계 요약 정보
     data_updated_at: datetime = Field(default_factory=datetime.utcnow, description="데이터 조회 시점")
 
+
+# 포인트 내역 스키마 (사용자 도메인 귀속)
+SearchType = Literal["point_charge", "point_use"]
+OrderType = Literal["latest", "highest", "lowest"]
+
+
+class CounselorBrief(BaseModel):
+    counselor_code: str = Field(..., description="상담사 코드")
+    nickname: Optional[str] = Field(None, description="상담사 닉네임")
+    name: Optional[str] = Field(None, description="상담사 실명")
+
+
+class PointChargeHistoryItem(BaseModel):
+    paid_at: Optional[datetime] = Field(None, description="결제 일시")
+    product_name: Optional[str] = Field(None, description="결제 상품명")
+    point_amount: int = Field(..., description="충전 포인트")
+
+
+class PointUseHistoryItem(BaseModel):
+    chatstart: Optional[str] = Field(None, description="채팅 시작")
+    chatend: Optional[str] = Field(None, description="채팅 종료")
+    counselor: Optional[CounselorBrief] = Field(None, description="상담사 정보")
+    usepoint: int = Field(..., description="사용 포인트")
+
+
+class PointHistoryResponse(BaseModel):
+    search_type: SearchType = Field(..., description="조회 유형")
+    items_charge: Optional[List[PointChargeHistoryItem]] = Field(None, description="충전 내역 목록")
+    items_use: Optional[List[PointUseHistoryItem]] = Field(None, description="사용 내역 목록")
 
 # TODO: 추후 필요시 참고용 스키마들
 # class UserLogin(BaseModel):

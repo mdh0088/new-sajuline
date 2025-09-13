@@ -34,7 +34,7 @@
         </div>
         
         <!-- AI 상세 분석 버튼 -->
-        <div class="mt-4 pt-4 border-t border-white/10">
+        <div class="mt-4 pt-4 border-t border-white/10 relative z-0">
           <button
             @click="requestAIAnalysis"
             class="w-full py-3 bg-purple-600/20 hover:bg-purple-600/30 border border-purple-600/30 rounded-xl font-medium text-sm transition-all duration-300"

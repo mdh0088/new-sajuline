@@ -3,6 +3,7 @@
  * - 인증/권한 관련 호출 전용
  */
 import { useQuery, useMutation, type UseQueryOptions, type UseMutationOptions } from '@tanstack/vue-query'
+import { useRequestHeaders } from 'nuxt/app'
 import type { APIResponse, APIError } from '~/types/common/api'
 import type { RefreshTokenRequest, TokenResponse, RefreshTokenResponse } from '~/types/user/models'
 
@@ -17,19 +18,24 @@ export interface AuthMePayload {
 
 const authApi = {
   async whoAmI(): Promise<AuthMePayload> {
-    const { $api } = useNuxtApp()
-    const response = await $api<APIResponse<AuthMePayload>>('/api/v1/auth/me')
+    const init: any = { credentials: 'include' }
+    if (process.server) {
+      const headers = useRequestHeaders(['cookie'])
+      init.headers = { cookie: headers.cookie || '' }
+    }
+    const response = await $fetch<APIResponse<AuthMePayload>>('/api/v1/auth/me', init)
     if (!response.success || !response.data) {
       throw new Error(response.error?.message || '권한 정보를 가져오지 못했습니다.')
     }
     return response.data
   },
   async refreshToken(refreshTokenData?: RefreshTokenRequest): Promise<TokenResponse> {
-    const { $api } = useNuxtApp()
-    const response = await $api<RefreshTokenResponse>('/api/v1/auth/refresh', {
-      method: 'POST',
-      body: refreshTokenData || {}
-    })
+    const init: any = { method: 'POST', credentials: 'include', body: refreshTokenData || {} }
+    if (process.server) {
+      const headers = useRequestHeaders(['cookie'])
+      init.headers = { cookie: headers.cookie || '' }
+    }
+    const response = await $fetch<RefreshTokenResponse>('/api/v1/auth/refresh', init)
     if (!response.success || !response.data) {
       throw new Error(response.error?.message || '토큰 갱신에 실패했습니다.')
     }

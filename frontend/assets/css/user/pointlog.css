@@ -1,0 +1,220 @@
+/* 사용자 포인트 로그 페이지 스타일 */
+
+/* 검색 영역 */
+.search-section {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 16px;
+  padding: 16px;
+}
+
+.search-title {
+  font-size: 15px;
+  font-weight: 600;
+  margin-bottom: 12px;
+  color: #fff;
+}
+
+.date-search {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.date-input-wrapper {
+  flex: 1;
+  cursor: pointer;
+}
+
+.date-input {
+  width: 100%;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  padding: 10px 12px;
+  color: #fff;
+  font-size: 14px;
+  outline: none;
+  cursor: pointer;
+}
+
+.date-input::-webkit-calendar-picker-indicator {
+  filter: invert(1);
+  opacity: 0.7;
+  cursor: pointer;
+}
+
+.date-input::-webkit-datetime-edit {
+  color: #fff;
+}
+
+.date-input::-webkit-datetime-edit-fields-wrapper {
+  color: #fff;
+}
+
+.date-input:focus {
+  border-color: #9333EA;
+}
+
+.search-btn {
+  background: linear-gradient(90deg, #9333EA 0%, #B794F6 100%);
+  border: none;
+  border-radius: 8px;
+  padding: 10px 16px;
+  color: #fff;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.search-btn:hover {
+  opacity: 0.9;
+  transform: translateY(-1px);
+}
+
+.search-btn:active {
+  transform: translateY(0);
+}
+
+/* 정렬 버튼 */
+.sort-buttons {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.sort-btn {
+  background: rgba(255, 255, 255, 0.05);
+  border: none;
+  border-radius: 8px;
+  padding: 8px 12px;
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 13px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.sort-btn:hover {
+  background: rgba(147, 51, 234, 0.1);
+  color: #fff;
+}
+
+.sort-btn.active {
+  background: linear-gradient(90deg, #9333EA 0%, #B794F6 100%);
+  color: #fff;
+}
+
+/* 거래 내역 리스트 */
+.transaction-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.transaction-item {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 16px;
+  padding: 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  transition: all 0.3s ease;
+}
+
+.transaction-item:hover {
+  background: rgba(147, 51, 234, 0.08);
+  transform: translateY(-2px);
+}
+
+.trans-left {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding-left: 12px;
+  flex: 1;
+  max-width: calc(100% - 140px);
+}
+
+.trans-date {
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.6);
+}
+
+.trans-desc {
+  font-size: 15px;
+  font-weight: 500;
+  color: #fff;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.trans-icon {
+  width: 32px;
+  height: 32px;
+  background: rgba(147, 51, 234, 0.1);
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+}
+
+.trans-right {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 6px;
+  min-width: 120px;
+  margin-left: 16px;
+}
+
+.trans-amount {
+  font-size: 17px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  white-space: nowrap;
+}
+
+.amount-positive {
+  color: #B794F6;
+}
+
+.amount-negative {
+  color: #FF6B6B;
+}
+
+/* 반응형 디자인 */
+@media (max-width: 768px) {
+  .transaction-item {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+  }
+
+  .trans-right {
+    align-items: flex-start;
+  }
+
+  .trans-left {
+    max-width: 100%;
+  }
+
+  .date-search {
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .date-input-wrapper {
+    width: 100%;
+  }
+
+  .search-btn {
+    width: 100%;
+    justify-self: stretch;
+  }
+}

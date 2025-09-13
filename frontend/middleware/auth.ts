@@ -7,7 +7,7 @@ import { useAuth } from '~/composables/auth/useAuth'
  * - 세션 복원 비동기 처리 후 판단
  */
 export default defineNuxtRouteMiddleware(async (to) => {
-  const { isAuthenticated, isAuthChecking, restoreSession, getCurrentRole } = useAuth()
+  const { isAuthenticated, isAuthChecking, restoreSession, getCurrentRole, checkTokenExpiry, attemptTokenRefresh, clearSession } = useAuth()
 
   // 페이지 메타 선언으로 제어
   const requiresAuth = to.meta?.requiresAuth as boolean | undefined
@@ -21,10 +21,31 @@ export default defineNuxtRouteMiddleware(async (to) => {
     await restoreSession()
   }
 
-  // 인증 필요 체크: SSR 단계에서는 리다이렉트를 최소화하고, 클라이언트에서 최종 판단
+  // 인증 필요 체크: SSR/CSR 모두에서 즉시 리다이렉트하여 초기 렌더 노출 방지
   if ((requiresAuth || requireRole) && !isAuthenticated.value) {
-    if (process.server) return
-    return navigateTo('/login')
+    const redirect = to.fullPath || '/'
+    return navigateTo({ path: '/login', query: { redirect } }, { redirectCode: 302 })
+  }
+
+  // 내비게이션 시 토큰 상태 점검 정책 (게스트 제외, 클라이언트 전용 refresh 실행)
+  if ((requiresAuth || requireRole) && isAuthenticated.value) {
+    // 만료 여부 확인
+    const valid = await checkTokenExpiry()
+    if (!valid) {
+      // 만료됨 → 로그아웃 처리 후 로그인 페이지로 (SSR/CSR 공통)
+      clearSession()
+      const redirect = to.fullPath || '/'
+      return navigateTo({ path: '/login', query: { redirect } }, { redirectCode: 302 })
+    } else if (process.client) {
+      // 아직 만료는 아니면 즉시 refresh 호출로 수명 연장 (실패 시 로그아웃)
+      try {
+        await attemptTokenRefresh()
+      } catch {
+        clearSession()
+        const redirect = to.fullPath || '/'
+        return navigateTo({ path: '/login', query: { redirect } }, { redirectCode: 302 })
+      }
+    }
   }
 
   // 역할 필요 체크

@@ -67,14 +67,15 @@ const roleBadgeClass = computed(() => isCounselor.value
 )
 
 onMounted(async () => {
-  // 초기 렌더 시 서버의 토큰 정보를 우선 반영 (규격: API 컴포저블 사용)
+  // 로그인 상태에서만 whoAmI 요청 (게스트는 호출하지 않음)
+  if (!isAuthenticated.value) return
   try {
     const result = await refetch()
     if (result.data) {
       setRole(result.data.role)
     }
-  } catch (e) {
-    // 무시 (비로그인 등)
+  } catch (_e) {
+    // 무시 (토큰 만료 등 전역 인터셉터에서 처리)
   }
 })
 

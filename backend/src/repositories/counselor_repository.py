@@ -2,7 +2,7 @@
 상담사 Repository 클래스
 데이터 액세스 레이어 - 순수한 CRUD 작업만 담당
 """
-from typing import Optional
+from typing import Optional, List, Dict
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, update
 
@@ -104,3 +104,23 @@ class CounselorRepository:
         )
         result = await self.db.execute(stmt)
         return result.rowcount > 0
+
+    @logger.catch(reraise=True)
+    async def get_by_counselor_code(self, counselor_code: str) -> Optional[Counselor]:
+        """상담사 코드로 조회"""
+        log = get_logger_with_request_id()
+        log.info("Looking up counselor by code", counselor_code=counselor_code)
+        stmt = select(Counselor).where(Counselor.counselor_code == counselor_code)
+        result = await self.db.execute(stmt)
+        counselor = result.scalar_one_or_none()
+        return counselor
+
+    @logger.catch(reraise=True)
+    async def get_by_counselor_codes(self, counselor_codes: List[str]) -> Dict[str, Counselor]:
+        """상담사 코드 목록으로 일괄 조회하여 매핑 반환"""
+        if not counselor_codes:
+            return {}
+        stmt = select(Counselor).where(Counselor.counselor_code.in_(counselor_codes))
+        result = await self.db.execute(stmt)
+        counselors: List[Counselor] = list(result.scalars().all())
+        return {c.counselor_code: c for c in counselors}
