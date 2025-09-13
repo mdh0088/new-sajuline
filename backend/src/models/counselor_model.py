@@ -160,23 +160,23 @@ class Counselor(Base):
         comment="후분금액"
     )
     
-    # 상태 플래그들 (char(1))
-    is_new: Mapped[Optional[str]] = mapped_column(
-        CHAR(1), 
+    # 상태 플래그들 (tinyint(1) -> bool)
+    is_new: Mapped[Optional[bool]] = mapped_column(
+        Boolean, 
         nullable=True, 
-        default="Y", 
+        default=True, 
         comment="신규 상담사 여부"
     )
-    is_out: Mapped[str] = mapped_column(
-        CHAR(1), 
+    is_out: Mapped[bool] = mapped_column(
+        Boolean, 
         nullable=False, 
-        default="N", 
+        default=False, 
         comment="탈퇴 여부"
     )
-    is_show: Mapped[str] = mapped_column(
-        CHAR(1), 
+    is_show: Mapped[bool] = mapped_column(
+        Boolean, 
         nullable=False, 
-        default="N", 
+        default=False, 
         comment="노출여부"
     )
     
