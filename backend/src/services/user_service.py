@@ -10,9 +10,17 @@ from src.exceptions.custom_exceptions import NotFoundError, DuplicateError, Auth
 from src.common.logging import logger, get_logger_with_request_id
 
 from src.models.user_model import User, UserStatus, JoinType
-from src.schemas.user_schema import UserResponse, UserSignup
+from src.schemas.user_schema import (
+    UserResponse,
+    UserSignup,
+    PointHistoryResponse,
+    PointChargeHistoryItem,
+    PointUseHistoryItem,
+)
 from src.repositories.user_repository import UserRepository
 from src.repositories.counselor_repository import CounselorRepository
+from src.repositories.payment_repository import PaymentRepository
+from src.repositories.ars.tm60_chatlog_repository import Tm60ChatlogRepository
 from src.repositories.ars.tm60_users_repository import Tm60UsersRepository
 from src.services.ars.tm60_users_service import Tm60UsersService
 from src.services.auth_service import AuthService
@@ -39,6 +47,7 @@ class UserService:
         self.activity_log_service = activity_log_service
         self.event_service = event_service
         self.tm60_users_service = tm60_users_service
+        # Note: 아래 두 레포지토리는 포인트 내역 API에서 필요하므로 DI에서 주입받는 대신 메서드 인자로 받을 수 있도록 설계할 수도 있음
     
     async def signup(self, signup_data: UserSignup) -> UserResponse:
         """
@@ -292,6 +301,100 @@ class UserService:
         
         log.info("Login successful", user_id=user.user_id, email=user.email)
         return access_token, user_response
+
+    async def get_point_history(
+        self,
+        *,
+        user_id: str,
+        start_dt: str,
+        end_dt: str,
+        search_type: str,
+        order_type: str,
+        payment_repo: PaymentRepository,
+        chatlog_repo: Tm60ChatlogRepository,
+        counselor_repo: CounselorRepository,
+        page: int = 1,
+        limit: int = 20,
+    ) -> Tuple[PointHistoryResponse, int]:
+        """사용자 포인트 내역 조회 (도메인: 사용자)"""
+        log = get_logger_with_request_id()
+        log.info(
+            "Point history request",
+            user_id=user_id,
+            start_dt=start_dt,
+            end_dt=end_dt,
+            search_type=search_type,
+            order_type=order_type,
+        )
+
+        # 입력 검증
+        if not start_dt or not end_dt:
+            raise ValidationError("start_dt와 end_dt는 필수입니다.")
+        if search_type not in ("point_charge", "point_use"):
+            raise ValidationError("search_type은 'point_charge' 또는 'point_use'여야 합니다.")
+        if order_type not in ("latest", "highest", "lowest"):
+            raise ValidationError("order_type은 'latest' | 'highest' | 'lowest'여야 합니다.")
+
+        # 날짜 파싱
+        try:
+            start_date = datetime.strptime(start_dt, "%Y-%m-%d")
+            end_date = datetime.strptime(end_dt, "%Y-%m-%d")
+        except ValueError:
+            raise ValidationError("날짜 형식은 yyyy-mm-dd 여야 합니다.")
+
+        if search_type == "point_charge":
+            rows, total = await payment_repo.get_point_charge_history(
+                user_id=user_id,
+                start_dt=start_date,
+                end_dt=end_date,
+                order_type=order_type,
+                page=page,
+                limit=limit,
+            )
+            items = [
+                PointChargeHistoryItem(
+                    paid_at=paid_at,
+                    product_name=product_name,
+                    point_amount=int(point_amount or 0),
+                )
+                for (paid_at, product_name, point_amount, amount) in rows
+            ]
+            return PointHistoryResponse(search_type="point_charge", items_charge=items), total
+
+        # point_use
+        logs, total = await chatlog_repo.get_usage_logs(
+            user_id=user_id,
+            start_dt_str=start_dt,
+            end_dt_str=end_dt,
+            order_type=order_type,
+            page=page,
+            limit=limit,
+        )
+
+        unique_codes = sorted({log.m_code for log in logs if log.m_code})
+        code_to_counselor = await counselor_repo.get_by_counselor_codes(unique_codes)
+
+        items_use: list[PointUseHistoryItem] = []
+        for log_row in logs:
+            counselor = code_to_counselor.get(log_row.m_code)
+            items_use.append(
+                PointUseHistoryItem(
+                    chatstart=log_row.chatstart,
+                    chatend=log_row.chatend,
+                    counselor=(
+                        None
+                        if not counselor
+                        else {
+                            "counselor_code": counselor.counselor_code,
+                            "nickname": counselor.nickname,
+                            "name": counselor.name,
+                        }
+                    ),
+                    usepoint=int(log_row.usepoint or 0),
+                )
+            )
+
+        return PointHistoryResponse(search_type="point_use", items_use=items_use), total
     
     async def check_email_availability(self, email: str) -> bool:
         """

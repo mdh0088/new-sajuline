@@ -2,15 +2,16 @@
 결제 Repository 클래스
 데이터 액세스 레이어 - 순수한 CRUD 작업만 담당
 """
-from typing import Optional, List
-from datetime import datetime
+from typing import Optional, List, Tuple
+from datetime import datetime, timedelta
 from decimal import Decimal
 
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, update, delete, and_, func
+from sqlalchemy import select, update, delete, and_, or_, func
 from sqlalchemy.engine import Result
 
 from src.models.payment_model import Payment
+from src.models.point_product_model import PointProduct
 from src.schemas.payment_schema import PaymentCreate, PaymentUpdate
 from src.common.logging import logger, get_logger_with_request_id
 from src.exceptions.custom_exceptions import BaseAppException
@@ -133,6 +134,80 @@ class PaymentRepository:
                 total_amount=total_amount,
                 month=f"{now.year}-{now.month:02d}")
         return total_amount
+
+    @logger.catch(reraise=True)
+    async def get_point_charge_history(
+        self,
+        user_id: str,
+        start_dt: datetime,
+        end_dt: datetime,
+        order_type: str,
+        page: int,
+        limit: int,
+    ) -> Tuple[List[Tuple[Optional[datetime], Optional[str], int, int]], int]:
+        """
+        포인트 충전 내역 조회
+        - t_payment 기준으로 t_point_product 조인하여 product_name 조회
+        - 필드: paid_at, product_name, point_amount, amount
+        - 기간: paid_at between [start_dt 00:00:00, end_dt 23:59:59]
+        - 정렬: latest(paid_at desc), highest(amount desc), lowest(amount asc)
+        - SUCCESS 상태만 포함
+        Returns: list of tuple(paid_at, product_name, point_amount, amount)
+        """
+        log = get_logger_with_request_id()
+        log.info("Getting point charge history", user_id=user_id, start=str(start_dt), end=str(end_dt), order_type=order_type)
+
+        dt_start = datetime(start_dt.year, start_dt.month, start_dt.day)
+        dt_end = datetime(end_dt.year, end_dt.month, end_dt.day, 23, 59, 59)
+
+        order_clause = None
+        if order_type == "latest":
+            order_clause = Payment.paid_at.desc()
+        elif order_type == "highest":
+            order_clause = Payment.amount.desc()
+        elif order_type == "lowest":
+            order_clause = Payment.amount.asc()
+        else:
+            order_clause = Payment.paid_at.desc()
+
+        # 기본 쿼리 (정렬/페이징 제외)
+        base_stmt = (
+            select(
+                Payment.paid_at,
+                PointProduct.product_name,
+                Payment.point_amount,
+                Payment.amount,
+            )
+            .join(PointProduct, Payment.product_id == PointProduct.product_id, isouter=True)
+            .where(
+                and_(
+                    Payment.user_id == user_id,
+                    Payment.payment_status == "SUCCESS",
+                    Payment.paid_at >= dt_start,
+                    Payment.paid_at <= dt_end,
+                )
+            )
+        )
+
+        # 총 개수
+        count_stmt = select(func.count(Payment.payment_id)).where(
+            and_(
+                Payment.user_id == user_id,
+                Payment.payment_status == "SUCCESS",
+                Payment.paid_at >= dt_start,
+                Payment.paid_at <= dt_end,
+            )
+        )
+        count_result = await self.db.execute(count_stmt)
+        total: int = int(count_result.scalar() or 0)
+
+        # 페이징 적용 쿼리
+        stmt = base_stmt.order_by(order_clause).offset(max(0, (page - 1) * limit)).limit(limit)
+
+        result = await self.db.execute(stmt)
+        rows: List[Tuple[Optional[datetime], Optional[str], int, int]] = list(result.all())
+        log.info("Point charge history fetched", user_id=user_id, count=len(rows), total=total, page=page, limit=limit)
+        return rows, total
     
     @logger.catch(reraise=True)
     async def update(self, payment_id: int, update_data: PaymentUpdate) -> bool:

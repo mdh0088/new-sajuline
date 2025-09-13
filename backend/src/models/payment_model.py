@@ -51,8 +51,8 @@ class Payment(Base):
         nullable=False,
         comment="결제 유형: POINT_CHARGE, SUBSCRIPTION"
     )
-    amount: Mapped[Decimal] = mapped_column(
-        Numeric(12, 2),
+    amount: Mapped[int] = mapped_column(
+        Integer,
         nullable=False,
         comment="결제 금액"
     )
@@ -60,11 +60,6 @@ class Payment(Base):
         Integer,
         default=0,
         comment="충전 포인트"
-    )
-    bonus_point: Mapped[int] = mapped_column(
-        Integer,
-        default=0,
-        comment="보너스 포인트"
     )
     mileage_used: Mapped[int] = mapped_column(
         Integer,
@@ -86,11 +81,6 @@ class Payment(Base):
     )
     
     # PG사 정보
-    pg_provider: Mapped[Optional[str]] = mapped_column(
-        String(20),
-        nullable=True,
-        comment="PG사"
-    )
     pg_tid: Mapped[Optional[str]] = mapped_column(
         String(100),
         nullable=True,
@@ -111,6 +101,41 @@ class Payment(Base):
         default="0",
         comment="세금"
     )
+    install_month: Mapped[Optional[str]] = mapped_column(
+        String(100),
+        nullable=True,
+        comment="할부개월"
+    )
+    pay_hash: Mapped[Optional[str]] = mapped_column(
+        String(100),
+        nullable=True,
+        comment="결제 해시"
+    )
+    taxfree_amount: Mapped[Optional[str]] = mapped_column(
+        String(100),
+        nullable=True,
+        comment="비과세 금액"
+    )
+    nonsettle_amount: Mapped[Optional[str]] = mapped_column(
+        String(100),
+        nullable=True,
+        comment="미결제 금액"
+    )
+    discount_amount: Mapped[Optional[str]] = mapped_column(
+        String(100),
+        nullable=True,
+        comment="할인 금액"
+    )
+    point_use_flag: Mapped[Optional[str]] = mapped_column(
+        String(100),
+        nullable=True,
+        comment="포인트 사용 여부"
+    )
+    disposable_cup_deposit: Mapped[Optional[str]] = mapped_column(
+        String(100),
+        nullable=True,
+        comment="일회용컵 보증금"
+    )
     domestic_flag: Mapped[str] = mapped_column(
         String(100),
         default="",
@@ -124,21 +149,79 @@ class Payment(Base):
         comment="결제 완료 시간"
     )
     
+    # 응답 관련
+    code: Mapped[Optional[str]] = mapped_column(
+        String(100),
+        nullable=True,
+        comment="성공코드"
+    )
+    result_message: Mapped[Optional[str]] = mapped_column(
+        Text,
+        nullable=True,
+        comment="결과 메시지"
+    )
+    
     # 취소 관련
+    cancel_amount: Mapped[Optional[int]] = mapped_column(
+        Integer,
+        nullable=True,
+        comment="환불 금액"
+    )
     cancelled_at: Mapped[Optional[datetime]] = mapped_column(
         DateTime,
         nullable=True,
         comment="취소 시간"
     )
-    cancel_reason: Mapped[Optional[str]] = mapped_column(
-        Text,
+    
+    # 계좌 정보
+    account_no: Mapped[Optional[str]] = mapped_column(
+        String(100),
         nullable=True,
-        comment="취소 사유"
+        comment="계좌번호"
     )
-    refund_amount: Mapped[Optional[Decimal]] = mapped_column(
-        Numeric(12, 2),
+    account_name: Mapped[Optional[str]] = mapped_column(
+        String(100),
         nullable=True,
-        comment="환불 금액"
+        comment="예금주명"
+    )
+    account_holder: Mapped[Optional[str]] = mapped_column(
+        String(100),
+        nullable=True,
+        comment="계좌 소유자"
+    )
+    bank_code: Mapped[Optional[str]] = mapped_column(
+        String(100),
+        nullable=True,
+        comment="은행 코드"
+    )
+    bank_name: Mapped[Optional[str]] = mapped_column(
+        String(100),
+        nullable=True,
+        comment="은행명"
+    )
+    
+    # 가상계좌 정보
+    expire_date: Mapped[Optional[str]] = mapped_column(
+        String(100),
+        nullable=True,
+        comment="만료일"
+    )
+    expire_time: Mapped[Optional[str]] = mapped_column(
+        String(100),
+        nullable=True,
+        comment="만료시간"
+    )
+    issue_tid: Mapped[Optional[str]] = mapped_column(
+        String(100),
+        nullable=True,
+        comment="발급 거래번호"
+    )
+    
+    # 현금영수증
+    cash_receipt_type: Mapped[Optional[str]] = mapped_column(
+        String(100),
+        nullable=True,
+        comment="현금영수증 종류"
     )
     
     # 타임스탬프

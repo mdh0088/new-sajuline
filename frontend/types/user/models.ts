@@ -177,6 +177,35 @@ export interface UserSession {
 }
 
 // =============================================================================
+// 마이페이지/등급 관련 타입 (Backend 스키마 기반)
+// =============================================================================
+
+export interface GradeResponse {
+  grade_name: string
+  grade_level: number
+  min_purchase_amount: number
+  point_earn_rate: string | number
+  discount_rate: string | number
+}
+
+export interface NextGradeInfo {
+  current_grade: GradeResponse
+  next_grade?: GradeResponse | null
+  required_amount?: number | null
+}
+
+export interface UserMypageData {
+  user_info: UserResponse
+  total_consultation_count: number
+  total_bookmark_count: number
+  total_review_count: number
+  current_points: number
+  grade_info: NextGradeInfo
+  monthly_payment_total: number | string
+  data_updated_at?: string
+}
+
+// =============================================================================
 // API 응답 타입 (실제 엔드포인트별)
 // =============================================================================
 
@@ -189,3 +218,38 @@ export type LoginResponse = APIResponse<LoginData>
 export type LogoutResponse = APIResponse<null>
 export type RefreshTokenResponse = APIResponse<TokenResponse>
 export type AvailabilityCheckResponse = APIResponse<boolean>
+export type UserMypageResponse = APIResponse<UserMypageData>
+
+// =============================================================================
+// 포인트 내역 타입 (Backend: PointHistoryResponse @ user_schema)
+// =============================================================================
+
+export type PointSearchType = 'point_charge' | 'point_use'
+export type PointOrderType = 'latest' | 'highest' | 'lowest'
+
+export interface CounselorBrief {
+  counselor_code: string
+  nickname?: string | null
+  name?: string | null
+}
+
+export interface PointChargeHistoryItem {
+  paid_at?: string | null
+  product_name?: string | null
+  point_amount: number
+}
+
+export interface PointUseHistoryItem {
+  chatstart?: string | null
+  chatend?: string | null
+  counselor?: CounselorBrief | null
+  usepoint: number
+}
+
+export interface UserPointHistoryData {
+  search_type: PointSearchType
+  items_charge?: PointChargeHistoryItem[] | null
+  items_use?: PointUseHistoryItem[] | null
+}
+
+export type UserPointHistoryResponse = APIResponse<UserPointHistoryData>
