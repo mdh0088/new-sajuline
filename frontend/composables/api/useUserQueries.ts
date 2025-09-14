@@ -169,6 +169,69 @@ const userApi = {
     return response.data
   },
 
+  // 사용자 후기 요약 조회
+  async getUserReviewSummary() {
+    const { $api } = useNuxtApp()
+    const response = await $api<import('~/types/user/models').UserReviewSummaryResponse>('/api/v1/users/reviews/summary')
+    if (!response.success || !response.data) {
+      throw new Error(response.error?.message || '후기 요약 조회에 실패했습니다.')
+    }
+    return response.data
+  },
+
+  // 사용자 후기 목록 조회 (작성/대기)
+  async getUserReviews(params: { searchtype: 'my_reviews' | 'pending_reviews'; page?: number; limit?: number }) {
+    const { $api } = useNuxtApp()
+    const query = new URLSearchParams()
+    query.set('searchtype', params.searchtype)
+    if (params.page) query.set('page', String(params.page))
+    if (params.limit) query.set('limit', String(params.limit))
+    const response = await $api<APIResponse<any[]>>(`/api/v1/users/reviews?${query.toString()}`)
+    if (!response.success) {
+      throw new Error(response.error?.message || '후기 목록 조회에 실패했습니다.')
+    }
+    // APIResponseBuilder.paginated 사용 → data는 배열
+    return response
+  },
+
+  // 사용자 후기 생성
+  async createUserReview(body: { session_id: number; rating: number; content?: string; review_tags?: string[] }) {
+    const { $api } = useNuxtApp()
+    const response = await $api<APIResponse<import('~/types/user/models').UserReviewItemData>>('/api/v1/users/reviews', {
+      method: 'POST',
+      body
+    })
+    if (!response.success || !response.data) {
+      throw new Error(response.error?.message || '후기 작성에 실패했습니다.')
+    }
+    return response.data
+  },
+
+  // 사용자 후기 수정 (세션 기준)
+  async updateUserReview(body: { session_id: number; rating?: number; content?: string; review_tags?: string[] }) {
+    const { $api } = useNuxtApp()
+    const response = await $api<APIResponse<import('~/types/user/models').UserReviewItemData>>('/api/v1/users/reviews', {
+      method: 'PUT',
+      body
+    })
+    if (!response.success || !response.data) {
+      throw new Error(response.error?.message || '후기 수정에 실패했습니다.')
+    }
+    return response.data
+  },
+
+  // 사용자 후기 삭제
+  async deleteUserReview(reviewId: number) {
+    const { $api } = useNuxtApp()
+    const response = await $api<APIResponse<boolean>>(`/api/v1/users/reviews/${reviewId}`, {
+      method: 'DELETE'
+    })
+    if (!response.success) {
+      throw new Error(response.error?.message || '후기 삭제에 실패했습니다.')
+    }
+    return response.data ?? false
+  },
+
   // 중복 검사 API들
   async checkEmailAvailability(email: string): Promise<boolean> {
     const { $api } = useNuxtApp()
@@ -297,6 +360,76 @@ export const useUserQueries = () => {
       queryKey: ['user', 'mypage'],
       queryFn: () => userApi.getUserMypage(),
       staleTime: 60 * 1000, // 1분
+      ...options
+    })
+  }
+
+  // 사용자 후기 요약 쿼리
+  const useUserReviewSummary = (
+    options?: Partial<UseQueryOptions<import('~/types/user/models').UserReviewSummaryData, APIError>>
+  ) => {
+    return useQuery({
+      queryKey: ['user', 'reviews', 'summary'],
+      queryFn: () => userApi.getUserReviewSummary(),
+      staleTime: 30 * 1000,
+      ...options
+    })
+  }
+
+  // 사용자 후기 목록 쿼리 (작성/대기)
+  const useUserReviews = (
+    params: { searchtype: 'my_reviews' | 'pending_reviews'; page?: number; limit?: number },
+    options?: Partial<UseQueryOptions<APIResponse<any[]>, APIError>>
+  ) => {
+    return useQuery({
+      queryKey: ['user', 'reviews', params],
+      queryFn: () => userApi.getUserReviews(params),
+      staleTime: 30 * 1000,
+      ...options
+    })
+  }
+
+  // 후기 생성 뮤테이션
+  const useCreateUserReview = (
+    options?: UseMutationOptions<import('~/types/user/models').UserReviewItemData, APIError, { session_id: number; rating: number; content?: string; review_tags?: string[] }>
+  ) => {
+    const qc = useQueryClient()
+    return useMutation({
+      mutationFn: userApi.createUserReview,
+      onSuccess: () => {
+        qc.invalidateQueries({ queryKey: ['user', 'reviews'] })
+        qc.invalidateQueries({ queryKey: ['user', 'reviews', 'summary'] })
+      },
+      ...options
+    })
+  }
+
+  // 후기 수정 뮤테이션
+  const useUpdateUserReview = (
+    options?: UseMutationOptions<import('~/types/user/models').UserReviewItemData, APIError, { session_id: number; rating?: number; content?: string; review_tags?: string[] }>
+  ) => {
+    const qc = useQueryClient()
+    return useMutation({
+      mutationFn: userApi.updateUserReview,
+      onSuccess: () => {
+        qc.invalidateQueries({ queryKey: ['user', 'reviews'] })
+        qc.invalidateQueries({ queryKey: ['user', 'reviews', 'summary'] })
+      },
+      ...options
+    })
+  }
+
+  // 후기 삭제 뮤테이션
+  const useDeleteUserReview = (
+    options?: UseMutationOptions<boolean, APIError, number>
+  ) => {
+    const qc = useQueryClient()
+    return useMutation({
+      mutationFn: userApi.deleteUserReview,
+      onSuccess: () => {
+        qc.invalidateQueries({ queryKey: ['user', 'reviews'] })
+        qc.invalidateQueries({ queryKey: ['user', 'reviews', 'summary'] })
+      },
       ...options
     })
   }
@@ -499,6 +632,15 @@ export const useUserQueries = () => {
     useUserList,
     useUserMypage,
     useUserPointHistory,
+    useUserReviewSummary,
+    useUserReviews,
+    // Direct fetch helpers (for imperative flows like infinite scroll)
+    fetchUserReviewSummary: userApi.getUserReviewSummary,
+    fetchUserReviews: userApi.getUserReviews,
+    // Direct mutation helpers (simple imperative calls)
+    createUserReview: userApi.createUserReview,
+    updateUserReview: userApi.updateUserReview,
+    deleteUserReview: userApi.deleteUserReview,
 
     // Availability Checks (실시간 검증용)
     useEmailAvailability,
@@ -512,6 +654,9 @@ export const useUserQueries = () => {
     useDeleteUser,
     useLogin,
     useLogout,
-    useAuthenticateUser
+    useAuthenticateUser,
+    useCreateUserReview,
+    useUpdateUserReview,
+    useDeleteUserReview
   }
 }
