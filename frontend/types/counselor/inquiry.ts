@@ -7,6 +7,9 @@ export interface InquirySummary {
   counselor_id?: string | null
   category?: string | null
   title?: string | null
+  content?: string | null
+  reply_content?: string | null
+  answered_at?: string | null
   is_read: boolean
   has_reply: boolean
   created_at: string

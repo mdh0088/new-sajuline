@@ -76,35 +76,69 @@
 
         <!-- PagedSection으로 리스트 표시 -->
         <PagedSection
-          :items="filteredTransactions"
-          :page="currentPage"
+          :items="itemsForActiveTab"
+          :page="pageForActiveTab"
           :total-pages="totalPages"
           :loading="isLoading"
           :error="error"
           :empty-text="activeTab === 'charge' ? '충전 내역이 없습니다' : '사용 내역이 없습니다'"
-          @update:page="val => currentPage = val"
+          @update:page="onUpdatePage"
         >
           <template #default="{ items }">
-            <div class="transaction-list">
-              <div 
-                v-for="transaction in items" 
-                :key="transaction.id" 
+            <!-- 충전 내역 카드 -->
+            <div v-if="activeTab === 'charge'" class="transaction-list">
+              <div
+                v-for="transaction in items"
+                :key="transaction.id"
                 class="transaction-item"
               >
                 <div class="trans-left">
                   <span class="trans-date">{{ formatDate(transaction.created_at) }}</span>
                   <div class="trans-desc">
-                    <span class="trans-icon">{{ getTransactionIcon(transaction.type) }}</span>
-                    <span>{{ getTransactionDescription(transaction.type) }}</span>
+                    <span class="trans-icon">💰</span>
+                    <span>{{ transaction.description }}</span>
                   </div>
                 </div>
                 <div class="trans-right">
-                  <div 
-                    class="trans-amount"
-                    :class="transaction.amount > 0 ? 'amount-positive' : 'amount-negative'"
-                  >
-                    <span>{{ transaction.amount > 0 ? '+' : '-' }}</span>
+                  <div class="trans-amount amount-positive">
+                    <span>+</span>
                     <span>{{ Math.abs(transaction.amount).toLocaleString() }}P</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- 사용 내역 카드 (/user/cslog 스타일 차용) -->
+            <div v-else class="space-y-4">
+              <div v-for="item in items" :key="item.id" class="history-item">
+                <div class="flex justify-between items-start gap-4 mb-2">
+                  <div class="flex items-center gap-4">
+                    <div>
+                      <img
+                        v-if="item.counselor_image_url"
+                        :src="item.counselor_image_url"
+                        alt="프로필 이미지"
+                        class="w-12 h-12 rounded-full object-cover border border-white/10"
+                        width="48"
+                        height="48"
+                        loading="lazy"
+                      />
+                      <div v-else class="w-12 h-12 rounded-full bg-gradient-to-br from-yellow-400 to-amber-500 flex items-center justify-center text-2xl shadow-[0_4px_12px_rgba(255,215,0,0.3)]">🔮</div>
+                    </div>
+                    <div class="flex flex-col gap-1">
+                      <span class="counselor-name">{{ item.counselor_name }}</span>
+                    </div>
+                  </div>
+                  <div class="flex flex-col gap-1 items-end">
+                    <span class="session-date">{{ formatDate(item.date) }}</span>
+                  </div>
+                </div>
+
+                <div class="flex justify-between items-end mt-2">
+                  <div class="session-time">상담 시간: {{ item.duration }}</div>
+                  <div class="trans-amount amount-negative">
+                    <span>-</span>
+                    <span>{{ Math.abs(item.amount).toLocaleString() }}P</span>
                   </div>
                 </div>
               </div>
@@ -126,6 +160,7 @@ import PagedSection from '~/components/common/PagedSection.vue'
 import { computed, ref, watch, watchEffect, onMounted } from 'vue'
 import type { APIResponse } from '~/types/common/api'
 import type { PointChargeHistoryItem, PointUseHistoryItem } from '~/types/user/models'
+import { useCdn } from '~/composables/utils/useCdn'
 
 definePageMeta({
   middleware: [auth],
@@ -145,8 +180,9 @@ const activeTab = ref<'charge' | 'usage'>('charge')
 // 정렬 상태
 const sortOrder = ref<'latest' | 'highest' | 'lowest'>('latest')
 
-// 페이지네이션
-const currentPage = ref(1)
+// 페이지네이션 (탭별 분리)
+const chargePage = ref(1)
+const usagePage = ref(1)
 const itemsPerPage = 10
 
 // 로딩 및 에러 상태
@@ -189,52 +225,68 @@ onMounted(() => {
   if (!startDate.value || !endDate.value) {
     initDefaultDates()
   } else {
-    searchTransactions()
+    // 초기 진입: 충전 내역 최신순만 조회
+    qStart.value = startDate.value
+    qEnd.value = endDate.value
+    chargePage.value = 1
+    fetchCharge()
   }
 })
 
-// 화면 표시용 VM 타입
-type VM = { id: string; type: 'charge' | 'consultation'; amount: number; created_at: string; description: string }
+// 화면 표시용 VM 타입 분리
+type ChargeVM = { id: string; amount: number; created_at: string; description: string }
+type UsageVM = { id: string; amount: number; date: string; counselor_name: string; counselor_image_url?: string; duration: string }
 
 // API 데이터를 화면용으로 매핑
-const chargeVM = computed<VM[]>(() => {
+const chargeVM = computed<ChargeVM[]>(() => {
   return (chargeItems.value || []).map((it, idx) => ({
     id: `${it.paid_at || ''}-${it.product_name || ''}-${idx}`,
-    type: 'charge',
     amount: Number(it.point_amount || 0),
     created_at: it.paid_at || new Date().toISOString(),
     description: it.product_name || '포인트 충전'
   }))
 })
 
-const usageVM = computed<VM[]>(() => {
-  return (usageItems.value || []).map((it, idx) => ({
-    id: `${it.chatstart || ''}-${it.chatend || ''}-${idx}`,
-    type: 'consultation',
-    amount: -Number(it.usepoint || 0),
-    created_at: it.chatstart || it.chatend || new Date().toISOString(),
-    description: it?.counselor?.nickname ? `상담 - ${it.counselor.nickname}` : '상담 이용'
-  }))
+const usageVM = computed<UsageVM[]>(() => {
+  const { cdnUrl } = useCdn()
+  const formatDuration = (seconds?: number | null) => {
+    const s = Number(seconds || 0)
+    const h = Math.floor(s / 3600)
+    const m = Math.floor((s % 3600) / 60)
+    if (h > 0) return `${h}시간 ${m}분`
+    return `${m}분`
+  }
+  return (usageItems.value || []).map((it, idx) => {
+    const name = (it as any)?.counselor?.nickname || (it as any)?.counselor?.name || '상담사'
+    const img = cdnUrl('cs', (it as any)?.counselor?.profile_image_url || '')
+    const date = it?.chatstart || it?.chatend || new Date().toISOString()
+    return {
+      id: `${it.chatstart || ''}-${it.chatend || ''}-${idx}`,
+      amount: -Number(it.usepoint || 0),
+      date,
+      counselor_name: name,
+      counselor_image_url: img || undefined,
+      duration: formatDuration((it as any)?.realchattm)
+    }
+  })
 })
 
-const filteredByTab = computed<VM[]>(() => (activeTab.value === 'charge' ? chargeVM.value : usageVM.value))
-
-// 서버에서 이미 정렬되어 옴 - 클라이언트 정렬 제거
-const filteredTransactions = computed(() => {
-  // 서버에서 order_type으로 정렬되어 반환되므로 클라이언트 정렬 불필요
-  return filteredByTab.value
-})
+const itemsForActiveTab = computed(() => (activeTab.value === 'charge' ? chargeVM.value : usageVM.value))
 
 // 총 페이지 수
 const totalPages = computed(() => (activeTab.value === 'charge' ? chargeTotalPages.value : usageTotalPages.value))
 
+// 활성 탭의 현재 페이지 getter/setter
+const pageForActiveTab = computed({
+  get: () => (activeTab.value === 'charge' ? chargePage.value : usagePage.value),
+  set: (val: number) => {
+    if (activeTab.value === 'charge') chargePage.value = val
+    else usagePage.value = val
+  }
+})
+
 // 활성 탭 기준 로딩 상태
 const isLoading = computed(() => activeTab.value === 'charge' ? chargeLoading.value : usageLoading.value)
-
-// 탭 변경 시 페이지를 1로 초기화
-watchEffect(() => {
-  currentPage.value = 1
-}, { flush: 'sync' })
 
 // 트랜잭션 아이콘 반환
 const getTransactionIcon = (type: string) => {
@@ -276,20 +328,14 @@ const formatDate = (isoString: string) => {
   return `${year}.${month}.${day} ${hours}:${minutes}`
 }
 
-// 검색 기능: API 호출
-const searchTransactions = async () => {
-  if (!startDate.value || !endDate.value) return
-  qStart.value = startDate.value
-  qEnd.value = endDate.value
-  currentPage.value = 1
-
+// 탭별 API 호출
+const fetchCharge = async () => {
+  if (!qStart.value || !qEnd.value) return
   const { $api } = useNuxtApp()
   error.value = ''
-
-  // 충전 내역
   try {
     chargeLoading.value = true
-    const res = await $api<APIResponse<PointChargeHistoryItem[]>>(`/api/v1/users/points/history?start_dt=${encodeURIComponent(qStart.value)}&end_dt=${encodeURIComponent(qEnd.value)}&search_type=point_charge&order_type=${encodeURIComponent(sortOrder.value)}&page=${currentPage.value}&limit=${itemsPerPage}`)
+    const res = await $api<APIResponse<PointChargeHistoryItem[]>>(`/api/v1/users/points/history?start_dt=${encodeURIComponent(qStart.value)}&end_dt=${encodeURIComponent(qEnd.value)}&search_type=point_charge&order_type=${encodeURIComponent(sortOrder.value)}&page=${chargePage.value}&limit=${itemsPerPage}`)
     if (!res?.success) throw new Error(res && (res as any).error?.message || '충전 내역 조회 실패')
     chargeItems.value = (res.data as PointChargeHistoryItem[]) || []
     const tp = (res.meta as any)?.pagination?.total_pages
@@ -299,11 +345,15 @@ const searchTransactions = async () => {
   } finally {
     chargeLoading.value = false
   }
+}
 
-  // 사용 내역
+const fetchUsage = async () => {
+  if (!qStart.value || !qEnd.value) return
+  const { $api } = useNuxtApp()
+  error.value = ''
   try {
     usageLoading.value = true
-    const res2 = await $api<APIResponse<PointUseHistoryItem[]>>(`/api/v1/users/points/history?start_dt=${encodeURIComponent(qStart.value)}&end_dt=${encodeURIComponent(qEnd.value)}&search_type=point_use&order_type=${encodeURIComponent(sortOrder.value)}&page=${currentPage.value}&limit=${itemsPerPage}`)
+    const res2 = await $api<APIResponse<PointUseHistoryItem[]>>(`/api/v1/users/points/history?start_dt=${encodeURIComponent(qStart.value)}&end_dt=${encodeURIComponent(qEnd.value)}&search_type=point_use&order_type=${encodeURIComponent(sortOrder.value)}&page=${usagePage.value}&limit=${itemsPerPage}`)
     if (!res2?.success) throw new Error(res2 && (res2 as any).error?.message || '사용 내역 조회 실패')
     usageItems.value = (res2.data as PointUseHistoryItem[]) || []
     const tp2 = (res2.meta as any)?.pagination?.total_pages
@@ -315,18 +365,46 @@ const searchTransactions = async () => {
   }
 }
 
+const onUpdatePage = async (val: number) => {
+  if (activeTab.value === 'charge') {
+    chargePage.value = val
+    await fetchCharge()
+  } else {
+    usagePage.value = val
+    await fetchUsage()
+  }
+}
 
-// 정렬 변경 시 재조회
-watch(sortOrder, () => {
-  if (qStart.value && qEnd.value) searchTransactions()
+// 검색 버튼 클릭 → 활성 탭만 조회
+const searchTransactions = async () => {
+  if (!startDate.value || !endDate.value) return
+  qStart.value = startDate.value
+  qEnd.value = endDate.value
+  chargePage.value = 1
+  usagePage.value = 1
+  if (activeTab.value === 'charge') await fetchCharge()
+  else await fetchUsage()
+}
+
+
+// 정렬 변경 시 활성 탭만 재조회
+watch(sortOrder, async () => {
+  if (!qStart.value || !qEnd.value) return
+  if (activeTab.value === 'charge') await fetchCharge()
+  else await fetchUsage()
 })
 
-// 페이지 변경 시 재조회
-watch(currentPage, () => {
-  if (qStart.value && qEnd.value) searchTransactions()
+// 탭 변경 시 사용 탭 최초 진입이면 조회
+watch(activeTab, async (tab) => {
+  if (!qStart.value || !qEnd.value) return
+  if (tab === 'usage' && usageItems.value.length === 0) {
+    usagePage.value = 1
+    await fetchUsage()
+  }
 })
 </script>
 
 <style scoped>
 @import '~/assets/css/user/pointlog.css';
+@import '~/assets/css/user/cslog.css';
 </style>
