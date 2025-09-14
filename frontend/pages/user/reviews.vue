@@ -8,18 +8,18 @@
         <div
           class="tab-item"
           :class="{ active: activeTab === 'completed' }"
-          @click="activeTab = 'completed'"
+          @click="switchTab('completed')"
         >
           작성한 후기
-          <span class="tab-badge">{{ completedReviews.length }}</span>
+          <span class="tab-badge">{{ summary?.total_my_reviews || 0 }}</span>
         </div>
         <div
           class="tab-item"
           :class="{ active: activeTab === 'pending' }"
-          @click="activeTab = 'pending'"
+          @click="switchTab('pending')"
         >
           작성 대기
-          <span class="tab-badge">{{ pendingReviews.length }}</span>
+          <span class="tab-badge">{{ summary?.total_pending_reviews || 0 }}</span>
         </div>
       </div>
     </div>
@@ -30,15 +30,11 @@
       <section class="review-stats">
         <div class="stats-grid">
           <div class="stat-item">
-            <div class="stat-value">{{ averageRating }}</div>
+            <div class="stat-value">{{ Number(summary?.average_rating ?? 0).toFixed(1) }}</div>
             <div class="stat-label">평균 평점</div>
           </div>
           <div class="stat-item">
-            <div class="stat-value">{{ totalReviews }}</div>
-            <div class="stat-label">작성한 후기</div>
-          </div>
-          <div class="stat-item">
-            <div class="stat-value">{{ earnedPoints }}P</div>
+            <div class="stat-value">{{ (summary?.earned_points ?? 0).toLocaleString() }}P</div>
             <div class="stat-label">받은 포인트</div>
           </div>
         </div>
@@ -48,22 +44,34 @@
       <div class="review-list">
         <!-- 작성 대기 탭 -->
         <template v-if="activeTab === 'pending'">
-          <div v-if="pendingReviews.length === 0" class="empty-state">
+          <div v-if="pendingItems.length === 0 && !isLoading" class="empty-state">
             <div class="empty-icon">📝</div>
             <div class="empty-title">작성 대기 중인 후기가 없습니다</div>
             <div class="empty-desc">상담 후 후기를 작성하고 포인트를 받아보세요!</div>
           </div>
           <div
-            v-for="review in pendingReviews"
-            :key="review.id"
+            v-for="item in pendingItems"
+            :key="item.session_id"
             class="review-card pending"
           >
             <div class="review-header">
               <div class="counselor-info">
-                <div class="counselor-avatar">{{ review.counselor.emoji }}</div>
+                <div>
+                  <img
+                    v-if="getCounselorImage(item.counselor?.profile_image_url)"
+                    :src="getCounselorImage(item.counselor?.profile_image_url)"
+                    alt="프로필 이미지"
+                    class="w-12 h-12 rounded-full object-cover border border-white/10"
+                    width="48"
+                    height="48"
+                    loading="lazy"
+                  />
+                  <div v-else class="w-12 h-12 rounded-full bg-gradient-to-br from-yellow-400 to-amber-500 flex items-center justify-center text-2xl shadow-[0_4px_12px_rgba(255,215,0,0.3)]">🔮</div>
+                </div>
                 <div class="counselor-details">
-                  <div class="counselor-name">{{ review.counselor.name }}</div>
-                  <div class="consultation-date">{{ formatDate(review.consultationDate) }} 상담</div>
+                  <div class="counselor-name">{{ item.counselor?.nickname || '상담사' }}</div>
+                  <div class="consultation-date">{{ (item.starttm || '') }} 상담</div>
+                  <div class="consultation-time">{{ formatPendingMinutes(item.realchattm) }}분 상담</div>
                 </div>
               </div>
               <div class="review-status pending">작성 대기</div>
@@ -72,30 +80,42 @@
               <p class="review-placeholder">아직 후기를 작성하지 않으셨습니다. 후기를 작성하고 100P를 받아보세요!</p>
             </div>
             <div class="review-actions">
-              <button class="review-button write-button" @click="openWriteModal(review)">후기 작성하기</button>
+              <button class="review-button write-button" @click="openWriteModal(item)">후기 작성하기</button>
             </div>
           </div>
+          <div ref="infiniteSentinel" class="h-8"></div>
         </template>
 
         <!-- 작성한 후기 탭 -->
         <template v-if="activeTab === 'completed'">
-          <div v-if="completedReviews.length === 0" class="empty-state">
+          <div v-if="reviewItems.length === 0 && !isLoading" class="empty-state">
             <div class="empty-icon">📝</div>
             <div class="empty-title">작성한 후기가 없습니다</div>
             <div class="empty-desc">첫 상담 후기를 작성해보세요!</div>
             <NuxtLink to="/chat" class="empty-button">상담 받러 가기</NuxtLink>
           </div>
           <div
-            v-for="review in completedReviews"
-            :key="review.id"
+            v-for="review in reviewItems"
+            :key="review.review_id"
             class="review-card"
           >
             <div class="review-header">
               <div class="counselor-info">
-                <div class="counselor-avatar">{{ review.counselor.emoji }}</div>
+                <div>
+                  <img
+                    v-if="getCounselorImage(review.counselor?.profile_image_url)"
+                    :src="getCounselorImage(review.counselor?.profile_image_url)"
+                    alt="프로필 이미지"
+                    class="w-12 h-12 rounded-full object-cover border border-white/10"
+                    width="48"
+                    height="48"
+                    loading="lazy"
+                  />
+                  <div v-else class="w-12 h-12 rounded-full bg-gradient-to-br from-yellow-400 to-amber-500 flex items-center justify-center text-2xl shadow-[0_4px_12px_rgba(255,215,0,0.3)]">🔮</div>
+                </div>
                 <div class="counselor-details">
-                  <div class="counselor-name">{{ review.counselor.name }}</div>
-                  <div class="consultation-date">{{ formatDate(review.consultationDate) }} 상담</div>
+                  <div class="counselor-name">{{ review.counselor?.nickname || '상담사' }}</div>
+                  <div class="consultation-date">{{ new Date(review.created_at).toLocaleString() }}</div>
                 </div>
               </div>
               <div class="review-status">작성 완료</div>
@@ -110,17 +130,31 @@
                 >⭐</span>
               </div>
             </div>
-            <div v-if="review.tags && review.tags.length > 0" class="review-tags">
-              <span v-for="tag in review.tags" :key="tag" class="review-tag">{{ tag }}</span>
+            <div v-if="review.review_tags && review.review_tags.length > 0" class="review-tags">
+              <span v-for="tag in review.review_tags" :key="tag" class="review-tag">{{ tag }}</span>
             </div>
             <div class="review-content">
               {{ review.content }}
             </div>
+
+            <!-- 상담사 답변 -->
+            <div v-if="review.counselor_reply" class="counselor-reply">
+              <div class="reply-header">
+                <div class="reply-icon">💬</div>
+                <div class="reply-label">{{ review.counselor?.nickname || '상담사' }} 선생님의 답변</div>
+                <div class="reply-date">{{ new Date(review.counselor_replied_at || review.created_at).toLocaleString() }}</div>
+              </div>
+              <div class="reply-content">
+                {{ review.counselor_reply }}
+              </div>
+            </div>
+
             <div class="review-actions">
               <button class="review-button edit-button" @click="openEditModal(review)">수정</button>
-              <button class="review-button delete-button" @click="deleteReview(review.id)">삭제</button>
+              <button class="review-button delete-button" @click="deleteReview(review.review_id)">삭제</button>
             </div>
           </div>
+          <div ref="infiniteSentinel" class="h-8"></div>
         </template>
       </div>
     </main>
@@ -181,9 +215,9 @@
           <button
             class="modal-button modal-submit"
             @click="submitReview"
-            :disabled="!isValidReview"
+            :disabled="!isValidReview || submitting"
           >
-            {{ isEditing ? '수정완료' : '작성완료' }}
+            {{ submitting ? '처리중...' : (isEditing ? '수정완료' : '작성완료') }}
           </button>
         </div>
       </div>
@@ -195,6 +229,13 @@
 
 <script setup lang="ts">
 import auth from '~/middleware/auth'
+import { ref, computed, onMounted } from 'vue'
+import { useNuxtApp } from 'nuxt/app'
+import AppHeader from '~/components/common/AppHeader.vue'
+import AppBottomNavi from '~/components/common/AppBottomNavi.vue'
+import { useUserQueries } from '~/composables/api/useUserQueries'
+import { useNotify } from '~/composables/utils/useNotify'
+import { useCdn } from '~/composables/utils/useCdn'
 
 definePageMeta({
   middleware: [auth],
@@ -221,57 +262,94 @@ const availableTags = [
   '위로가 돼요', '공감력 좋아요', '해결책 제시'
 ]
 
-// 임시 데이터 (실제로는 API에서 가져올 데이터)
-const completedReviews = ref([
-  {
-    id: 1,
-    counselor: { name: '천기누설 선생님', emoji: '🔥' },
-    consultationDate: new Date('2025-05-25'),
-    rating: 5,
-    tags: ['정확해요', '친절해요', '속시원해요'],
-    content: '취업 관련해서 고민이 많았는데 선생님께서 정말 정확하게 봐주셨어요. 말씀하신 시기에 정말로 면접 연락이 왔고, 덕분에 좋은 회사에 합격했습니다. 앞으로도 중요한 결정할 때마다 찾아뵙고 싶어요. 감사합니다!'
-  },
-  {
-    id: 2,
-    counselor: { name: '별빛 선생님', emoji: '💫' },
-    consultationDate: new Date('2025-05-20'),
-    rating: 4,
-    tags: ['위로가 돼요', '공감력 좋아요'],
-    content: '힘든 시기에 큰 위로가 되었습니다. 선생님의 따뜻한 말씀 덕분에 마음이 많이 편안해졌어요. 앞으로의 방향도 잘 제시해주셔서 희망을 갖고 나아갈 수 있을 것 같습니다.'
-  }
-])
+// API 상태
+const summary = ref<any>(null)
+const reviewItems = ref<any[]>([])
+const pendingItems = ref<any[]>([])
+const page = ref(1)
+const totalPages = ref(1)
+const limit = 10
+const isLoading = ref(false)
+const infiniteSentinel = ref<HTMLDivElement | null>(null)
+const { cdnUrl } = useCdn()
+const getCounselorImage = (path?: string | null) => {
+  return cdnUrl('cs', path || '')
+}
 
-const pendingReviews = ref([
-  {
-    id: 3,
-    counselor: { name: '명월 선생님', emoji: '🌙' },
-    consultationDate: new Date('2025-05-30')
-  }
-])
+// 초기 데이터 로드
+const { createUserReview, updateUserReview, deleteUserReview, fetchUserReviewSummary, fetchUserReviews } = useUserQueries()
+const { notifyConfirm, notifySuccess, notifyError } = useNotify()
 
-// 계산된 값들
-const totalReviews = computed(() => completedReviews.value.length)
-const averageRating = computed(() => {
-  if (completedReviews.value.length === 0) return '0.0'
-  const sum = completedReviews.value.reduce((acc, review) => acc + review.rating, 0)
-  return (sum / completedReviews.value.length).toFixed(1)
+const loadSummary = async () => {
+  const res = await fetchUserReviewSummary()
+  summary.value = res
+}
+
+const fetchList = async () => {
+  if (page.value > totalPages.value) return
+  const res = await fetchUserReviews({ searchtype: activeTab.value === 'completed' ? 'my_reviews' : 'pending_reviews', page: page.value, limit })
+  const items = (res.data as any[]) || []
+  const tp = (res.meta as any)?.pagination?.total_pages
+  totalPages.value = typeof tp === 'number' && tp > 0 ? tp : 1
+  if (activeTab.value === 'completed') {
+    reviewItems.value.push(...items)
+  } else {
+    pendingItems.value.push(...items)
+  }
+}
+
+const switchTab = async (tab: 'completed' | 'pending') => {
+  if (activeTab.value === tab) return
+  activeTab.value = tab
+  // reset list
+  page.value = 1
+  reviewItems.value = []
+  pendingItems.value = []
+  await fetchList()
+}
+
+onMounted(async () => {
+  await loadSummary()
+  await fetchList()
+  // infinite scroll
+  const io = new IntersectionObserver((entries) => {
+    entries.forEach(async (e) => {
+      if (e.isIntersecting && !isLoading.value && page.value < totalPages.value) {
+        isLoading.value = true
+        page.value += 1
+        try { await fetchList() } finally { isLoading.value = false }
+      }
+    })
+  })
+  if (infiniteSentinel.value) io.observe(infiniteSentinel.value)
 })
-const earnedPoints = computed(() => totalReviews.value * 100)
 
 const isValidReview = computed(() => {
   return modalRating.value > 0 && modalContent.value.length >= 20
 })
+
+const submitting = ref(false)
 
 // 유틸리티 함수
 const formatDate = (date: Date) => {
   return `${date.getFullYear()}.${String(date.getMonth() + 1).padStart(2, '0')}.${String(date.getDate()).padStart(2, '0')}`
 }
 
+const formatPendingMinutes = (sec?: number | null) => {
+  const s = Number(sec || 0)
+  return Math.max(1, Math.ceil(s / 60))
+}
+
 // 모달 관련 함수
-const openWriteModal = (review: any) => {
+const openWriteModal = (item: any) => {
   isEditing.value = false
-  currentPendingReview.value = review
-  resetModalForm()
+  currentPendingReview.value = item
+  // reset only input fields, keep selection
+  modalRating.value = 0
+  modalTags.value = []
+  modalContent.value = ''
+  hoverRating.value = 0
+  editingReview.value = null
   showModal.value = true
 }
 
@@ -279,7 +357,7 @@ const openEditModal = (review: any) => {
   isEditing.value = true
   editingReview.value = review
   modalRating.value = review.rating
-  modalTags.value = [...review.tags]
+  modalTags.value = Array.isArray(review.review_tags) ? [...review.review_tags] : []
   modalContent.value = review.content
   showModal.value = true
 }
@@ -310,45 +388,54 @@ const toggleTag = (tag: string) => {
 const submitReview = async () => {
   if (!isValidReview.value) return
 
-  // 여기에 실제 API 호출 로직 추가
   if (isEditing.value && editingReview.value) {
-    // 수정 로직
-    const index = completedReviews.value.findIndex(r => r.id === editingReview.value!.id)
-    if (index > -1) {
-      completedReviews.value[index]!.rating = modalRating.value
-      completedReviews.value[index]!.tags = [...modalTags.value]
-      completedReviews.value[index]!.content = modalContent.value
+    submitting.value = true
+    try {
+      await updateUserReview({ session_id: editingReview.value.session_id, rating: modalRating.value, content: modalContent.value, review_tags: [...modalTags.value] })
+      // refresh
+      page.value = 1
+      reviewItems.value = []
+      await loadSummary()
+      await fetchList()
+      closeModal()
+    } finally {
+      submitting.value = false
     }
   } else if (currentPendingReview.value) {
-    // 새 작성 로직
-    const newReview = {
-      id: Date.now(),
-      counselor: currentPendingReview.value.counselor,
-      consultationDate: currentPendingReview.value.consultationDate,
-      rating: modalRating.value,
-      tags: [...modalTags.value],
-      content: modalContent.value
-    }
-
-    completedReviews.value.unshift(newReview)
-
-    // 대기 목록에서 제거
-    const pendingIndex = pendingReviews.value.findIndex(r => r.id === currentPendingReview.value.id)
-    if (pendingIndex > -1) {
-      pendingReviews.value.splice(pendingIndex, 1)
+    submitting.value = true
+    try {
+      const sid = Number((currentPendingReview.value as any)?.session_id)
+      if (!sid || Number.isNaN(sid)) {
+        console.error('Invalid session_id for review creation')
+        return
+      }
+      await createUserReview({ session_id: sid, rating: modalRating.value, content: modalContent.value, review_tags: [...modalTags.value] })
+      // refresh both lists and summary
+      page.value = 1
+      reviewItems.value = []
+      pendingItems.value = []
+      await loadSummary()
+      await fetchList()
+      closeModal()
+    } finally {
+      submitting.value = false
     }
   }
-
-  closeModal()
 }
 
 const deleteReview = async (reviewId: number) => {
-  if (!confirm('정말로 이 후기를 삭제하시겠습니까?')) return
-
-  // 여기에 실제 API 호출 로직 추가
-  const index = completedReviews.value.findIndex(r => r.id === reviewId)
-  if (index > -1) {
-    completedReviews.value.splice(index, 1)
+  const confirmed = await notifyConfirm('해당 후기를 삭제하시겠습니까?')
+  if (!confirmed) return
+  try {
+    await deleteUserReview(reviewId)
+    notifySuccess('삭제되었습니다.')
+    // refresh
+    page.value = 1
+    reviewItems.value = []
+    await loadSummary()
+    await fetchList()
+  } catch (e: any) {
+    notifyError(e?.message || '삭제에 실패했습니다.')
   }
 }
 </script>

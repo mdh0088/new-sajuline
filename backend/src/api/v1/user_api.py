@@ -32,15 +32,24 @@ from src.services.consultation_review_service import ConsultationReviewService
 from src.services.payment_service import PaymentService
 from src.services.grade_service import GradeService
 from src.services.ars.tm60_chatlog_service import Tm60ChatlogService
+from src.repositories.ars.tm60_chatlog_repository import Tm60ChatlogRepository
+from src.services.point_transaction_service import PointTransactionService
+from src.schemas.consultation_review_schema import (
+    UserReviewSummary,
+    UserReviewList,
+    PendingReviewList,
+    UserReviewCreateRequest,
+    UserReviewUpdateRequest,
+    ConsultationReviewResponse,
+)
 from src.schemas.user_schema import (
     UserResponse, UserSignup, UserMypageResponse, SearchType, OrderType
 )
 from src.schemas.auth_schema import LoginRequest, LoginResponse
-from src.common.response import APIResponse, ok, fail
+from src.common.response import APIResponse,APIResponseBuilder, ok, fail
 from src.common.logging import logger, get_logger_with_request_id
 from src.common.utils.client_info import extract_client_info
 from src.exceptions.custom_exceptions import BaseAppException
-
 router = APIRouter(prefix="/users", tags=["users"])
 
 
@@ -176,6 +185,10 @@ def get_tm60_chatlog_service() -> Tm60ChatlogService:
     """TM60 채팅로그 서비스 의존성 주입"""
     for mssql_session in get_db_mssql():
         return Tm60ChatlogService(mssql_session)
+
+def get_tm60_chatlog_repository():
+    for mssql_session in get_db_mssql():
+        return Tm60ChatlogRepository(mssql_session)
 
 
 
@@ -652,6 +665,133 @@ async def get_user_mypage(
                    error=str(e))
         raise BaseAppException(f"마이페이지 정보 조회 중 오류가 발생했습니다: {str(e)}", status_code=500)
 
+
+# =====================================================
+# User Reviews APIs (/user/review 요구사항)
+# =====================================================
+
+@router.get(
+    "/reviews/summary",
+    response_model=APIResponse[UserReviewSummary],
+    summary="사용자 후기 요약 정보",
+)
+async def get_user_review_summary_api(
+    current_user: TokenPayload = Depends(get_current_user),
+    review_service: ConsultationReviewService = Depends(get_consultation_review_service),
+    tm60_chatlog_repo: Tm60ChatlogRepository = Depends(get_tm60_chatlog_repository),
+) -> APIResponse[UserReviewSummary]:
+    data = await review_service.get_user_review_summary(
+        user_id=current_user.sub,
+        chatlog_repo=tm60_chatlog_repo,
+    )
+    return ok(data=data, message="후기 요약 조회 성공")
+
+
+@router.get(
+    "/reviews",
+    response_model=APIResponse,
+    summary="사용자 후기 목록 조회 (작성/대기)",
+    description="searchtype = my_reviews | pending_reviews, page/limit 기반"
+)
+async def get_user_reviews_api(
+    searchtype: str = Query("my_reviews"),
+    page: int = Query(1, ge=1),
+    limit: int = Query(20, ge=1, le=100),
+    current_user: TokenPayload = Depends(get_current_user),
+    review_service: ConsultationReviewService = Depends(get_consultation_review_service),
+    tm60_chatlog_repo: Tm60ChatlogRepository = Depends(get_tm60_chatlog_repository),
+    counselor_repo: CounselorRepository = Depends(get_counselor_repository),
+):
+    if searchtype == "my_reviews":
+        data, total = await review_service.get_my_reviews_detailed(
+            user_id=current_user.sub,
+            page=page,
+            limit=limit,
+            chatlog_repo=tm60_chatlog_repo,
+            counselor_repo=counselor_repo,
+        )
+        return APIResponseBuilder.paginated(
+            data=data.items,
+            page=page,
+            limit=limit,
+            total=total,
+            message="작성한 후기 목록 조회 성공",
+        )
+
+    if searchtype == "pending_reviews":
+        data, total = await review_service.get_pending_reviews(
+            user_id=current_user.sub,
+            page=page,
+            limit=limit,
+            chatlog_repo=tm60_chatlog_repo,
+            counselor_repo=counselor_repo,
+        )
+        return APIResponseBuilder.paginated(
+            data=data.items,
+            page=page,
+            limit=limit,
+            total=total,
+            message="작성 대기 목록 조회 성공",
+        )
+
+    raise BaseAppException("유효하지 않은 searchtype 입니다. my_reviews | pending_reviews", status_code=400)
+
+
+@router.post(
+    "/reviews",
+    response_model=APIResponse[ConsultationReviewResponse],
+    summary="사용자 후기 생성 (포인트 지급 포함)",
+)
+async def create_user_review_api(
+    payload: UserReviewCreateRequest,
+    current_user: TokenPayload = Depends(get_current_user),
+    review_service: ConsultationReviewService = Depends(get_consultation_review_service),
+    tm60_chatlog_repo: Tm60ChatlogRepository = Depends(get_tm60_chatlog_repository),
+    counselor_repo: CounselorRepository = Depends(get_counselor_repository),
+    tm60_users_service: Tm60UsersService = Depends(get_tm60_users_service),
+    point_tx_service: PointTransactionService = Depends(get_point_transaction_service),
+) -> APIResponse[ConsultationReviewResponse]:
+    result = await review_service.create_user_review_with_award(
+        user_id=current_user.sub,
+        payload=payload,
+        chatlog_repo=tm60_chatlog_repo,
+        counselor_repo=counselor_repo,
+        tm60_users_service=tm60_users_service,
+        point_transaction_service=point_tx_service,
+    )
+    return ok(data=result, message="후기 작성 성공")
+
+
+@router.put(
+    "/reviews",
+    response_model=APIResponse[ConsultationReviewResponse],
+    summary="사용자 후기 수정 (세션 기준)",
+)
+async def update_user_review_api(
+    payload: UserReviewUpdateRequest,
+    current_user: TokenPayload = Depends(get_current_user),
+    review_service: ConsultationReviewService = Depends(get_consultation_review_service),
+) -> APIResponse[ConsultationReviewResponse]:
+    updated = await review_service.update_user_review_by_session(
+        user_id=current_user.sub,
+        payload=payload,
+    )
+    return ok(data=updated, message="후기 수정 성공")
+
+
+@router.delete(
+    "/reviews/{review_id}",
+    response_model=APIResponse[bool],
+    summary="사용자 후기 삭제 (상담사 답변 존재 시 불가)",
+)
+async def delete_user_review_api(
+    review_id: int,
+    current_user: TokenPayload = Depends(get_current_user),
+    review_service: ConsultationReviewService = Depends(get_consultation_review_service),
+) -> APIResponse[bool]:
+    success = await review_service.delete_user_review_with_check(review_id=review_id, user_id=current_user.sub)
+    return ok(data=success, message="후기 삭제 성공")
+
 @router.get(
     "/points/history",
     response_model=APIResponse,
@@ -688,7 +828,7 @@ async def get_point_history(
         limit=limit,
     )
     # 페이지네이션 메타 포함 응답
-    from src.common.response import APIResponseBuilder
+    
     return APIResponseBuilder.paginated(
         data=data.items_charge if search_type == 'point_charge' else data.items_use or [],
         page=page,

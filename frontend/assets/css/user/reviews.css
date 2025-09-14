@@ -163,6 +163,12 @@
   color: rgba(255, 255, 255, 0.6);
 }
 
+.consultation-time {
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.5);
+  margin-top: 2px;
+}
+
 .review-status {
   padding: 6px 14px;
   background: rgba(76, 175, 80, 0.2);
@@ -231,6 +237,58 @@
   border-radius: 16px;
   font-size: 12px;
   color: #B794F6;
+}
+
+/* 상담사 답변 */
+.counselor-reply {
+  background: rgba(16, 185, 129, 0.05);
+  border: 1px solid rgba(16, 185, 129, 0.15);
+  border-radius: 16px;
+  padding: 16px;
+  margin: 16px 0;
+  position: relative;
+}
+
+.counselor-reply::before {
+  content: '';
+  position: absolute;
+  left: 16px;
+  top: -1px;
+  width: 12px;
+  height: 2px;
+  background: linear-gradient(90deg, #10B981 0%, #34D399 100%);
+  border-radius: 1px;
+}
+
+.reply-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.reply-icon {
+  font-size: 16px;
+}
+
+.reply-label {
+  font-size: 13px;
+  font-weight: 600;
+  color: #10B981;
+  flex: 1;
+}
+
+.reply-date {
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.reply-content {
+  font-size: 14px;
+  line-height: 1.5;
+  color: rgba(255, 255, 255, 0.8);
+  padding-left: 24px;
+  position: relative;
 }
 
 /* 리뷰 액션 */
@@ -485,5 +543,25 @@
 
   .review-button {
     width: 100%;
+  }
+
+  /* 상담사 답변 모바일 최적화 */
+  .counselor-reply {
+    padding: 14px;
+    margin: 14px 0;
+  }
+
+  .reply-header {
+    gap: 6px;
+    margin-bottom: 10px;
+  }
+
+  .reply-label {
+    font-size: 12px;
+  }
+
+  .reply-content {
+    font-size: 13px;
+    padding-left: 20px;
   }
 }
