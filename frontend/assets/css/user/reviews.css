@@ -128,12 +128,16 @@
   justify-content: space-between;
   align-items: flex-start;
   margin-bottom: 16px;
+  gap: 12px;
 }
 
 .counselor-info {
-  display: flex;
-  align-items: center;
-  gap: 12px;
+  display: flex !important;
+  align-items: center !important;
+  gap: 12px !important;
+  flex-wrap: nowrap !important;
+  min-width: 0 !important;
+  width: 100%;
 }
 
 .counselor-avatar {
@@ -148,19 +152,31 @@
 }
 
 .counselor-details {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 4px !important;
+  flex: 1 !important;
+  min-width: 0 !important;
+  overflow: hidden;
 }
 
 .counselor-name {
   font-size: 16px;
   font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .consultation-date {
   font-size: 13px;
   color: rgba(255, 255, 255, 0.6);
+}
+
+.consultation-time {
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.5);
+  margin-top: 2px;
 }
 
 .review-status {
@@ -170,6 +186,8 @@
   font-size: 12px;
   font-weight: 600;
   color: #4CAF50;
+  white-space: nowrap;
+  flex-shrink: 0;
 }
 
 .review-status.pending {
@@ -231,6 +249,58 @@
   border-radius: 16px;
   font-size: 12px;
   color: #B794F6;
+}
+
+/* 상담사 답변 */
+.counselor-reply {
+  background: rgba(16, 185, 129, 0.05);
+  border: 1px solid rgba(16, 185, 129, 0.15);
+  border-radius: 16px;
+  padding: 16px;
+  margin: 16px 0;
+  position: relative;
+}
+
+.counselor-reply::before {
+  content: '';
+  position: absolute;
+  left: 16px;
+  top: -1px;
+  width: 12px;
+  height: 2px;
+  background: linear-gradient(90deg, #10B981 0%, #34D399 100%);
+  border-radius: 1px;
+}
+
+.reply-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.reply-icon {
+  font-size: 16px;
+}
+
+.reply-label {
+  font-size: 13px;
+  font-weight: 600;
+  color: #10B981;
+  flex: 1;
+}
+
+.reply-date {
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.reply-content {
+  font-size: 14px;
+  line-height: 1.5;
+  color: rgba(255, 255, 255, 0.8);
+  padding-left: 24px;
+  position: relative;
 }
 
 /* 리뷰 액션 */
@@ -459,6 +529,26 @@
   transform: translateY(-1px);
 }
 
+/* 레이아웃 강제 고정 */
+.review-card .counselor-info {
+  display: flex !important;
+  align-items: center !important;
+  flex-wrap: nowrap !important;
+  gap: 12px !important;
+}
+
+.review-card .counselor-info > div:first-child {
+  flex-shrink: 0 !important;
+  width: 48px !important;
+  height: 48px !important;
+}
+
+.review-card .counselor-details {
+  flex: 1 !important;
+  min-width: 0 !important;
+  overflow: hidden !important;
+}
+
 /* 반응형 디자인 */
 @media (max-width: 480px) {
   .stats-grid {
@@ -485,5 +575,25 @@
 
   .review-button {
     width: 100%;
+  }
+
+  /* 상담사 답변 모바일 최적화 */
+  .counselor-reply {
+    padding: 14px;
+    margin: 14px 0;
+  }
+
+  .reply-header {
+    gap: 6px;
+    margin-bottom: 10px;
+  }
+
+  .reply-label {
+    font-size: 12px;
+  }
+
+  .reply-content {
+    font-size: 13px;
+    padding-left: 20px;
   }
 }

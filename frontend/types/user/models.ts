@@ -230,6 +230,7 @@ export interface CounselorBrief {
   counselor_code: string
   nickname?: string | null
   name?: string | null
+  profile_image_url?: string | null
 }
 
 export interface PointChargeHistoryItem {
@@ -241,6 +242,7 @@ export interface PointChargeHistoryItem {
 export interface PointUseHistoryItem {
   chatstart?: string | null
   chatend?: string | null
+  realchattm?: number | null
   counselor?: CounselorBrief | null
   usepoint: number
 }
@@ -252,3 +254,44 @@ export interface UserPointHistoryData {
 }
 
 export type UserPointHistoryResponse = APIResponse<UserPointHistoryData>
+
+// =============================================================================
+// 사용자 후기 타입 (Backend: consultation_review_schema)
+// =============================================================================
+
+export interface UserReviewSummaryData {
+  total_my_reviews: number
+  total_pending_reviews: number
+  average_rating: number
+  earned_points: number
+}
+
+export interface ReviewCounselorBrief {
+  nickname?: string | null
+  profile_image_url?: string | null
+}
+
+export interface UserReviewItemData {
+  review_id: number
+  session_id: number
+  rating: number
+  content?: string | null
+  counselor_reply?: string | null
+  review_tags?: string[] | null
+  is_best: boolean
+  created_at: string
+  counselor_replied_at?: string | null
+  realchattm?: number | null
+  counselor?: ReviewCounselorBrief | null
+}
+
+export interface PendingReviewItemData {
+  session_id: number
+  starttm?: string | null
+  realchattm?: number | null
+  counselor?: ReviewCounselorBrief | null
+}
+
+export type UserReviewSummaryResponse = APIResponse<UserReviewSummaryData>
+export type UserReviewListResponse = APIResponse<UserReviewItemData[]>
+export type PendingReviewListResponse = APIResponse<PendingReviewItemData[]>

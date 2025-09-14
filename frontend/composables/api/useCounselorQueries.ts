@@ -8,7 +8,8 @@ import {
   useQueryClient,
   useQuery,
   type UseMutationOptions,
-  type UseQueryOptions
+  type UseQueryOptions,
+  type UseQueryReturnType
 } from '@tanstack/vue-query'
 import { computed, unref, type Ref } from 'vue'
 import type { 
@@ -21,6 +22,8 @@ import type { APIResponse, APIError, PaginatedResult } from '~/types/common/api'
 import type { NoticeListItem } from '~/types/counselor/notice'
 import type { ReviewSummary } from '~/types/counselor/review'
 import type { InquirySummary, CounselorMypageUpdatePayload } from '~/types/counselor/inquiry'
+import type { CounselorPublic } from '~/types/counselor/detail'
+import { useNuxtApp } from 'nuxt/app'
 
 // 타입은 counselor 전용 디렉터리에서 관리합니다.
 
@@ -40,6 +43,16 @@ const counselorApi = {
       throw new Error(response.error?.message || '상담사 로그인에 실패했습니다.')
     }
     
+    return response.data
+  },
+
+  // 공개: 상담사 상세 (code로 조회)
+  async getPublicDetail(counselorCode: string): Promise<CounselorPublic> {
+    const { $api } = useNuxtApp()
+    const response = await $api<APIResponse<CounselorPublic>>(`/api/v1/counselors/public/${encodeURIComponent(counselorCode)}`, { method: 'GET' })
+    if (!response.success || !response.data) {
+      throw new Error(response.error?.message || '상담사 정보를 불러오지 못했습니다.')
+    }
     return response.data
   },
 
@@ -120,14 +133,13 @@ const counselorApi = {
     }
   },
 
-  // 상담사 후기 목록
+  // 상담사 후기 목록 (로그인 상담사 전용)
   async getCounselorReviews(params: { page?: number; limit?: number; visible_only?: boolean }): Promise<PaginatedResult<ReviewSummary>> {
     const { $api } = useNuxtApp()
     const query = new URLSearchParams()
     query.set('page', String(params.page ?? 1))
     query.set('limit', String(params.limit ?? 20))
     if (params.visible_only !== undefined) query.set('visible_only', String(params.visible_only))
-
     const response = await $api<APIResponse<ReviewSummary[]>>(`/api/v1/counselors/inquiries/reviews?${query.toString()}`, { method: 'GET' })
     if (!response.success) {
       throw new Error(response.error?.message || '고객 후기를 불러오지 못했습니다.')
@@ -142,14 +154,72 @@ const counselorApi = {
     }
   },
 
-  // 상담문의 목록 (사용자 → 상담사)
+  // 상담문의 목록 (사용자 → 상담사, 로그인 상담사 전용)
   async getCounselorUserInquiries(params: { page?: number; limit?: number }): Promise<PaginatedResult<InquirySummary>> {
     const { $api } = useNuxtApp()
     const query = new URLSearchParams()
     query.set('page', String(params.page ?? 1))
     query.set('limit', String(params.limit ?? 20))
-
     const response = await $api<APIResponse<InquirySummary[]>>(`/api/v1/counselors/inquiries/users?${query.toString()}`, { method: 'GET' })
+    if (!response.success) {
+      throw new Error(response.error?.message || '상담문의를 불러오지 못했습니다.')
+    }
+    const pagination = response.meta?.pagination
+    return {
+      items: response.data ?? [],
+      page: pagination?.page ?? (params.page ?? 1),
+      limit: pagination?.limit ?? (params.limit ?? 20),
+      total: pagination?.total ?? (response.data?.length ?? 0),
+      total_pages: pagination?.total_pages ?? 1
+    }
+  },
+
+  // 사용자 → 상담사 문의 생성 (로그인 사용자)
+  async createUserInquiry(payload: { counselor_id: string; content: string; category?: string; title?: string }) {
+    const { $api } = useNuxtApp()
+    const response = await $api<APIResponse<any>>(`/api/v1/users/inquiries`, {
+      method: 'POST',
+      body: {
+        counselor_id: payload.counselor_id,
+        content: payload.content,
+        category: payload.category,
+        title: payload.title
+      }
+    })
+    if (!response.success || !response.data) {
+      throw new Error(response.error?.message || '문의 등록에 실패했습니다.')
+    }
+    return response.data
+  },
+
+  // 공개: 상담사 후기 목록 (게스트)
+  async getPublicCounselorReviews(params: { counselor_id: string; page?: number; limit?: number; visible_only?: boolean }): Promise<PaginatedResult<ReviewSummary>> {
+    const { $api } = useNuxtApp()
+    const query = new URLSearchParams()
+    query.set('page', String(params.page ?? 1))
+    query.set('limit', String(params.limit ?? 20))
+    if (params.visible_only !== undefined) query.set('visible_only', String(params.visible_only))
+    const response = await $api<APIResponse<ReviewSummary[]>>(`/api/v1/counselors/public/${encodeURIComponent(params.counselor_id)}/reviews?${query.toString()}`, { method: 'GET' })
+    if (!response.success) {
+      throw new Error(response.error?.message || '고객 후기를 불러오지 못했습니다.')
+    }
+    const pagination = response.meta?.pagination
+    return {
+      items: response.data ?? [],
+      page: pagination?.page ?? (params.page ?? 1),
+      limit: pagination?.limit ?? (params.limit ?? 20),
+      total: pagination?.total ?? (response.data?.length ?? 0),
+      total_pages: pagination?.total_pages ?? 1
+    }
+  },
+
+  // 공개: 상담문의 목록 (게스트)
+  async getPublicCounselorUserInquiries(params: { counselor_id: string; page?: number; limit?: number }): Promise<PaginatedResult<InquirySummary>> {
+    const { $api } = useNuxtApp()
+    const query = new URLSearchParams()
+    query.set('page', String(params.page ?? 1))
+    query.set('limit', String(params.limit ?? 20))
+    const response = await $api<APIResponse<InquirySummary[]>>(`/api/v1/counselors/public/${encodeURIComponent(params.counselor_id)}/inquiries?${query.toString()}`, { method: 'GET' })
     if (!response.success) {
       throw new Error(response.error?.message || '상담문의를 불러오지 못했습니다.')
     }
@@ -278,7 +348,7 @@ export const useCounselorQueries = () => {
     })
   }
 
-  // 고객 후기 목록 쿼리
+  // 고객 후기 목록 쿼리 (로그인 상담사)
   const useCounselorReviews = (
     page: number | Ref<number> = 1,
     limit: number | Ref<number> = 20,
@@ -297,6 +367,7 @@ export const useCounselorQueries = () => {
   }
 
   // 상담문의 목록 쿼리 (사용자→상담사)
+  // 상담문의 목록 쿼리 (사용자→상담사, 로그인 상담사)
   const useCounselorUserInquiries = (
     page: number | Ref<number> = 1,
     limit: number | Ref<number> = 20,
@@ -307,6 +378,20 @@ export const useCounselorQueries = () => {
     return useQuery({
       queryKey: computed(() => ['counselor', 'inquiries', 'users', p.value, l.value]),
       queryFn: () => counselorApi.getCounselorUserInquiries({ page: p.value, limit: l.value }),
+      staleTime: 1000 * 60,
+      ...options
+    })
+  }
+
+  // 공개: 상담사 상세 쿼리
+  const usePublicDetail = (
+    counselorCode: string | Ref<string>,
+    options?: UseQueryOptions<CounselorPublic, APIError, CounselorPublic>
+  ) => {
+    const code = computed(() => String(unref(counselorCode)))
+    return useQuery<CounselorPublic, APIError, CounselorPublic, any>({
+      queryKey: computed(() => ['counselor', 'public', code.value]),
+      queryFn: () => counselorApi.getPublicDetail(code.value),
       staleTime: 1000 * 60,
       ...options
     })
@@ -339,6 +424,10 @@ export const useCounselorQueries = () => {
     useNoticeList,
     useCounselorReviews,
     useCounselorUserInquiries,
-    useCounselorAdminInquiries
+    useCounselorAdminInquiries,
+    usePublicDetail,
+    getPublicCounselorReviews: counselorApi.getPublicCounselorReviews,
+    getPublicCounselorUserInquiries: counselorApi.getPublicCounselorUserInquiries,
+    createUserInquiry: counselorApi.createUserInquiry
   }
 }

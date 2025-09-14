@@ -86,12 +86,14 @@
                   <div class="consult-types">
                     <button
                       v-if="counselor.consultTypes.includes('phone')"
-                      @click.stop="startConsult(counselor.id, 'phone')"
+                      @click.stop="openPhoneConsultModal(counselor)"
                       class="consult-type-btn primary"
                       :disabled="!counselor.isOnline"
                     >
                       전화상담
                     </button>
+                    <!-- 채팅상담 버튼 주석 처리 -->
+                    <!--
                     <button
                       v-if="counselor.consultTypes.includes('chat')"
                       @click.stop="startConsult(counselor.id, 'chat')"
@@ -100,6 +102,7 @@
                     >
                       채팅상담
                     </button>
+                    -->
                   </div>
                 </div>
               </div>
@@ -155,6 +158,18 @@
         </div>
       </div>
     </div>
+
+    <!-- 전화상담 모달 -->
+    <PhoneConsultModal
+      v-if="selectedCounselorForPhone"
+      :counselor="selectedCounselorForPhone"
+      :is-visible="showPhoneConsultModal"
+      :user-points="userPoints"
+      @close="closePhoneConsultModal"
+      @start-point-consult="handleStartPointConsult"
+      @start060-consult="handleStart060Consult"
+      @go-to-charge="handleGoToCharge"
+    />
   </div>
 </template>
 
@@ -163,6 +178,7 @@ import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import AppHeader from '~/components/common/AppHeader.vue'
 import AppBottomNavi from '~/components/common/AppBottomNavi.vue'
+import PhoneConsultModal from '~/components/common/PhoneConsultModal.vue'
 
 definePageMeta({
   middleware: ['auth'],
@@ -181,11 +197,13 @@ const favoriteCounselors = ref([
     tier: '프리미엄 상담사',
     emoji: '👨‍💼',
     isOnline: true,
-    specialties: ['사주명리', '궁합', '운세'],
+    specialties: ['사주명리', '궁합', '운세', '타로', '연애운', '직업운'],
     description: '20년 경력의 사주명리 전문가입니다. 정확한 사주 분석과 따뜻한 상담으로 많은 분들의 신뢰를 받고 있습니다.',
     rating: 4.9,
     reviewCount: 128,
-    consultTypes: ['phone', 'chat']
+    consultTypes: ['phone', 'chat'],
+    pointRate: 800,
+    rate060: 1300
   },
   {
     id: 1235,
@@ -194,11 +212,13 @@ const favoriteCounselors = ref([
     tier: '골드 상담사',
     emoji: '👩‍💼',
     isOnline: false,
-    specialties: ['타로', '연애운', '직업운'],
+    specialties: ['타로', '연애운', '직업운', '심리상담', '사주풀이'],
     description: '섬세한 타로 리딩으로 연애와 직업에 대한 정확한 조언을 제공합니다. 따뜻한 상담으로 유명합니다.',
     rating: 4.8,
     reviewCount: 95,
-    consultTypes: ['phone', 'chat']
+    consultTypes: ['phone', 'chat'],
+    pointRate: 750,
+    rate060: 1200
   },
   {
     id: 1236,
@@ -207,17 +227,24 @@ const favoriteCounselors = ref([
     tier: '실버 상담사',
     emoji: '🧑‍💼',
     isOnline: true,
-    specialties: ['사주', '타로', '꿈해몽'],
+    specialties: ['사주', '타로', '꿈해몽', '궁합', '애정운', '재물운', '건강운'],
     description: '다양한 분야의 전문 지식을 바탕으로 종합적인 상담을 제공합니다. 친근하고 이해하기 쉬운 설명이 특징입니다.',
     rating: 4.7,
     reviewCount: 67,
-    consultTypes: ['phone']
+    consultTypes: ['phone'],
+    pointRate: 700,
+    rate060: 1100
   }
 ])
 
-// 모달 관련
+// 즐겨찾기 해제 모달 관련
 const showConfirmModal = ref(false)
 const selectedCounselor = ref<any>(null)
+
+// 전화상담 모달 관련
+const showPhoneConsultModal = ref(false)
+const selectedCounselorForPhone = ref<any>(null)
+const userPoints = ref(5000) // 임시 사용자 포인트 (실제로는 API에서 가져옴)
 
 // 즐겨찾기 해제 확인
 const confirmUnfavorite = (counselor: any) => {
@@ -252,10 +279,50 @@ const goToCounselorProfile = (counselorId: number) => {
   router.push(`/counselor/${counselorId}`)
 }
 
-// 상담 시작
+// 전화상담 모달 열기
+const openPhoneConsultModal = (counselor: any) => {
+  selectedCounselorForPhone.value = counselor
+  showPhoneConsultModal.value = true
+}
+
+// 전화상담 모달 닫기
+const closePhoneConsultModal = () => {
+  showPhoneConsultModal.value = false
+  selectedCounselorForPhone.value = null
+}
+
+// 포인트 상담 시작
+const handleStartPointConsult = (counselorId: number) => {
+  console.log('포인트 상담 시작:', counselorId)
+  // TODO: 포인트 상담 로직 구현
+  // 실제로는 전화 API 호출
+  closePhoneConsultModal()
+}
+
+// 060 상담 시작
+const handleStart060Consult = (counselorId: number) => {
+  console.log('060 상담 시작:', counselorId)
+  // TODO: 060 상담 로직 구현
+  // 실제로는 전화 번호 복사하거나 전화 걸기 기능
+  closePhoneConsultModal()
+}
+
+// 포인트 충전 페이지로 이동
+const handleGoToCharge = () => {
+  console.log('포인트 충전 페이지로 이동')
+  // TODO: 포인트 충전 페이지로 라우팅
+  router.push('/point/charge')
+  closePhoneConsultModal()
+}
+
+// 상담 시작 (채팅상담용 - 현재 사용하지 않음)
 const startConsult = (counselorId: number, type: string) => {
   if (type === 'phone') {
-    router.push(`/chat/${counselorId}?type=phone`)
+    // 전화상담은 모달로 처리
+    const counselor = favoriteCounselors.value.find(c => c.id === counselorId)
+    if (counselor) {
+      openPhoneConsultModal(counselor)
+    }
   } else if (type === 'chat') {
     router.push(`/chat/${counselorId}?type=chat`)
   }

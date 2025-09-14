@@ -58,6 +58,13 @@ class ConsultationReview(Base):
         comment="상담사 답변"
     )
     
+    # 태그 (JSON 문자열 보관)
+    review_tags: Mapped[Optional[str]] = mapped_column(
+        Text,
+        nullable=True,
+        comment="리뷰 태그(JSON 문자열)"
+    )
+
     # 상태 및 표시 설정
     is_best: Mapped[bool] = mapped_column(
         Boolean,

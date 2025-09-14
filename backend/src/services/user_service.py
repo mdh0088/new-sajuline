@@ -381,6 +381,7 @@ class UserService:
                 PointUseHistoryItem(
                     chatstart=log_row.chatstart,
                     chatend=log_row.chatend,
+                    realchattm=log_row.realchattm,
                     counselor=(
                         None
                         if not counselor
@@ -388,6 +389,7 @@ class UserService:
                             "counselor_code": counselor.counselor_code,
                             "nickname": counselor.nickname,
                             "name": counselor.name,
+                            "profile_image_url": counselor.profile_image_url,
                         }
                     ),
                     usepoint=int(log_row.usepoint or 0),

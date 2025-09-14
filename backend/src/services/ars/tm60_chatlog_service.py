@@ -59,3 +59,11 @@ class Tm60ChatlogService:
             raise ValidationError("yyyy는 4자리, mm는 2자리여야 합니다")
 
         return await self.repository.get_monthly_stats_by_m_code(m_code, yyyy, mm)
+
+    async def get_consultation_count_by_m_code(self, m_code: str) -> int:
+        """상담사 코드 기준 상담 건수(usepoint>0)"""
+        log = get_logger_with_request_id()
+        log.info("Getting consultation count by m_code", m_code=m_code)
+        if not m_code or not m_code.strip():
+            raise ValidationError("m_code가 올바르지 않습니다.")
+        return await self.repository.get_consultation_count_by_m_code(m_code.strip())

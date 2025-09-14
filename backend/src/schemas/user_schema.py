@@ -95,6 +95,7 @@ class CounselorBrief(BaseModel):
     counselor_code: str = Field(..., description="상담사 코드")
     nickname: Optional[str] = Field(None, description="상담사 닉네임")
     name: Optional[str] = Field(None, description="상담사 실명")
+    profile_image_url: Optional[str] = Field(None, description="프로필 이미지 URL")
 
 
 class PointChargeHistoryItem(BaseModel):
@@ -106,6 +107,7 @@ class PointChargeHistoryItem(BaseModel):
 class PointUseHistoryItem(BaseModel):
     chatstart: Optional[str] = Field(None, description="채팅 시작")
     chatend: Optional[str] = Field(None, description="채팅 종료")
+    realchattm: Optional[int] = Field(None, description="실제 채팅 시간")
     counselor: Optional[CounselorBrief] = Field(None, description="상담사 정보")
     usepoint: int = Field(..., description="사용 포인트")
 

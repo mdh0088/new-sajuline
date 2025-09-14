@@ -33,6 +33,7 @@ class ReferenceType(str, Enum):
     CONSULTATION = "CONSULTATION"  # 상담
     EVENT = "EVENT"            # 이벤트
     MANUAL = "MANUAL"          # 수동 처리
+    REVIEW = "REVIEW"          # 후기 작성
 
 
 class PointTransaction(Base):
