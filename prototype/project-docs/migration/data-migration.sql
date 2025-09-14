@@ -189,9 +189,7 @@ INSERT INTO t_counselor_application (
     selected_image_url,
     application_status,
     created_at,
-    updated_at,
-    specialty_types,
-    keywords
+    updated_at
 )
 SELECT 
     IDX,
@@ -403,60 +401,100 @@ FROM TBL_PRODUCT;
 
 -- 4.2 결제 내역 마이그레이션 (참조 무결성 처리)
 INSERT INTO t_payment (
-    payment_id,
-    order_no,
-    user_id,  -- USER의 USER_ID로 직접 매핑
-    product_id,
-    payment_type,
-    amount,
-    point_amount,
-    bonus_point,
-    payment_method,
-    payment_status,
-    pg_provider,
-    pg_tid,
-    cid,
-    pay_info,
-    tax_amount,
-    domestic_flag,
-    paid_at,
-    cancelled_at,
-    cancel_reason,
-    refund_amount,
-    created_at,
-    updated_at
+	payment_id,
+	order_no,
+	user_id,
+	product_id,
+	payment_type,
+	amount,
+	point_amount,
+	mileage_used,
+	payment_method,
+	payment_status,
+	pg_tid,
+	cid,
+	pay_info,
+	tax_amount,
+	install_month,
+	pay_hash,
+	taxfree_amount,
+	nonsettle_amount,
+	discount_amount,
+	point_use_flag,
+	disposable_cup_deposit,
+	domestic_flag,
+	paid_at,
+	code,
+	result_message,
+	cancel_amount,
+	cancelled_at,
+	account_no,
+	account_name,
+	account_holder,
+	bank_code,
+	bank_name,
+	expire_date,
+	expire_time,
+	issue_tid,
+	cash_receipt_type,
+	created_at,
+	updated_at
 )
 SELECT 
     t.IDX,
     t.ORDER_NO,
-    t.USER_ID,  -- USER_ID를 그대로 사용 (외래키 참조)
-    (SELECT product_id FROM t_point_product WHERE product_name = t.PRODUCT_NAME LIMIT 1),
-    'POINT_CHARGE',
-    IFNULL(CAST(t.AMOUNT AS DECIMAL(12,2)),0),
-    t.USER_POINT,
-    0, -- 보너스 포인트 계산 필요
-    t.PGCODE,
-    CASE t.PAY_TYPE
-        WHEN 'SUCCESS' THEN 'SUCCESS'
-        WHEN 'CANCEL' THEN 'CANCELLED'
-        WHEN 'HOLD' THEN 'PENDING'
-        WHEN 'FAIL' THEN 'FAILED'
-        ELSE 'PENDING'
-    END,
+    t.USER_ID, 
     CASE 
-        WHEN t.PGCODE LIKE '%KAKAO%' THEN 'KAKAO'
-        WHEN t.PGCODE LIKE '%CARD%' THEN 'CARD'
-        ELSE 'OTHER'
-    END,
+	    WHEN PRODUCT_NAME = '31500' THEN 1 
+	    WHEN PRODUCT_NAME = '30000' THEN 1 
+	    WHEN PRODUCT_NAME = '33300' THEN 1 
+	    WHEN PRODUCT_NAME = '3만 포인트' THEN 1 
+	    WHEN PRODUCT_NAME = '52500' THEN 2 
+	    WHEN PRODUCT_NAME = '50000' THEN 2 
+	    WHEN PRODUCT_NAME = '55500' THEN 2
+	    WHEN PRODUCT_NAME = '5만 포인트' THEN 2
+	    WHEN PRODUCT_NAME = '110000' THEN 3 
+	    WHEN PRODUCT_NAME = '100000' THEN 3 
+	    WHEN PRODUCT_NAME = '111000' THEN 3
+	    WHEN PRODUCT_NAME = '10만 포인트' THEN 3
+	    WHEN PRODUCT_NAME = '345000' THEN 5 
+	    WHEN PRODUCT_NAME = '300000' THEN 5
+	    WHEN PRODUCT_NAME = '30만 포인트' THEN 5
+	    WHEN PRODUCT_NAME = '575000' THEN 6 
+	    WHEN PRODUCT_NAME = '500000' THEN 6
+    ELSE 0 END AS product_id,
+    'POINT_CHARGE',
+    CAST(IFNULL(NULLIF(t.AMOUNT, ''), 0) AS SIGNED),
+    t.USER_POINT,
+    0,
+    t.PGCODE,
+    t.PAY_TYPE,
     t.TID,
     t.CID,
     t.PAY_INFO,
     t.TAX_AMOUNT,
+    t.INSTALL_MONTH,
+    t.PAYHASH,
+    t.TAXFREE_AMOUNT,
+    t.NONSETTLE_AMOUNT,
+    t.DISCOUNT_AMOUNT,
+    t.POINTUSE_FLAG,
+    t.DISPOSABLE_CUP_DEPOSIT,
     t.DOMESTIC_FLAG,
-    CASE WHEN t.PAY_TYPE = 'SUCCESS' THEN t.REGIST_DATE ELSE NULL END,
+    STR_TO_DATE(NULLIF(t.TRANSACTION_DATE, ''), '%Y-%m-%d %H:%i:%s'),
+    t.CODE,
+    t.MESSAGE,
+    CAST(IFNULL(NULLIF(t.CANCEL_AMOUNT, ''), 0) AS SIGNED),
     t.CANCEL_DATE,
-    NULL,
-    CAST(t.CANCEL_AMOUNT AS DECIMAL(12,2)),
+    t.ACCOUNT_NO,
+    t.ACCOUNT_NAME,
+    t.ACCOUNT_HOLDER,
+    t.BANK_CODE,
+    t.BANK_NAME,
+    t.EXPIRE_DATE,
+    t.EXPIRE_TIME,
+    t.ISSUE_TID,
+    t.CASH_RECEIPT_TYPE,
     t.REGIST_DATE,
     t.UPDATE_DATE
 FROM TBL_USER_TRADE t

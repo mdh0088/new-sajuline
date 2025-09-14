@@ -1,5 +1,5 @@
 <template>
-  <nav class="fixed bottom-0 left-0 right-0 bg-slate-950/95 backdrop-blur-xl border-t border-white/10 px-5 py-3">
+  <nav class="fixed bottom-0 left-0 right-0 bg-slate-950/95 backdrop-blur-xl border-t border-white/10 px-5 py-3 z-50 pointer-events-auto">
     <div class="flex justify-around max-w-md mx-auto">
       <button 
         class="flex flex-col items-center gap-1 text-purple-400 transition-colors"
@@ -32,9 +32,9 @@ const { isCounselor } = useAuth()
 const mypagePath = computed(() => isCounselor.value ? '/counselor/mypage' : '/mypage')
 // 네비게이션 클릭 처리
 const handleNavClick = (tab: 'home' | 'fortune' | 'chat' | 'profile') => {
-  if (tab === 'home') return
+  if (tab === 'home') return navigateTo('/')
   if (tab === 'fortune') return navigateTo('/fortune')
-  if (tab === 'chat') return navigateTo('/chat')  
+  if (tab === 'chat') return navigateTo('/chat')
   if (tab === 'profile') return navigateTo(mypagePath.value)
 }
 </script>

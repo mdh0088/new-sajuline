@@ -11,6 +11,7 @@ import {
   type UseMutationOptions
 } from '@tanstack/vue-query'
 import { computed, unref, type ComputedRef, type Ref } from 'vue'
+import { useNuxtApp } from 'nuxt/app'
 import type { 
   UserCreateRequest, 
   UserUpdateRequest,
@@ -25,8 +26,11 @@ import type {
   LoginResponse,
   LogoutResponse,
   AuthenticateResponse,
-  AvailabilityCheckResponse
+  AvailabilityCheckResponse,
+  UserMypageData,
+  UserMypageResponse
 } from '~/types/user/models'
+import type { UserPointHistoryData, UserPointHistoryResponse, PointSearchType, PointOrderType } from '~/types/user/models'
 import type { APIResponse, APIError } from '~/types/common/api'
 
 /**
@@ -134,6 +138,34 @@ const userApi = {
       throw new Error(response.error?.message || '인증에 실패했습니다.')
     }
     
+    return response.data
+  },
+
+  // 마이페이지 조회
+  async getUserMypage(): Promise<UserMypageData> {
+    const { $api } = useNuxtApp()
+    const response = await $api<UserMypageResponse>('/api/v1/users/mypage')
+
+    if (!response.success || !response.data) {
+      throw new Error(response.error?.message || '마이페이지 정보를 불러오지 못했습니다.')
+    }
+
+    return response.data
+  },
+
+  // 포인트 내역 조회
+  async getUserPointHistory(params: { start_dt: string; end_dt: string; search_type: PointSearchType; order_type?: PointOrderType }): Promise<UserPointHistoryData> {
+    const { $api } = useNuxtApp()
+    const query = new URLSearchParams()
+    query.set('start_dt', params.start_dt)
+    query.set('end_dt', params.end_dt)
+    query.set('search_type', params.search_type)
+    if (params.order_type) query.set('order_type', params.order_type)
+
+    const response = await $api<UserPointHistoryResponse>(`/api/v1/users/points/history?${query.toString()}`)
+    if (!response.success || !response.data) {
+      throw new Error(response.error?.message || '포인트 내역 조회에 실패했습니다.')
+    }
     return response.data
   },
 
@@ -253,6 +285,35 @@ export const useUserQueries = () => {
       queryKey: ['users', 'list', params],
       queryFn: () => userApi.getUserList(params),
       staleTime: 2 * 60 * 1000, // 2분 - 목록은 비교적 자주 업데이트
+      ...options
+    })
+  }
+
+  // 마이페이지 쿼리
+  const useUserMypage = (
+    options?: Partial<UseQueryOptions<UserMypageData, APIError>>
+  ) => {
+    return useQuery({
+      queryKey: ['user', 'mypage'],
+      queryFn: () => userApi.getUserMypage(),
+      staleTime: 60 * 1000, // 1분
+      ...options
+    })
+  }
+
+  // 포인트 내역 쿼리
+  const useUserPointHistory = (
+    params: { start_dt: string; end_dt: string; search_type: PointSearchType; order_type?: PointOrderType } | ComputedRef<{ start_dt: string; end_dt: string; search_type: PointSearchType; order_type?: PointOrderType }> | Ref<{ start_dt: string; end_dt: string; search_type: PointSearchType; order_type?: PointOrderType }>,
+    options?: Partial<UseQueryOptions<UserPointHistoryData, APIError>>
+  ) => {
+    return useQuery({
+      queryKey: ['user', 'point-history', unref(params)],
+      queryFn: () => userApi.getUserPointHistory(unref(params) as any),
+      enabled: computed(() => {
+        const p = unref(params) as any
+        return Boolean(p?.start_dt && p?.end_dt && p?.search_type)
+      }),
+      staleTime: 60 * 1000,
       ...options
     })
   }
@@ -436,6 +497,8 @@ export const useUserQueries = () => {
     useUserById,
     useUserByEmail, 
     useUserList,
+    useUserMypage,
+    useUserPointHistory,
 
     // Availability Checks (실시간 검증용)
     useEmailAvailability,

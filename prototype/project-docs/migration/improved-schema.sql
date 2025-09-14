@@ -264,6 +264,7 @@ CREATE TABLE t_consultation_review (
     rating TINYINT(1) NOT NULL COMMENT '평점 (1-5)',
     content TEXT DEFAULT NULL COMMENT '후기 내용',
     counselor_reply TEXT DEFAULT NULL COMMENT '상담사 답변',
+    review_tags longtext DEFAULT NULL COMMENT '리뷰 태그',
     is_best TINYINT(1) DEFAULT 0 COMMENT '베스트 후기',
     is_visible TINYINT(1) DEFAULT 1 COMMENT '공개 여부',
     like_count INT(11) DEFAULT 0 COMMENT '좋아요 수',
@@ -337,38 +338,52 @@ CREATE TABLE t_point_product (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci COMMENT='포인트 상품';
 
 -- 5.2 결제 내역
-CREATE TABLE t_payment (
-    payment_id INT(11) NOT NULL AUTO_INCREMENT,
-    order_no VARCHAR(50) NOT NULL COMMENT '주문번호',
-    user_id VARCHAR(100) NOT NULL,
-    product_id INT(11) DEFAULT NULL,
-    payment_type VARCHAR(30) NOT NULL COMMENT '결제 유형: POINT_CHARGE, SUBSCRIPTION',
-    amount DECIMAL(12,2) NOT NULL COMMENT '결제 금액',
-    point_amount INT(11) DEFAULT 0 COMMENT '충전 포인트',
-    bonus_point INT(11) DEFAULT 0 COMMENT '보너스 포인트',
-    mileage_used INT(11) DEFAULT 0 COMMENT '사용 마일리지',
-    payment_method VARCHAR(30) NOT NULL COMMENT '결제 수단',
-    payment_status VARCHAR(20) NOT NULL DEFAULT 'PENDING' COMMENT '결제 상태',
-    pg_provider VARCHAR(20) DEFAULT NULL COMMENT 'PG사',
-    pg_tid VARCHAR(100) DEFAULT NULL COMMENT 'PG 거래번호',
-    cid varchar(100) DEFAULT '' COMMENT 'cid',
-    pay_info varchar(100) DEFAULT '' COMMENT '결제정보',
-    tax_amount varchar(100) DEFAULT '0' COMMENT '세금',
-    domestic_flag varchar(100) DEFAULT '' COMMENT '도메스틱 플래그',
-    paid_at DATETIME DEFAULT NULL COMMENT '결제 완료 시간',
-    cancelled_at DATETIME DEFAULT NULL COMMENT '취소 시간',
-    cancel_reason TEXT DEFAULT NULL COMMENT '취소 사유',
-    refund_amount DECIMAL(12,2) DEFAULT NULL COMMENT '환불 금액',
-    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    updated_at DATETIME DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP,
-    PRIMARY KEY (payment_id),
-    UNIQUE KEY uk_order_no (order_no),
-    KEY idx_user_id_status (user_id, payment_status),
-    KEY idx_paid_at (paid_at),
-    KEY idx_created_at (created_at DESC)
-    --CONSTRAINT fk_payment_user FOREIGN KEY (user_id) REFERENCES t_user(user_id),
-    --CONSTRAINT fk_payment_product FOREIGN KEY (product_id) REFERENCES t_point_product(product_id)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci COMMENT='결제 내역';
+CREATE TABLE `t_payment` (
+  payment_id int(11) NOT NULL AUTO_INCREMENT,
+  order_no varchar(50) NOT NULL COMMENT '주문번호',
+  user_id varchar(100) NOT NULL,
+  product_id int(11) DEFAULT NULL,
+  payment_type varchar(30) NOT NULL COMMENT '결제 유형: POINT_CHARGE, SUBSCRIPTION',
+  amount int(11) NOT NULL COMMENT '결제 금액',
+  point_amount int(11) DEFAULT 0 COMMENT '충전 포인트',
+  mileage_used int(11) DEFAULT 0 COMMENT '사용 마일리지',
+  payment_method varchar(30) NOT NULL COMMENT '결제 수단, pgcode',
+  payment_status varchar(20) NOT NULL DEFAULT 'PENDING' COMMENT '결제 상태',
+  pg_tid varchar(100) DEFAULT NULL COMMENT 'PG 거래번호',
+  cid varchar(100) DEFAULT '' COMMENT 'cid',
+  pay_info varchar(100) DEFAULT '' COMMENT '결제정보',
+  tax_amount varchar(100) DEFAULT '0' COMMENT '세금',
+  install_month varchar(100) DEFAULT NULL,
+  pay_hash varchar(100) DEFAULT NULL,
+  taxfree_amount varchar(100) DEFAULT NULL,
+  nonsettle_amount varchar(100) DEFAULT NULL,
+  discount_amount varchar(100) DEFAULT NULL,
+  point_use_flag varchar(100) DEFAULT NULL,
+  disposable_cup_deposit varchar(100) DEFAULT NULL,
+  domestic_flag varchar(100) DEFAULT '' COMMENT '도메스틱 플래그',
+  paid_at datetime DEFAULT NULL COMMENT '결제 완료 시간',
+  code varchar(100) DEFAULT NULL COMMENT '성공코드',
+  result_message text DEFAULT NULL COMMENT '결과 메시지',
+  cancel_amount int(11) DEFAULT NULL COMMENT '환불 금액',
+  cancelled_at datetime DEFAULT NULL COMMENT '취소 시간',
+  account_no varchar(100) DEFAULT NULL,
+  account_name varchar(100) DEFAULT NULL,
+  account_holder varchar(100) DEFAULT NULL,
+  bank_code varchar(100) DEFAULT NULL,
+  bank_name varchar(100) DEFAULT NULL,
+  expire_date varchar(100) DEFAULT NULL,
+  expire_time varchar(100) DEFAULT NULL,
+  issue_tid varchar(100) DEFAULT NULL,
+  cash_receipt_type varchar(100) DEFAULT NULL,
+  created_at datetime NOT NULL DEFAULT current_timestamp(),
+  updated_at datetime DEFAULT NULL ON UPDATE current_timestamp(),
+  PRIMARY KEY (`payment_id`),
+  UNIQUE KEY `uk_order_no` (`order_no`),
+  KEY `idx_user_id_status` (`user_id`,`payment_status`),
+  KEY `idx_paid_at` (`paid_at`),
+  KEY `idx_created_at` (`created_at` DESC),
+  KEY `fk_payment_product` (`product_id`)
+)  ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci COMMENT='결제 내역';
 
 -- 5.3 포인트/마일리지 거래 내역 (통합)
 CREATE TABLE t_point_transaction (
@@ -816,48 +831,6 @@ INSERT INTO t_mileage_config (config_key, config_value, description) VALUES
 INSERT INTO t_admin (login_id, password_hash, name, email, phone, role) VALUES
 ('admin', '$2b$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/LewYpfQaXscF', 'Super Admin', 'admin@sajuline.com', '010-1234-5678', 'SUPER');
 
--- =====================================================
--- 13. 뷰 생성 (선택사항)
--- =====================================================
-
--- 활성 상담사 목록 뷰
-CREATE OR REPLACE VIEW v_active_counselors AS
-SELECT 
-    c.counselor_id,
-    c.counselor_code,
-    c.nickname,
-    c.profile_image_url,
-    c.introduction_short,
-    c.counselor_status,
-    c.grade,
-    c.rating_avg,
-    c.rating_count,
-    c.point_per_minute,
-    GROUP_CONCAT(cs.specialty_code) AS specialties
-FROM t_counselor c
-LEFT JOIN t_counselor_specialty cs ON c.counselor_id = cs.counselor_id
-WHERE c.counselor_status != 'ABSENT'
-    AND c.withdrawn_at IS NULL
-GROUP BY c.counselor_id;
-
--- 사용자 포인트 현황 뷰
-CREATE OR REPLACE VIEW v_user_point_status AS
-SELECT 
-    u.user_id,
-    u.login_id,
-    u.nickname,
-    u.grade_code,
-    COALESCE(pb.point_balance, 0) AS point_balance,
-    COALESCE(pb.mileage_balance, 0) AS mileage_balance,
-    COALESCE(pb.total_earned_point, 0) AS total_earned_point,
-    COALESCE(pb.total_used_point, 0) AS total_used_point
-FROM t_user u
-LEFT JOIN t_user_point_balance pb ON u.user_id = pb.user_id
-WHERE u.user_status = 'ACTIVE';
-
--- =====================================================
--- 끝
--- =====================================================
 
 
 -- == 2025-09-05 추가 스키마 ==

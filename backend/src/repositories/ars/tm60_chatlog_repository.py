@@ -4,7 +4,7 @@ ARS 시스템 연동 - MSSQL tm60_chatlog 테이블 전용 (읽기 전용)
 """
 import asyncio
 from sqlalchemy.orm import Session
-from sqlalchemy import func, and_
+from sqlalchemy import func, and_, or_
 
 from src.models.ars.tm60_chatlog_model import Tm60Chatlog
 from src.common.logging import logger, get_logger_with_request_id
@@ -109,3 +109,62 @@ class Tm60ChatlogRepository:
                 raise BaseAppException(f"월별 상담 통계 조회 실패: {str(e)}", status_code=500)
 
         return await asyncio.to_thread(_sync_get_stats)
+
+    @logger.catch(reraise=True)
+    async def get_usage_logs(
+        self,
+        user_id: str,
+        start_dt_str: str,
+        end_dt_str: str,
+        order_type: str,
+        page: int,
+        limit: int,
+    ) -> tuple[list[Tm60Chatlog], int]:
+        """
+        포인트 사용 내역 (tm60_chatlog)
+        - where usepoint > 0 and u_id = user_id
+        - 날짜 필터: chatstart 또는 chatend가 [start_dt, end_dt] 범위 내
+        - 정렬: latest(chatstart desc), highest(usepoint desc), lowest(usepoint asc)
+        """
+        log = get_logger_with_request_id()
+        log.info("Getting usage logs", user_id=user_id, start=start_dt_str, end=end_dt_str, order_type=order_type)
+
+        # 문자열 날짜 경계 생성 (YYYY-MM-DD HH:MM:SS)
+        start_bound = f"{start_dt_str} 00:00:00"
+        end_bound = f"{end_dt_str} 23:59:59"
+
+        def _sync_get_usage_logs() -> tuple[list[Tm60Chatlog], int]:
+            try:
+                base_query = (
+                    self.mssql_session.query(Tm60Chatlog)
+                    .filter(
+                        and_(
+                            Tm60Chatlog.u_id == user_id,
+                            Tm60Chatlog.usepoint > 0,
+                            or_(
+                                and_(Tm60Chatlog.chatstart >= start_bound, Tm60Chatlog.chatstart <= end_bound),
+                                and_(Tm60Chatlog.chatend >= start_bound, Tm60Chatlog.chatend <= end_bound),
+                            ),
+                        )
+                    )
+                )
+
+                total: int = int(base_query.count())
+
+                if order_type == "latest":
+                    base_query = base_query.order_by(Tm60Chatlog.chatstart.desc())
+                elif order_type == "highest":
+                    base_query = base_query.order_by(Tm60Chatlog.usepoint.desc())
+                elif order_type == "lowest":
+                    base_query = base_query.order_by(Tm60Chatlog.usepoint.asc())
+                else:
+                    base_query = base_query.order_by(Tm60Chatlog.chatstart.desc())
+
+                rows: list[Tm60Chatlog] = list(base_query.offset(max(0, (page - 1) * limit)).limit(limit).all())
+                log.info("Usage logs fetched", user_id=user_id, count=len(rows), total=total, page=page, limit=limit)
+                return rows, total
+            except Exception as e:
+                log.warning("Failed to get usage logs", user_id=user_id, error=str(e))
+                raise BaseAppException(f"포인트 사용 내역 조회 실패: {str(e)}", status_code=500)
+
+        return await asyncio.to_thread(_sync_get_usage_logs)
