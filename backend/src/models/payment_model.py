@@ -3,9 +3,7 @@
 """
 from datetime import datetime
 from typing import Optional
-from decimal import Decimal
-
-from sqlalchemy import String, DateTime, Integer, Numeric, Text, Index, ForeignKey
+from sqlalchemy import String, DateTime, Integer, Text, Index, ForeignKey
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import Mapped, mapped_column
 

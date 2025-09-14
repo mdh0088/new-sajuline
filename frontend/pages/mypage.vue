@@ -12,10 +12,20 @@
           <div class="flex items-center justify-between mb-3">
             <h3 class="text-lg font-bold flex items-center gap-2">💰 <span>내 포인트</span></h3>
           </div>
-          <div class="text-3xl font-extrabold text-yellow-300 mb-4">{{ points.toLocaleString() }} P</div>
+          <div class="text-3xl font-extrabold text-yellow-300 mb-4">
+            <template v-if="isLoading">
+              <div class="bg-yellow-300/20 animate-pulse rounded h-10 w-32"></div>
+            </template>
+            <template v-else-if="error">
+              <span class="text-red-300 text-sm">로딩 실패</span>
+            </template>
+            <template v-else>
+              {{ points.toLocaleString() }} P
+            </template>
+          </div>
           <div class="flex gap-3">
             <NuxtLink to="/point" class="flex-1 py-3 rounded-xl bg-gradient-to-r from-yellow-400 to-amber-400 text-slate-950 font-semibold text-center active:scale-95">충전하기</NuxtLink>
-            <NuxtLink to="/user/pointlog" class="flex-1 py-3 rounded-xl bg-white/10 hover:bg-white/15 font-semibold text-center active:scale-95">사용내역</NuxtLink>
+            <NuxtLink to="/user/pointlog" class="flex-1 py-3 rounded-xl bg-white/10 hover:bg-white/15 font-semibold text-center active:scale-95">포인트 내역</NuxtLink>
           </div>
         </div>
 
@@ -23,14 +33,42 @@
         <div class="rounded-2xl border border-purple-500/30 bg-purple-500/5 p-5 mb-5">
           <div class="flex items-center justify-between mb-3">
             <div class="text-purple-200 font-semibold flex items-center gap-2">🎯 <span>다음 등급까지</span></div>
-            <div class="text-sm text-white/80">{{ gradeRemaining }}</div>
+            <div class="text-sm text-white/80">
+              <template v-if="isLoading">
+                <div class="bg-white/20 animate-pulse rounded h-4 w-16"></div>
+              </template>
+              <template v-else-if="error">
+                <span class="text-red-300">-</span>
+              </template>
+              <template v-else>
+                {{ gradeRemaining }}
+              </template>
+            </div>
           </div>
           <div class="w-full h-2 rounded-lg bg-white/10 overflow-hidden">
             <div class="h-full bg-gradient-to-r from-purple-600 to-purple-300 rounded-lg" :style="{ width: progressWidth }"></div>
           </div>
           <div class="flex items-center justify-between mt-2 text-xs text-white/60">
-            <div class="flex items-center gap-1">🥉 <span class="text-purple-200 font-medium">{{ currentGrade }}</span></div>
-            <div class="flex items-center gap-1">👑 <span class="text-white/80 font-medium">{{ nextGrade }}</span></div>
+            <div class="flex items-center gap-1">
+              🥉
+              <span class="text-purple-200 font-medium">
+                <template v-if="isLoading">
+                  <div class="bg-purple-200/20 animate-pulse rounded h-3 w-12 inline-block"></div>
+                </template>
+                <template v-else-if="error">-</template>
+                <template v-else>{{ currentGrade }}</template>
+              </span>
+            </div>
+            <div class="flex items-center gap-1">
+              👑
+              <span class="text-white/80 font-medium">
+                <template v-if="isLoading">
+                  <div class="bg-white/20 animate-pulse rounded h-3 w-12 inline-block"></div>
+                </template>
+                <template v-else-if="error">-</template>
+                <template v-else>{{ nextGrade }}</template>
+              </span>
+            </div>
           </div>
         </div>
 
@@ -103,7 +141,7 @@ definePageMeta({
 
 
 const { useUserMypage } = useUserQueries()
-const { data: mypage } = useUserMypage()
+const { data: mypage, isLoading, error } = useUserMypage()
 
 // 포인트
 const points = computed(() => Number(mypage.value?.current_points ?? 0))

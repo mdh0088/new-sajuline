@@ -383,7 +383,7 @@ CREATE TABLE `t_payment` (
   KEY `idx_paid_at` (`paid_at`),
   KEY `idx_created_at` (`created_at` DESC),
   KEY `fk_payment_product` (`product_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=6285 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci COMMENT='결제 내역';
+)  ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci COMMENT='결제 내역';
 
 -- 5.3 포인트/마일리지 거래 내역 (통합)
 CREATE TABLE t_point_transaction (
@@ -831,48 +831,6 @@ INSERT INTO t_mileage_config (config_key, config_value, description) VALUES
 INSERT INTO t_admin (login_id, password_hash, name, email, phone, role) VALUES
 ('admin', '$2b$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/LewYpfQaXscF', 'Super Admin', 'admin@sajuline.com', '010-1234-5678', 'SUPER');
 
--- =====================================================
--- 13. 뷰 생성 (선택사항)
--- =====================================================
-
--- 활성 상담사 목록 뷰
-CREATE OR REPLACE VIEW v_active_counselors AS
-SELECT 
-    c.counselor_id,
-    c.counselor_code,
-    c.nickname,
-    c.profile_image_url,
-    c.introduction_short,
-    c.counselor_status,
-    c.grade,
-    c.rating_avg,
-    c.rating_count,
-    c.point_per_minute,
-    GROUP_CONCAT(cs.specialty_code) AS specialties
-FROM t_counselor c
-LEFT JOIN t_counselor_specialty cs ON c.counselor_id = cs.counselor_id
-WHERE c.counselor_status != 'ABSENT'
-    AND c.withdrawn_at IS NULL
-GROUP BY c.counselor_id;
-
--- 사용자 포인트 현황 뷰
-CREATE OR REPLACE VIEW v_user_point_status AS
-SELECT 
-    u.user_id,
-    u.login_id,
-    u.nickname,
-    u.grade_code,
-    COALESCE(pb.point_balance, 0) AS point_balance,
-    COALESCE(pb.mileage_balance, 0) AS mileage_balance,
-    COALESCE(pb.total_earned_point, 0) AS total_earned_point,
-    COALESCE(pb.total_used_point, 0) AS total_used_point
-FROM t_user u
-LEFT JOIN t_user_point_balance pb ON u.user_id = pb.user_id
-WHERE u.user_status = 'ACTIVE';
-
--- =====================================================
--- 끝
--- =====================================================
 
 
 -- == 2025-09-05 추가 스키마 ==

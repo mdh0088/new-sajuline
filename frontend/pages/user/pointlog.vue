@@ -181,10 +181,16 @@ const initDefaultDates = () => {
   const fmt = (d: Date) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
   startDate.value = fmt(prior)
   endDate.value = fmt(today)
+  // 날짜 설정 후 바로 조회
+  searchTransactions()
 }
 
 onMounted(() => {
-  if (!startDate.value || !endDate.value) initDefaultDates()
+  if (!startDate.value || !endDate.value) {
+    initDefaultDates()
+  } else {
+    searchTransactions()
+  }
 })
 
 // 화면 표시용 VM 타입
@@ -213,33 +219,17 @@ const usageVM = computed<VM[]>(() => {
 
 const filteredByTab = computed<VM[]>(() => (activeTab.value === 'charge' ? chargeVM.value : usageVM.value))
 
-// 정렬된 거래 내역
-const sortedTransactions = computed(() => {
-  const transactions = [...filteredByTab.value]
-  
-  switch (sortOrder.value) {
-    case 'latest':
-      return transactions.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
-    case 'highest':
-      return transactions.sort((a, b) => Math.abs(b.amount) - Math.abs(a.amount))
-    case 'lowest':
-      return transactions.sort((a, b) => Math.abs(a.amount) - Math.abs(b.amount))
-    default:
-      return transactions
-  }
-})
-
-// 페이지네이션이 적용된 거래 내역
+// 서버에서 이미 정렬되어 옴 - 클라이언트 정렬 제거
 const filteredTransactions = computed(() => {
-  // 서버에서 페이지 단위로 반환되므로 추가 슬라이싱 없음
-  return sortedTransactions.value
+  // 서버에서 order_type으로 정렬되어 반환되므로 클라이언트 정렬 불필요
+  return filteredByTab.value
 })
 
 // 총 페이지 수
 const totalPages = computed(() => (activeTab.value === 'charge' ? chargeTotalPages.value : usageTotalPages.value))
 
-// 로딩 상태 집계
-const isLoading = computed(() => chargeLoading.value || usageLoading.value)
+// 활성 탭 기준 로딩 상태
+const isLoading = computed(() => activeTab.value === 'charge' ? chargeLoading.value : usageLoading.value)
 
 // 탭 변경 시 페이지를 1로 초기화
 watchEffect(() => {
@@ -325,12 +315,6 @@ const searchTransactions = async () => {
   }
 }
 
-// 최초 마운트 시 기본 기간으로 조회
-onMounted(() => {
-  if (startDate.value && endDate.value) {
-    searchTransactions()
-  }
-})
 
 // 정렬 변경 시 재조회
 watch(sortOrder, () => {

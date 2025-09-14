@@ -15,9 +15,8 @@ import type { APIResponse } from '../common/api'
  */
 export enum UserStatus {
   ACTIVE = 'ACTIVE',
-  INACTIVE = 'INACTIVE', 
-  SUSPENDED = 'SUSPENDED',
-  DELETED = 'DELETED'
+  DORMANT = 'DORMANT',
+  WITHDRAWN = 'WITHDRAWN'
 }
 
 /**

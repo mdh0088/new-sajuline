@@ -1,6 +1,7 @@
 """
 상담사 관련 API 엔드포인트
 """
+from datetime import datetime
 from typing import Optional
 from fastapi import APIRouter, Depends, HTTPException, status, Query, Response, Request
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -221,7 +222,6 @@ async def logout(
 
         # Access Token 블랙리스트 처리
         if access_token:
-            from datetime import datetime
             access_expires = datetime.fromtimestamp(current_user.exp)
             await auth_service.blacklist_token(
                 jti=current_user.jti,
@@ -233,7 +233,6 @@ async def logout(
         if refresh_token:
             try:
                 refresh_payload = await auth_service.verify_refresh_token(refresh_token, redis_client)
-                from datetime import datetime
                 refresh_expires = datetime.fromtimestamp(refresh_payload["exp"])
                 await auth_service.blacklist_token(
                     jti=refresh_payload["jti"],

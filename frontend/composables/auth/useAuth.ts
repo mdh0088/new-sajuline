@@ -285,9 +285,7 @@ export const useAuth = () => {
     return true
   }
   
-  // 내비게이션 시에만 판단하므로 주기적 체크 제거
-  const startTokenCheck = () => {}
-  const stopTokenCheck = () => {}
+  // 주기적 체크 미사용 정책
   
   /**
    * 컴포넌트 마운트 시 초기화
@@ -296,9 +294,6 @@ export const useAuth = () => {
     onMounted(() => {
       // 세션 복원은 비동기 수행 (중복 호출 방지)
       restoreSession()
-      if (isAuthenticated.value) {
-        startTokenCheck()
-      }
     })
   }
 
@@ -324,16 +319,6 @@ export const useAuth = () => {
     }
   }
   
-  /**
-   * 로그인 상태 변경 감지
-   */
-  watch(isAuthenticated, (newValue) => {
-    if (newValue) {
-      startTokenCheck()
-    } else {
-      stopTokenCheck()
-    }
-  })
   
   return {
     // 상태

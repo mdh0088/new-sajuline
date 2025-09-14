@@ -38,7 +38,6 @@ class UserResponse(UserBase):
     user_id: str = Field(..., description="사용자 ID")
     user_status: UserStatus = Field(..., description="사용자 상태")
     grade_code: str = Field(..., description="등급코드")
-    social_provider: Optional[str] = Field(None, description="소셜 제공자")
     failed_login_count: int = Field(..., description="로그인 실패 횟수")
     locked_until: Optional[datetime] = Field(None, description="계정 잠금 해제 시간")
     created_at: datetime = Field(..., description="생성일시")

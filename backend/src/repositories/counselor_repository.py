@@ -113,6 +113,11 @@ class CounselorRepository:
         stmt = select(Counselor).where(Counselor.counselor_code == counselor_code)
         result = await self.db.execute(stmt)
         counselor = result.scalar_one_or_none()
+        log.info(
+            "Counselor lookup completed",
+            counselor_code=counselor_code,
+            found=counselor is not None
+        )
         return counselor
 
     @logger.catch(reraise=True)
