@@ -307,11 +307,11 @@ export const useUserQueries = () => {
     options?: Partial<UseQueryOptions<UserPointHistoryData, APIError>>
   ) => {
     return useQuery({
-      queryKey: ['user', 'point-history', params],
+      queryKey: ['user', 'point-history', unref(params)],
       queryFn: () => userApi.getUserPointHistory(unref(params) as any),
       enabled: computed(() => {
         const p = unref(params) as any
-        return !!p?.start_dt && !!p?.end_dt && !!p?.search_type
+        return Boolean(p?.start_dt && p?.end_dt && p?.search_type)
       }),
       staleTime: 60 * 1000,
       ...options

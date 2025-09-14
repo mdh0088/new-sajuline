@@ -130,6 +130,10 @@
 </template>
 
 
+definePageMeta({
+  requiresAuth: false
+})
+
 <script setup lang="ts">
 // Vue 및 Nuxt imports
 import { ref, onMounted } from 'vue'

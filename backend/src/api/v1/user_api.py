@@ -33,14 +33,13 @@ from src.services.payment_service import PaymentService
 from src.services.grade_service import GradeService
 from src.services.ars.tm60_chatlog_service import Tm60ChatlogService
 from src.schemas.user_schema import (
-    UserResponse, UserSignup, UserMypageResponse
+    UserResponse, UserSignup, UserMypageResponse, SearchType, OrderType
 )
 from src.schemas.auth_schema import LoginRequest, LoginResponse
 from src.common.response import APIResponse, ok, fail
 from src.common.logging import logger, get_logger_with_request_id
 from src.common.utils.client_info import extract_client_info
 from src.exceptions.custom_exceptions import BaseAppException
-from src.schemas.user_schema import PointHistoryResponse
 
 router = APIRouter(prefix="/users", tags=["users"])
 
@@ -665,8 +664,8 @@ async def get_user_mypage(
 async def get_point_history(
     start_dt: str = Query(..., description="시작일 (yyyy-mm-dd)"),
     end_dt: str = Query(..., description="종료일 (yyyy-mm-dd)"),
-    search_type: str = Query(..., pattern="^(point_charge|point_use)$"),
-    order_type: str = Query("latest", pattern="^(latest|highest|lowest)$"),
+    search_type: SearchType = Query(...),
+    order_type: OrderType = Query("latest"),
     page: int = Query(1, ge=1, description="페이지 번호"),
     limit: int = Query(20, ge=1, le=100, description="페이지당 항목 수"),
     current_user: TokenPayload = Depends(get_current_user),

@@ -32,9 +32,9 @@ const { isCounselor } = useAuth()
 const mypagePath = computed(() => isCounselor.value ? '/counselor/mypage' : '/mypage')
 // 네비게이션 클릭 처리
 const handleNavClick = (tab: 'home' | 'fortune' | 'chat' | 'profile') => {
-  if (tab === 'home') return
+  if (tab === 'home') return navigateTo('/')
   if (tab === 'fortune') return navigateTo('/fortune')
-  if (tab === 'chat') return navigateTo('/chat')  
+  if (tab === 'chat') return navigateTo('/chat')
   if (tab === 'profile') return navigateTo(mypagePath.value)
 }
 </script>

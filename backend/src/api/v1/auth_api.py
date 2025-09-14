@@ -41,10 +41,6 @@ async def refresh_token(
     log = get_logger_with_request_id()
     
     try:
-        # 테스트용 강제 API 레이어 오류 발생
-        if refresh_request.refresh_token == "api_refresh_error_test":
-            raise BaseAppException("API layer: 토큰 갱신 처리 실패 테스트", status_code=500)
-        
         # 쿠키에서 기존 Refresh Token 추출 (블랙리스트용)
         old_refresh_token = request.cookies.get("refresh_token") or refresh_request.refresh_token
         if not old_refresh_token:
@@ -87,7 +83,7 @@ async def refresh_token(
             samesite="lax",  # CSRF 보호
             max_age=30 * 60  # 30분
         )
-        
+
         # HttpOnly 쿠키에 새로운 Refresh Token 설정
         response.set_cookie(
             key="refresh_token",

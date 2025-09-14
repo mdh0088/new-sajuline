@@ -122,12 +122,19 @@ export default defineNuxtPlugin(() => {
           })
         }
         
-        // 정책: 자동 리프레시/리디렉션은 하지 않고 에러만 전달 (페이지 이동 시 미들웨어에서 처리)
-        
-        // 토큰 갱신 실패 시에도 적절한 에러 메시지 반환
+        // 단일 비행 리프레시 후 원요청 1회 재시도
+        // @ts-expect-error: 내부 재시도 플래그
+        if (!options._retry) {
+          try {
+            await refreshToken()
+            // @ts-expect-error: 내부 재시도 플래그
+            return api(request, { ...options, _retry: true })
+          } catch (_) {
+            // 리프레시 실패 시 아래 표준 에러로 폴백
+          }
+        }
         const errorData = response._data
         const errorMessage = errorData?.message || errorData?.error?.message || '인증이 필요합니다.'
-        
         throw createError({
           statusCode: response.status,
           statusMessage: errorMessage,

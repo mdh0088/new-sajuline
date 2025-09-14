@@ -189,9 +189,7 @@ INSERT INTO t_counselor_application (
     selected_image_url,
     application_status,
     created_at,
-    updated_at,
-    specialty_types,
-    keywords
+    updated_at
 )
 SELECT 
     IDX,
