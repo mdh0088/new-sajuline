@@ -56,7 +56,7 @@
           >
             <div class="review-header">
               <div class="counselor-info">
-                <div>
+                <div class="flex-shrink-0">
                   <img
                     v-if="getCounselorImage(item.counselor?.profile_image_url)"
                     :src="getCounselorImage(item.counselor?.profile_image_url)"
@@ -66,9 +66,9 @@
                     height="48"
                     loading="lazy"
                   />
-                  <div v-else class="w-12 h-12 rounded-full bg-gradient-to-br from-yellow-400 to-amber-500 flex items-center justify-center text-2xl shadow-[0_4px_12px_rgba(255,215,0,0.3)]">🔮</div>
+                  <div v-else class="w-12 h-12 rounded-full bg-gradient-to-br from-yellow-400 to-amber-500 flex items-center justify-center text-2xl shadow-[0_4px_12px_rgba(255,215,0,0.3)] flex-shrink-0">🔮</div>
                 </div>
-                <div class="counselor-details">
+                <div class="counselor-details flex-1 min-w-0">
                   <div class="counselor-name">{{ item.counselor?.nickname || '상담사' }}</div>
                   <div class="consultation-date">{{ (item.starttm || '') }} 상담</div>
                   <div class="consultation-time">{{ formatPendingMinutes(item.realchattm) }}분 상담</div>
@@ -101,7 +101,7 @@
           >
             <div class="review-header">
               <div class="counselor-info">
-                <div>
+                <div class="flex-shrink-0">
                   <img
                     v-if="getCounselorImage(review.counselor?.profile_image_url)"
                     :src="getCounselorImage(review.counselor?.profile_image_url)"
@@ -111,9 +111,9 @@
                     height="48"
                     loading="lazy"
                   />
-                  <div v-else class="w-12 h-12 rounded-full bg-gradient-to-br from-yellow-400 to-amber-500 flex items-center justify-center text-2xl shadow-[0_4px_12px_rgba(255,215,0,0.3)]">🔮</div>
+                  <div v-else class="w-12 h-12 rounded-full bg-gradient-to-br from-yellow-400 to-amber-500 flex items-center justify-center text-2xl shadow-[0_4px_12px_rgba(255,215,0,0.3)] flex-shrink-0">🔮</div>
                 </div>
-                <div class="counselor-details">
+                <div class="counselor-details flex-1 min-w-0">
                   <div class="counselor-name">{{ review.counselor?.nickname || '상담사' }}</div>
                   <div class="consultation-date">{{ new Date(review.created_at).toLocaleString() }}</div>
                 </div>
@@ -151,7 +151,7 @@
 
             <div class="review-actions">
               <button class="review-button edit-button" @click="openEditModal(review)">수정</button>
-              <button class="review-button delete-button" @click="deleteReview(review.review_id)">삭제</button>
+              <!-- <button class="review-button delete-button" @click="deleteReview(review.review_id)">삭제</button> -->
             </div>
           </div>
           <div ref="infiniteSentinel" class="h-8"></div>
@@ -160,68 +160,14 @@
     </main>
 
     <!-- 리뷰 작성/수정 모달 -->
-    <div v-if="showModal" class="modal-overlay" @click="closeModal">
-      <div class="modal-content" @click.stop>
-        <div class="modal-header">
-          <h3 class="modal-title">{{ isEditing ? '후기 수정' : '후기 작성' }}</h3>
-        </div>
-        <div class="modal-body">
-          <!-- 별점 -->
-          <div class="form-group">
-            <label class="form-label">만족도를 평가해주세요</label>
-            <div class="rating-stars">
-              <span
-                v-for="i in 5"
-                :key="i"
-                class="star"
-                :class="{ filled: i <= (hoverRating || modalRating) }"
-                @click="modalRating = i"
-                @mouseenter="hoverRating = i"
-                @mouseleave="hoverRating = 0"
-              >⭐</span>
-            </div>
-          </div>
-
-          <!-- 태그 선택 -->
-          <div class="form-group">
-            <label class="form-label">어떤 점이 좋았나요? (최대 3개)</label>
-            <div class="tag-select">
-              <div
-                v-for="tag in availableTags"
-                :key="tag"
-                class="tag-option"
-                :class="{ selected: modalTags.includes(tag) }"
-                @click="toggleTag(tag)"
-              >
-                {{ tag }}
-              </div>
-            </div>
-          </div>
-
-          <!-- 리뷰 내용 -->
-          <div class="form-group">
-            <label class="form-label">상담은 어떠셨나요?</label>
-            <textarea
-              v-model="modalContent"
-              class="textarea"
-              placeholder="다른 회원님들께 도움이 될 수 있도록 솔직한 후기를 남겨주세요. (최소 20자)"
-              maxlength="500"
-            ></textarea>
-            <div class="char-count">{{ modalContent.length }} / 500</div>
-          </div>
-        </div>
-        <div class="modal-footer">
-          <button class="modal-button modal-cancel" @click="closeModal">취소</button>
-          <button
-            class="modal-button modal-submit"
-            @click="submitReview"
-            :disabled="!isValidReview || submitting"
-          >
-            {{ submitting ? '처리중...' : (isEditing ? '수정완료' : '작성완료') }}
-          </button>
-        </div>
-      </div>
-    </div>
+    <ReviewWriteModal
+      :is-visible="showModal"
+      :is-editing="isEditing"
+      :initial-data="modalData"
+      :submitting="submitting"
+      @close="closeModal"
+      @submit="handleModalSubmit"
+    />
 
     <AppBottomNavi />
   </div>
@@ -233,6 +179,7 @@ import { ref, computed, onMounted } from 'vue'
 import { useNuxtApp } from 'nuxt/app'
 import AppHeader from '~/components/common/AppHeader.vue'
 import AppBottomNavi from '~/components/common/AppBottomNavi.vue'
+import ReviewWriteModal from '~/components/common/ReviewWriteModal.vue'
 import { useUserQueries } from '~/composables/api/useUserQueries'
 import { useNotify } from '~/composables/utils/useNotify'
 import { useCdn } from '~/composables/utils/useCdn'
@@ -250,17 +197,12 @@ const isEditing = ref(false)
 const editingReview = ref<any>(null)
 const currentPendingReview = ref<any>(null)
 
-// 모달 폼 데이터
-const modalRating = ref(0)
-const modalTags = ref<string[]>([])
-const modalContent = ref('')
-const hoverRating = ref(0)
-
-// 사용 가능한 태그
-const availableTags = [
-  '정확해요', '친절해요', '속시원해요',
-  '위로가 돼요', '공감력 좋아요', '해결책 제시'
-]
+// 모달 데이터
+const modalData = ref({
+  rating: 0,
+  tags: [] as string[],
+  content: ''
+})
 
 // API 상태
 const summary = ref<any>(null)
@@ -325,7 +267,7 @@ onMounted(async () => {
 })
 
 const isValidReview = computed(() => {
-  return modalRating.value > 0 && modalContent.value.length >= 20
+  return modalData.value.rating > 0 && modalData.value.content.length >= 20
 })
 
 const submitting = ref(false)
@@ -344,21 +286,26 @@ const formatPendingMinutes = (sec?: number | null) => {
 const openWriteModal = (item: any) => {
   isEditing.value = false
   currentPendingReview.value = item
-  // reset only input fields, keep selection
-  modalRating.value = 0
-  modalTags.value = []
-  modalContent.value = ''
-  hoverRating.value = 0
   editingReview.value = null
+  // 모달 데이터 초기화
+  modalData.value = {
+    rating: 0,
+    tags: [],
+    content: ''
+  }
   showModal.value = true
 }
 
 const openEditModal = (review: any) => {
   isEditing.value = true
   editingReview.value = review
-  modalRating.value = review.rating
-  modalTags.value = Array.isArray(review.review_tags) ? [...review.review_tags] : []
-  modalContent.value = review.content
+  currentPendingReview.value = null
+  // 기존 리뷰 데이터로 초기화
+  modalData.value = {
+    rating: review.rating,
+    tags: Array.isArray(review.review_tags) ? [...review.review_tags] : [],
+    content: review.content
+  }
   showModal.value = true
 }
 
@@ -368,60 +315,51 @@ const closeModal = () => {
 }
 
 const resetModalForm = () => {
-  modalRating.value = 0
-  modalTags.value = []
-  modalContent.value = ''
-  hoverRating.value = 0
+  modalData.value = {
+    rating: 0,
+    tags: [],
+    content: ''
+  }
   editingReview.value = null
   currentPendingReview.value = null
 }
 
-const toggleTag = (tag: string) => {
-  const index = modalTags.value.indexOf(tag)
-  if (index > -1) {
-    modalTags.value.splice(index, 1)
-  } else if (modalTags.value.length < 3) {
-    modalTags.value.push(tag)
-  }
-}
-
-const submitReview = async () => {
-  if (!isValidReview.value) return
-
-  if (isEditing.value && editingReview.value) {
-    submitting.value = true
-    try {
-      await updateUserReview({ session_id: editingReview.value.session_id, rating: modalRating.value, content: modalContent.value, review_tags: [...modalTags.value] })
-      // refresh
-      page.value = 1
-      reviewItems.value = []
-      await loadSummary()
-      await fetchList()
-      closeModal()
-    } finally {
-      submitting.value = false
-    }
-  } else if (currentPendingReview.value) {
-    submitting.value = true
-    try {
+const handleModalSubmit = async (data: { rating: number, tags: string[], content: string }) => {
+  submitting.value = true
+  try {
+    if (isEditing.value && editingReview.value) {
+      await updateUserReview({
+        session_id: editingReview.value.session_id,
+        rating: data.rating,
+        content: data.content,
+        review_tags: [...data.tags]
+      })
+    } else if (currentPendingReview.value) {
       const sid = Number((currentPendingReview.value as any)?.session_id)
       if (!sid || Number.isNaN(sid)) {
         console.error('Invalid session_id for review creation')
         return
       }
-      await createUserReview({ session_id: sid, rating: modalRating.value, content: modalContent.value, review_tags: [...modalTags.value] })
-      // refresh both lists and summary
-      page.value = 1
-      reviewItems.value = []
-      pendingItems.value = []
-      await loadSummary()
-      await fetchList()
-      closeModal()
-    } finally {
-      submitting.value = false
+      await createUserReview({
+        session_id: sid,
+        rating: data.rating,
+        content: data.content,
+        review_tags: [...data.tags]
+      })
     }
+
+    // refresh
+    page.value = 1
+    reviewItems.value = []
+    pendingItems.value = []
+    await loadSummary()
+    await fetchList()
+    closeModal()
+  } finally {
+    submitting.value = false
   }
 }
+
 
 const deleteReview = async (reviewId: number) => {
   const confirmed = await notifyConfirm('해당 후기를 삭제하시겠습니까?')

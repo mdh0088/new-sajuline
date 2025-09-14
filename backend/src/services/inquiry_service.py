@@ -8,7 +8,7 @@ from src.exceptions.custom_exceptions import NotFoundError, ValidationError
 from src.common.logging import logger, get_logger_with_request_id
 
 from src.models.inquiry_model import Inquiry
-from src.schemas.inquiry_schema import InquirySummary
+from src.schemas.inquiry_schema import InquirySummary, UserInquiryCreateRequest, InquiryResponse
 from src.repositories.inquiry_repository import InquiryRepository
 
 
@@ -105,3 +105,27 @@ class InquiryService:
                 total=total)
         
         return inquiry_summaries, page, limit, total
+
+    async def create_user_inquiry(
+        self,
+        *,
+        user_id: str,
+        payload: UserInquiryCreateRequest
+    ) -> InquiryResponse:
+        """사용자 → 상담사 1:1 문의 생성"""
+        log = get_logger_with_request_id()
+        log.info("Creating user inquiry (service)", user_id=user_id, counselor_id=payload.counselor_id)
+
+        if not payload.content or not payload.counselor_id:
+            raise ValidationError("counselor_id와 content는 필수입니다.")
+
+        inquiry = await self.inquiry_repo.create_user_inquiry(
+            user_id=user_id,
+            counselor_id=payload.counselor_id,
+            content=payload.content,
+            category=payload.category,
+            title=payload.title
+        )
+
+        response = InquiryResponse.model_validate(inquiry)
+        return response

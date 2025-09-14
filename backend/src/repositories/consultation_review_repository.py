@@ -100,6 +100,23 @@ class ConsultationReviewRepository:
             return 0.0
 
     @logger.catch(reraise=True)
+    async def get_average_rating_by_counselor_id(self, counselor_id: str, *, visible_only: bool = True) -> float:
+        """상담사 ID별 평균 평점 (기본: 공개 후기만)"""
+        log = get_logger_with_request_id()
+        log.info("Getting average rating by counselor", counselor_id=counselor_id, visible_only=visible_only)
+        stmt = select(func.avg(ConsultationReview.rating)).where(ConsultationReview.counselor_id == counselor_id)
+        if visible_only:
+            stmt = stmt.where(ConsultationReview.is_visible == True)  # noqa: E712
+        result = await self.db.execute(stmt)
+        avg_val = result.scalar()
+        try:
+            value = float(avg_val) if avg_val is not None else 0.0
+            log.info("Average rating computed", counselor_id=counselor_id, average=value)
+            return value
+        except Exception:
+            return 0.0
+
+    @logger.catch(reraise=True)
     async def get_session_ids_by_user_id(self, user_id: str, *, visible_only: bool = True) -> List[int]:
         """해당 사용자의 (기본: 공개) 후기들의 session_id 목록 조회"""
         stmt = select(ConsultationReview.session_id).where(ConsultationReview.user_id == user_id)

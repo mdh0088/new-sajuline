@@ -47,6 +47,9 @@ from src.schemas.user_schema import (
 )
 from src.schemas.auth_schema import LoginRequest, LoginResponse
 from src.common.response import APIResponse,APIResponseBuilder, ok, fail
+from src.repositories.inquiry_repository import InquiryRepository
+from src.services.inquiry_service import InquiryService
+from src.schemas.inquiry_schema import UserInquiryCreateRequest, InquiryResponse
 from src.common.logging import logger, get_logger_with_request_id
 from src.common.utils.client_info import extract_client_info
 from src.exceptions.custom_exceptions import BaseAppException
@@ -137,6 +140,16 @@ def get_consultation_review_repository(db: AsyncSession = Depends(get_db_maria))
     return ConsultationReviewRepository(db)
 
 
+def get_inquiry_repository(db: AsyncSession = Depends(get_db_maria)) -> InquiryRepository:
+    return InquiryRepository(db)
+
+
+def get_inquiry_service(
+    inquiry_repo: InquiryRepository = Depends(get_inquiry_repository)
+) -> InquiryService:
+    return InquiryService(inquiry_repo)
+
+
 def get_payment_repository(db: AsyncSession = Depends(get_db_maria)) -> PaymentRepository:
     """결제 리포지토리 의존성 주입"""
     return PaymentRepository(db)
@@ -192,6 +205,20 @@ def get_tm60_chatlog_repository():
 
 
 
+
+@router.post(
+    "/inquiries",
+    response_model=APIResponse[InquiryResponse],
+    summary="사용자 → 상담사 문의 등록"
+)
+async def create_user_inquiry_api(
+    payload: UserInquiryCreateRequest,
+    current_user: TokenPayload = Depends(get_current_user),
+    inquiry_service: InquiryService = Depends(get_inquiry_service)
+) -> APIResponse[InquiryResponse]:
+    """로그인 사용자 기준으로 상담사에게 문의 등록"""
+    result = await inquiry_service.create_user_inquiry(user_id=current_user.sub, payload=payload)
+    return ok(data=result, message="문의가 등록되었습니다.")
 
 @router.post(
     "/signup",

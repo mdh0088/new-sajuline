@@ -71,6 +71,8 @@ class ConsultationReviewSummary(BaseModel):
     counselor_id: str = Field(..., description="상담사 ID")
     rating: int = Field(..., description="평점 (1-5)")
     content: Optional[str] = Field(None, description="후기 내용")
+    counselor_reply: Optional[str] = Field(None, description="상담사 답변")
+    counselor_replied_at: Optional[datetime] = Field(None, description="상담사 답변 일시")
     is_best: bool = Field(..., description="베스트 후기")
     like_count: int = Field(..., description="좋아요 수")
     created_at: datetime = Field(..., description="생성일시")

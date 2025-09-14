@@ -23,6 +23,16 @@ class InquiryCreate(InquiryBase):
     pass
 
 
+class UserInquiryCreateRequest(BaseModel):
+    """사용자 → 상담사 문의 생성 요청 스키마 (클라이언트 입력)
+    서버가 inquirer_type/inquirer_id를 세션으로 보강하므로 노출하지 않음
+    """
+    counselor_id: str = Field(..., description="문의 대상 상담사 ID")
+    category: Optional[str] = Field(None, description="문의 카테고리")
+    title: Optional[str] = Field(None, description="제목")
+    content: str = Field(..., min_length=1, description="내용")
+
+
 class InquiryUpdate(BaseModel):
     """1:1 문의 수정 요청 스키마"""
     category: Optional[str] = Field(None, description="문의 카테고리")
@@ -55,6 +65,9 @@ class InquirySummary(BaseModel):
     counselor_id: Optional[str] = Field(None, description="문의 상담사 ID")
     category: Optional[str] = Field(None, description="문의 카테고리")
     title: Optional[str] = Field(None, description="제목")
+    content: Optional[str] = Field(None, description="내용")
+    reply_content: Optional[str] = Field(None, description="관리자 답변")
+    answered_at: Optional[datetime] = Field(None, description="답변 시간")
     is_read: bool = Field(..., description="읽음 상태")
     has_reply: bool = Field(False, description="답변 여부")
     created_at: datetime = Field(..., description="생성일시")

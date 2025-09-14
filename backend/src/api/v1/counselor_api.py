@@ -494,3 +494,108 @@ async def get_monthly_consultation_stats(
         "sum_usepoint": sum_usepoint
     }
     return ok(data=data, message="상담시간/포인트 합계 조회 성공")
+
+
+# =====================
+# 공개(게스트) 엔드포인트
+# =====================
+
+@router.get(
+    "/public/{counselor_code}",
+    response_model=APIResponse[CounselorResponse],
+    summary="상담사 공개 상세 조회",
+    description="counselor_code로 상담사 상세를 조회합니다. 게스트 접근 가능"
+)
+async def get_public_counselor_detail(
+    counselor_code: str,
+    counselor_repo: CounselorRepository = Depends(get_counselor_repository),
+    review_repo: ConsultationReviewRepository = Depends(get_consultation_review_repository),
+    chatlog_service: Tm60ChatlogService = Depends(get_tm60_chatlog_service)
+):
+    """상담사 공개 상세 조회
+    - 입력: counselor_code
+    - 출력 필드: counselor_id, nickname, profile_image_url, introduction_short, greeting_message,
+      career_info, keywords, work_time, specialty_types, after_amount, before_amount,
+      rating_avg(후기 기반), consultation_count(tm60_chatlog 기반)
+    """
+    log = get_logger_with_request_id()
+    log.info("API: Public counselor detail", counselor_code=counselor_code)
+
+    counselor = await counselor_repo.get_by_counselor_code(counselor_code)
+    if not counselor:
+        raise BaseAppException("상담사를 찾을 수 없습니다", status_code=404)
+
+    # 평균 평점 (공개 후기만)
+    rating_avg = await review_repo.get_average_rating_by_counselor_id(counselor.counselor_id, visible_only=True)
+
+    # 상담건수 (tm60_chatlog: m_code=counselor_code AND usepoint>0)
+    consultation_count = await chatlog_service.get_consultation_count_by_m_code(counselor.counselor_code)
+
+    # 응답 변환 및 보강
+    resp = CounselorResponse.model_validate(counselor)
+    resp.rating_avg = rating_avg
+    resp.consultation_count = consultation_count
+
+    return ok(data=resp, message="상담사 공개 상세 조회 성공")
+
+
+@router.get(
+    "/public/{counselor_id}/reviews",
+    response_model=APIResponse,
+    summary="상담사 공개 후기 목록 조회",
+    description="counselor_id로 후기 목록을 조회합니다. 게스트 접근 가능"
+)
+async def get_public_counselor_reviews(
+    counselor_id: str,
+    page: int = Query(1, ge=1, description="페이지 번호"),
+    limit: int = Query(20, ge=1, le=100, description="페이지당 항목 수"),
+    visible_only: bool = Query(True, description="공개 후기만 조회"),
+    review_service: ConsultationReviewService = Depends(get_consultation_review_service),
+):
+    log = get_logger_with_request_id()
+    log.info("API: Public counselor reviews", counselor_id=counselor_id, page=page, limit=limit, visible_only=visible_only)
+
+    reviews, page, limit, total = await review_service.get_counselor_reviews(
+        counselor_id=counselor_id,
+        page=page,
+        limit=limit,
+        visible_only=visible_only,
+    )
+
+    return APIResponseBuilder.paginated(
+        data=reviews,
+        page=page,
+        limit=limit,
+        total=total,
+        message="상담사 공개 후기 목록 조회 성공",
+    )
+
+
+@router.get(
+    "/public/{counselor_id}/inquiries",
+    response_model=APIResponse,
+    summary="상담사 공개 문의 목록 조회",
+    description="counselor_id로 사용자→상담사 문의 목록을 조회합니다. 게스트 접근 가능"
+)
+async def get_public_counselor_user_inquiries(
+    counselor_id: str,
+    page: int = Query(1, ge=1, description="페이지 번호"),
+    limit: int = Query(20, ge=1, le=100, description="페이지당 항목 수"),
+    inquiry_service: InquiryService = Depends(get_inquiry_service),
+):
+    log = get_logger_with_request_id()
+    log.info("API: Public counselor user inquiries", counselor_id=counselor_id, page=page, limit=limit)
+
+    inquiries, page, limit, total = await inquiry_service.get_counselor_user_inquiries(
+        counselor_id=counselor_id,
+        page=page,
+        limit=limit,
+    )
+
+    return APIResponseBuilder.paginated(
+        data=inquiries,
+        page=page,
+        limit=limit,
+        total=total,
+        message="상담사 공개 문의 목록 조회 성공",
+    )

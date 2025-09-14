@@ -1,0 +1,437 @@
+/* 전화상담 모달 스타일 */
+
+/* 모달 오버레이 */
+.phone-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.7);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 2000;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.3s ease, visibility 0.3s ease;
+}
+
+.phone-modal-overlay.active {
+  opacity: 1;
+  visibility: visible;
+}
+
+/* 모달 본문 */
+.phone-modal {
+  background: #1a1a2e;
+  border-radius: 20px;
+  width: 100%;
+  max-width: 500px;
+  margin: 20px;
+  transform: scale(0.95);
+  opacity: 0;
+  transition: transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1), opacity 0.3s ease;
+  padding-bottom: env(safe-area-inset-bottom);
+  max-height: 90vh;
+  overflow-y: auto;
+}
+
+.phone-modal-overlay.active .phone-modal {
+  transform: scale(1);
+  opacity: 1;
+}
+
+/* 헤더 */
+.modal-header {
+  padding: 20px;
+  background: linear-gradient(135deg, #2a2a4a 0%, #1a1a2e 100%);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 20px 20px 0 0;
+}
+
+.counselor-profile {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.counselor-avatar {
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  border: 2px solid #9333EA;
+  box-shadow: 0 0 15px rgba(147, 51, 234, 0.4);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background-color: #3a3a5a;
+  font-size: 30px;
+}
+
+.counselor-info {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  flex: 1;
+}
+
+.counselor-name-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.specialty-tags-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 4px;
+}
+
+.specialty-tag {
+  background: rgba(147, 51, 234, 0.2);
+  color: #B794F6;
+  padding: 4px 8px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.counselor-name {
+  font-size: 20px;
+  font-weight: 700;
+  color: #ffffff;
+}
+
+.counselor-number {
+  font-size: 16px;
+  color: rgba(255, 255, 255, 0.7);
+}
+
+/* 콘텐츠 */
+.modal-content {
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.point-consult-button {
+  background: linear-gradient(135deg, #9333EA 0%, #7C3AED 100%);
+  color: white;
+  padding: 15px 20px;
+  border-radius: 12px;
+  font-size: 17px;
+  font-weight: 700;
+  border: none;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  box-shadow: 0 5px 20px rgba(147, 51, 234, 0.3);
+  cursor: pointer;
+  transition: transform 0.2s ease;
+}
+
+.point-consult-button:active {
+  transform: scale(0.98);
+}
+
+.point-icon {
+  background-color: white;
+  color: #9333EA;
+  border-radius: 50%;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 900;
+  font-size: 14px;
+}
+
+.point-info {
+  text-align: right;
+  font-size: 14px;
+  color: rgba(255, 255, 255, 0.6);
+  margin: 0;
+}
+
+.point-info strong {
+  color: #FFD700;
+  font-size: 18px;
+}
+
+.connect-info {
+  font-size: 14px;
+  color: rgba(255, 255, 255, 0.7);
+  text-align: center;
+  margin: 10px 0 20px 0;
+}
+
+/* 포인트 상태 */
+.point-status {
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 12px;
+  padding: 15px;
+  margin-bottom: 20px;
+}
+
+.status-item {
+  text-align: center;
+}
+
+.status-label {
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.5);
+  display: block;
+  margin-bottom: 5px;
+}
+
+.status-value {
+  font-size: 24px;
+  font-weight: 700;
+  color: #ffffff;
+}
+
+.charge-button {
+  background: #B794F6;
+  color: #1a1a2e;
+  padding: 10px 15px;
+  border-radius: 10px;
+  border: none;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.charge-button:hover {
+  background: #a06ede;
+}
+
+/* 060 후불 상담 옵션 */
+.prepay-option {
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 12px;
+  margin-top: 10px;
+}
+
+.prepay-toggle {
+  width: 100%;
+  background: transparent;
+  border: none;
+  color: rgba(255, 255, 255, 0.8);
+  padding: 15px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 16px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.prepay-toggle:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.arrow-down {
+  transition: transform 0.3s ease;
+  font-size: 12px;
+}
+
+.arrow-down.rotated {
+  transform: rotate(180deg);
+}
+
+.prepay-details {
+  background: rgba(255, 255, 255, 0.03);
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.prepay-content {
+  padding: 15px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.phone-060-button {
+  background: rgba(183, 148, 246, 0.2);
+  color: #B794F6;
+  padding: 12px 20px;
+  border-radius: 12px;
+  font-size: 17px;
+  font-weight: 600;
+  border: 1px solid rgba(183, 148, 246, 0.4);
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.phone-060-button:active {
+  transform: scale(0.98);
+}
+
+.phone-icon {
+  font-size: 20px;
+  color: #B794F6;
+}
+
+.fee-info {
+  text-align: center;
+  font-size: 14px;
+  color: rgba(255, 255, 255, 0.6);
+  margin: 0;
+}
+
+.fee-info strong {
+  color: #FFD700;
+  font-size: 18px;
+}
+
+.guide-title {
+  font-size: 15px;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.8);
+  text-align: center;
+  margin: 0;
+}
+
+.guide-text {
+  font-size: 14px;
+  color: rgba(255, 255, 255, 0.7);
+  text-align: center;
+  line-height: 1.5;
+  margin: 0;
+}
+
+.close-button {
+  background: #444466;
+  color: white;
+  padding: 15px 20px;
+  border-radius: 12px;
+  font-size: 17px;
+  font-weight: 700;
+  border: none;
+  width: 100%;
+  margin-top: 20px;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.close-button:hover {
+  background: #555577;
+}
+
+/* 모바일 반응형 */
+@media (max-width: 768px) {
+  .phone-modal {
+    margin: 10px;
+  }
+}
+
+@media (max-width: 480px) {
+  .modal-header {
+    padding: 15px;
+  }
+
+  .counselor-avatar {
+    width: 50px;
+    height: 50px;
+    font-size: 24px;
+  }
+
+  .counselor-name {
+    font-size: 18px;
+  }
+
+  .counselor-number {
+    font-size: 14px;
+  }
+
+  .specialty-tags-row {
+    gap: 4px;
+    margin-top: 2px;
+  }
+
+  .specialty-tag {
+    padding: 3px 6px;
+    font-size: 11px;
+    border-radius: 10px;
+  }
+
+  .modal-content {
+    padding: 15px;
+  }
+
+  .point-consult-button {
+    padding: 12px 15px;
+    font-size: 15px;
+  }
+
+  .point-icon {
+    width: 20px;
+    height: 20px;
+    font-size: 12px;
+  }
+
+  .point-info strong {
+    font-size: 16px;
+  }
+
+  .charge-button {
+    padding: 8px 12px;
+    font-size: 12px;
+  }
+
+  .prepay-toggle {
+    padding: 12px;
+    font-size: 14px;
+  }
+
+  .prepay-content {
+    padding: 10px;
+    gap: 8px;
+  }
+
+  .phone-060-button {
+    padding: 10px 15px;
+    font-size: 15px;
+  }
+
+  .phone-icon {
+    font-size: 18px;
+  }
+
+  .fee-info strong {
+    font-size: 16px;
+  }
+
+  .guide-title {
+    font-size: 14px;
+  }
+
+  .guide-text {
+    font-size: 13px;
+  }
+
+  .close-button {
+    padding: 12px 15px;
+    font-size: 15px;
+  }
+}
