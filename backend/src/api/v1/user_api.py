@@ -33,7 +33,7 @@ from src.services.payment_service import PaymentService
 from src.services.grade_service import GradeService
 from src.services.ars.tm60_chatlog_service import Tm60ChatlogService
 from src.schemas.user_schema import (
-    UserResponse, UserSignup, UserMypageResponse
+    UserResponse, UserSignup, UserMypageResponse, SearchType, OrderType
 )
 from src.schemas.auth_schema import LoginRequest, LoginResponse
 from src.common.response import APIResponse, ok, fail
@@ -641,6 +641,7 @@ async def get_user_mypage(
                 monthly_payment=monthly_payment_total)
         
         return ok(data=mypage_response, message="마이페이지 정보 조회 성공")
+
         
     except BaseAppException:
         # 이미 정의된 예외는 그대로 재발생
@@ -650,3 +651,48 @@ async def get_user_mypage(
                    user_id=user_id, 
                    error=str(e))
         raise BaseAppException(f"마이페이지 정보 조회 중 오류가 발생했습니다: {str(e)}", status_code=500)
+
+@router.get(
+    "/points/history",
+    response_model=APIResponse,
+    summary="사용자 포인트 내역 조회",
+    description=(
+        "search_type=point_charge → t_payment + t_point_product 조인하여 (paid_at, product_name, point_amount) 반환.\n"
+        "search_type=point_use → tm60_chatlog에서 (chatstart, chatend, 상담사정보, usepoint) 반환."
+    ),
+)
+async def get_point_history(
+    start_dt: str = Query(..., description="시작일 (yyyy-mm-dd)"),
+    end_dt: str = Query(..., description="종료일 (yyyy-mm-dd)"),
+    search_type: SearchType = Query(...),
+    order_type: OrderType = Query("latest"),
+    page: int = Query(1, ge=1, description="페이지 번호"),
+    limit: int = Query(20, ge=1, le=100, description="페이지당 항목 수"),
+    current_user: TokenPayload = Depends(get_current_user),
+    user_service: UserService = Depends(get_user_service),
+    payment_repo: PaymentRepository = Depends(get_payment_repository),
+    tm60_chatlog_repo: Tm60ChatlogRepository = Depends(get_tm60_chatlog_repository),
+    counselor_repo: CounselorRepository = Depends(get_counselor_repository),
+) -> APIResponse:
+    """사용자 포인트 내역 조회"""
+    data, total = await user_service.get_point_history(
+        user_id=current_user.sub,
+        start_dt=start_dt,
+        end_dt=end_dt,
+        search_type=search_type,
+        order_type=order_type,
+        payment_repo=payment_repo,
+        chatlog_repo=tm60_chatlog_repo,
+        counselor_repo=counselor_repo,
+        page=page,
+        limit=limit,
+    )
+    # 페이지네이션 메타 포함 응답
+    from src.common.response import APIResponseBuilder
+    return APIResponseBuilder.paginated(
+        data=data.items_charge if search_type == 'point_charge' else data.items_use or [],
+        page=page,
+        limit=limit,
+        total=total,
+        message="포인트 내역 조회 성공"
+    )

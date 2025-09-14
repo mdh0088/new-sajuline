@@ -129,10 +129,11 @@ const goBack = () => {
   navigateTo('/')
 }
 
-// 로그인 성공 처리
+// 로그인 성공 처리 (redirect 쿼리 지원)
+const route = useRoute()
 const handleLoginSuccess = () => {
-  // 로그인 성공 시 메인 페이지로 이동
-  navigateTo('/')
+  const redirect = (route.query.redirect as string) || '/'
+  navigateTo(redirect)
 }
 
 // 소셜 로그인 핸들러들

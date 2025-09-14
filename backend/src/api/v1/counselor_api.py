@@ -1,6 +1,7 @@
 """
 상담사 관련 API 엔드포인트
 """
+from datetime import datetime
 from typing import Optional
 from fastapi import APIRouter, Depends, HTTPException, status, Query, Response, Request
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -9,6 +10,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from src.common.middleware.rate_limit import limiter
 
 from src.core.database import get_db_maria, get_db_mssql
+from src.core.redis import get_redis
 from src.repositories.counselor_repository import CounselorRepository
 from src.repositories.user_activity_log_repository import UserActivityLogRepository
 from src.repositories.consultation_review_repository import ConsultationReviewRepository
@@ -189,6 +191,81 @@ async def login(
             nickname=counselor_response.nickname)
     
     return ok(login_response, "상담사 로그인이 성공했습니다")
+
+
+@router.post(
+    "/logout",
+    response_model=APIResponse[None],
+    summary="상담사 로그아웃",
+    description="현재 로그인한 상담사를 로그아웃하고 JWT 토큰 쿠키를 삭제"
+)
+async def logout(
+    request: Request,
+    response: Response,
+    current_user: TokenPayload = Depends(get_current_user),
+    auth_service: AuthService = Depends(get_auth_service),
+    redis_client = Depends(get_redis)
+):
+    """상담사 로그아웃"""
+    log = get_logger_with_request_id()
+    # 역할 확인: 상담사만 접근
+    try:
+        verify_counselor_role(current_user)
+    except Exception:
+        # 역할 불일치 시에도 쿠키는 삭제하여 보안상 세션을 종료
+        pass
+
+    try:
+        # 현재 토큰들을 블랙리스트에 추가 (보안 강화)
+        access_token = request.cookies.get("access_token")
+        refresh_token = request.cookies.get("refresh_token")
+
+        # Access Token 블랙리스트 처리
+        if access_token:
+            access_expires = datetime.fromtimestamp(current_user.exp)
+            await auth_service.blacklist_token(
+                jti=current_user.jti,
+                expires_at=access_expires,
+                redis_client=redis_client
+            )
+
+        # Refresh Token 블랙리스트 처리
+        if refresh_token:
+            try:
+                refresh_payload = await auth_service.verify_refresh_token(refresh_token, redis_client)
+                refresh_expires = datetime.fromtimestamp(refresh_payload["exp"])
+                await auth_service.blacklist_token(
+                    jti=refresh_payload["jti"],
+                    expires_at=refresh_expires,
+                    redis_client=redis_client
+                )
+            except Exception as e:
+                # refresh token이 이미 만료되었거나 유효하지 않은 경우
+                log.warning("Failed to blacklist refresh token during logout",
+                           user_id=current_user.sub, error=str(e))
+
+    except Exception as e:
+        # 블랙리스트 처리 실패해도 로그아웃은 진행 (쿠키 삭제)
+        log.warning("Token blacklist failed during logout",
+                   user_id=current_user.sub, error=str(e))
+
+    # HttpOnly 쿠키에서 JWT 토큰들 삭제
+    response.delete_cookie(
+        key="access_token",
+        httponly=True,
+        secure=True,
+        samesite="lax"
+    )
+
+    response.delete_cookie(
+        key="refresh_token",
+        httponly=True,
+        secure=True,
+        samesite="lax"
+    )
+
+    log.info("Counselor logout successful", counselor_id=current_user.sub, email=current_user.email)
+    return ok(data=None, message="로그아웃 성공")
 
 
 @router.get("/inquiries/reviews", response_model=APIResponse, summary="상담사별 후기 목록 조회")

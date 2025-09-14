@@ -1,0 +1,357 @@
+/* 상담 내역 페이지 스타일 */
+
+/* 히스토리 아이템 기본 스타일 */
+.history-item {
+  position: relative;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 20px;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  box-shadow: 0 4px 20px rgba(147, 51, 234, 0.1);
+  transition: all 0.3s ease;
+}
+
+.history-item:hover {
+  background: rgba(147, 51, 234, 0.08);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 24px rgba(147, 51, 234, 0.2);
+}
+
+/* 상담사 정보 */
+.counselor-thumb {
+  width: 64px;
+  height: 64px;
+  border-radius: 20px;
+  background: linear-gradient(135deg, rgba(147, 51, 234, 0.2) 0%, rgba(124, 58, 237, 0.1) 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 28px;
+  flex-shrink: 0;
+}
+
+.counselor-name {
+  font-size: 18px;
+  font-weight: 700;
+  color: #ffffff;
+}
+
+.counselor-type {
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.7);
+}
+
+/* 세션 메타 정보 */
+.session-date {
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.session-status {
+  font-size: 13px;
+  font-weight: 600;
+  padding: 4px 8px;
+  border-radius: 12px;
+  text-align: center;
+}
+
+.status-completed {
+  background-color: #10b981;
+  color: #ffffff;
+}
+
+.status-cancelled {
+  background-color: rgba(255, 107, 107, 0.3);
+  color: #ff6b6b;
+}
+
+.status-pending {
+  background-color: rgba(251, 191, 36, 0.3);
+  color: #fbbf24;
+}
+
+/* 상담 내용 */
+.consultation-content {
+  font-size: 14px;
+  color: rgba(255, 255, 255, 0.7);
+  line-height: 1.5;
+  background: rgba(255, 255, 255, 0.02);
+  border-radius: 12px;
+  padding: 16px;
+}
+
+.consultation-content strong {
+  color: #B794F6;
+  font-weight: 600;
+  display: block;
+  margin-bottom: 12px;
+  font-size: 15px;
+}
+
+.consultation-content p {
+  margin-bottom: 16px;
+  line-height: 1.6;
+}
+
+.consultation-content p:last-child {
+  margin-bottom: 0;
+}
+
+.session-info {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.session-time {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.session-time::before {
+  content: '⏱️';
+  font-size: 14px;
+}
+
+/* 액션 버튼 */
+.review-button {
+  padding: 8px 16px;
+  font-size: 14px;
+  font-weight: 600;
+  border-radius: 16px;
+  border: none;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  background: linear-gradient(135deg, #9333EA 0%, #7C3AED 100%);
+  color: #ffffff;
+  box-shadow: 0 2px 8px rgba(147, 51, 234, 0.4);
+}
+
+.review-button:active {
+  transform: scale(0.95);
+  box-shadow: 0 1px 4px rgba(147, 51, 234, 0.3);
+}
+
+/* 빈 상태 */
+.empty-state {
+  text-align: center;
+  padding: 60px 20px;
+}
+
+.empty-icon {
+  font-size: 64px;
+  margin-bottom: 16px;
+  opacity: 0.3;
+}
+
+.empty-title {
+  font-size: 18px;
+  font-weight: 600;
+  margin-bottom: 8px;
+}
+
+.empty-desc {
+  font-size: 14px;
+  color: rgba(255, 255, 255, 0.6);
+}
+
+/* 모달 스타일 */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.7);
+  backdrop-filter: blur(5px);
+  -webkit-backdrop-filter: blur(5px);
+  z-index: 2000;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.modal-content {
+  background: rgba(20, 20, 25, 0.95);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 24px;
+  width: 90%;
+  max-width: 400px;
+  padding: 24px;
+  position: relative;
+  animation: modalSlideUp 0.3s ease;
+}
+
+@keyframes modalSlideUp {
+  from {
+    transform: translateY(20px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.modal-title {
+  font-size: 20px;
+  font-weight: 700;
+  color: #ffffff;
+}
+
+.modal-close {
+  background: none;
+  border: none;
+  color: rgba(255, 255, 255, 0.6);
+  font-size: 24px;
+  cursor: pointer;
+  padding: 4px;
+  transition: all 0.3s ease;
+}
+
+.modal-close:hover {
+  color: #ffffff;
+}
+
+/* 후기 폼 */
+.review-form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.rating-input {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.rating-star {
+  font-size: 32px;
+  color: rgba(255, 255, 255, 0.2);
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.rating-star.active {
+  color: #FFD700;
+}
+
+.review-textarea {
+  width: 100%;
+  height: 120px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  padding: 12px;
+  color: #ffffff;
+  font-size: 14px;
+  resize: none;
+  transition: all 0.3s ease;
+}
+
+.review-textarea:focus {
+  outline: none;
+  border-color: #B794F6;
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.modal-footer {
+  display: flex;
+  gap: 12px;
+  margin-top: 20px;
+}
+
+.modal-button {
+  flex: 1;
+  padding: 12px;
+  border-radius: 12px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.submit-button {
+  background: linear-gradient(135deg, #9333EA 0%, #7C3AED 100%);
+  color: #ffffff;
+  border: none;
+}
+
+.cancel-button {
+  background: rgba(255, 255, 255, 0.1);
+  color: rgba(255, 255, 255, 0.8);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.modal-button:active {
+  transform: scale(0.98);
+}
+
+/* 반응형 디자인 */
+@media (max-width: 768px) {
+  .history-item {
+    padding: 16px;
+  }
+
+  .counselor-thumb {
+    width: 56px;
+    height: 56px;
+    font-size: 24px;
+  }
+
+  .consultation-content {
+    font-size: 13px;
+  }
+
+  .review-button {
+    padding: 6px 12px;
+    font-size: 13px;
+  }
+
+  .modal-content {
+    width: 95%;
+    padding: 20px;
+  }
+
+  .rating-star {
+    font-size: 28px;
+  }
+}
+
+@media (max-width: 480px) {
+  .counselor-thumb {
+    width: 48px;
+    height: 48px;
+    font-size: 20px;
+  }
+
+  .counselor-name {
+    font-size: 16px;
+  }
+
+  .consultation-content {
+    padding: 12px;
+  }
+
+  .modal-content {
+    padding: 16px;
+  }
+}
