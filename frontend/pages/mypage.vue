@@ -93,7 +93,7 @@
           <div>
             <h4 class="text-sm text-white/60 mb-2 px-1">상담 관리</h4>
             <div class="rounded-2xl overflow-hidden border border-white/10">
-              <NuxtLink to="/user/cslog" class="menu-item"><div class="menu-left"><div class="menu-icon">💬</div><div><div class="menu-title">상담 내역</div><div class="menu-desc">지난 상담 기록 확인</div></div></div><div class="menu-right">›</div></NuxtLink>
+              <!-- <NuxtLink to="/user/cslog" class="menu-item"><div class="menu-left"><div class="menu-icon">💬</div><div><div class="menu-title">상담 내역</div><div class="menu-desc">지난 상담 기록 확인</div></div></div><div class="menu-right">›</div></NuxtLink> -->
               <NuxtLink to="/user/favorite" class="menu-item"><div class="menu-left"><div class="menu-icon">⭐</div><div><div class="menu-title">즐겨찾기 상담사</div><div class="menu-desc">자주 찾는 상담사 관리</div></div></div><div class="menu-right">›</div></NuxtLink>
               <NuxtLink to="/user/reviews" class="menu-item"><div class="menu-left"><div class="menu-icon">📝</div><div><div class="menu-title">상담 후기</div><div class="menu-desc">내가 작성한 후기 보기</div></div></div><div class="menu-right">›</div></NuxtLink>
             </div>

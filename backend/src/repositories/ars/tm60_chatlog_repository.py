@@ -111,6 +111,34 @@ class Tm60ChatlogRepository:
         return await asyncio.to_thread(_sync_get_stats)
 
     @logger.catch(reraise=True)
+    async def get_consultation_count_by_m_code(self, m_code: str) -> int:
+        """
+        상담사 코드(m_code) 기준 상담 건수
+        - 조건: usepoint > 0 AND m_code = #{m_code}
+        """
+        log = get_logger_with_request_id()
+        log.info("Getting consultation count by m_code", m_code=m_code)
+
+        def _sync_get_count() -> int:
+            try:
+                count = (
+                    self.mssql_session.query(func.count(Tm60Chatlog.idx))
+                    .filter(
+                        and_(
+                            Tm60Chatlog.m_code == m_code,
+                            Tm60Chatlog.usepoint > 0,
+                        )
+                    )
+                    .scalar()
+                ) or 0
+                return int(count)
+            except Exception as e:
+                log.warning("Failed to get consultation count by m_code", m_code=m_code, error=str(e))
+                raise BaseAppException(f"상담 건수 조회 실패: {str(e)}", status_code=500)
+
+        return await asyncio.to_thread(_sync_get_count)
+
+    @logger.catch(reraise=True)
     async def get_by_idx_list(self, idx_list: list[int]) -> list[Tm60Chatlog]:
         """idx 목록으로 다건 조회"""
         log = get_logger_with_request_id()

@@ -107,3 +107,40 @@ class InquiryRepository:
                 total=total)
         
         return inquiries, total
+
+    @logger.catch(reraise=True)
+    async def create_user_inquiry(
+        self,
+        *,
+        user_id: str,
+        counselor_id: str,
+        content: str,
+        category: Optional[str] = None,
+        title: Optional[str] = None
+    ) -> Inquiry:
+        """
+        사용자 → 상담사 1:1 문의 생성
+        - inquirer_type = USER
+        - inquirer_id = user_id
+        - counselor_id = counselor_id
+        """
+        log = get_logger_with_request_id()
+        log.info("Creating user inquiry", user_id=user_id, counselor_id=counselor_id)
+
+        inquiry = Inquiry(
+            inquirer_type=InquirerType.USER.value,
+            inquirer_id=user_id,
+            counselor_id=counselor_id,
+            category=category,
+            title=title,
+            content=content,
+            is_read=False,
+            created_at=datetime.utcnow()
+        )
+
+        self.db.add(inquiry)
+        await self.db.flush()
+        await self.db.refresh(inquiry)
+
+        log.info("User inquiry created", inquiry_id=inquiry.inquiry_id)
+        return inquiry

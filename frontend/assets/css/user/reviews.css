@@ -128,12 +128,16 @@
   justify-content: space-between;
   align-items: flex-start;
   margin-bottom: 16px;
+  gap: 12px;
 }
 
 .counselor-info {
-  display: flex;
-  align-items: center;
-  gap: 12px;
+  display: flex !important;
+  align-items: center !important;
+  gap: 12px !important;
+  flex-wrap: nowrap !important;
+  min-width: 0 !important;
+  width: 100%;
 }
 
 .counselor-avatar {
@@ -148,14 +152,20 @@
 }
 
 .counselor-details {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 4px !important;
+  flex: 1 !important;
+  min-width: 0 !important;
+  overflow: hidden;
 }
 
 .counselor-name {
   font-size: 16px;
   font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .consultation-date {
@@ -164,7 +174,7 @@
 }
 
 .consultation-time {
-  font-size: 12px;
+  font-size: 11px;
   color: rgba(255, 255, 255, 0.5);
   margin-top: 2px;
 }
@@ -176,6 +186,8 @@
   font-size: 12px;
   font-weight: 600;
   color: #4CAF50;
+  white-space: nowrap;
+  flex-shrink: 0;
 }
 
 .review-status.pending {
@@ -515,6 +527,26 @@
 
 .modal-submit:hover:not(:disabled) {
   transform: translateY(-1px);
+}
+
+/* 레이아웃 강제 고정 */
+.review-card .counselor-info {
+  display: flex !important;
+  align-items: center !important;
+  flex-wrap: nowrap !important;
+  gap: 12px !important;
+}
+
+.review-card .counselor-info > div:first-child {
+  flex-shrink: 0 !important;
+  width: 48px !important;
+  height: 48px !important;
+}
+
+.review-card .counselor-details {
+  flex: 1 !important;
+  min-width: 0 !important;
+  overflow: hidden !important;
 }
 
 /* 반응형 디자인 */
