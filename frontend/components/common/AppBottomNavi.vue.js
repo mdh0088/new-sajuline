@@ -23,15 +23,19 @@ Object.defineProperty(exports, "__esModule", { value: true });
 var vue_1 = require("vue");
 var useAuth_1 = require("~/composables/auth/useAuth");
 var isCounselor = (0, useAuth_1.useAuth)().isCounselor;
-var mypagePath = (0, vue_1.computed)(function () { return isCounselor.value ? '/counselor/mypage' : '/mypage'; });
+var mypagePath = (0, vue_1.computed)(function () { return isCounselor.value ? '/counselor/mypage' : '/user/mypage'; });
 // 네비게이션 클릭 처리
 var handleNavClick = function (tab) {
     if (tab === 'home')
         return navigateTo('/');
-    if (tab === 'fortune')
-        return navigateTo('/fortune');
-    if (tab === 'chat')
-        return navigateTo('/chat');
+    if (tab === 'fortune') {
+        // TODO: 운세 페이지 구현 후 라우트 변경
+        return;
+    }
+    if (tab === 'chat') {
+        // TODO: 상담 페이지 구현 후 라우트 변경
+        return;
+    }
     if (tab === 'profile')
         return navigateTo(mypagePath.value);
 };
