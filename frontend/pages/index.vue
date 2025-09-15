@@ -186,19 +186,15 @@
         <span class="nav-icon">🏠</span>
         <span class="nav-label">홈</span>
       </NuxtLink>
-      <NuxtLink to="/ai-fortune" class="nav-item">
-        <span class="nav-icon">🤖</span>
-        <span class="nav-label">AI운세</span>
-      </NuxtLink>
       <NuxtLink to="/events" class="nav-item">
         <span class="nav-icon">🎁</span>
         <span class="nav-label">이벤트</span>
       </NuxtLink>
-      <NuxtLink to="/favorites" class="nav-item">
+      <NuxtLink to="/user/favorite" class="nav-item">
         <span class="nav-icon">⭐</span>
         <span class="nav-label">즐겨찾기</span>
       </NuxtLink>
-      <NuxtLink to="/mypage" class="nav-item">
+      <NuxtLink to="/user/mypage" class="nav-item">
         <span class="nav-icon">👤</span>
         <span class="nav-label">마이</span>
       </NuxtLink>

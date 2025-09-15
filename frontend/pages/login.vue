@@ -97,13 +97,10 @@
 
         <!-- 게스트 모드 -->
         <div class="text-center mt-6 pt-6 border-t border-white/10">
-          <NuxtLink 
-            to="/fortune" 
-            class="inline-flex items-center gap-2 text-white/70 hover:text-white text-sm hover:underline transition-colors duration-300"
-          >
+          <div class="inline-flex items-center gap-2 text-white/40 text-sm">
             <span>✨</span>
-            회원가입 없이 AI 운세 체험하기
-          </NuxtLink>
+            회원가입 없이 AI 운세 체험하기 (준비중)
+          </div>
         </div>
       </div>
     </main>

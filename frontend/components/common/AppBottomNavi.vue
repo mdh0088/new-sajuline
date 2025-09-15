@@ -8,14 +8,20 @@
         <span class="text-xl">🏠</span>
         <span class="text-xs font-medium">홈</span>
       </button>
-      <NuxtLink to="/fortune" class="flex flex-col items-center gap-1 text-white/60 hover:text-white/80 transition-colors">
+      <button
+        class="flex flex-col items-center gap-1 text-white/60 hover:text-white/80 transition-colors"
+        @click="handleNavClick('fortune')"
+      >
         <span class="text-xl">🔮</span>
         <span class="text-xs font-medium">운세</span>
-      </NuxtLink>
-      <NuxtLink to="/chat" class="flex flex-col items-center gap-1 text-white/60 hover:text-white/80 transition-colors">
+      </button>
+      <button
+        class="flex flex-col items-center gap-1 text-white/60 hover:text-white/80 transition-colors"
+        @click="handleNavClick('chat')"
+      >
         <span class="text-xl">💬</span>
         <span class="text-xs font-medium">상담</span>
-      </NuxtLink>
+      </button>
       <NuxtLink :to="mypagePath" class="flex flex-col items-center gap-1 text-white/60 hover:text-white/80 transition-colors">
         <span class="text-xl">👤</span>
         <span class="text-xs font-medium">마이페이지</span>
@@ -29,12 +35,18 @@ import { computed } from 'vue'
 import { useAuth } from '~/composables/auth/useAuth'
 
 const { isCounselor } = useAuth()
-const mypagePath = computed(() => isCounselor.value ? '/counselor/mypage' : '/mypage')
+const mypagePath = computed(() => isCounselor.value ? '/counselor/mypage' : '/user/mypage')
 // 네비게이션 클릭 처리
 const handleNavClick = (tab: 'home' | 'fortune' | 'chat' | 'profile') => {
   if (tab === 'home') return navigateTo('/')
-  if (tab === 'fortune') return navigateTo('/fortune')
-  if (tab === 'chat') return navigateTo('/chat')
+  if (tab === 'fortune') {
+    // TODO: 운세 페이지 구현 후 라우트 변경
+    return
+  }
+  if (tab === 'chat') {
+    // TODO: 상담 페이지 구현 후 라우트 변경
+    return
+  }
   if (tab === 'profile') return navigateTo(mypagePath.value)
 }
 </script>

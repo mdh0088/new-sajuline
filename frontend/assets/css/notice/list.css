@@ -1,0 +1,240 @@
+/* 공지사항 리스트 페이지 스타일 */
+
+/* 공지사항 리스트 컨테이너 */
+.notice-list-container {
+  padding: 20px;
+  padding-bottom: 100px; /* 하단 네비게이션 공간 */
+}
+
+/* 공지사항 리스트 */
+.notice-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* 공지사항 아이템 */
+.notice-item {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 16px;
+  padding: 20px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  text-decoration: none;
+  color: inherit;
+  display: block;
+}
+
+.notice-item:hover {
+  transform: translateY(-2px);
+  background: rgba(255, 255, 255, 0.05);
+}
+
+/* 공지사항 헤더 */
+.notice-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.notice-title-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1;
+  min-width: 0;
+}
+
+.notice-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: #ffffff;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.notice-date {
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.5);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+/* 공지사항 내용 미리보기 */
+.notice-content {
+  font-size: 14px;
+  color: rgba(255, 255, 255, 0.7);
+  line-height: 1.6;
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  text-overflow: ellipsis;
+}
+
+/* 공지사항 배지 */
+.notice-badge {
+  display: inline-block;
+  padding: 4px 8px;
+  background: rgba(147, 51, 234, 0.2);
+  color: #B794F6;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  flex-shrink: 0;
+}
+
+.notice-badge.new {
+  background: rgba(147, 51, 234, 0.2);
+  color: #B794F6;
+}
+
+.notice-badge.event {
+  background: rgba(251, 146, 60, 0.2);
+  color: #FB923C;
+}
+
+.notice-badge.update {
+  background: rgba(34, 211, 238, 0.2);
+  color: #22D3EE;
+}
+
+.notice-badge.important {
+  background: rgba(239, 68, 68, 0.2);
+  color: #EF4444;
+}
+
+/* 페이지네이션 */
+.pagination {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 8px;
+  margin-top: 32px;
+}
+
+.page-btn {
+  min-width: 36px;
+  height: 36px;
+  padding: 0 12px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  color: #fff;
+  transition: all 0.3s ease;
+  cursor: pointer;
+  text-decoration: none;
+  user-select: none;
+}
+
+.page-btn:hover:not(.disabled):not(.active) {
+  background: rgba(147, 51, 234, 0.1);
+  transform: translateY(-1px);
+}
+
+.page-btn.active {
+  background: rgba(147, 51, 234, 0.2);
+  color: #B794F6;
+  border-color: rgba(147, 51, 234, 0.3);
+  cursor: default;
+}
+
+.page-btn.disabled {
+  background: rgba(255, 255, 255, 0.02);
+  color: rgba(255, 255, 255, 0.3);
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.page-btn.prev,
+.page-btn.next {
+  padding: 0 16px;
+  font-weight: 500;
+}
+
+/* 빈 상태 */
+.notice-empty {
+  text-align: center;
+  padding: 60px 20px;
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.notice-empty-icon {
+  font-size: 48px;
+  margin-bottom: 16px;
+  opacity: 0.5;
+}
+
+.notice-empty-title {
+  font-size: 18px;
+  font-weight: 600;
+  margin-bottom: 8px;
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.notice-empty-desc {
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+/* 로딩 상태 */
+.notice-loading {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 60px 20px;
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.loading-spinner {
+  width: 40px;
+  height: 40px;
+  border: 3px solid rgba(255, 255, 255, 0.1);
+  border-top-color: #B794F6;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* 반응형 디자인 */
+@media (min-width: 768px) {
+  .notice-list-container {
+    max-width: 768px;
+    margin: 0 auto;
+    padding: 32px;
+  }
+
+  .notice-item {
+    padding: 24px;
+  }
+
+  .notice-title {
+    font-size: 17px;
+  }
+
+  .notice-content {
+    font-size: 15px;
+  }
+
+  .pagination {
+    margin-top: 40px;
+  }
+
+  .page-btn {
+    min-width: 40px;
+    height: 40px;
+    font-size: 15px;
+  }
+}
