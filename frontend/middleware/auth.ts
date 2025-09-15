@@ -45,7 +45,7 @@ export default defineNuxtRouteMiddleware(async (to) => {
 
   // 게스트 전용 페이지 보호 (로그인 상태면 접근 차단)
   if (requireGuest(to) && isAuthenticated.value) {
-    return navigateTo('/mypage')
+    return navigateTo('/user/mypage')
   }
 
   // 인증 필요 체크: SSR/CSR 모두에서 즉시 리다이렉트하여 초기 렌더 노출 방지
@@ -77,7 +77,7 @@ export default defineNuxtRouteMiddleware(async (to) => {
     const role = getCurrentRole()
     if (role !== requiredRole) {
       // 역할 불일치 시 각 역할 기본 마이페이지로 라우팅
-      return navigateTo(role === 'counselor' ? '/counselor/mypage' : '/mypage')
+      return navigateTo(role === 'counselor' ? '/counselor/mypage' : '/user/mypage')
     }
   }
 })

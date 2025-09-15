@@ -92,7 +92,6 @@
             <div class="empty-icon">📝</div>
             <div class="empty-title">작성한 후기가 없습니다</div>
             <div class="empty-desc">첫 상담 후기를 작성해보세요!</div>
-            <NuxtLink to="/chat" class="empty-button">상담 받러 가기</NuxtLink>
           </div>
           <div
             v-for="review in reviewItems"

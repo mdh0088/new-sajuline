@@ -49,7 +49,7 @@ const sync = async () => {
   if (result.data) setRole(result.data.role)
 }
 
-const goMypage = () => navigateTo(isCounselor.value ? '/counselor/mypage' : '/mypage')
+const goMypage = () => navigateTo(isCounselor.value ? '/counselor/mypage' : '/user/mypage')
 </script>
 
 

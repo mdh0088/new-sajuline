@@ -1,0 +1,443 @@
+/* 이벤트 상세 페이지 스타일 */
+.event-detail-page {
+  min-height: 100vh;
+  background-color: #0a0a0f;
+  color: #ffffff;
+  display: flex;
+  flex-direction: column;
+}
+
+/* 상세 콘텐츠 */
+.event-detail {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.event-detail-thumbnail {
+  width: 100%;
+  height: 200px;
+  background: #222;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 64px;
+}
+
+.event-detail-content {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.event-detail-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+}
+
+.event-detail-title {
+  font-size: 20px;
+  font-weight: 700;
+  color: #fff;
+  flex: 1;
+}
+
+.event-detail-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  align-items: flex-end;
+}
+
+.event-detail-date {
+  font-size: 14px;
+  color: rgba(255, 255, 255, 0.6);
+}
+
+.event-detail-status {
+  font-size: 12px;
+  font-weight: 600;
+  padding: 4px 8px;
+  border-radius: 8px;
+  text-align: center;
+}
+
+.event-detail-status.ongoing {
+  background-color: #10b981;
+  color: #ffffff;
+}
+
+.event-detail-status.completed {
+  background-color: rgba(255, 255, 255, 0.2);
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.event-detail-body {
+  background-color: rgba(255, 255, 255, 0.05);
+  border-radius: 8px;
+  padding: 24px;
+  font-size: 15px;
+  color: rgba(255, 255, 255, 0.85);
+  line-height: 1.8;
+  white-space: pre-wrap;
+  text-align: left;
+}
+
+.event-detail-body p {
+  margin-bottom: 16px;
+  text-align: left;
+}
+
+.event-detail-body p:last-child {
+  margin-bottom: 0;
+}
+
+.event-detail-body strong {
+  color: #B794F6;
+  font-weight: 600;
+}
+
+.event-detail-body ul,
+.event-detail-body ol {
+  margin: 12px 0;
+  padding-left: 24px;
+  text-align: left;
+}
+
+.event-detail-body li {
+  margin-bottom: 8px;
+  text-align: left;
+}
+
+.event-detail-body li:last-child {
+  margin-bottom: 0;
+}
+
+.event-detail-footer {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin-top: 24px;
+  padding: 20px;
+  background: rgba(255, 255, 255, 0.03);
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.event-detail-button {
+  width: 100%;
+  padding: 16px;
+  background: linear-gradient(135deg, #9333EA 0%, #7C3AED 100%);
+  border: none;
+  border-radius: 12px;
+  color: white;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 20px rgba(147, 51, 234, 0.4);
+}
+
+.event-detail-button:active {
+  transform: scale(0.98);
+  box-shadow: 0 2px 10px rgba(147, 51, 234, 0.3);
+}
+
+.event-detail-button:disabled {
+  background: rgba(255, 255, 255, 0.1);
+  color: rgba(255, 255, 255, 0.5);
+  box-shadow: none;
+  cursor: not-allowed;
+}
+
+/* 이전/다음 네비게이션 */
+.event-navigation-links {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.event-nav-button {
+  flex: 1;
+  padding: 12px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  color: #fff;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  text-align: center;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  text-decoration: none;
+}
+
+.event-nav-button:hover {
+  background: rgba(147, 51, 234, 0.1);
+  border-color: rgba(147, 51, 234, 0.3);
+}
+
+.event-nav-button:active {
+  transform: scale(0.98);
+}
+
+.event-nav-button.prev {
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.event-nav-button.next {
+  color: #B794F6;
+}
+
+.event-nav-button.disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+/* 댓글 섹션 */
+.event-comments-section {
+  margin-top: 24px;
+  background-color: rgba(255, 255, 255, 0.05);
+  border-radius: 8px;
+  padding: 16px;
+}
+
+.event-comments-title {
+  font-size: 16px;
+  font-weight: 700;
+  margin-bottom: 12px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.event-comment-count {
+  font-size: 14px;
+  color: rgba(255, 255, 255, 0.5);
+  font-weight: normal;
+}
+
+.event-comments-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  max-height: 400px;
+  overflow-y: auto;
+  margin-bottom: 16px;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(147, 51, 234, 0.5) rgba(255, 255, 255, 0.1);
+}
+
+/* Webkit 브라우저용 스크롤바 스타일 */
+.event-comments-list::-webkit-scrollbar {
+  width: 6px;
+}
+
+.event-comments-list::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 3px;
+}
+
+.event-comments-list::-webkit-scrollbar-thumb {
+  background: rgba(147, 51, 234, 0.5);
+  border-radius: 3px;
+  transition: all 0.3s ease;
+}
+
+.event-comments-list::-webkit-scrollbar-thumb:hover {
+  background: rgba(147, 51, 234, 0.7);
+}
+
+.event-comment-item {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  padding: 12px;
+  position: relative;
+}
+
+.event-comment-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.event-comment-author {
+  font-size: 13px;
+  font-weight: 600;
+  color: #fff;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.event-author-badge {
+  font-size: 11px;
+  padding: 2px 6px;
+  background: linear-gradient(135deg, #9333EA 0%, #7C3AED 100%);
+  border-radius: 4px;
+  color: white;
+}
+
+.event-comment-actions {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+.event-comment-date {
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.6);
+}
+
+.event-action-button {
+  background: none;
+  border: none;
+  color: rgba(255, 255, 255, 0.5);
+  font-size: 12px;
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: 4px;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.event-action-button.like {
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.event-action-button.like.active {
+  color: #FF6B6B;
+}
+
+.event-action-button.like:hover {
+  background: rgba(255, 107, 107, 0.1);
+}
+
+.event-like-count {
+  font-size: 11px;
+  color: inherit;
+}
+
+.event-action-button.edit {
+  color: #B794F6;
+}
+
+.event-action-button.edit:hover {
+  background: rgba(183, 148, 246, 0.1);
+}
+
+.event-action-button.delete {
+  color: #FF6B6B;
+}
+
+.event-action-button.delete:hover {
+  background: rgba(255, 107, 107, 0.1);
+}
+
+.event-comment-text {
+  font-size: 14px;
+  color: rgba(255, 255, 255, 0.85);
+  line-height: 1.4;
+  margin-bottom: 8px;
+}
+
+.event-comment-edit-form {
+  display: none;
+  margin-top: 8px;
+}
+
+.event-comment-edit-form.active {
+  display: block;
+}
+
+.event-comment-edit-input {
+  width: 100%;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 8px;
+  padding: 8px 12px;
+  font-size: 14px;
+  color: #fff;
+  margin-bottom: 8px;
+  resize: none;
+  min-height: 60px;
+}
+
+.event-edit-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.event-edit-button {
+  padding: 6px 12px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.event-edit-button.cancel {
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.event-edit-button.save {
+  background: linear-gradient(135deg, #9333EA 0%, #7C3AED 100%);
+  border: none;
+  color: white;
+}
+
+.event-edit-button:hover {
+  transform: translateY(-1px);
+}
+
+.event-comment-form {
+  display: flex;
+  gap: 8px;
+}
+
+.event-comment-input {
+  flex: 1;
+  resize: none;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  padding: 8px;
+  font-size: 14px;
+  color: #fff;
+  height: 40px;
+}
+
+.event-comment-input::placeholder {
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.event-comment-submit {
+  padding: 0 16px;
+  background: linear-gradient(135deg, #9333EA 0%, #7C3AED 100%);
+  border: none;
+  border-radius: 8px;
+  color: white;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.3s ease;
+}
+
+.event-comment-submit:active {
+  background: rgba(147, 51, 234, 0.7);
+}
