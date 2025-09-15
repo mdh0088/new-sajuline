@@ -8,7 +8,12 @@ from src.exceptions.custom_exceptions import ValidationError
 from src.common.logging import logger, get_logger_with_request_id
 
 from src.models.user_bookmark_model import UserBookmark
-from src.schemas.user_bookmark_schema import UserBookmarkResponse, UserBookmarkCount, UserBookmarkListResponse
+from src.schemas.user_bookmark_schema import (
+    UserBookmarkResponse,
+    UserBookmarkCount,
+    UserBookmarkListResponse,
+)
+from src.schemas.user_bookmark_schema import UserBookmarkCreate as CreateSchema
 from src.repositories.user_bookmark_repository import UserBookmarkRepository
 
 
@@ -84,3 +89,28 @@ class UserBookmarkService:
             page=page,
             size=size
         )
+
+    async def is_bookmarked(self, user_id: str, counselor_id: str) -> bool:
+        """사용자-상담사 즐겨찾기 여부"""
+        if not user_id or not counselor_id:
+            raise ValidationError("사용자 ID와 상담사 ID가 필요합니다.")
+        return await self.bookmark_repo.exists(user_id, counselor_id)
+
+    async def add_bookmark(self, user_id: str, counselor_id: str) -> UserBookmarkResponse:
+        """즐겨찾기 등록 (중복시 에러)"""
+        if not user_id or not counselor_id:
+            raise ValidationError("사용자 ID와 상담사 ID가 필요합니다.")
+        if await self.bookmark_repo.exists(user_id, counselor_id):
+            raise ValidationError("이미 즐겨찾기에 등록되어 있습니다.")
+        created = await self.bookmark_repo.create(CreateSchema(user_id=user_id, counselor_id=counselor_id))
+        # 트랜잭션 커밋: 서비스 계층에서 명확히 커밋 처리
+        await self.bookmark_repo.db.commit()
+        return UserBookmarkResponse.model_validate(created)
+
+    async def remove_bookmark(self, user_id: str, counselor_id: str) -> bool:
+        """즐겨찾기 삭제 (없어도 False 반환)"""
+        if not user_id or not counselor_id:
+            raise ValidationError("사용자 ID와 상담사 ID가 필요합니다.")
+        affected = await self.bookmark_repo.delete(user_id, counselor_id)
+        await self.bookmark_repo.db.commit()
+        return affected > 0

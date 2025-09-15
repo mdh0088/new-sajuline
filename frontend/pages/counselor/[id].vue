@@ -226,7 +226,7 @@
     <!-- 하단 CTA -->
     <div v-if="counselor" class="bottom-cta">
       <div class="cta-buttons">
-        <button class="favorite-button" @click="toggleFavorite">
+        <button v-if="showFavorite" class="favorite-button" :disabled="favoritePending" @click="toggleFavorite">
           <span class="star-icon" :class="{ 'filled': isFavorite }">⭐</span>
         </button>
         <!-- 채팅 상담 버튼 - 주석 처리 -->
@@ -282,6 +282,8 @@ import { computed, ref, onMounted, onBeforeUnmount, watch, watchEffect } from 'v
 import { useRoute, useSeoMeta, navigateTo } from 'nuxt/app'
 import { useNotify } from '~/composables/utils/useNotify'
 import { useCounselorQueries } from '~/composables/api/useCounselorQueries'
+import { useBookmarkQueries } from '~/composables/api/useBookmarkQueries'
+import { useAuth } from '~/composables/auth/useAuth'
 import { useCdn } from '~/composables/utils/useCdn'
 import type { CounselorPublic } from '~/types/counselor/detail'
 import type { ReviewSummary } from '~/types/counselor/review'
@@ -364,6 +366,8 @@ const userPoints = ref(1500)
 
 // 즐겨찾기 상태
 const isFavorite = ref(false)
+const favoritePending = ref(true)
+const showFavorite = ref(false)
 
 // 탭 상태 관리
 const activeTab = ref<'reviews' | 'inquiries'>('reviews')
@@ -449,9 +453,42 @@ const startChatConsult = () => {
   navigateTo(`/chat/${counselor.value?.counselor_id || counselorCode.value}`)
 }
 
-const toggleFavorite = () => {
-  isFavorite.value = !isFavorite.value
-  // TODO: API 호출로 실제 즐겨찾기 상태 업데이트
+const { useCheckBookmark, useAddBookmark, useRemoveBookmark } = useBookmarkQueries()
+const { isUser } = useAuth()
+
+const { data: _bookmarkChecked, refetch: refetchBookmark } = useCheckBookmark(computed(() => counselor.value?.counselor_id || ''), { enabled: computed(() => false) })
+const addBookmarkMutation = useAddBookmark({
+  onSuccess: () => {
+    isFavorite.value = true
+    notifySuccess('즐겨찾기에 등록되었습니다.')
+  },
+  onError: (err: any) => {
+    notifyError(err?.message || '즐겨찾기 등록에 실패했습니다.')
+  }
+})
+const removeBookmarkMutation = useRemoveBookmark({
+  onSuccess: () => {
+    isFavorite.value = false
+    notifySuccess('즐겨찾기가 해제되었습니다.')
+  },
+  onError: (err: any) => {
+    notifyError(err?.message || '즐겨찾기 해제에 실패했습니다.')
+  }
+})
+
+const toggleFavorite = async () => {
+  if (!counselor.value) return
+  if (!isUser.value) return
+  const cid = counselor.value.counselor_id
+  try {
+    if (isFavorite.value) {
+      await removeBookmarkMutation.mutateAsync(cid)
+    } else {
+      await addBookmarkMutation.mutateAsync(cid)
+    }
+  } catch (_) {
+    // 알림은 onError에서 처리됨
+  }
 }
 
 // 유틸리티 함수들
@@ -727,6 +764,21 @@ onMounted(async () => {
         inquiryTotalPages.value = 1
         inquiryItems.value = []
         await Promise.all([fetchReviews(1, false), fetchInquiries(1, false)])
+        // 즐겨찾기 초기 상태 로딩
+        showFavorite.value = isUser.value
+        if (isUser.value) {
+          try {
+            favoritePending.value = true
+            const res = await refetchBookmark()
+            isFavorite.value = Boolean(res?.data)
+          } catch (_) {
+            isFavorite.value = false
+          } finally {
+            favoritePending.value = false
+          }
+        } else {
+          favoritePending.value = false
+        }
         unwatch()
       }
     }
