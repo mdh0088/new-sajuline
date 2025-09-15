@@ -45,6 +45,8 @@ from src.schemas.consultation_review_schema import (
 from src.schemas.user_schema import (
     UserResponse, UserSignup, UserMypageResponse, SearchType, OrderType
 )
+from src.common.utils.auth_utils import verify_user_role
+from src.schemas.user_bookmark_schema import UserBookmarkResponse
 from src.schemas.auth_schema import LoginRequest, LoginResponse
 from src.common.response import APIResponse,APIResponseBuilder, ok, fail
 from src.repositories.inquiry_repository import InquiryRepository
@@ -863,3 +865,53 @@ async def get_point_history(
         total=total,
         message="포인트 내역 조회 성공"
     )
+
+
+# =====================
+# 즐겨찾기 API
+# =====================
+
+@router.get(
+    "/bookmarks/check",
+    response_model=APIResponse[bool],
+    summary="사용자 즐겨찾기 여부 조회"
+)
+async def check_bookmark(
+    counselor_id: str = Query(..., description="상담사 ID"),
+    current_user: TokenPayload = Depends(get_current_user),
+    bookmark_service: UserBookmarkService = Depends(get_user_bookmark_service)
+) -> APIResponse[bool]:
+    # 권한: 일반 사용자만
+    verify_user_role(current_user)
+    is_marked = await bookmark_service.is_bookmarked(current_user.sub, counselor_id)
+    return ok(data=is_marked, message="즐겨찾기 여부 조회 성공")
+
+
+@router.post(
+    "/bookmarks",
+    response_model=APIResponse[UserBookmarkResponse],
+    summary="사용자 즐겨찾기 등록"
+)
+async def add_bookmark(
+    counselor_id: str,
+    current_user: TokenPayload = Depends(get_current_user),
+    bookmark_service: UserBookmarkService = Depends(get_user_bookmark_service)
+) -> APIResponse[UserBookmarkResponse]:
+    verify_user_role(current_user)
+    created = await bookmark_service.add_bookmark(current_user.sub, counselor_id)
+    return ok(data=created, message="즐겨찾기 등록 성공")
+
+
+@router.delete(
+    "/bookmarks",
+    response_model=APIResponse[bool],
+    summary="사용자 즐겨찾기 삭제"
+)
+async def remove_bookmark(
+    counselor_id: str,
+    current_user: TokenPayload = Depends(get_current_user),
+    bookmark_service: UserBookmarkService = Depends(get_user_bookmark_service)
+) -> APIResponse[bool]:
+    verify_user_role(current_user)
+    removed = await bookmark_service.remove_bookmark(current_user.sub, counselor_id)
+    return ok(data=removed, message="즐겨찾기 삭제 성공")

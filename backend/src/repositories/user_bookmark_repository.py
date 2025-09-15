@@ -5,7 +5,7 @@
 from typing import List
 
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, func
+from sqlalchemy import select, func, delete as sqla_delete
 
 from src.models.user_bookmark_model import UserBookmark
 from src.schemas.user_bookmark_schema import UserBookmarkCreate
@@ -62,3 +62,36 @@ class UserBookmarkRepository:
         
         log.info("Bookmark list lookup completed", user_id=user_id, count=len(bookmarks))
         return bookmarks
+
+    @logger.catch(reraise=True)
+    async def exists(self, user_id: str, counselor_id: str) -> bool:
+        """특정 사용자-상담사 북마크 존재 여부"""
+        log = get_logger_with_request_id()
+        log.info("Checking bookmark existence", user_id=user_id, counselor_id=counselor_id)
+
+        stmt = (
+            select(func.count(UserBookmark.bookmark_id))
+            .where(
+                (UserBookmark.user_id == user_id)
+                & (UserBookmark.counselor_id == counselor_id)
+            )
+        )
+        result = await self.db.execute(stmt)
+        count = result.scalar() or 0
+        return count > 0
+
+    @logger.catch(reraise=True)
+    async def delete(self, user_id: str, counselor_id: str) -> int:
+        """특정 사용자-상담사 북마크 삭제 (영향 행 수 반환)"""
+        log = get_logger_with_request_id()
+        log.info("Deleting bookmark", user_id=user_id, counselor_id=counselor_id)
+
+        stmt = (
+            sqla_delete(UserBookmark)
+            .where(
+                (UserBookmark.user_id == user_id)
+                & (UserBookmark.counselor_id == counselor_id)
+            )
+        )
+        result = await self.db.execute(stmt)
+        return result.rowcount or 0
