@@ -70,3 +70,18 @@ class GradeRepository:
                 current_level=current_grade.grade_level,
                 found=next_grade is not None)
         return next_grade
+
+    @logger.catch(reraise=True)
+    async def list_active_ordered(self) -> list[Grade]:
+        """활성 등급 목록 조회 (is_active=True, grade_level ASC)"""
+        log = get_logger_with_request_id()
+        log.info("Listing active grades ordered by level ASC")
+        stmt = (
+            select(Grade)
+            .where(Grade.is_active == True)
+            .order_by(asc(Grade.grade_level))
+        )
+        result = await self.db.execute(stmt)
+        grades = result.scalars().all()
+        log.info("Active grades fetched", count=len(grades))
+        return grades
