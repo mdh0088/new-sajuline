@@ -8,7 +8,7 @@ export interface INotice {
   id: number;
   title: string;
   content: string;
-  category: NoticeCategory;
+  category: NoticeCategory; // frontend 표현용, 백엔드 매핑 필요
   viewCount: number;
   createdAt: string;
   updatedAt?: string;
@@ -37,6 +37,9 @@ export interface INoticeDetail extends INotice {
     id: number;
     title: string;
   } | null;
+  // 백엔드 필드 매핑 (상세 API)
+  before_notice_id?: number | null;
+  after_notice_id?: number | null;
 }
 
 // 공지사항 목록 페이지네이션
