@@ -22,6 +22,7 @@ from src.api.v1.user_api import router as user_router
 from src.api.v1.counselor_api import router as counselor_router
 from src.api.v1.notice_api import router as notice_router
 from src.api.v1.grade_api import router as grade_router
+from src.api.v1.event_api import router as event_router
 from src.common.response import fail
 from src.exceptions.custom_exceptions import BaseAppException
 from src.common.logging.config import setup_logging
@@ -195,6 +196,7 @@ app.include_router(user_router, prefix="/api/v1")
 app.include_router(counselor_router, prefix="/api/v1")
 app.include_router(notice_router, prefix="/api/v1")
 app.include_router(grade_router, prefix="/api/v1")
+app.include_router(event_router, prefix="/api/v1")
 
 
 class HealthResponse(BaseModel):
