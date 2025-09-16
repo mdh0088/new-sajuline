@@ -107,6 +107,17 @@
   box-shadow: 0 4px 20px rgba(147, 51, 234, 0.1);
 }
 
+/* 이미지 아이콘 대응 (프런트 동적 데이터 적용) */
+.tier-icon-img {
+  width: 36px;
+  height: 36px;
+  object-fit: contain;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: #fff;
+}
+.tier-icon-fallback { font-size: 20px; }
+
 .tier-step-icon::before {
   content: '';
   position: absolute;

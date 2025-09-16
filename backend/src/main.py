@@ -21,6 +21,7 @@ from src.api.v1.auth_api import router as auth_router
 from src.api.v1.user_api import router as user_router
 from src.api.v1.counselor_api import router as counselor_router
 from src.api.v1.notice_api import router as notice_router
+from src.api.v1.grade_api import router as grade_router
 from src.common.response import fail
 from src.exceptions.custom_exceptions import BaseAppException
 from src.common.logging.config import setup_logging
@@ -56,6 +57,10 @@ app = FastAPI(
         {
             "name": "notices",
             "description": "공지사항 관리 - 공지사항 조회",
+        },
+        {
+            "name": "grades",
+            "description": "멤버십 등급 - 공개 조회",
         },
         {
             "name": "health",
@@ -189,6 +194,7 @@ app.include_router(auth_router, prefix="/api/v1")
 app.include_router(user_router, prefix="/api/v1")
 app.include_router(counselor_router, prefix="/api/v1")
 app.include_router(notice_router, prefix="/api/v1")
+app.include_router(grade_router, prefix="/api/v1")
 
 
 class HealthResponse(BaseModel):

@@ -17,17 +17,24 @@
       <section class="tier-visualization">
         <div class="tier-steps">
           <div
-            v-for="tier in tiers"
-            :key="tier.id"
+            v-for="g in grades"
+            :key="g.grade_code"
             class="tier-step"
           >
-            <div :class="['tier-step-icon', tier.id]">
-              {{ tier.icon }}
+            <div class="tier-step-icon">
+              <img
+                v-if="g.grade_image_url"
+                :src="cdnUrl('grade', g.grade_image_url)"
+                alt="grade image"
+                class="tier-icon-img"
+                loading="lazy"
+              />
+              <span v-else class="tier-icon-fallback">⭐</span>
             </div>
             <div class="tier-step-info">
-              <div class="tier-step-label">{{ tier.name }}</div>
+              <div class="tier-step-label">{{ g.grade_code }}</div>
               <div class="tier-step-amount">
-                {{ formatAmountRange(tier) }}
+                {{ shortAmountRange(g.min_purchase_amount) }}
               </div>
             </div>
           </div>
@@ -37,22 +44,33 @@
       <!-- 등급 상세 카드 -->
       <section class="tier-cards">
         <div
-          v-for="tier in tiers"
-          :key="tier.id"
+          v-for="g in grades"
+          :key="g.grade_code"
           class="tier-card"
         >
           <div class="tier-card-header">
-            <div :class="['tier-icon', tier.id]">
-              {{ tier.icon }}
+            <div class="tier-icon">
+              <img
+                v-if="g.grade_image_url"
+                :src="cdnUrl('grade', g.grade_image_url)"
+                alt="grade image"
+                class="tier-icon-img"
+                loading="lazy"
+              />
+              <span v-else class="tier-icon-fallback">⭐</span>
             </div>
-            <h3 class="tier-name">{{ tier.name }}</h3>
+            <h3 class="tier-name">{{ g.grade_code }}</h3>
           </div>
           <div class="tier-range">
-            {{ getFullAmountRange(tier) }}
+            {{ fullAmountRange(g.min_purchase_amount, nextMin(g)) }}
           </div>
-          <div class="tier-benefit">
-            등급 혜택: 마일리지 적립 {{ tier.mileageRate }}%
+          <div v-if="numberVal(g.point_earn_rate) >= 1" class="tier-benefit">
+            적립 혜택: 마일리지 적립 {{ numberVal(g.point_earn_rate) }}%
           </div>
+          <div v-if="numberVal(g.discount_rate) >= 1" class="tier-benefit">
+            할인 혜택 : 상품 할인 {{ numberVal(g.discount_rate) }}%
+          </div>
+          <div v-if="g.description" class="tier-desc">{{ g.description }}</div>
         </div>
       </section>
 
@@ -94,111 +112,36 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue';
-import type { IMembershipTier } from '~/types/membership';
+import { computed } from 'vue';
 import '~/assets/css/membership/benefit.css';
+import { useGradeApi } from '~/composables/api/useGrade'
+import { useCdn } from '~/composables/utils/useCdn'
 
-// 멤버십 등급 데이터
-const tiers = ref<IMembershipTier[]>([
-  {
-    id: 'white',
-    name: 'WHITE',
-    icon: '⚪',
-    minAmount: 0,
-    maxAmount: 100000,
-    mileageRate: 0,
-    displayOrder: 1,
-  },
-  {
-    id: 'bronze',
-    name: 'BRONZE',
-    icon: '🥉',
-    minAmount: 100000,
-    maxAmount: 300000,
-    mileageRate: 1,
-    displayOrder: 2,
-  },
-  {
-    id: 'silver',
-    name: 'SILVER',
-    icon: '🥈',
-    minAmount: 300000,
-    maxAmount: 500000,
-    mileageRate: 2,
-    displayOrder: 3,
-  },
-  {
-    id: 'gold',
-    name: 'GOLD',
-    icon: '🥇',
-    minAmount: 500000,
-    maxAmount: 1000000,
-    mileageRate: 3,
-    displayOrder: 4,
-  },
-  {
-    id: 'vip',
-    name: 'VIP',
-    icon: '👑',
-    minAmount: 1000000,
-    maxAmount: 3000000,
-    mileageRate: 4,
-    displayOrder: 5,
-  },
-  {
-    id: 'vip-plus',
-    name: 'VIP+',
-    icon: '👑',
-    minAmount: 3000000,
-    maxAmount: 7000000,
-    mileageRate: 5,
-    displayOrder: 6,
-  },
-  {
-    id: 'vvip',
-    name: 'VVIP',
-    icon: '💎',
-    minAmount: 7000000,
-    mileageRate: 7,
-    displayOrder: 7,
-  },
-]);
+const { usePublicGrades } = useGradeApi()
+const { data } = usePublicGrades()
+const grades = computed(() => (data.value ?? []).sort((a, b) => a.grade_level - b.grade_level))
+const { cdnUrl } = useCdn()
 
-// 금액 포맷팅 (간략 버전)
-const formatAmountRange = (tier: IMembershipTier): string => {
-  if (tier.id === 'white') {
-    return '~10만원';
-  }
-  if (tier.id === 'vvip') {
-    return '700만원↑';
-  }
+const shortAmountRange = (min: number) => {
+  if (!min || min === 0) return '10만원 미만'
+  return `~${(min / 10000).toLocaleString()}만원`
+}
 
-  const max = tier.maxAmount! / 10000;
-  return `~${max}만원`;
-};
+const fullAmountRange = (min: number, nextMin?: number | null) => {
+  const fmt = (v: number) => v >= 10000 ? `${(v/10000).toLocaleString()}만원` : `${v.toLocaleString()}원`
+  if (!min || min === 0) return '전월 결제금액 10만원 미만'
+  if (!nextMin || nextMin <= min) return `전월 결제금액 ${fmt(min)} 이상`
+  return `전월 결제금액 ${fmt(min)} 이상 ~ ${fmt(nextMin)} 미만`
+}
 
-// 금액 포맷팅 (상세 버전)
-const getFullAmountRange = (tier: IMembershipTier): string => {
-  const formatAmount = (amount: number): string => {
-    if (amount >= 10000) {
-      return `${(amount / 10000).toLocaleString()}만원`;
-    }
-    return `${amount.toLocaleString()}원`;
-  };
+const numberVal = (v: number | string | undefined) => Number(v ?? 0)
 
-  if (tier.id === 'white') {
-    return '전월 결제금액 10만원 미만';
-  }
-
-  if (tier.id === 'vvip') {
-    return '전월 결제금액 700만원 이상';
-  }
-
-  const min = formatAmount(tier.minAmount);
-  const max = formatAmount(tier.maxAmount!);
-
-  return `전월 결제금액 ${min} 이상 ~ ${max} 미만`;
-};
+const nextMin = (g: any) => {
+  const arr = grades.value
+  const idx = arr.findIndex(it => it.grade_code === g.grade_code)
+  const next = idx >= 0 && idx + 1 < arr.length ? arr[idx + 1] : undefined
+  return next?.min_purchase_amount ?? null
+}
 
 // SEO 설정
 useHead({
@@ -226,4 +169,6 @@ useHead({
     flex: 1;
   }
 }
+.tier-icon-img{width:36px;height:36px;object-fit:contain;border-radius:8px;border:1px solid rgba(0,0,0,.06);background:#fff}
+.tier-icon-fallback{font-size:20px}
 </style>
