@@ -81,3 +81,15 @@ class GradeService:
             next_grade=next_grade_response,
             required_amount=required_amount
         )
+
+    async def list_public_grades(self) -> list[GradeResponse]:
+        """
+        게스트 공개용 등급 전체 목록 조회
+        - is_active=True 조건
+        - grade_level ASC 정렬
+        - t_grade 전 필드 매핑(GradeResponse)
+        """
+        log = get_logger_with_request_id()
+        log.info("Listing public grades")
+        items = await self.grade_repo.list_active_ordered()
+        return [GradeResponse.model_validate(g) for g in items]
