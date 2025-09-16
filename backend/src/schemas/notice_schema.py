@@ -45,3 +45,9 @@ class NoticeListParams(BaseModel):
     search: Optional[str] = Field(None, description="제목/내용 검색어")
 
 
+# 상세 응답 (이전/다음 ID 포함)
+class NoticeDetailResponse(NoticeResponse):
+    """공지사항 상세 응답 스키마 (이전/다음 이동용 ID 포함)"""
+    before_notice_id: Optional[int] = Field(None, description="이전 공지 notice_id (없으면 null)")
+    after_notice_id: Optional[int] = Field(None, description="다음 공지 notice_id (없으면 null)")
+
