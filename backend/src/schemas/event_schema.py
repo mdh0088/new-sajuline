@@ -71,6 +71,12 @@ class EventResponse(EventBase):
     model_config = ConfigDict(from_attributes=True)
 
 
+class EventDetailResponse(EventResponse):
+    """이벤트 상세 응답 (이전/다음 이동용 ID 포함)"""
+    before_event_id: Optional[int] = Field(None, description="이전 이벤트 ID (없으면 null)")
+    after_event_id: Optional[int] = Field(None, description="다음 이벤트 ID (없으면 null)")
+
+
 class EventListResponse(BaseModel):
     """이벤트 목록 응답 스키마"""
     events: list[EventResponse] = Field(..., description="이벤트 목록")
