@@ -1,7 +1,7 @@
 """
 이벤트 관련 비즈니스 로직 서비스
 """
-from typing import Optional
+from typing import Optional, Tuple, List
 from datetime import datetime
 
 from src.repositories.event_repository import EventRepository
@@ -13,16 +13,17 @@ from src.models.point_transaction_model import TransactionType, CurrencyType, Re
 from src.common.logging import logger, get_logger_with_request_id
 from src.exceptions.custom_exceptions import BaseAppException, ValidationError
 from src.schemas.user_schema import SignupRewardInfo
+from src.schemas.event_schema import EventResponse, EventDetailResponse
 
 
 class EventService:
     """이벤트 비즈니스 로직 서비스"""
     
     def __init__(
-        self, 
+        self,
         event_repo: EventRepository,
         point_transaction_service: PointTransactionService,
-        tm60_users_service: Tm60UsersService
+        tm60_users_service: Tm60UsersService,
     ):
         self.event_repo = event_repo
         self.point_transaction_service = point_transaction_service
@@ -136,3 +137,30 @@ class EventService:
             else:
                 # 예상치 못한 오류는 재발생 (회원가입도 실패)
                 raise BaseAppException(f"포인트 지급 처리 실패: {str(e)}", status_code=500)
+
+    # ===== 공개 조회 API용 서비스 =====
+    async def get_public_event_list(self) -> List[EventResponse]:
+        """게스트 공개 이벤트 목록 (is_active=True, created_at DESC)"""
+        log = get_logger_with_request_id()
+        log.info("Service: get_public_event_list")
+        events = await self.event_repo.get_public_list()
+        return [EventResponse.model_validate(e) for e in events]
+
+    async def get_event_detail_with_adjacent(self, event_id: int) -> EventDetailResponse:
+        """
+        이벤트 상세 조회 + 이전/다음 event_id 포함
+        - 스키마에 after_event_id, before_event_id 필드를 추가하여 반환
+        """
+        log = get_logger_with_request_id()
+        log.info("Service: get_event_detail_with_adjacent", event_id=event_id)
+        event = await self.event_repo.get_by_id(event_id)
+        if not event:
+            raise ValidationError(f"이벤트를 찾을 수 없습니다. (ID: {event_id})")
+
+        before_id, after_id = await self.event_repo.get_adjacent_ids(event_id)
+        base = EventDetailResponse.model_validate(event)
+        base.before_event_id = before_id
+        base.after_event_id = after_id
+        return base
+
+    # 조회수 기능 없음 (t_event에 view_count 미존재)

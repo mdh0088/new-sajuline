@@ -1,9 +1,9 @@
 """
 이벤트 관련 데이터 액세스 클래스
 """
-from typing import Optional
+from typing import Optional, Tuple, List
 from datetime import datetime
-from sqlalchemy import select
+from sqlalchemy import select, and_, desc
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.common.logging import logger, get_logger_with_request_id
@@ -45,6 +45,79 @@ class EventRepository:
                 reward_value=event.reward_value if event else None)
         return event
     
+    @logger.catch(reraise=True)
+    async def get_public_list(self) -> list[Event]:
+        """게스트 공개 목록: is_active=True, created_at DESC"""
+        log = get_logger_with_request_id()
+        log.info("Getting public events list")
+        stmt = (
+            select(Event)
+            .where(Event.is_active.is_(True))
+            .order_by(desc(Event.created_at))
+        )
+        result = await self.db.execute(stmt)
+        events = list(result.scalars().all())
+        log.info("Public events retrieved", count=len(events))
+        return events
+
+    @logger.catch(reraise=True)
+    async def get_by_id(self, event_id: int) -> Optional[Event]:
+        log = get_logger_with_request_id()
+        log.info("Looking up event by ID", event_id=event_id)
+        stmt = select(Event).where(Event.event_id == event_id)
+        result = await self.db.execute(stmt)
+        event = result.scalar_one_or_none()
+        log.info("Event lookup completed", event_id=event_id, found=event is not None)
+        return event
+
+    @logger.catch(reraise=True)
+    async def get_adjacent_ids(self, event_id: int) -> Tuple[Optional[int], Optional[int]]:
+        """현재 이벤트 기준 이전/다음 ID 반환 (is_active=True, created_at DESC 시퀀스)"""
+        log = get_logger_with_request_id()
+        log.info("Resolving adjacent event ids", event_id=event_id)
+
+        # 현재 created_at 조회
+        current_stmt = select(Event.created_at).where(Event.event_id == event_id)
+        current_res = await self.db.execute(current_stmt)
+        current_created_at = current_res.scalar_one_or_none()
+        if not current_created_at:
+            return None, None
+
+        # 이전(before): 더 최신 (created_at > current)
+        before_stmt = (
+            select(Event.event_id)
+            .where(
+                and_(
+                    Event.is_active.is_(True),
+                    Event.created_at > current_created_at
+                )
+            )
+            .order_by(desc(Event.created_at))
+            .limit(1)
+        )
+        before_res = await self.db.execute(before_stmt)
+        before_id = before_res.scalar_one_or_none()
+
+        # 다음(after): 더 과거 (created_at < current)
+        after_stmt = (
+            select(Event.event_id)
+            .where(
+                and_(
+                    Event.is_active.is_(True),
+                    Event.created_at < current_created_at
+                )
+            )
+            .order_by(desc(Event.created_at))
+            .limit(1)
+        )
+        after_res = await self.db.execute(after_stmt)
+        after_id = after_res.scalar_one_or_none()
+
+        log.info("Adjacent event IDs resolved", before_event_id=before_id, after_event_id=after_id)
+        return before_id, after_id
+
+    # 조회수 필드 없음 → 관련 메서드 제거
+
     @logger.catch(reraise=True)
     async def get_event_by_code(self, event_code: str) -> Optional[Event]:
         """이벤트 코드로 이벤트 조회"""
