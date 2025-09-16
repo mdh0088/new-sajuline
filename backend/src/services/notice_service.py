@@ -9,7 +9,7 @@ from src.exceptions.custom_exceptions import NotFoundError, ValidationError
 from src.common.logging import get_logger_with_request_id
 
 from src.models.notice_model import Notice
-from src.schemas.notice_schema import NoticeResponse, NoticeListParams
+from src.schemas.notice_schema import NoticeResponse, NoticeListParams, NoticeDetailResponse
 from src.repositories.notice_repository import NoticeRepository
 
 
@@ -73,3 +73,27 @@ class NoticeService:
                 limit=params.limit)
         
         return notice_responses, params.page, params.limit, total
+
+    async def get_public_notice_list(self) -> List[NoticeResponse]:
+        """게스트용 공지 목록 조회 (기본 필터/정렬 고정)"""
+        log = get_logger_with_request_id()
+        log.info("Getting public notice list (service)")
+        notices = await self.notice_repo.get_public_list()
+        return [NoticeResponse.model_validate(n) for n in notices]
+
+    async def get_notice_detail_with_adjacent(self, notice_id: int) -> NoticeDetailResponse:
+        """상세 + 이전/다음 ID 포함 응답"""
+        log = get_logger_with_request_id()
+        log.info("Getting notice detail with adjacent", notice_id=notice_id)
+        notice = await self.notice_repo.get_by_id(notice_id)
+        if not notice:
+            raise NotFoundError(f"공지사항을 찾을 수 없습니다. (ID: {notice_id})")
+        before_id, after_id = await self.notice_repo.get_adjacent_ids(notice_id)
+        base = NoticeDetailResponse.model_validate(notice)
+        base.before_notice_id = before_id
+        base.after_notice_id = after_id
+        return base
+
+    async def increase_view_count(self, notice_id: int) -> None:
+        """조회수 증가"""
+        await self.notice_repo.increment_view_count(notice_id)

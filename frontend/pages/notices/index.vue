@@ -32,16 +32,28 @@
             <div class="notice-header">
               <div class="notice-title-wrapper">
                 <span
-                  v-if="notice.category !== 'general'"
-                  :class="['notice-badge', notice.category]"
+                  v-if="notice.category === 'update'"
+                  class="notice-badge update"
                 >
-                  {{ getBadgeText(notice.category) }}
+                  UPDATE
+                </span>
+                <span
+                  v-if="notice.category === 'event'"
+                  class="notice-badge event"
+                >
+                  EVENT
+                </span>
+                <span
+                  v-if="notice.category === 'important'"
+                  class="notice-badge important"
+                >
+                  중요
                 </span>
                 <h3 class="notice-title">{{ notice.title }}</h3>
               </div>
               <span class="notice-date">{{ formatDate(notice.createdAt) }}</span>
             </div>
-            <p class="notice-content">{{ notice.summary }}</p>
+            <p class="notice-content">{{ cleanText(notice.summary) }}</p>
           </NuxtLink>
         </div>
 
@@ -86,8 +98,9 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue';
+import { ref, computed, onMounted, watch } from 'vue';
 import type { INoticeListItem, NoticeCategory } from '~/types/notice';
+import { useNoticeApi } from '~/composables/api/useNotice';
 import '~/assets/css/notice/list.css';
 
 // 상태 관리
@@ -95,51 +108,12 @@ const notices = ref<INoticeListItem[]>([]);
 const currentPage = ref(1);
 const totalPages = ref(1);
 const isLoading = ref(false);
+const { useNoticeList } = useNoticeApi();
 
-// 임시 데이터 (API 구현 전까지 사용)
-const mockNotices: INoticeListItem[] = [
-  {
-    id: 1,
-    title: '시스템 점검 안내',
-    summary: '더 나은 서비스 제공을 위해 시스템 점검을 진행할 예정입니다. 점검 시간 동안 서비스 이용이 제한됩니다.',
-    category: 'new',
-    viewCount: 1234,
-    createdAt: '2024-03-15T10:00:00',
-    isFixed: true,
-  },
-  {
-    id: 2,
-    title: '봄맞이 이벤트 안내',
-    summary: '봄을 맞이하여 진행되는 특별 이벤트를 안내드립니다. 다양한 혜택과 함께 즐거운 시간 보내세요.',
-    category: 'event',
-    viewCount: 856,
-    createdAt: '2024-03-10T14:30:00',
-  },
-  {
-    id: 3,
-    title: '앱 버전 업데이트 안내',
-    summary: '더 나은 서비스 이용을 위한 앱 업데이트를 안내드립니다. 새로운 기능과 개선사항을 확인해보세요.',
-    category: 'update',
-    viewCount: 543,
-    createdAt: '2024-03-05T09:00:00',
-  },
-  {
-    id: 4,
-    title: '개인정보처리방침 개정 안내',
-    summary: '개인정보처리방침이 일부 개정되었습니다. 변경된 내용을 확인하시고 서비스를 이용해 주시기 바랍니다.',
-    category: 'important',
-    viewCount: 1523,
-    createdAt: '2024-02-28T16:00:00',
-  },
-  {
-    id: 5,
-    title: '신규 상담사 입점 안내',
-    summary: '새로운 전문 상담사분들이 입점하셨습니다. 다양한 분야의 전문가들과 상담을 진행해보세요.',
-    category: 'general',
-    viewCount: 432,
-    createdAt: '2024-02-25T11:00:00',
-  },
-];
+// API 쿼리
+const { data: listData, isFetching } = useNoticeList({
+  // 목록은 전체 반환(API 설계), 여기서 그대로 사용
+})
 
 // 페이지네이션 표시 페이지 계산
 const displayPages = computed(() => {
@@ -198,7 +172,28 @@ const formatDate = (dateString: string): string => {
   const year = date.getFullYear();
   const month = String(date.getMonth() + 1).padStart(2, '0');
   const day = String(date.getDate()).padStart(2, '0');
-  return `${year}.${month}.${day}`;
+  return `${year}-${month}-${day}`;
+};
+
+// HTML 태그 및 특수문자 정리
+const cleanText = (text: string): string => {
+  if (!text) return '';
+
+  return text
+    // HTML 태그 제거
+    .replace(/<[^>]*>/g, '')
+    // HTML 엔티티 디코딩
+    .replace(/&quot;/g, '"')
+    .replace(/&amp;/g, '&')
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&nbsp;/g, ' ')
+    .replace(/&#39;/g, "'")
+    .replace(/&apos;/g, "'")
+    // 연속된 공백을 하나로 축약
+    .replace(/\s+/g, ' ')
+    // 앞뒤 공백 제거
+    .trim();
 };
 
 // 페이지 변경
@@ -215,16 +210,12 @@ const loadNotices = async () => {
   isLoading.value = true;
 
   try {
-    // API 구현 전까지 임시 데이터 사용
-    await new Promise(resolve => setTimeout(resolve, 500)); // 로딩 시뮬레이션
-
-    // 페이지네이션 시뮬레이션
-    const pageSize = 10;
-    const start = (currentPage.value - 1) * pageSize;
-    const end = start + pageSize;
-
-    notices.value = mockNotices.slice(start, end);
-    totalPages.value = Math.ceil(mockNotices.length / pageSize);
+    const items = listData.value ?? []
+    const pageSize = 10
+    const start = (currentPage.value - 1) * pageSize
+    const end = start + pageSize
+    notices.value = items.slice(start, end)
+    totalPages.value = Math.max(1, Math.ceil(items.length / pageSize))
   } catch (error) {
     console.error('공지사항 로드 실패:', error);
     notices.value = [];
@@ -237,6 +228,14 @@ const loadNotices = async () => {
 onMounted(() => {
   loadNotices();
 });
+
+// 데이터 변경 시 자동 재계산
+watch(
+  () => listData.value,
+  () => {
+    loadNotices()
+  }
+)
 
 // SEO 설정
 useHead({
