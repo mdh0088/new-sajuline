@@ -1,0 +1,355 @@
+/* 포인트 가이드 페이지 스타일 */
+
+/* 헤더 */
+.header {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  background: rgba(10, 10, 15, 0.95);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  z-index: 1000;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.header-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 20px;
+  height: 60px;
+}
+
+.back-button {
+  width: 36px;
+  height: 36px;
+  border: none;
+  background: transparent;
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: 20px;
+}
+
+.header-title {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.header-actions {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.icon-btn {
+  width: 36px;
+  height: 36px;
+  background: rgba(255, 255, 255, 0.05);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 12px;
+  transition: all 0.3s ease;
+  font-size: 18px;
+  border: none;
+  cursor: pointer;
+}
+
+.icon-btn:active {
+  transform: scale(0.95);
+  background: rgba(255, 255, 255, 0.1);
+}
+
+/* 메인 콘텐츠 */
+.main-content {
+  margin-top: 60px;
+  padding: 24px 20px 100px;
+  background: linear-gradient(180deg, rgba(147, 51, 234, 0.05) 0%, rgba(10, 10, 15, 0) 100%);
+  flex: 1;
+  overflow-y: auto;
+  min-height: calc(100vh - 60px);
+}
+
+/* 탭 */
+.tabs {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 24px;
+  background: rgba(255, 255, 255, 0.03);
+  padding: 4px;
+  border-radius: 12px;
+}
+
+.tab-btn {
+  flex: 1;
+  text-align: center;
+  padding: 14px 0;
+  font-size: 15px;
+  font-weight: 600;
+  border-radius: 8px;
+  background: transparent;
+  transition: all 0.3s ease;
+  cursor: pointer;
+  color: rgba(255, 255, 255, 0.7);
+  border: none;
+}
+
+.tab-btn.active {
+  background: linear-gradient(135deg, #9333EA 0%, #7C3AED 100%);
+  color: #fff;
+  box-shadow: 0 4px 20px rgba(147, 51, 234, 0.3);
+}
+
+/* 콘텐츠 카드 */
+.content-card {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 16px;
+  padding: 24px;
+  margin-bottom: 24px;
+  transition: all 0.3s ease;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+
+.content-card:hover {
+  background: rgba(255, 255, 255, 0.05);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+}
+
+.content-card h3 {
+  font-size: 17px;
+  font-weight: 600;
+  margin-bottom: 16px;
+  color: #fff;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.content-card h3 .icon {
+  font-size: 20px;
+  color: #B794F6;
+}
+
+.content-card p,
+.content-card li {
+  font-size: 14px;
+  color: rgba(255, 255, 255, 0.8);
+  margin-bottom: 12px;
+  line-height: 1.6;
+}
+
+.content-card ol {
+  counter-reset: item;
+  list-style-type: none;
+  margin-left: 0;
+  padding-left: 0;
+}
+
+.content-card ol li {
+  counter-increment: item;
+  margin-bottom: 16px;
+  padding-left: 28px;
+  position: relative;
+}
+
+.content-card ol li::before {
+  content: counter(item);
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 20px;
+  height: 20px;
+  background: rgba(147, 51, 234, 0.1);
+  border: 1px solid rgba(147, 51, 234, 0.2);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  color: #B794F6;
+  font-weight: 600;
+}
+
+.content-card li {
+  margin-bottom: 8px;
+  position: relative;
+}
+
+.content-card li strong {
+  color: #B794F6;
+  font-weight: 600;
+}
+
+.content-card li em {
+  color: #B794F6;
+  font-style: normal;
+  font-weight: 500;
+}
+
+.content-card code {
+  background: rgba(147, 51, 234, 0.1);
+  padding: 2px 8px;
+  border-radius: 6px;
+  font-family: monospace;
+  color: #B794F6;
+  border: 1px solid rgba(147, 51, 234, 0.2);
+}
+
+/* 추가 안내 */
+.content-card p:last-child {
+  margin-top: 20px;
+  padding-top: 16px;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  color: rgba(255, 255, 255, 0.6);
+  font-size: 13px;
+}
+
+/* 하단 네비게이션 */
+.bottom-nav {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: rgba(10, 10, 15, 0.95);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  display: flex;
+  justify-content: space-around;
+  padding: 8px 0 12px;
+  z-index: 1000;
+}
+
+.nav-item {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 8px;
+  color: rgba(255, 255, 255, 0.5);
+  text-decoration: none;
+  transition: all 0.3s ease;
+  position: relative;
+}
+
+.nav-item::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 0;
+  height: 2px;
+  background: linear-gradient(90deg, #9333EA 0%, #B794F6 100%);
+  transition: width 0.3s ease;
+}
+
+.nav-item.active {
+  color: #B794F6;
+}
+
+.nav-item.active::before {
+  width: 40px;
+}
+
+.nav-icon {
+  font-size: 24px;
+  margin-bottom: 4px;
+}
+
+.nav-label {
+  font-size: 11px;
+  font-weight: 500;
+}
+
+/* 강조 텍스트 */
+.highlight {
+  color: #B794F6;
+  font-weight: 500;
+}
+
+/* 탭 콘텐츠 애니메이션 */
+.tab-content {
+  animation: fadeInUp 0.3s ease-out;
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* 반응형 디자인 */
+@media (max-width: 768px) {
+  .content-card h3 {
+    font-size: 15px;
+  }
+
+  .content-card p,
+  .content-card li {
+    font-size: 13px;
+  }
+
+  .main-content {
+    padding: 20px 16px 100px;
+  }
+
+  .content-card {
+    padding: 20px;
+    margin-bottom: 20px;
+  }
+
+  .tabs {
+    margin-bottom: 20px;
+  }
+
+  .tab-btn {
+    padding: 12px 0;
+    font-size: 14px;
+  }
+}
+
+@media (max-width: 480px) {
+  .content-card h3 {
+    font-size: 14px;
+  }
+
+  .content-card h3 .icon {
+    font-size: 18px;
+  }
+
+  .content-card p,
+  .content-card li {
+    font-size: 12px;
+  }
+
+  .content-card {
+    padding: 16px;
+  }
+
+  .content-card ol li {
+    padding-left: 24px;
+  }
+
+  .content-card ol li::before {
+    width: 18px;
+    height: 18px;
+    font-size: 11px;
+  }
+}

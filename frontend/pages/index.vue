@@ -5,7 +5,7 @@
       <div class="header-top">
         <div class="logo">사주라인</div>
         <div class="header-actions">
-          <div class="coin-balance" @click="$router.push('/payment')">
+          <div class="coin-balance" @click="$router.push('/point')">
             <span>💰</span>
             <span>{{ userPoints }}P</span>
           </div>
@@ -113,7 +113,7 @@
         <div class="promotion-content">
           <h3 class="promotion-title">🎉 첫 충전 100% 보너스</h3>
           <p class="promotion-desc">지금 충전하면 2배로 돌려드려요!</p>
-          <button class="promotion-button" @click="$router.push('/payment')">혜택 받기</button>
+          <button class="promotion-button" @click="$router.push('/point')">혜택 받기</button>
         </div>
       </section>
 
