@@ -255,9 +255,11 @@ export const useAuth = () => {
   
   // 내비게이션 기반 정책으로 전환: 주기적 자동 체크 제거
   const checkTokenExpiry = async () => {
-    if (!userSession.value?.access_token_expires_at) return false
+    // 세션이 없으면 true 반환 (API 호출 시 401로 확인됨)
+    if (!userSession.value?.access_token_expires_at) return true
     const now = Date.now()
-    return userSession.value.access_token_expires_at > now
+    // 30초 여유를 두고 미리 갱신 (30초 이내면 false)
+    return userSession.value.access_token_expires_at > (now + 30000)
   }
   
   /**
