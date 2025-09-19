@@ -1,13 +1,16 @@
 """
 사용자 관련 Pydantic 스키마
 """
-from datetime import datetime, date
+from datetime import datetime, date, timedelta, timezone
 from typing import Optional, List, Literal
 from decimal import Decimal
 from pydantic import BaseModel, EmailStr, Field, ConfigDict
 
 from src.models.user_model import JoinType, UserStatus, Gender
 from src.schemas.grade_schema import NextGradeInfo
+
+# 한국 시간대 (UTC+9) 정의
+KST = timezone(timedelta(hours=9))
 
 
 class UserBase(BaseModel):

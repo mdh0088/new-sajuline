@@ -53,19 +53,17 @@ export default defineNuxtRouteMiddleware(async (to) => {
     return goLogin(to)
   }
 
-  // 내비게이션 시 토큰 상태 점검 정책 (게스트 제외, 클라이언트 전용 refresh 실행)
-  if (needsAuth && isAuthenticated.value) {
-    // 만료 여부 확인
+  // 내비게이션 시 토큰 상태 점검 정책 (게스트 제외, 클라이언트 전용)
+  // API 인터셉터가 401 처리하므로 미들웨어는 간단하게 처리
+  if (needsAuth && isAuthenticated.value && process.client) {
+    // Access Token이 만료되었거나 곧 만료될 경우 (30초 이내)
     const valid = await checkTokenExpiry()
     if (!valid) {
-      // 만료됨 → 로그아웃 처리 후 로그인 페이지로 (SSR/CSR 공통)
-      clearSession()
-      return goLogin(to)
-    } else if (process.client) {
-      // 아직 만료는 아니면 즉시 refresh 호출로 수명 연장 (실패 시 로그아웃)
+      // Refresh 시도 (Refresh Token이 살아있다면 성공)
       try {
         await attemptTokenRefresh()
       } catch {
+        // Refresh Token도 만료된 경우에만 로그아웃
         clearSession()
         return goLogin(to)
       }

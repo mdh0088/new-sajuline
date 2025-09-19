@@ -262,11 +262,39 @@
   color: rgba(255, 255, 255, 0.8);
 }
 
+/* 할인 관련 스타일 */
+.price-with-discount {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.discount-badge {
+  align-self: flex-start;
+  padding: 2px 6px;
+  background: linear-gradient(135deg, #FF6B6B 0%, #FF8E53 100%);
+  border-radius: 6px;
+  font-size: 10px;
+  font-weight: 600;
+  color: white;
+}
+
 .original-price {
   text-decoration: line-through;
   color: rgba(255, 255, 255, 0.4);
   font-size: 14px;
-  margin-right: 8px;
+  margin-right: 6px;
+}
+
+.discounted-price {
+  font-weight: 600;
+  color: #FFD700;
+  font-size: 16px;
+}
+
+.price-normal {
+  font-size: 16px;
+  color: rgba(255, 255, 255, 0.8);
 }
 
 /* 결제 수단 */
@@ -461,6 +489,9 @@
   font-weight: 500;
 }
 
+.amount-negative { color: #FF6B6B; }
+.amount-positive { color: #22C55E; }
+
 .point-value {
   font-size: 16px;
   font-weight: 500;
@@ -485,12 +516,7 @@
   margin: 16px 0;
 }
 
-.vat-note {
-  font-size: 12px;
-  color: rgba(255, 255, 255, 0.4);
-  text-align: right;
-  margin-top: 8px;
-}
+/* VAT 별도 문구 제거에 따라 클래스 미사용 */
 
 /* 하단 결제 버튼 */
 .bottom-cta {
