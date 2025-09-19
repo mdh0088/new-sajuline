@@ -44,20 +44,24 @@
 
         <div class="charge-grid">
           <div
-            v-for="(item, index) in chargeItems"
+            v-for="(item, index) in products"
             :key="index"
             :class="['charge-item', {
-              popular: item.popular,
-              selected: selectedChargeIndex === index
+              selected: selectedIndex === index
             }]"
-            @click="selectChargeItem(index)"
+            @click="selectItem(index)"
           >
-            <div v-if="item.popular" class="popular-badge">인기</div>
-            <div class="charge-amount">{{ item.points.toLocaleString() }} P</div>
-            <div class="charge-bonus">+{{ item.bonus.toLocaleString() }} P 보너스</div>
+            <div class="charge-amount">{{ item.product_name }}</div>
+            <div v-if="item.bonus_point > 0" class="charge-bonus">+{{ item.bonus_point.toLocaleString() }} P 보너스</div>
             <div class="charge-price">
-              <span v-if="item.originalPrice" class="original-price">{{ item.originalPrice.toLocaleString() }}원</span>
-              <span>{{ item.price.toLocaleString() }}원</span>
+              <div v-if="item.discount_rate > 0" class="price-with-discount">
+                <div class="discount-badge">{{ item.discount_rate }}% 할인</div>
+                <span class="original-price">{{ item.price.toLocaleString() }}원</span>
+                <span class="discounted-price">{{ discountedPrice(item.price, item.discount_rate).toLocaleString() }}원</span>
+              </div>
+              <div v-else class="price-normal">
+                <span>{{ item.price.toLocaleString() }}원</span>
+              </div>
             </div>
           </div>
         </div>
@@ -95,6 +99,8 @@
             <NuxtLink to="/terms/payment" class="terms-link">결제 이용약관</NuxtLink>에 동의합니다
           </div>
         </div>
+        </section>
+        <!-- 환불 불가 약관 - 추후 필요시 사용
         <div class="terms-item">
           <div
             :class="['checkbox', { checked: refundAgreed }]"
@@ -104,7 +110,7 @@
             충전한 포인트는 환불이 불가함을 확인했습니다
           </div>
         </div>
-      </section>
+        -->
 
       <!-- 결제 내역 -->
       <div class="payment-summary">
@@ -116,18 +122,29 @@
         <div class="summary-content">
           <div class="summary-row point-row">
             <span class="summary-label">충전 포인트</span>
-            <span class="point-value">{{ selectedChargeItem?.points.toLocaleString() || '0' }} P</span>
+            <span class="point-value">{{ selectedProduct?.point_amount.toLocaleString() || '0' }} P</span>
           </div>
-          <div class="summary-row point-row">
+          <div v-if="(selectedProduct?.bonus_point || 0) > 0" class="summary-row point-row">
             <span class="summary-label">보너스 포인트</span>
-            <span class="bonus-value">+{{ selectedChargeItem?.bonus.toLocaleString() || '0' }} P</span>
+            <span class="bonus-value">+{{ selectedProduct?.bonus_point.toLocaleString() }} P</span>
           </div>
           <div class="summary-divider"></div>
           <div class="summary-row">
-            <span class="summary-label">결제 금액</span>
-            <span class="payment-amount">{{ selectedChargeItem?.price.toLocaleString() || '0' }}원</span>
+            <span class="summary-label">상품 가격</span>
+            <span class="summary-value">{{ originalPrice.toLocaleString() }}원</span>
           </div>
-          <div class="vat-note">* VAT 별도</div>
+          <div v-if="discountRate > 0" class="summary-row">
+            <span class="summary-label">할인 가격</span>
+            <span class="summary-value amount-negative">-{{ discountAmount.toLocaleString() }}원</span>
+          </div>
+          <div class="summary-row">
+            <span class="summary-label">VAT</span>
+            <span class="summary-value amount-positive">+{{ vatAmount.toLocaleString() }}원</span>
+          </div>
+          <div class="summary-row">
+            <span class="summary-label">결제금액(VAT 포함)</span>
+            <span class="payment-amount">{{ finalAmount.toLocaleString() }}원</span>
+          </div>
         </div>
       </div>
     </main>
@@ -139,7 +156,7 @@
         :disabled="!canProceedPayment"
         @click="processPayment"
       >
-        {{ selectedChargeItem?.price.toLocaleString() || '0' }}원 결제하기
+        {{ finalAmount.toLocaleString() }}원 결제하기
       </button>
     </div>
 
@@ -169,6 +186,7 @@
 import { ref, computed } from 'vue'
 import { useHead } from 'nuxt/app'
 import { useNotify } from '~/composables/utils/useNotify'
+import { usePointProductApi, type PointProduct } from '~/composables/api/usePointProduct'
 
 const { notifySuccess, notifyError, notifyInfo } = useNotify()
 
@@ -188,54 +206,13 @@ definePageMeta({
   layout: 'default'
 })
 
-// 현재 포인트
+// 현재 포인트 (임시 값: 실제로는 사용자 포인트 API로 교체 가능)
 const currentPoints = ref(1200)
 
-// 충전 아이템 목록
-const chargeItems = ref([
-  {
-    points: 5000,
-    bonus: 1000,
-    price: 5000,
-    originalPrice: null,
-    popular: false
-  },
-  {
-    points: 10000,
-    bonus: 3000,
-    price: 10000,
-    originalPrice: null,
-    popular: true
-  },
-  {
-    points: 30000,
-    bonus: 10000,
-    price: 27000,
-    originalPrice: 30000,
-    popular: false
-  },
-  {
-    points: 50000,
-    bonus: 20000,
-    price: 43000,
-    originalPrice: 50000,
-    popular: false
-  },
-  {
-    points: 100000,
-    bonus: 50000,
-    price: 79000,
-    originalPrice: 100000,
-    popular: false
-  },
-  {
-    points: 200000,
-    bonus: 120000,
-    price: 149000,
-    originalPrice: 200000,
-    popular: false
-  }
-])
+// API 연동: 포인트 상품 목록
+const { usePublicPointProducts } = usePointProductApi()
+const { data: productList, isLoading } = usePublicPointProducts()
+const products = computed<PointProduct[]>(() => productList?.value ?? [])
 
 // 결제 수단 목록
 const paymentMethods = ref([
@@ -262,21 +239,15 @@ const paymentMethods = ref([
 ])
 
 // 선택된 항목들
-const selectedChargeIndex = ref(1) // 기본으로 인기 상품 선택
+const selectedIndex = ref(0)
 const selectedPaymentIndex = ref(0) // 기본으로 신용카드 선택
 
 // 약관 동의
 const termsAgreed = ref(false)
-const refundAgreed = ref(false)
+// const refundAgreed = ref(false) // 환불 불가 약관 - 추후 필요시 사용
 
 // 계산된 속성들
-const selectedChargeItem = computed(() => {
-  const index = selectedChargeIndex.value
-  if (index >= 0 && index < chargeItems.value.length) {
-    return chargeItems.value[index]
-  }
-  return null
-})
+const selectedProduct = computed<PointProduct | null>(() => products.value[selectedIndex.value] ?? null)
 
 const selectedPaymentMethod = computed(() => {
   const index = selectedPaymentIndex.value
@@ -286,21 +257,33 @@ const selectedPaymentMethod = computed(() => {
   return null
 })
 
+const discountRate = computed(() => selectedProduct.value?.discount_rate ?? 0)
+const originalPrice = computed(() => selectedProduct.value?.price ?? 0)
+const discountAmount = computed(() => {
+  const rate = discountRate.value
+  const price = originalPrice.value
+  return rate > 0 ? Math.floor((price * rate) / 100) : 0
+})
+const discountedPriceVal = computed(() => originalPrice.value - discountAmount.value)
+const vatAmount = computed(() => Math.floor((originalPrice.value * 10) / 100))
+const finalAmount = computed(() => discountedPriceVal.value + vatAmount.value)
+
 const canProceedPayment = computed(() => {
-  return selectedChargeItem.value !== null &&
+  return selectedProduct.value !== null &&
          selectedPaymentMethod.value !== null &&
-         termsAgreed.value &&
-         refundAgreed.value
+         termsAgreed.value
+         // && refundAgreed.value // 환불 불가 약관 - 추후 필요시 사용
 })
 
 // 메서드들
-function selectChargeItem(index: number) {
-  selectedChargeIndex.value = index
-}
+function selectItem(index: number) { selectedIndex.value = index }
 
 function selectPaymentMethod(index: number) {
   selectedPaymentIndex.value = index
 }
+
+
+function discountedPrice(price: number, rate: number) { return price - Math.floor((price * rate) / 100) }
 
 function processPayment() {
   if (!canProceedPayment.value) {
@@ -308,16 +291,16 @@ function processPayment() {
     return
   }
 
-  const chargeItem = selectedChargeItem.value
+  const product = selectedProduct.value
   const paymentMethod = selectedPaymentMethod.value
 
   // null 체크를 통한 타입 안전성 확보
-  if (!chargeItem || !paymentMethod) {
+  if (!product || !paymentMethod) {
     notifyError('충전 금액 또는 결제 수단을 선택해주세요.')
     return
   }
 
-  notifyInfo(`${paymentMethod.name}로 ${chargeItem.price.toLocaleString()}원 결제를 진행합니다.`)
+  notifyInfo(`${paymentMethod.name}로 ${finalAmount.value.toLocaleString()}원 결제를 진행합니다.`)
 
   // TODO: 실제 결제 API 연동
   // 임시로 성공 메시지만 표시

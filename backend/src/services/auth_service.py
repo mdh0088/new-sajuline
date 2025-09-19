@@ -2,7 +2,7 @@
 JWT 기반 공통 인증 서비스 및 의존성
 """
 import uuid
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import Dict, Optional
 
 from jose import JWTError, jwt
@@ -12,6 +12,9 @@ from fastapi import HTTPException, status, Request, Depends
 from src.config.settings import settings
 from src.exceptions.custom_exceptions import AuthenticationError, ValidationError
 from src.common.logging import get_logger_with_request_id
+
+# 한국 시간대 (UTC+9) 정의
+KST = timezone(timedelta(hours=9))
 
 
 class AuthService:
@@ -67,15 +70,15 @@ class AuthService:
             raise ValidationError("Auth service layer: JWT 토큰 생성 실패 테스트")
         
         try:
-            now = datetime.utcnow()
+            now = datetime.now(KST)
             expire = now + timedelta(minutes=self.access_token_expire_minutes)
             
             payload = {
                 "sub": user_id,
                 "email": email,
                 "role": role,
-                "exp": expire,
-                "iat": now,
+                "exp": int(expire.timestamp()),
+                "iat": int(now.timestamp()),
                 "jti": str(uuid.uuid4()),
                 "token_type": "access"
             }
@@ -94,15 +97,15 @@ class AuthService:
             raise ValidationError("Auth service layer: JWT 리프레시 토큰 생성 실패 테스트")
         
         try:
-            now = datetime.utcnow()
+            now = datetime.now(KST)
             expire = now + timedelta(days=self.refresh_token_expire_days)
             
             payload = {
                 "sub": user_id,
                 "email": email,
                 "role": role,
-                "exp": expire,
-                "iat": now,
+                "exp": int(expire.timestamp()),
+                "iat": int(now.timestamp()),
                 "jti": str(uuid.uuid4()),
                 "token_type": "refresh"
             }
@@ -188,7 +191,7 @@ class AuthService:
         
         try:
             # TTL 계산 (만료 시간까지 남은 시간)
-            ttl = int((expires_at - datetime.utcnow()).total_seconds())
+            ttl = int((expires_at - datetime.now(KST)).total_seconds())
             if ttl > 0:
                 # Redis에 블랙리스트 등록 (TTL 설정으로 자동 만료)
                 await redis_client.setex(f"blacklist:{jti}", ttl, "1")

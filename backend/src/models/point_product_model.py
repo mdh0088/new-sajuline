@@ -3,7 +3,7 @@
 """
 from typing import Optional
 
-from sqlalchemy import String, Integer, Index
+from sqlalchemy import String, Integer, Index, Boolean
 from sqlalchemy.orm import Mapped, mapped_column
 
 from src.core.database import Base
@@ -29,15 +29,56 @@ class PointProduct(Base):
         comment="상품명"
     )
 
-    # 포인트 수량 (참고용)
-    point_amount: Mapped[Optional[int]] = mapped_column(
+    # 포인트 수량
+    point_amount: Mapped[int] = mapped_column(
         Integer,
-        nullable=True,
+        nullable=False,
         comment="포인트 수량"
+    )
+
+    # 판매 가격(원)
+    price: Mapped[int] = mapped_column(
+        Integer,
+        nullable=False,
+        comment="판매 가격(원)"
+    )
+
+    # 보너스 포인트
+    bonus_point: Mapped[int] = mapped_column(
+        Integer,
+        nullable=False,
+        default=0,
+        comment="보너스 포인트"
+    )
+
+    # 할인율(%)
+    discount_rate: Mapped[int] = mapped_column(
+        Integer,
+        nullable=False,
+        default=0,
+        comment="할인율(%)"
+    )
+
+    # 노출 순서
+    display_order: Mapped[int] = mapped_column(
+        Integer,
+        nullable=False,
+        default=0,
+        comment="노출 순서"
+    )
+
+    # 활성화 여부
+    is_active: Mapped[bool] = mapped_column(
+        Boolean,
+        nullable=False,
+        default=True,
+        comment="활성화 여부"
     )
 
     __table_args__ = (
         Index('idx_point_product_name', 'product_name'),
+        Index('idx_point_product_active', 'is_active'),
+        Index('idx_point_product_display_order', 'display_order'),
         {"comment": "포인트 상품"}
     )
 
