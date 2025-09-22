@@ -253,10 +253,15 @@ class PaymentRepository:
             update_values["pg_tid"] = update_data.pg_tid
         if update_data.paid_at is not None:
             update_values["paid_at"] = update_data.paid_at
-        if update_data.cancel_reason is not None:
-            update_values["cancel_reason"] = update_data.cancel_reason
-        if update_data.refund_amount is not None:
-            update_values["refund_amount"] = update_data.refund_amount
+        # 스키마/모델 기준 컬럼명 반영
+        if update_data.code is not None:
+            update_values["code"] = update_data.code
+        if update_data.result_message is not None:
+            update_values["result_message"] = update_data.result_message
+        if update_data.cancel_amount is not None:
+            update_values["cancel_amount"] = update_data.cancel_amount
+        if update_data.cancelled_at is not None:
+            update_values["cancelled_at"] = update_data.cancelled_at
         
         if not update_values:
             log.warning("No fields to update", payment_id=payment_id)
@@ -320,12 +325,17 @@ class PaymentRepository:
         update_values = {
             "payment_status": "CANCELLED",
             "cancelled_at": datetime.utcnow(),
-            "cancel_reason": cancel_reason,
+            # 모델 컬럼명에 맞춰 사유는 result_message 에 저장
+            "result_message": cancel_reason,
             "updated_at": datetime.utcnow()
         }
         
         if refund_amount is not None:
-            update_values["refund_amount"] = refund_amount
+            # 모델 컬럼명은 cancel_amount (정수형)
+            try:
+                update_values["cancel_amount"] = int(refund_amount)
+            except (TypeError, ValueError):
+                update_values["cancel_amount"] = None
         
         stmt = (
             update(Payment)

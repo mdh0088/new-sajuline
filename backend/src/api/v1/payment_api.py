@@ -159,7 +159,7 @@ async def request_payment(
     return ok(data=PayletterRequestResponse(**data), message="결제 요청 성공")
 
 
-@router.post("/return", response_model=APIResponse[dict])
+@router.post("/point_return", response_model=APIResponse[dict])
 async def payment_return(
     body: PayletterCallbackBody,
     payment_service: PaymentService = Depends(get_payment_service),
@@ -220,7 +220,7 @@ async def payment_return(
     return ok(data={"status": "success", "order_no": order_no}, message="결제 완료 처리되었습니다")
 
 
-@router.get("/cancel", response_model=APIResponse[dict])
+@router.get("/point_cancel", response_model=APIResponse[dict])
 async def payment_cancel(request: Request) -> APIResponse[dict]:
     """
     결제 취소 URL (사용자 브라우저에서 취소 선택 시)
