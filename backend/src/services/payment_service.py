@@ -296,3 +296,14 @@ class PaymentService:
         
         log.info("Payment retrieved successfully", payment_id=payment_id)
         return PaymentResponse.model_validate(payment)
+
+    async def get_recent_pending_by_user_and_amount(
+        self,
+        user_id: str,
+        amount: int,
+    ) -> Optional[PaymentResponse]:
+        """최근 PENDING 결제(사용자/금액 일치) 1건 조회"""
+        payment = await self.payment_repo.get_recent_pending_by_user_and_amount(user_id, amount)
+        if not payment:
+            return None
+        return PaymentResponse.model_validate(payment)
