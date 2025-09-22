@@ -33,10 +33,8 @@ class PaymentRepository:
             payment_type=payment_data.payment_type,
             amount=payment_data.amount,
             point_amount=payment_data.point_amount,
-            bonus_point=payment_data.bonus_point,
             mileage_used=payment_data.mileage_used,
             payment_method=payment_data.payment_method,
-            pg_provider=payment_data.pg_provider,
             cid=payment_data.cid,
             pay_info=payment_data.pay_info,
             tax_amount=payment_data.tax_amount,
@@ -46,6 +44,17 @@ class PaymentRepository:
         self.db.add(payment)
         await self.db.flush()
         await self.db.refresh(payment)
+        return payment
+
+    @logger.catch(reraise=True)
+    async def get_by_order_no(self, order_no: str) -> Optional[Payment]:
+        """주문번호로 조회"""
+        log = get_logger_with_request_id()
+        log.info("Looking up payment by order no", order_no=order_no)
+        stmt = select(Payment).where(Payment.order_no == order_no)
+        result = await self.db.execute(stmt)
+        payment = result.scalar_one_or_none()
+        log.info("Payment lookup by order no completed", order_no=order_no, found=payment is not None)
         return payment
     
     @logger.catch(reraise=True)
@@ -59,6 +68,27 @@ class PaymentRepository:
         payment = result.scalar_one_or_none()
         
         log.info("Payment lookup completed", payment_id=payment_id, found=payment is not None)
+        return payment
+
+    @logger.catch(reraise=True)
+    async def get_recent_pending_by_user_and_amount(self, user_id: str, amount: int) -> Optional[Payment]:
+        """최근 PENDING 결제(사용자/금액 일치) 1건 조회"""
+        log = get_logger_with_request_id()
+        log.info("Looking up recent pending payment by user and amount", user_id=user_id, amount=amount)
+        stmt = (
+            select(Payment)
+            .where(
+                and_(
+                    Payment.user_id == user_id,
+                    Payment.amount == amount,
+                    Payment.payment_status == "PENDING",
+                )
+            )
+            .order_by(Payment.created_at.desc())
+        )
+        result = await self.db.execute(stmt)
+        payment = result.scalar_one_or_none()
+        log.info("Pending payment lookup completed", found=payment is not None)
         return payment
     
     @logger.catch(reraise=True)
