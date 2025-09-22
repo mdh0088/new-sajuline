@@ -179,6 +179,19 @@
         <span class="nav-label">마이</span>
       </NuxtLink>
     </nav>
+
+    <!-- PC 결제 모달 -->
+    <div v-if="showPaymentModal" class="payment-modal-backdrop" @click.self="showPaymentModal = false">
+      <div class="payment-modal">
+        <div class="payment-modal-header">
+          <div class="payment-modal-title">결제창</div>
+          <button class="payment-modal-close" @click="showPaymentModal = false">✕</button>
+        </div>
+        <div class="payment-modal-body">
+          <iframe v-if="paymentPageUrl" class="payment-iframe" :src="paymentPageUrl" title="Payletter Payment"></iframe>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -187,6 +200,8 @@ import { ref, computed } from 'vue'
 import { useHead } from 'nuxt/app'
 import { useNotify } from '~/composables/utils/useNotify'
 import { usePointProductApi, type PointProduct } from '~/composables/api/usePointProduct'
+import { usePaymentApi } from '~/composables/api/usePayment'
+import { useMediaQuery } from '@vueuse/core'
 
 const { notifySuccess, notifyError, notifyInfo } = useNotify()
 
@@ -219,22 +234,20 @@ const paymentMethods = ref([
   {
     icon: '💳',
     name: '신용/체크카드',
-    description: '모든 카드 결제 가능'
-  },
-  {
-    icon: '📱',
-    name: '휴대폰 결제',
-    description: '통신사 소액결제'
+    description: '모든 카드 결제 가능',
+    code: 'allthegate'
   },
   {
     icon: '🏦',
-    name: '계좌이체',
-    description: '실시간 계좌이체'
+    name: '가상계좌',
+    description: '무통장입금',
+    code: 'virtualaccount'
   },
   {
     icon: '💛',
     name: '카카오페이',
-    description: '간편결제'
+    description: '간편결제',
+    code: 'kakaopay'
   }
 ])
 
@@ -275,6 +288,13 @@ const canProceedPayment = computed(() => {
          // && refundAgreed.value // 환불 불가 약관 - 추후 필요시 사용
 })
 
+// 디바이스 구분 (VueUse)
+const isMobile = useMediaQuery('(max-width: 767px)')
+
+// PC 모달 상태
+const showPaymentModal = ref(false)
+const paymentPageUrl = ref('')
+
 // 메서드들
 function selectItem(index: number) { selectedIndex.value = index }
 
@@ -302,16 +322,84 @@ function processPayment() {
 
   notifyInfo(`${paymentMethod.name}로 ${finalAmount.value.toLocaleString()}원 결제를 진행합니다.`)
 
-  // TODO: 실제 결제 API 연동
-  // 임시로 성공 메시지만 표시
-  setTimeout(() => {
-    notifySuccess('🎉 결제가 완료되었습니다!')
-    // 결제 완료 후 처리 로직
-  }, 2000)
+  const { requestPayment } = usePaymentApi()
+  // 백엔드에는 pgcode를 전송
+  requestPayment(product.product_id, (paymentMethod as any).code)
+    .then((res) => {
+      if (isMobile.value) {
+        if (res.mobile_url) {
+          window.location.href = res.mobile_url
+        } else if (res.online_url) {
+          window.location.href = res.online_url
+        } else {
+          notifyError('결제 페이지 URL을 찾을 수 없습니다')
+        }
+        return
+      }
+
+      // PC: 모달(iframe)로 online_url 표시
+      if (res.online_url) {
+        paymentPageUrl.value = res.online_url
+        showPaymentModal.value = true
+      } else if (res.mobile_url) {
+        // online_url이 없으면 mobile_url로 폴백
+        paymentPageUrl.value = res.mobile_url
+        showPaymentModal.value = true
+      } else {
+        notifyError('결제 페이지 URL을 찾을 수 없습니다')
+      }
+    })
+    .catch((err: any) => {
+      notifyError(err?.message || '결제 요청 중 오류가 발생했습니다')
+    })
 }
 </script>
 
 <style scoped>
 /* point.css 파일을 import하여 사용 */
 @import '~/assets/css/point.css';
+
+/* 결제 모달 */
+.payment-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+.payment-modal {
+  width: 90vw;
+  max-width: 960px;
+  height: 85vh;
+  background: #0f172a;
+  border-radius: 12px;
+  border: 1px solid rgba(255,255,255,0.08);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+.payment-modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  border-bottom: 1px solid rgba(255,255,255,0.1);
+}
+.payment-modal-title { font-weight: 600; }
+.payment-modal-close {
+  background: transparent;
+  border: none;
+  color: #fff;
+  font-size: 20px;
+  cursor: pointer;
+}
+.payment-modal-body { flex: 1; }
+.payment-iframe {
+  width: 100%;
+  height: 100%;
+  border: 0;
+  background: #fff;
+}
 </style>
