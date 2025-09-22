@@ -19,5 +19,9 @@ class PointProductService:
         items = await self.repo.list_public_products()
         return [PointProductResponse.model_validate(x) for x in items]
 
+    async def get_product(self, product_id: int) -> PointProductResponse | None:
+        item = await self.repo.get_by_id(product_id)
+        return PointProductResponse.model_validate(item) if item else None
+
 
 
