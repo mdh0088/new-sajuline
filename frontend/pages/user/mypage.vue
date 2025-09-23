@@ -98,7 +98,7 @@
               <NuxtLink to="/user/reviews" class="menu-item"><div class="menu-left"><div class="menu-icon">📝</div><div><div class="menu-title">상담 후기</div><div class="menu-desc">내가 작성한 후기 보기</div></div></div><div class="menu-right">›</div></NuxtLink>
             </div>
           </div>
-
+          <!-- 혜택 영역 숨김처리
           <div>
             <h4 class="text-sm text-white/60 mb-2 px-1">혜택</h4>
             <div class="rounded-2xl overflow-hidden border border-white/10">
@@ -106,13 +106,15 @@
               <div class="menu-item"><div class="menu-left"><div class="menu-icon">🎯</div><div><div class="menu-title">출석 체크</div><div class="menu-desc">매일 포인트 받기</div></div></div><div class="menu-right">›</div></div>
               <div class="menu-item"><div class="menu-left"><div class="menu-icon">🤝</div><div><div class="menu-title">친구 초대</div><div class="menu-desc">초대하고 5,000P 받기</div></div></div><div class="menu-right">›</div></div>
             </div>
-          </div>
+          </div> -->
 
           <div>
             <h4 class="text-sm text-white/60 mb-2 px-1">기타</h4>
             <div class="rounded-2xl overflow-hidden border border-white/10">
               <div class="menu-item" @click="goNotice"><div class="menu-left"><div class="menu-icon">📢</div><div><div class="menu-title">공지사항</div><div class="menu-desc">서비스 소식 확인</div></div></div><div class="menu-right">NEW</div></div>
+              <!-- 알림 설정 메뉴 숨김처리
               <div class="menu-item"><div class="menu-left"><div class="menu-icon">🔔</div><div><div class="menu-title">알림 설정</div><div class="menu-desc">푸시 알림 관리</div></div></div><div class="menu-right">›</div></div>
+               -->
               <div class="menu-item" @click="goCs"><div class="menu-left"><div class="menu-icon">❓</div><div><div class="menu-title">고객센터</div><div class="menu-desc">1:1 문의 및 FAQ</div></div></div><div class="menu-right">›</div></div>
               <div class="menu-item" @click="goTerms"><div class="menu-left"><div class="menu-icon">📜</div><div><div class="menu-title">이용약관</div><div class="menu-desc">서비스 이용 약관</div></div></div><div class="menu-right">›</div></div>
               <div class="menu-item" @click="goPrivacy"><div class="menu-left"><div class="menu-icon">🔒</div><div><div class="menu-title">개인정보처리방침</div><div class="menu-desc">개인정보 보호 정책</div></div></div><div class="menu-right">›</div></div>
@@ -196,7 +198,7 @@ const gradeRemaining = computed(() => {
 })
 
 const router = useRouter()
-const goNotice = () => router.push('/notice')
+const goNotice = () => router.push('/notices')
 const goCs = () => router.push('/cs')
 const goTerms = () => router.push('/terms')
 const goPrivacy = () => router.push('/privacy')
