@@ -40,6 +40,8 @@ export interface INoticeDetail extends INotice {
   // 백엔드 필드 매핑 (상세 API)
   before_notice_id?: number | null;
   after_notice_id?: number | null;
+  before_notice_title?: string | null;
+  after_notice_title?: string | null;
 }
 
 // 공지사항 목록 페이지네이션
