@@ -22,7 +22,7 @@
 }
 
 .auth-main {
-  padding-top: 4rem;
+  padding-top: 7rem;
   padding-bottom: 2rem;
   padding-left: 1.25rem;
   padding-right: 1.25rem;
@@ -155,6 +155,7 @@
   --el-input-text-color: rgba(255, 255, 255, 0.9);
   --el-input-placeholder-color: rgba(255, 255, 255, 0.4);
   --el-input-hover-border-color: rgba(255, 255, 255, 0.2);
+  --el-input-height: 3.5rem;
 }
 
 .auth-input-wrapper.error {
@@ -166,9 +167,18 @@
   background: var(--el-input-bg-color) !important;
   border: 1px solid var(--el-input-border-color) !important;
   border-radius: 0.75rem !important;
-  padding: 0.75rem 1rem !important;
+  padding: 1.5rem 1rem !important;
+  min-height: var(--el-input-height, 3.5rem) !important;
+  height: var(--el-input-height, 3.5rem) !important;
   box-shadow: none !important;
   transition: all 0.3s ease !important;
+}
+
+/* 추가적인 강제 스타일링 */
+.auth-input-wrapper .el-input__wrapper {
+  padding: 1.5rem 1rem !important;
+  min-height: 3.5rem !important;
+  height: 3.5rem !important;
 }
 
 .auth-input-wrapper :deep(.el-input__wrapper:hover) {
@@ -229,6 +239,9 @@
   color: white !important;
   font-weight: 700 !important;
   border-radius: 0.75rem !important;
+  padding: 1rem 1.5rem !important;
+  min-height: 3.5rem !important;
+  height: 3.5rem !important;
   box-shadow: 0 10px 15px -3px rgba(147, 51, 234, 0.25) !important;
   transition: all 0.3s ease !important;
 }
