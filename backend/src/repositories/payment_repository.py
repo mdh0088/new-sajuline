@@ -33,10 +33,8 @@ class PaymentRepository:
             payment_type=payment_data.payment_type,
             amount=payment_data.amount,
             point_amount=payment_data.point_amount,
-            bonus_point=payment_data.bonus_point,
             mileage_used=payment_data.mileage_used,
             payment_method=payment_data.payment_method,
-            pg_provider=payment_data.pg_provider,
             cid=payment_data.cid,
             pay_info=payment_data.pay_info,
             tax_amount=payment_data.tax_amount,
@@ -46,6 +44,17 @@ class PaymentRepository:
         self.db.add(payment)
         await self.db.flush()
         await self.db.refresh(payment)
+        return payment
+
+    @logger.catch(reraise=True)
+    async def get_by_order_no(self, order_no: str) -> Optional[Payment]:
+        """주문번호로 조회"""
+        log = get_logger_with_request_id()
+        log.info("Looking up payment by order no", order_no=order_no)
+        stmt = select(Payment).where(Payment.order_no == order_no)
+        result = await self.db.execute(stmt)
+        payment = result.scalar_one_or_none()
+        log.info("Payment lookup by order no completed", order_no=order_no, found=payment is not None)
         return payment
     
     @logger.catch(reraise=True)
@@ -59,6 +68,27 @@ class PaymentRepository:
         payment = result.scalar_one_or_none()
         
         log.info("Payment lookup completed", payment_id=payment_id, found=payment is not None)
+        return payment
+
+    @logger.catch(reraise=True)
+    async def get_recent_pending_by_user_and_amount(self, user_id: str, amount: int) -> Optional[Payment]:
+        """최근 PENDING 결제(사용자/금액 일치) 1건 조회"""
+        log = get_logger_with_request_id()
+        log.info("Looking up recent pending payment by user and amount", user_id=user_id, amount=amount)
+        stmt = (
+            select(Payment)
+            .where(
+                and_(
+                    Payment.user_id == user_id,
+                    Payment.amount == amount,
+                    Payment.payment_status == "PENDING",
+                )
+            )
+            .order_by(Payment.created_at.desc())
+        )
+        result = await self.db.execute(stmt)
+        payment = result.scalar_one_or_none()
+        log.info("Pending payment lookup completed", found=payment is not None)
         return payment
     
     @logger.catch(reraise=True)
@@ -223,10 +253,15 @@ class PaymentRepository:
             update_values["pg_tid"] = update_data.pg_tid
         if update_data.paid_at is not None:
             update_values["paid_at"] = update_data.paid_at
-        if update_data.cancel_reason is not None:
-            update_values["cancel_reason"] = update_data.cancel_reason
-        if update_data.refund_amount is not None:
-            update_values["refund_amount"] = update_data.refund_amount
+        # 스키마/모델 기준 컬럼명 반영
+        if update_data.code is not None:
+            update_values["code"] = update_data.code
+        if update_data.result_message is not None:
+            update_values["result_message"] = update_data.result_message
+        if update_data.cancel_amount is not None:
+            update_values["cancel_amount"] = update_data.cancel_amount
+        if update_data.cancelled_at is not None:
+            update_values["cancelled_at"] = update_data.cancelled_at
         
         if not update_values:
             log.warning("No fields to update", payment_id=payment_id)
@@ -290,12 +325,17 @@ class PaymentRepository:
         update_values = {
             "payment_status": "CANCELLED",
             "cancelled_at": datetime.utcnow(),
-            "cancel_reason": cancel_reason,
+            # 모델 컬럼명에 맞춰 사유는 result_message 에 저장
+            "result_message": cancel_reason,
             "updated_at": datetime.utcnow()
         }
         
         if refund_amount is not None:
-            update_values["refund_amount"] = refund_amount
+            # 모델 컬럼명은 cancel_amount (정수형)
+            try:
+                update_values["cancel_amount"] = int(refund_amount)
+            except (TypeError, ValueError):
+                update_values["cancel_amount"] = None
         
         stmt = (
             update(Payment)

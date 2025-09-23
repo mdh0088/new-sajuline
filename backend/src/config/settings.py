@@ -71,9 +71,6 @@ class Settings(BaseSettings):
     naver_client_id: str = Field(..., env="NAVER_CLIENT_ID")
     naver_client_secret: str = Field(..., env="NAVER_CLIENT_SECRET")
     
-    # 결제 게이트웨이 설정
-    payment_gateway_url: Optional[str] = Field(None, env="PAYMENT_GATEWAY_URL")
-    payment_gateway_key: Optional[str] = Field(None, env="PAYMENT_GATEWAY_KEY")
     
     # 모니터링 설정
     sentry_dsn: str = Field(..., env="SENTRY_DSN")
@@ -106,6 +103,18 @@ class Settings(BaseSettings):
     log_to_file: bool = Field(..., env="LOG_TO_FILE")
     service_name: str = Field(..., env="SERVICE_NAME")
     service_version: str = Field(..., env="SERVICE_VERSION")
+
+
+    # payment 설정 (옵셔널로 완화: 서버 부팅시 ValidationError 방지, 사용시 검사)
+    payment_gateway_url: Optional[str] = Field(None, env="PAYMENT_GATEWAY_URL")
+    payment_gateway_key: Optional[str] = Field(None, env="PAYMENT_GATEWAY_KEY")
+    payment_client_id: Optional[str] = Field(None, env="PAYMENT_CLIENT_ID")
+    payment_naver_key: Optional[str] = Field(None, env="PAYMENT_NAVER_KEY")
+    payment_naver_id: Optional[str] = Field(None, env="PAYMENT_NAVER_ID")
+    payment_return_url: Optional[str] = Field(None, env="PAYMENT_RETURN_URL")
+    payment_cancel_url: Optional[str] = Field(None, env="PAYMENT_CANCEL_URL")
+    payment_callback_url: Optional[str] = Field(None, env="PAYMENT_CALLBACK_URL")
+    payment_virtual_callback_url: Optional[str] = Field(None, env="PAYMENT_VIRTUAL_CALLBACK_URL")
     
     class Config:
         # 환경에 따라 자동으로 env 파일 선택

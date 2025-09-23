@@ -48,6 +48,13 @@ class UserService:
         self.event_service = event_service
         self.tm60_users_service = tm60_users_service
         # Note: 아래 두 레포지토리는 포인트 내역 API에서 필요하므로 DI에서 주입받는 대신 메서드 인자로 받을 수 있도록 설계할 수도 있음
+
+    async def get_user_by_id(self, user_id: str) -> UserResponse:
+        """사용자 단건 조회 (닉네임/이메일 등 기본 정보 용도)"""
+        user = await self.user_repo.get_by_id(user_id)
+        if not user:
+            raise NotFoundError("사용자를 찾을 수 없습니다.")
+        return UserResponse.model_validate(user)
     
     async def signup(self, signup_data: UserSignup) -> UserResponse:
         """
