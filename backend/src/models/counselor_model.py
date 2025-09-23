@@ -160,6 +160,13 @@ class Counselor(Base):
         comment="후분금액"
     )
     
+    is_best: Mapped[Optional[bool]] = mapped_column(
+        Boolean, 
+        nullable=True, 
+        default=True, 
+        comment="best 여부"
+    )
+
     # 상태 플래그들 (tinyint(1) -> bool)
     is_new: Mapped[Optional[bool]] = mapped_column(
         Boolean, 
