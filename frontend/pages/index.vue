@@ -9,12 +9,7 @@
             <span>💰</span>
             <span>{{ userPoints }}P</span>
           </div>
-          <button class="icon-btn" @click="$router.push('/search')">
-            🔍
-          </button>
-          <button class="icon-btn" @click="$router.push('/login')">
-            👤
-          </button>
+
         </div>
       </div>
     </header>
@@ -190,6 +185,10 @@
         <span class="nav-icon">🎁</span>
         <span class="nav-label">이벤트</span>
       </NuxtLink>
+      <NuxtLink to="/search" class="nav-item">
+        <span class="nav-icon">🔍</span>
+        <span class="nav-label">검색</span>
+      </NuxtLink>
       <NuxtLink to="/user/favorite" class="nav-item">
         <span class="nav-icon">⭐</span>
         <span class="nav-label">즐겨찾기</span>
@@ -200,8 +199,8 @@
       </NuxtLink>
     </nav>
 
-    <!-- 플로팅 버튼 -->
-    <button class="floating-button" @click="openChat">💬</button>
+    <!-- 플로팅 버튼
+    <button class="floating-button" @click="openChat">💬</button> -->
   </div>
 </template>
 

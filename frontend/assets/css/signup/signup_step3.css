@@ -24,12 +24,19 @@
 .date-picker-container,
 .time-input-container {
   @apply w-full;
+  width: 100% !important;
+  display: block !important;
+  box-sizing: border-box !important;
 }
 
 /* Element Plus 컴포넌트 기본 스타일 */
 .birth-date-picker,
 .birth-time-picker {
   @apply w-full;
+  width: 100% !important;
+  display: block !important;
+  max-width: none !important;
+  box-sizing: border-box !important;
 }
 
 /* Element Plus DatePicker/TimePicker 커스텀 스타일 - input-field와 완전 일치 */
@@ -47,6 +54,8 @@
 
 .custom-date-input :deep(.el-input__wrapper) {
   width: 100% !important;
+  max-width: none !important;
+  min-width: 100% !important;
   height: auto !important;
   background: var(--el-input-bg-color) !important;
   border: 1px solid var(--el-input-border-color) !important;
@@ -58,6 +67,7 @@
   transition: all 0.3s ease !important;
   display: flex !important;
   align-items: center !important;
+  flex: 1 !important;
   /* 기존 input-field와 정확히 동일한 최소 높이 */
   min-height: calc(1em * 1.5 + 32px) !important; /* font-size * line-height + vertical padding */
 }

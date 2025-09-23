@@ -13,7 +13,7 @@ from src.schemas.grade_schema import NextGradeInfo
 class UserBase(BaseModel):
     """사용자 기본 스키마"""
     email: EmailStr = Field(..., description="이메일")
-    nickname: str = Field(..., min_length=2, max_length=50, description="닉네임")
+    nickname: str = Field(..., min_length=1, max_length=50, description="닉네임")
     phone: str = Field(..., min_length=1, max_length=15, description="전화번호")
     join_type: JoinType = Field(default=JoinType.COMMON, description="가입 유형")
     social_provider: Optional[str] = Field(None, description="소셜 제공자")

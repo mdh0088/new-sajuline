@@ -4,7 +4,13 @@
     <AppHeader title="공지사항" :show-back="true" />
 
     <!-- 메인 콘텐츠 -->
-    <main class="notice-list-container">
+    <main class="main-content">
+      <!-- 페이지 제목 -->
+      <div class="page-header">
+        <h1 class="page-title">공지사항</h1>
+        <p class="page-desc">서비스 관련 중요한 소식을 확인하세요</p>
+      </div>
+
       <!-- 로딩 상태 -->
       <div v-if="isLoading" class="notice-loading">
         <div class="loading-spinner"></div>
@@ -101,7 +107,6 @@
 import { ref, computed, onMounted, watch } from 'vue';
 import type { INoticeListItem, NoticeCategory } from '~/types/notice';
 import { useNoticeApi } from '~/composables/api/useNotice';
-import '~/assets/css/notice/list.css';
 
 // 상태 관리
 const notices = ref<INoticeListItem[]>([]);
@@ -256,6 +261,185 @@ useHead({
   color: #ffffff;
 }
 
+/* 메인 콘텐츠 */
+.main-content {
+    margin-top: 60px;
+    padding: 20px;
+    padding-bottom: 80px;
+    max-width: 100%;
+}
+
+/* 공지사항 리스트 */
+.notice-list {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.notice-item {
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 16px;
+    padding: 20px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    text-decoration: none;
+    color: inherit;
+}
+
+.notice-item:hover {
+    transform: translateY(-2px);
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.notice-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+}
+
+.notice-title {
+    font-size: 16px;
+    font-weight: 600;
+    color: #ffffff;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    flex: 1;
+    margin-right: 12px;
+}
+
+.notice-date {
+    font-size: 13px;
+    color: rgba(255, 255, 255, 0.5);
+}
+
+.notice-content {
+    font-size: 14px;
+    color: rgba(255, 255, 255, 0.7);
+    line-height: 1.6;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.notice-badge {
+    display: inline-block;
+    padding: 4px 8px;
+    background: rgba(147, 51, 234, 0.2);
+    color: #B794F6;
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: 600;
+    margin-right: 8px;
+}
+
+/* 공지사항 상세 */
+.notice-detail {
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 16px;
+    padding: 24px;
+    margin-bottom: 20px;
+}
+
+.notice-detail-header {
+    margin-bottom: 20px;
+}
+
+.notice-detail-title {
+    font-size: 20px;
+    font-weight: 700;
+    margin-bottom: 8px;
+}
+
+.notice-detail-meta {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    color: rgba(255, 255, 255, 0.5);
+    font-size: 14px;
+}
+
+.notice-detail-content {
+    font-size: 15px;
+    line-height: 1.8;
+    color: rgba(255, 255, 255, 0.8);
+}
+
+.notice-detail-content p {
+    margin-bottom: 16px;
+}
+
+.notice-detail-content strong {
+    color: #B794F6;
+    font-weight: 600;
+}
+
+.notice-detail-content ul {
+    list-style: none;
+    margin: 16px 0;
+    padding-left: 20px;
+}
+
+.notice-detail-content li {
+    position: relative;
+    margin-bottom: 8px;
+    padding-left: 16px;
+}
+
+.notice-detail-content li::before {
+    content: '•';
+    position: absolute;
+    left: 0;
+    color: #B794F6;
+}
+
+/* 페이지네이션 */
+.pagination {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 8px;
+    margin-top: 24px;
+}
+
+.page-btn {
+    min-width: 36px;
+    height: 36px;
+    padding: 0 12px;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    color: #fff;
+    transition: all 0.3s ease;
+    cursor: pointer;
+}
+
+.page-btn:hover {
+    background: rgba(147, 51, 234, 0.1);
+    transform: translateY(-1px);
+}
+
+.page-btn.active {
+    background: rgba(147, 51, 234, 0.2);
+    color: #B794F6;
+    border-color: rgba(147, 51, 234, 0.3);
+}
+
+.page-btn.disabled {
+    background: rgba(255, 255, 255, 0.05);
+    color: rgba(255, 255, 255, 0.3);
+    cursor: not-allowed;
+}
+
 .page-dots {
   display: inline-flex;
   align-items: center;
@@ -265,5 +449,73 @@ useHead({
   color: rgba(255, 255, 255, 0.3);
   font-size: 14px;
   user-select: none;
+}
+
+/* 로딩 및 빈 상태 스타일 */
+.notice-loading, .notice-empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 40px 20px;
+    text-align: center;
+}
+
+.loading-spinner {
+    width: 32px;
+    height: 32px;
+    border: 3px solid rgba(255, 255, 255, 0.1);
+    border-top: 3px solid #B794F6;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+.notice-empty-icon {
+    font-size: 48px;
+    margin-bottom: 16px;
+}
+
+.notice-empty-title {
+    font-size: 18px;
+    font-weight: 600;
+    margin-bottom: 8px;
+    color: #ffffff;
+}
+
+.notice-empty-desc {
+    font-size: 14px;
+    color: rgba(255, 255, 255, 0.6);
+    line-height: 1.5;
+}
+
+.notice-title-wrapper {
+    display: flex;
+    align-items: center;
+    flex: 1;
+    min-width: 0;
+    gap: 8px;
+}
+
+/* 페이지 헤더 스타일 */
+.page-header {
+    margin-bottom: 24px;
+}
+
+.page-title {
+    font-size: 24px;
+    font-weight: 700;
+    color: #ffffff;
+    margin-bottom: 8px;
+}
+
+.page-desc {
+    font-size: 14px;
+    color: rgba(255, 255, 255, 0.6);
+    line-height: 1.4;
 }
 </style>
