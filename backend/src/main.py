@@ -24,6 +24,7 @@ from src.api.v1.notice_api import router as notice_router
 from src.api.v1.grade_api import router as grade_router
 from src.api.v1.event_api import router as event_router
 from src.api.v1.point_product_api import router as point_product_router
+from src.api.v1.banner_api import router as banner_router
 from src.api.v1.payment_api import router as payment_router
 from src.common.response import fail
 from src.exceptions.custom_exceptions import BaseAppException
@@ -64,6 +65,10 @@ app = FastAPI(
         {
             "name": "grades",
             "description": "멤버십 등급 - 공개 조회",
+        },
+        {
+            "name": "banners",
+            "description": "배너 - 공개 조회 및 클릭 카운트",
         },
         {
             "name": "health",
@@ -201,6 +206,7 @@ app.include_router(grade_router, prefix="/api/v1")
 app.include_router(event_router, prefix="/api/v1")
 app.include_router(point_product_router, prefix="/api/v1")
 app.include_router(payment_router, prefix="/api/v1")
+app.include_router(banner_router, prefix="/api/v1")
 
 
 class HealthResponse(BaseModel):
