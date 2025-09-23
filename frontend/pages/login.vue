@@ -65,24 +65,28 @@
 
         <!-- 소셜 로그인 컴포넌트 -->
         <div class="mb-8">
-          <SocialLogin 
-            @kakao-login="handleKakaoLogin"
-            @naver-login="handleNaverLogin" 
-            @google-login="handleGoogleLogin"
+          <LoginForm
+            @success="handleLoginSuccess"
+            @forgot-password="handleForgotPassword"
           />
         </div>
 
         <!-- 구분선 -->
         <div class="flex items-center gap-4 my-8">
           <div class="flex-1 h-px bg-white/10"></div>
-          <span class="text-white/50 text-sm">또는 사용자 ID로 로그인</span>
+          <span class="text-white/50 text-sm">또는 간편 로그인</span>
           <div class="flex-1 h-px bg-white/10"></div>
         </div>
 
         <!-- 로그인 폼 컴포넌트 -->
-        <LoginForm 
-          @success="handleLoginSuccess"
-          @forgot-password="handleForgotPassword"
+        <!-- <SocialLogin
+          @kakao-login="handleKakaoLogin"
+          @naver-login="handleNaverLogin"
+          @google-login="handleGoogleLogin"
+        /> -->
+        <SocialLogin
+          @kakao-login="handleKakaoLogin"
+          @naver-login="handleNaverLogin"
         />
 
         <!-- 회원가입 링크 -->
