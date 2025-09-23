@@ -34,5 +34,14 @@ class PointProductRepository:
         log.info("Public point products fetched", count=len(items))
         return items
 
+    @logger.catch(reraise=True)
+    async def get_by_id(self, product_id: int) -> PointProduct | None:
+        """상품 ID로 조회"""
+        log = get_logger_with_request_id()
+        log.info("Get point product by id", product_id=product_id)
+        stmt = select(PointProduct).where(PointProduct.product_id == product_id)
+        result = await self.db.execute(stmt)
+        return result.scalar_one_or_none()
+
 
 

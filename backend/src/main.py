@@ -24,6 +24,7 @@ from src.api.v1.notice_api import router as notice_router
 from src.api.v1.grade_api import router as grade_router
 from src.api.v1.event_api import router as event_router
 from src.api.v1.point_product_api import router as point_product_router
+from src.api.v1.payment_api import router as payment_router
 from src.common.response import fail
 from src.exceptions.custom_exceptions import BaseAppException
 from src.common.logging.config import setup_logging
@@ -199,6 +200,7 @@ app.include_router(notice_router, prefix="/api/v1")
 app.include_router(grade_router, prefix="/api/v1")
 app.include_router(event_router, prefix="/api/v1")
 app.include_router(point_product_router, prefix="/api/v1")
+app.include_router(payment_router, prefix="/api/v1")
 
 
 class HealthResponse(BaseModel):
