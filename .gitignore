@@ -84,3 +84,5 @@ docker-compose.override.yml
 # YoYo AI version control directory
 .yoyo/
 sajuline_dump_250918.sql
+sajuline_dump_250918.sql
+*.sql
