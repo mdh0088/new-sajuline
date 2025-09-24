@@ -100,6 +100,7 @@ CREATE TABLE t_counselor (
     consultation_time_total INT(11) DEFAULT 0 COMMENT '총 상담 시간(분)',
     after_amount int(11) DEFAULT 1000 COMMENT '선불 금액',
     before_amount varchar(100) NOT NULL DEFAULT '1000' COMMENT '후분금액',
+    is_best tinyint(1) DEFAULT 0 COMMENT '베스트 여부',
     is_new TINYINT(1) DEFAULT 1 COMMENT '신규 상담사 여부',
     is_out TINYINT(1) NOT NULL DEFAULT 0 COMMENT '탈퇴 여부',
     is_show TINYINT(1) NOT NULL DEFAULT 0 COMMENT '노출여부',
