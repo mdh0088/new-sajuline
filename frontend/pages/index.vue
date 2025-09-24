@@ -77,37 +77,11 @@
 
         <!-- 상담사 카드들 -->
         <div class="counselor-grid-container">
-          <div
-            v-for="counselor in counselors"
-            :key="counselor.id"
-            class="counselor-card-compact"
-            @click="$router.push(`/counselor/${counselor.id}`)"
-          >
-            <div :class="['counselor-avatar-small', { online: counselor.isOnline }]">
-              <img v-if="counselor.image" :src="counselor.image" :alt="counselor.name" />
-              <span v-else>{{ counselor.avatar }}</span>
-            </div>
-            <div class="counselor-info-compact">
-              <div class="counselor-main-info">
-                <div class="counselor-left-info">
-                  <div class="counselor-name-small">{{ counselor.name }}</div>
-                  <div class="counselor-specialty-small">{{ counselor.specialty }}</div>
-                  <div class="counselor-tags-small">
-                    <span v-for="tag in counselor.tags.slice(0, 3)" :key="tag" class="tag-small">{{ tag }}</span>
-                  </div>
-                </div>
-                <div class="counselor-right-info">
-                  <div class="counselor-price-small">{{ counselor.price.toLocaleString() }}원/분</div>
-                  <div class="counselor-rating-small">
-                    <span class="rating-stars-small">⭐⭐⭐⭐⭐</span>
-                    <span class="rating-score">{{ counselor.rating }}</span>
-                  </div>
-                  <div class="counselor-experience">{{ counselor.experience }} · 리뷰 {{ counselor.reviewCount.toLocaleString() }}</div>
-                </div>
-              </div>
-              <div class="counselor-desc-small">{{ counselor.description }}</div>
-            </div>
-          </div>
+          <CounselorCardCompact
+            v-for="c in items"
+            :key="c.counselor_code"
+            :counselor="c"
+          />
         </div>
       </section>
     </main>
@@ -147,10 +121,13 @@ definePageMeta({
 })
 
 <script setup lang="ts">
-import { ref, onMounted, computed } from 'vue'
+import { ref, onMounted, computed, watch } from 'vue'
 import { useHead, useRoute } from 'nuxt/app'
 import { useNotify } from '~/composables/utils/useNotify'
 import MainBannerCarousel from '~/components/home/MainBannerCarousel.vue'
+import CounselorCardCompact from '~/components/counselor/CounselorCardCompact.vue'
+import { useCounselorQueries } from '~/composables/api/useCounselorQueries'
+import type { CounselorSearchParams, CounselorSearchItem } from '~/types/counselor/search'
 
 const { notifySuccess, notifyInfo } = useNotify()
 
@@ -190,7 +167,15 @@ const categoryFilters = ref(['전체', '🔥 HOT', '⭐ 베스트', '🆕 신규
 const activeStatusFilter = ref(0)
 const activeCategoryFilter = ref(0)
 
-// 상담사 목록
+// 상담사 목록 (API 연동)
+const items = ref<CounselorSearchItem[]>([])
+const params = ref<CounselorSearchParams>({ page: 1, limit: 10, cs_status: null, is_best: null, is_new: null, cs_specialties: null, cs_keywords: null, search_name: null })
+const totalPages = ref(1)
+const isLoading = ref(false)
+const { usePublicSearch, searchPublic } = useCounselorQueries()
+const { data: pageData } = usePublicSearch(params, { enabled: false })
+
+// 기존 목업 데이터 제거
 const counselors = ref([
   {
     id: 1,
@@ -329,10 +314,16 @@ onMounted(() => {
 // 메서드들
 function setActiveStatusFilter(index: number) {
   activeStatusFilter.value = index
+  const map = [null, '2', '3', '1'] as (string | null)[]
+  params.value.cs_status = map[index] || null
+  resetAndFetch()
 }
 
 function setActiveCategoryFilter(index: number) {
   activeCategoryFilter.value = index
+  params.value.is_best = index === 2 ? true : null
+  params.value.is_new = index === 3 ? true : null
+  resetAndFetch()
 }
 
 function startFreeTrial() {
@@ -349,6 +340,42 @@ function openChat() {
   notifyInfo('💬 채팅 상담을 시작합니다!')
   // TODO: 채팅 열기 로직
 }
+
+async function resetAndFetch() {
+  items.value = []
+  params.value.page = 1
+  await fetchNext()
+}
+
+async function fetchNext() {
+  if (isLoading.value) return
+  isLoading.value = true
+  try {
+    const res = await searchPublic(params.value)
+    totalPages.value = Math.max(1, res.total_pages || 1)
+    if ((params.value.page || 1) === 1) items.value = res.items
+    else items.value = [...items.value, ...res.items]
+  } finally {
+    isLoading.value = false
+  }
+}
+
+onMounted(async () => {
+  await resetAndFetch()
+  const sentinel = document.createElement('div')
+  sentinel.style.height = '1px'
+  sentinel.setAttribute('data-sentinel', 'counselor')
+  document.body.appendChild(sentinel)
+  const io = new IntersectionObserver(async (entries) => {
+    const entry = entries[0]
+    if (!entry || !entry.isIntersecting) return
+    if (isLoading.value) return
+    if ((params.value.page || 1) >= totalPages.value) return
+    params.value.page = (params.value.page || 1) + 1
+    await fetchNext()
+  })
+  io.observe(sentinel)
+})
 </script>
 
 <style scoped>

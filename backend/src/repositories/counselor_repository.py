@@ -4,7 +4,7 @@
 """
 from typing import Optional, List, Dict
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, update
+from sqlalchemy import select, update, and_, or_, func
 
 from src.models.counselor_model import Counselor
 from src.common.logging import logger, get_logger_with_request_id
@@ -129,3 +129,74 @@ class CounselorRepository:
         result = await self.db.execute(stmt)
         counselors: List[Counselor] = list(result.scalars().all())
         return {c.counselor_code: c for c in counselors}
+
+    @logger.catch(reraise=True)
+    async def find_codes_by_filters(
+        self,
+        *,
+        is_best: Optional[bool] = None,
+        is_new: Optional[bool] = None,
+        cs_specialties: Optional[List[str]] = None,
+        cs_keywords: Optional[List[str]] = None,
+        search_name: Optional[str] = None,
+    ) -> List[Dict[str, str]]:
+        """
+        공개 검색용: t_counselor에서 기본 노출 조건과 필터를 적용하여
+        counselor_code / counselor_id 목록을 반환합니다.
+
+        - is_out = false AND is_show = true
+        - is_best, is_new (옵션)
+        - specialty_types: 문자열(JSON) LIKE 매칭 (예: %"TARO"%)
+        - keywords: 쉼표 구분 문자열 LIKE 매칭
+        - search_name: nickname LIKE
+        """
+        log = get_logger_with_request_id()
+        log.info(
+            "Searching counselor codes by filters",
+            is_best=is_best,
+            is_new=is_new,
+            cs_specialties=cs_specialties,
+            cs_keywords=cs_keywords,
+            search_name=search_name,
+        )
+
+        stmt = select(Counselor.counselor_code, Counselor.counselor_id).where(
+            and_(
+                Counselor.is_out.is_(False),
+                Counselor.is_show.is_(True),
+            )
+        )
+
+        if is_best is not None:
+            stmt = stmt.where(Counselor.is_best.is_(is_best))
+        if is_new is not None:
+            stmt = stmt.where(Counselor.is_new.is_(is_new))
+
+        # specialty_types LIKE match for each entry
+        if cs_specialties:
+            specs = [s for s in cs_specialties if s]
+            if specs:
+                like_clauses = []
+                for sp in specs:
+                    # JSON 문자열 내 값 매칭: "TARO"
+                    like_clauses.append(Counselor.specialty_types.like(f'%"{sp}"%'))
+                # 다중 전문분야는 OR 매칭 (선택한 것 중 하나라도 포함)
+                stmt = stmt.where(or_(*like_clauses))
+
+        # keywords LIKE match: any of provided keywords
+        if cs_keywords:
+            kws = [k for k in cs_keywords if k]
+            if kws:
+                kw_clauses = [Counselor.keywords.like(f"%{k}%") for k in kws]
+                stmt = stmt.where(or_(*kw_clauses))
+
+        if search_name:
+            stmt = stmt.where(Counselor.nickname.like(f"%{search_name}%"))
+
+        result = await self.db.execute(stmt)
+        rows = list(result.all())
+        items: List[Dict[str, str]] = [
+            {"counselor_code": r[0], "counselor_id": r[1]} for r in rows
+        ]
+        log.info("Counselor code search completed", count=len(items))
+        return items

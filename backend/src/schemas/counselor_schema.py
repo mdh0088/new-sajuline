@@ -77,6 +77,31 @@ class CounselorResponse(CounselorBase):
         return v
 
 
+class CounselorSearchItem(BaseModel):
+    """공개 목록 검색 응답 아이템"""
+    counselor_id: str
+    counselor_code: str
+    nickname: str
+    profile_image_url: Optional[str] = None
+    introduction_short: Optional[str] = None
+    specialty_types: Optional[List[str]] = None
+    keywords: Optional[str] = None
+    after_amount: Optional[int] = None
+    rating_avg: Optional[Decimal] = None
+    review_count: int
+    m_state: Optional[str] = Field(None, description="TM60 멤버 상태(1 대기중, 2 상담중, 3 부재중 등)")
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class CounselorSearchResponse(BaseModel):
+    """공개 목록 검색 응답(페이지네이션)"""
+    items: List[CounselorSearchItem]
+    page: int
+    limit: int
+    total: int
+
+
 # TODO: 추후 필요시 참고용 스키마들
 # 부분 업데이트 요청 스키마 (마이페이지 편집)
 class CounselorMypageUpdate(BaseModel):
