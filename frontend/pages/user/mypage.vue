@@ -5,7 +5,65 @@
     <main class="pt-[60px] pb-24">
       <!-- 유저 마이페이지: 프로토타입 반영 -->
       <section class="px-5 py-6">
-        
+
+        <!-- 프로필 섹션 -->
+        <section class="profile-section">
+            <div class="page-title-section">
+                <h1 class="page-title">마이페이지</h1>
+                <p class="page-subtitle">내 정보와 활동을 한눈에 확인하세요</p>
+            </div>
+
+            <div class="profile-info-container">
+                <!-- 상담 프로필 섹션 -->
+                <div class="profile-section-item">
+                    <div class="section-header">
+                        <h3 class="section-title">프로필</h3>
+                    </div>
+                    <div class="profile-user-info">
+                        <div class="profile-main-info">
+                            <h2 class="profile-name">김사주</h2>
+                        </div>
+                        <div class="profile-stats-mini">
+                            <span>총 상담 {{ stats.consults }}회 | 후기 작성 {{ stats.reviews }}건</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 멤버십 섹션 -->
+                <div class="profile-section-item">
+                    <div class="section-header">
+                        <h3 class="section-title">멤버십</h3>
+                    </div>
+                    <div class="membership-content">
+                        <div class="membership-main-info">
+                            <div class="membership-badge gold">
+                                <span>👑</span>
+                                <span>{{ currentGrade }}</span>
+                            </div>
+                        </div>
+                        <div class="membership-benefits">
+                            10% 적립
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 마일리지 섹션 -->
+                <div class="profile-section-item">
+                    <div class="section-header">
+                        <h3 class="section-title">마일리지</h3>
+                    </div>
+                    <div class="mileage-content">
+                        <div class="mileage-main-info">
+                            <div class="profile-mileage-amount">2,450M</div>
+                        </div>
+                        <div class="mileage-actions">
+                            <button class="mileage-btn">적립내역</button>
+                            <NuxtLink to="/mileageshop" class="mileage-btn">사용하기</NuxtLink>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
 
         <!-- 포인트 카드 -->
         <div class="rounded-2xl border border-yellow-400/30 bg-gradient-to-br from-yellow-400/10 to-yellow-400/5 p-5 mb-5">

@@ -312,3 +312,1023 @@
 .sajuline-prompt-modal .el-input__wrapper:hover {
   border-color: #6b7280 !important;
 }
+
+/* 프로필 섹션 CSS */
+.profile-section {
+    padding: 32px 20px;
+    background: linear-gradient(180deg, rgba(147, 51, 234, 0.15) 0%, transparent 100%);
+    text-align: center;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Apple SD Gothic Neo', 'Noto Sans KR', sans-serif;
+    color: #ffffff;
+}
+
+/* 페이지 타이틀 섹션 */
+.page-title-section {
+    margin-bottom: 32px;
+    text-align: center;
+}
+
+.page-title {
+    font-size: 28px;
+    font-weight: 800;
+    background: linear-gradient(135deg, #B794F6 0%, #9F7AEA 50%, #805AD5 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    margin-bottom: 8px;
+}
+
+.page-subtitle {
+    font-size: 14px;
+    color: rgba(255, 255, 255, 0.7);
+    margin: 0;
+    line-height: 1.4;
+}
+
+/* 프로필 정보 컨테이너 */
+.profile-info-container {
+    display: flex;
+    gap: 16px;
+    margin-top: 24px;
+}
+
+.profile-section-item {
+    flex: 1;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 16px;
+    padding: 16px;
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    display: flex;
+    flex-direction: column;
+    min-height: 140px;
+}
+
+.section-header {
+    margin-bottom: 12px;
+}
+
+.section-title {
+    font-size: 13px;
+    font-weight: 700;
+    color: #B794F6;
+    margin: 0;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    opacity: 0.9;
+}
+
+/* 상담 프로필 섹션 */
+.profile-user-info {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+}
+
+.profile-main-info {
+    flex: 1;
+}
+
+.profile-user-info .profile-name {
+    font-size: 16px;
+    font-weight: 700;
+    color: #ffffff;
+    margin-bottom: 6px;
+    line-height: 1.2;
+}
+
+.profile-stats-mini {
+    background: rgba(147, 51, 234, 0.15);
+    border: 1px solid rgba(147, 51, 234, 0.3);
+    border-radius: 8px;
+    padding: 8px 10px;
+    font-size: 12px;
+    font-weight: 600;
+    color: #B794F6;
+    text-align: center;
+    margin-top: auto;
+}
+
+/* 멤버십 섹션 */
+.membership-content {
+    text-align: center;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+}
+
+.membership-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 12px;
+    background: linear-gradient(135deg, #FFD700 0%, #FFA500 100%);
+    border-radius: 20px;
+    color: #000;
+    font-weight: 700;
+    font-size: 12px;
+    margin-bottom: 8px;
+}
+
+.membership-benefits {
+    font-size: 12px;
+    color: #B794F6;
+    line-height: 1.4;
+    background: rgba(147, 51, 234, 0.15);
+    border: 1px solid rgba(147, 51, 234, 0.3);
+    border-radius: 8px;
+    padding: 8px 10px;
+    font-weight: 600;
+    text-align: center;
+    margin-top: auto;
+}
+
+/* 마일리지 섹션 */
+.mileage-content {
+    text-align: center;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+}
+
+.mileage-main-info {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+/* 마이페이지 프로필 섹션의 마일리지 */
+.profile-mileage-amount {
+    font-size: 18px;
+    font-weight: 700;
+    color: #B794F6;
+    margin-bottom: 12px;
+    background: linear-gradient(135deg, #ffffff 0%, #9F7AEA 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    text-align: center;
+    padding: 4px 0;
+}
+
+.mileage-actions {
+    display: flex;
+    gap: 6px;
+    margin-top: auto;
+}
+
+.mileage-btn {
+    flex: 1;
+    padding: 8px 10px;
+    background: rgba(147, 51, 234, 0.15);
+    border: 1px solid rgba(147, 51, 234, 0.3);
+    border-radius: 8px;
+    color: #B794F6;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    backdrop-filter: blur(5px);
+}
+
+.mileage-btn:hover {
+    background: rgba(147, 51, 234, 0.25);
+    border-color: rgba(147, 51, 234, 0.5);
+    transform: translateY(-1px);
+}
+
+/* 반응형 디자인 */
+
+/* 태블릿 세로 (768px 이상) */
+@media (min-width: 768px) {
+    .profile-section {
+        padding: 40px 32px;
+    }
+
+    .page-title {
+        font-size: 32px;
+    }
+
+    .page-subtitle {
+        font-size: 16px;
+    }
+
+    .profile-info-container {
+        gap: 20px;
+        margin-top: 32px;
+    }
+
+    .profile-section-item {
+        padding: 20px;
+        min-height: 160px;
+    }
+
+    .section-title {
+        font-size: 14px;
+    }
+
+    .profile-user-info .profile-name {
+        font-size: 18px;
+    }
+
+    .profile-stats-mini {
+        font-size: 13px;
+        padding: 10px 12px;
+    }
+
+    .profile-mileage-amount {
+        font-size: 20px;
+    }
+
+    .mileage-btn {
+        font-size: 13px;
+        padding: 10px 12px;
+    }
+
+    .membership-badge {
+        font-size: 13px;
+        padding: 10px 16px;
+    }
+
+    .membership-benefits {
+        font-size: 13px;
+        padding: 10px 12px;
+    }
+}
+
+/* 태블릿 가로 및 소형 데스크탑 (1024px 이상) */
+@media (min-width: 1024px) {
+    .profile-section {
+        padding: 48px 40px;
+    }
+
+    .page-title {
+        font-size: 36px;
+    }
+
+    .profile-info-container {
+        gap: 24px;
+        margin-top: 40px;
+    }
+
+    .profile-section-item {
+        padding: 24px;
+        min-height: 180px;
+    }
+}
+
+/* 대형 데스크탑 (1440px 이상) */
+@media (min-width: 1440px) {
+    .profile-section {
+        padding: 56px 48px;
+    }
+
+    .page-title {
+        font-size: 40px;
+    }
+
+    .profile-info-container {
+        gap: 32px;
+        margin-top: 48px;
+    }
+
+    .profile-section-item {
+        padding: 28px;
+        min-height: 200px;
+    }
+}
+
+/* 매우 작은 화면 (480px 이하) 추가 최적화 */
+@media (max-width: 480px) {
+    .profile-info-container {
+        flex-direction: column;
+        gap: 12px;
+        margin-top: 20px;
+    }
+
+    .profile-section-item {
+        padding: 16px;
+        min-height: 120px;
+    }
+
+    .section-title {
+        font-size: 12px;
+    }
+
+    .profile-user-info .profile-name {
+        font-size: 15px;
+    }
+
+    .profile-stats-mini {
+        font-size: 11px;
+        padding: 8px 10px;
+    }
+
+    .profile-mileage-amount {
+        font-size: 16px;
+    }
+
+    .mileage-btn {
+        font-size: 11px;
+        padding: 8px 10px;
+    }
+
+    .membership-badge {
+        font-size: 11px;
+        padding: 6px 10px;
+    }
+
+    .membership-benefits {
+        font-size: 11px;
+        padding: 8px 10px;
+    }
+}
+
+/* 마일리지 샵 CSS */
+/* 헤더 */
+.mileage-header {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    background: rgba(10, 10, 15, 0.95);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    z-index: 1000;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.mileage-header-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16px 20px;
+    height: 60px;
+}
+
+.mileage-back-button {
+    width: 36px;
+    height: 36px;
+    border: none;
+    background: transparent;
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    font-size: 20px;
+}
+
+.mileage-header-title {
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 18px;
+    font-weight: 600;
+}
+
+.mileage-header-actions {
+    display: flex;
+    gap: 8px;
+}
+
+.mileage-icon-btn {
+    width: 36px;
+    height: 36px;
+    border: none;
+    background: transparent;
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    font-size: 18px;
+}
+
+/* 메인 콘텐츠 */
+.mileage-main-content {
+    margin-top: 60px;
+    padding: 20px 20px 100px;
+}
+
+/* 페이지 타이틀 섹션 */
+.mileage-page-title-section {
+    margin-bottom: 32px;
+    text-align: center;
+    padding: 32px 0;
+    background: linear-gradient(180deg, rgba(147, 51, 234, 0.15) 0%, transparent 100%);
+    border-radius: 20px;
+}
+
+.mileage-page-title {
+    font-size: 28px;
+    font-weight: 800;
+    background: linear-gradient(135deg, #B794F6 0%, #9F7AEA 50%, #805AD5 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    margin-bottom: 8px;
+}
+
+.mileage-page-subtitle {
+    font-size: 14px;
+    color: rgba(255, 255, 255, 0.7);
+    margin: 0;
+    line-height: 1.4;
+}
+
+/* 마일리지 정보 */
+.mileage-info {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    margin-bottom: 32px;
+    padding: 20px;
+    background: rgba(147, 51, 234, 0.1);
+    border: 1px solid rgba(147, 51, 234, 0.3);
+    border-radius: 16px;
+}
+
+.mileage-icon {
+    font-size: 24px;
+}
+
+/* 마일리지 샵 페이지의 마일리지 */
+.mileage-shop-amount {
+    font-size: 24px;
+    font-weight: 700;
+    background: linear-gradient(135deg, #B794F6 0%, #9F7AEA 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.mileage-label {
+    font-size: 16px;
+    color: rgba(255, 255, 255, 0.8);
+}
+
+/* 카테고리 필터 */
+.mileage-category-filters {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 24px;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    padding: 4px 0;
+}
+
+.mileage-category-filters::-webkit-scrollbar {
+    display: none;
+}
+
+.mileage-category-chip {
+    flex: 0 0 auto;
+    padding: 10px 20px;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 24px;
+    font-size: 14px;
+    font-weight: 500;
+    color: rgba(255, 255, 255, 0.7);
+    white-space: nowrap;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.mileage-category-chip.active {
+    background: rgba(147, 51, 234, 0.2);
+    color: #B794F6;
+    border-color: rgba(147, 51, 234, 0.4);
+}
+
+.mileage-category-chip:hover {
+    background: rgba(255, 255, 255, 0.08);
+}
+
+/* 상품 그리드 */
+.mileage-products-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 20px;
+}
+
+.mileage-product-card {
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 16px;
+    padding: 20px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.mileage-product-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, #9333EA 0%, #B794F6 100%);
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.mileage-product-card:hover {
+    background: rgba(255, 255, 255, 0.05);
+    transform: translateY(-2px);
+}
+
+.mileage-product-card:hover::before {
+    opacity: 1;
+}
+
+.mileage-product-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 16px;
+}
+
+.mileage-product-icon {
+    width: 60px;
+    height: 60px;
+    background: linear-gradient(135deg, rgba(147, 51, 234, 0.2) 0%, rgba(124, 58, 237, 0.1) 100%);
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 28px;
+    flex-shrink: 0;
+}
+
+.mileage-product-price {
+    text-align: right;
+}
+
+.mileage-price-amount {
+    font-size: 18px;
+    font-weight: 700;
+    color: #B794F6;
+    margin-bottom: 4px;
+}
+
+.mileage-price-label {
+    font-size: 12px;
+    color: rgba(255, 255, 255, 0.6);
+}
+
+.mileage-product-info {
+    margin-bottom: 16px;
+}
+
+.mileage-product-title {
+    font-size: 16px;
+    font-weight: 700;
+    color: #ffffff;
+    margin-bottom: 8px;
+    line-height: 1.3;
+}
+
+.mileage-product-description {
+    font-size: 13px;
+    color: rgba(255, 255, 255, 0.7);
+    line-height: 1.4;
+    margin-bottom: 12px;
+}
+
+.mileage-product-tags {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+    margin-bottom: 16px;
+}
+
+.mileage-product-tag {
+    padding: 4px 8px;
+    background: rgba(147, 51, 234, 0.1);
+    border: 1px solid rgba(147, 51, 234, 0.2);
+    border-radius: 12px;
+    font-size: 11px;
+    font-weight: 500;
+    color: #B794F6;
+}
+
+.mileage-purchase-button {
+    width: 100%;
+    padding: 12px 16px;
+    background: linear-gradient(135deg, #9333EA 0%, #7C3AED 100%);
+    border: none;
+    border-radius: 12px;
+    color: white;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.mileage-purchase-button:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 8px 20px rgba(147, 51, 234, 0.3);
+}
+
+.mileage-purchase-button:disabled {
+    background: rgba(255, 255, 255, 0.1);
+    color: rgba(255, 255, 255, 0.4);
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+}
+
+/* 구매 확인 모달 */
+.mileage-modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.7);
+    backdrop-filter: blur(4px);
+    z-index: 2000;
+}
+
+.mileage-purchase-modal {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: #1a1a2e;
+    border-radius: 20px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    z-index: 2001;
+    width: 90%;
+    max-width: 400px;
+    max-height: 80vh;
+    overflow-y: auto;
+}
+
+.mileage-modal-header {
+    padding: 24px 24px 0;
+    text-align: center;
+    position: relative;
+}
+
+.mileage-modal-title {
+    font-size: 20px;
+    font-weight: 700;
+    color: #ffffff;
+    margin-bottom: 8px;
+}
+
+.mileage-modal-subtitle {
+    font-size: 14px;
+    color: rgba(255, 255, 255, 0.6);
+    margin-bottom: 24px;
+}
+
+.mileage-close-button {
+    position: absolute;
+    top: 16px;
+    right: 16px;
+    width: 32px;
+    height: 32px;
+    border: none;
+    background: rgba(255, 255, 255, 0.1);
+    color: #fff;
+    font-size: 18px;
+    border-radius: 50%;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.mileage-close-button:hover {
+    background: rgba(255, 255, 255, 0.2);
+}
+
+.mileage-modal-content {
+    padding: 0 24px 24px;
+}
+
+/* 상품 정보 섹션 */
+.mileage-modal-product-info {
+    background: rgba(255, 255, 255, 0.03);
+    border-radius: 16px;
+    padding: 20px;
+    margin-bottom: 24px;
+}
+
+.mileage-modal-product-header {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin-bottom: 16px;
+}
+
+.mileage-modal-product-icon {
+    width: 60px;
+    height: 60px;
+    background: linear-gradient(135deg, rgba(147, 51, 234, 0.2) 0%, rgba(124, 58, 237, 0.1) 100%);
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 28px;
+    flex-shrink: 0;
+}
+
+.mileage-modal-product-details {
+    flex: 1;
+}
+
+.mileage-modal-product-title {
+    font-size: 16px;
+    font-weight: 700;
+    color: #ffffff;
+    margin-bottom: 4px;
+}
+
+.mileage-modal-product-description {
+    font-size: 13px;
+    color: rgba(255, 255, 255, 0.7);
+    line-height: 1.4;
+}
+
+.mileage-modal-product-price {
+    text-align: right;
+}
+
+.mileage-modal-price-amount {
+    font-size: 20px;
+    font-weight: 700;
+    color: #B794F6;
+    margin-bottom: 4px;
+}
+
+.mileage-modal-price-label {
+    font-size: 12px;
+    color: rgba(255, 255, 255, 0.6);
+}
+
+/* 마일리지 정보 섹션 */
+.mileage-breakdown {
+    background: rgba(147, 51, 234, 0.05);
+    border: 1px solid rgba(147, 51, 234, 0.2);
+    border-radius: 16px;
+    padding: 20px;
+    margin-bottom: 24px;
+}
+
+.mileage-breakdown-title {
+    font-size: 16px;
+    font-weight: 700;
+    color: #B794F6;
+    margin-bottom: 16px;
+    text-align: center;
+}
+
+.mileage-breakdown-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 0;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.mileage-breakdown-item:last-child {
+    border-bottom: none;
+    font-weight: 700;
+    color: #B794F6;
+    font-size: 16px;
+}
+
+.mileage-breakdown-label {
+    font-size: 14px;
+    color: rgba(255, 255, 255, 0.8);
+}
+
+.mileage-breakdown-value {
+    font-size: 14px;
+    font-weight: 600;
+    color: #ffffff;
+}
+
+.mileage-breakdown-value.mileage-highlight {
+    color: #B794F6;
+    font-size: 16px;
+}
+
+/* 경고 메시지 */
+.mileage-insufficient-notice {
+    background: rgba(220, 38, 38, 0.1);
+    border: 1px solid rgba(220, 38, 38, 0.3);
+    border-radius: 12px;
+    padding: 16px;
+    margin-bottom: 20px;
+    text-align: center;
+}
+
+.mileage-notice-icon {
+    font-size: 24px;
+    margin-bottom: 8px;
+}
+
+.mileage-notice-text {
+    font-size: 14px;
+    color: #ff6b6b;
+    font-weight: 500;
+}
+
+/* 모달 액션 버튼들 */
+.mileage-modal-actions {
+    display: flex;
+    gap: 12px;
+}
+
+.mileage-modal-cancel-btn {
+    flex: 1;
+    padding: 16px;
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 12px;
+    color: rgba(255, 255, 255, 0.8);
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.mileage-modal-cancel-btn:hover {
+    background: rgba(255, 255, 255, 0.15);
+}
+
+.mileage-modal-confirm-btn {
+    flex: 1;
+    padding: 16px;
+    background: linear-gradient(135deg, #9333EA 0%, #7C3AED 100%);
+    border: none;
+    border-radius: 12px;
+    color: white;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.mileage-modal-confirm-btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 8px 20px rgba(147, 51, 234, 0.3);
+}
+
+.mileage-modal-confirm-btn:disabled {
+    background: rgba(255, 255, 255, 0.1);
+    color: rgba(255, 255, 255, 0.4);
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+}
+
+/* 구매 완료 모달 */
+.mileage-success-modal {
+    text-align: center;
+    padding: 40px 24px 24px;
+}
+
+.mileage-success-icon {
+    font-size: 64px;
+    margin-bottom: 16px;
+}
+
+.mileage-success-title {
+    font-size: 20px;
+    font-weight: 700;
+    color: #4ade80;
+    margin-bottom: 12px;
+}
+
+.mileage-success-message {
+    font-size: 14px;
+    color: rgba(255, 255, 255, 0.8);
+    margin-bottom: 24px;
+    line-height: 1.5;
+}
+
+.mileage-success-button {
+    width: 100%;
+    padding: 16px;
+    background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%);
+    border: none;
+    border-radius: 12px;
+    color: white;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.mileage-success-button:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 8px 20px rgba(34, 197, 94, 0.3);
+}
+
+/* 마일리지 이용안내 섹션 */
+.mileage-guide-section {
+    background: rgba(147, 51, 234, 0.03);
+    border: 1px solid rgba(147, 51, 234, 0.15);
+    border-radius: 12px;
+    margin-bottom: 20px;
+    overflow: hidden;
+}
+
+.mileage-guide-header {
+    padding: 16px 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    background: rgba(147, 51, 234, 0.05);
+}
+
+.mileage-guide-header:hover {
+    background: rgba(147, 51, 234, 0.08);
+}
+
+.mileage-guide-title {
+    font-size: 14px;
+    font-weight: 600;
+    color: #B794F6;
+}
+
+.mileage-guide-toggle {
+    font-size: 12px;
+    color: #B794F6;
+    transition: transform 0.3s ease;
+}
+
+.mileage-guide-content {
+    padding: 16px 20px;
+    animation: slideDown 0.3s ease-out;
+}
+
+@keyframes slideDown {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.mileage-guide-item {
+    margin-bottom: 16px;
+}
+
+.mileage-guide-item:last-child {
+    margin-bottom: 0;
+}
+
+.mileage-guide-item h4 {
+    font-size: 13px;
+    font-weight: 600;
+    color: #ffffff;
+    margin-bottom: 8px;
+    padding-bottom: 4px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.mileage-guide-item ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.mileage-guide-item li {
+    font-size: 12px;
+    color: rgba(255, 255, 255, 0.8);
+    line-height: 1.4;
+    margin-bottom: 6px;
+    padding-left: 12px;
+    position: relative;
+}
+
+.mileage-guide-item li:before {
+    content: '•';
+    position: absolute;
+    left: 0;
+    color: #B794F6;
+    font-weight: bold;
+}
+
+.mileage-guide-item li:last-child {
+    margin-bottom: 0;
+}
