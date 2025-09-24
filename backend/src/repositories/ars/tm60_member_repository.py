@@ -6,6 +6,7 @@ import asyncio
 from typing import Optional
 
 from sqlalchemy.orm import Session
+from sqlalchemy import and_, func
 
 from src.models.ars.tm60_member_model import Tm60Member
 from src.common.logging import logger, get_logger_with_request_id
@@ -49,5 +50,39 @@ class Tm60MemberRepository:
                 raise BaseAppException(f"ARS 멤버 상태 업데이트 실패: {str(e)}", status_code=500)
 
         return await asyncio.to_thread(_sync_update)
+
+    @logger.catch(reraise=True)
+    async def get_state_map_by_codes(self, m_codes: list[str], *, m_state: Optional[str] = None) -> dict[str, str]:
+        """
+        m_code 목록으로 tm60_member 조회하여 { m_code: m_state } 매핑 반환
+        - 선택적으로 m_state 조건 적용
+        - 다중 결과가 있을 경우 가장 최근 가입일(m_fdate) 우선
+        """
+        log = get_logger_with_request_id()
+        log.info("Fetching tm60_member state map by codes", count=len(m_codes), m_state=m_state)
+
+        def _sync_get_map() -> dict[str, str]:
+            try:
+                if not m_codes:
+                    return {}
+                q = (
+                    self.mssql_session.query(Tm60Member.m_code, Tm60Member.m_state, Tm60Member.m_fdate)
+                    .filter(Tm60Member.m_code.in_(m_codes))
+                )
+                if m_state is not None:
+                    q = q.filter(Tm60Member.m_state == m_state)
+                rows = q.all()
+                # 최신 m_fdate 우선으로 집계
+                result: dict[str, tuple[str, Optional[datetime]]] = {}
+                for code, state, fdate in rows:
+                    prev = result.get(code)
+                    if prev is None or (fdate and prev[1] and fdate > prev[1]) or (prev is None):
+                        result[code] = (state, fdate)
+                return {k: v[0] for k, v in result.items()}
+            except Exception as e:
+                log.warning("Failed to fetch tm60_member state map", error=str(e))
+                return {}
+
+        return await asyncio.to_thread(_sync_get_map)
 
 

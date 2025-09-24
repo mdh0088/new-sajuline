@@ -243,9 +243,9 @@
       </div>
     </div>
 
-    <!-- 전화 상담 모달 -->
+    <!-- 전화 상담 모달 (로그인 유저용) -->
     <PhoneConsultModal
-      v-if="counselor"
+      v-if="counselor && isUser"
       :counselor="modalCounselorData"
       :is-visible="showPhoneModal"
       :user-points="userPoints"
@@ -253,6 +253,16 @@
       @start-point-consult="handlePointConsult"
       @start060-consult="handle060Consult"
       @go-to-charge="goToCharge"
+    />
+
+    <!-- 전화 상담 모달 (비로그인 유저용) -->
+    <GuestPhoneConsultModal
+      v-if="counselor && !isUser"
+      :counselor="modalCounselorData"
+      :is-visible="showPhoneModal"
+      @close="closePhoneModal"
+      @start060-consult="handle060Consult"
+      @go-to-register-login="goToRegisterLogin"
     />
 
     <!-- 후기 작성 모달 -->
@@ -446,6 +456,11 @@ const handle060Consult = (counselorId: number) => {
 const goToCharge = () => {
   // 포인트 충전 페이지로 이동
   navigateTo('/payment/charge')
+}
+
+const goToRegisterLogin = () => {
+  // 로그인/회원가입 페이지로 이동
+  navigateTo('/login')
 }
 
 const startChatConsult = () => {
