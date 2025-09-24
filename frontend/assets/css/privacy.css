@@ -10,9 +10,7 @@
 /* 메인 콘텐츠 */
 .privacy-content {
   flex: 1;
-  padding: 20px;
-  padding-top: 80px; /* 헤더 영역 높이만큼 상단 패딩 추가 */
-  padding-bottom: 100px; /* 하단 네비 공간 */
+  padding: 80px 20px 100px 20px; /* 상단 헤더 공간 추가 (60px + 20px 여백) */
   overflow-y: auto;
 }
 
@@ -40,7 +38,7 @@
 .privacy-section h3 {
   font-size: 16px;
   font-weight: 600;
-  margin-bottom: 4px;
+  margin-bottom: 8px;
   color: #fff;
 }
 
@@ -50,7 +48,70 @@
   color: rgba(255, 255, 255, 0.9);
   margin-bottom: 12px;
   text-align: justify;
-  white-space: pre-line;
+}
+
+.privacy-section ol {
+  margin: 8px 0;
+  padding-left: 24px;
+}
+
+.privacy-section li {
+  font-size: 15px;
+  line-height: 1.6;
+  color: rgba(255, 255, 255, 0.9);
+  margin-bottom: 8px;
+  list-style-type: decimal;
+}
+
+.privacy-section ul {
+  margin: 12px 0;
+  padding-left: 24px;
+  list-style-type: disc;
+}
+
+.privacy-section li ul {
+  margin-top: 8px;
+  list-style-type: circle;
+}
+
+.privacy-section strong {
+  color: #fff;
+  font-weight: 600;
+}
+
+.privacy-highlight {
+  background: rgba(147, 51, 234, 0.1);
+  padding: 16px;
+  border-radius: 12px;
+  margin: 16px 0;
+  border: 1px solid rgba(147, 51, 234, 0.2);
+}
+
+.privacy-highlight p {
+  margin-bottom: 12px;
+}
+
+.privacy-highlight p:last-child {
+  margin-bottom: 0;
+}
+
+/* 반응형 디자인 */
+@media (max-width: 768px) {
+  .privacy-section h2 {
+    font-size: 18px;
+  }
+
+  .privacy-section h3 {
+    font-size: 15px;
+  }
+
+  .privacy-section p {
+    font-size: 14px;
+  }
+
+  .privacy-section li {
+    font-size: 14px;
+  }
 }
 
 .privacy-section ol {

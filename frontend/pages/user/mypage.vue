@@ -9,8 +9,16 @@
         <!-- 프로필 섹션 -->
         <section class="profile-section">
             <div class="page-title-section">
-                <h1 class="page-title">마이페이지</h1>
-                <p class="page-subtitle">내 정보와 활동을 한눈에 확인하세요</p>
+                <div class="title-with-settings">
+                    <div>
+                        <h1 class="page-title">마이페이지</h1>
+                        <p class="page-subtitle">내 정보와 활동을 한눈에 확인하세요</p>
+                    </div>
+                    <button class="settings-button" @click="goEdit">
+                        <span class="settings-icon">⚙️</span>
+                        <span class="settings-text">설정</span>
+                    </button>
+                </div>
             </div>
 
             <div class="profile-info-container">
@@ -174,7 +182,7 @@
               <div class="menu-item"><div class="menu-left"><div class="menu-icon">🔔</div><div><div class="menu-title">알림 설정</div><div class="menu-desc">푸시 알림 관리</div></div></div><div class="menu-right">›</div></div>
                -->
               <div class="menu-item" @click="goCs"><div class="menu-left"><div class="menu-icon">❓</div><div><div class="menu-title">고객센터</div><div class="menu-desc">1:1 문의 및 FAQ</div></div></div><div class="menu-right">›</div></div>
-              <div class="menu-item" @click="goTerms"><div class="menu-left"><div class="menu-icon">📜</div><div><div class="menu-title">이용약관</div><div class="menu-desc">서비스 이용 약관</div></div></div><div class="menu-right">›</div></div>
+              <div class="menu-item" @click="goProvision"><div class="menu-left"><div class="menu-icon">📜</div><div><div class="menu-title">이용약관</div><div class="menu-desc">서비스 이용 약관</div></div></div><div class="menu-right">›</div></div>
               <div class="menu-item" @click="goPrivacy"><div class="menu-left"><div class="menu-icon">🔒</div><div><div class="menu-title">개인정보처리방침</div><div class="menu-desc">개인정보 보호 정책</div></div></div><div class="menu-right">›</div></div>
             </div>
           </div>
@@ -257,9 +265,10 @@ const gradeRemaining = computed(() => {
 
 const router = useRouter()
 const goNotice = () => router.push('/notices')
-const goCs = () => router.push('/cs')
-const goTerms = () => router.push('/terms')
+const goCs = () => router.push('/user/cs')
+const goProvision = () => router.push('/provision')
 const goPrivacy = () => router.push('/privacy')
+const goEdit = () => router.push('/user/edit')
 </script>
 
 <style scoped>
