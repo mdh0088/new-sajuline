@@ -47,6 +47,7 @@ class CounselorResponse(CounselorBase):
     is_out: bool = Field(..., description="탈퇴 여부")
     is_show: bool = Field(..., description="노출 여부")
     is_new: Optional[bool] = Field(None, description="신규 상담사 여부")
+    is_best: Optional[bool] = Field(None, description="best 여부")
     approved_at: Optional[datetime] = Field(None, description="승인일시")
     created_at: datetime = Field(..., description="생성 일시")
     updated_at: Optional[datetime] = Field(None, description="수정 일시")

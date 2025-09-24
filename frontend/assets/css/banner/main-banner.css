@@ -1,0 +1,5 @@
+/* 메인 배너 전용 보조 스타일 (필요 시 확장) */
+.hero-banner { position: relative; width: 100%; overflow: hidden; background: #0a0a0f; }
+.hero-banner img { width: 100%; height: auto; display: block; object-fit: cover; }
+
+
