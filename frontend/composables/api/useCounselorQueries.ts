@@ -23,6 +23,7 @@ import type { NoticeListItem } from '~/types/counselor/notice'
 import type { ReviewSummary } from '~/types/counselor/review'
 import type { InquirySummary, CounselorMypageUpdatePayload } from '~/types/counselor/inquiry'
 import type { CounselorPublic } from '~/types/counselor/detail'
+import type { CounselorSearchItem, CounselorSearchParams } from '~/types/counselor/search'
 import { useNuxtApp } from 'nuxt/app'
 
 // 타입은 counselor 전용 디렉터리에서 관리합니다.
@@ -54,6 +55,34 @@ const counselorApi = {
       throw new Error(response.error?.message || '상담사 정보를 불러오지 못했습니다.')
     }
     return response.data
+  },
+
+  // 공개: 상담사 검색 목록 (게스트)
+  async searchPublic(params: CounselorSearchParams): Promise<PaginatedResult<CounselorSearchItem>> {
+    const { $api } = useNuxtApp()
+    const query = new URLSearchParams()
+    query.set('page', String(params.page ?? 1))
+    query.set('limit', String(params.limit ?? 10))
+    if (params.cs_status) query.set('cs_status', String(params.cs_status))
+    if (params.is_best !== undefined && params.is_best !== null) query.set('is_best', String(params.is_best))
+    if (params.is_new !== undefined && params.is_new !== null) query.set('is_new', String(params.is_new))
+    if (params.search_name) query.set('search_name', params.search_name)
+    // 배열 파라미터는 다중 키로 전달
+    for (const v of params.cs_specialties || []) query.append('cs_specialties', v)
+    for (const v of params.cs_keywords || []) query.append('cs_keywords', v)
+
+    const response = await $api<APIResponse<CounselorSearchItem[]>>(`/api/v1/counselors/public/search?${query.toString()}`, { method: 'GET' })
+    if (!response.success) {
+      throw new Error(response.error?.message || '상담사 목록을 불러오지 못했습니다.')
+    }
+    const pagination = response.meta?.pagination
+    return {
+      items: response.data ?? [],
+      page: pagination?.page ?? (params.page ?? 1),
+      limit: pagination?.limit ?? (params.limit ?? 10),
+      total: pagination?.total ?? (response.data?.length ?? 0),
+      total_pages: pagination?.total_pages ?? 1
+    }
   },
 
   // 상담사 로그아웃
@@ -317,6 +346,29 @@ export const useCounselorQueries = () => {
     })
   }
 
+  // 공개: 상담사 검색 목록 쿼리
+  const usePublicSearch = (
+    params: Ref<CounselorSearchParams> | CounselorSearchParams,
+    options?: QueryOpts<PaginatedResult<CounselorSearchItem>>
+  ) => {
+    const p = computed(() => unref(params))
+    return useQuery({
+      queryKey: computed(() => ['counselor', 'public', 'search',
+        p.value.page ?? 1,
+        p.value.limit ?? 10,
+        p.value.cs_status ?? '',
+        String(p.value.is_best ?? ''),
+        String(p.value.is_new ?? ''),
+        (p.value.cs_specialties || []).join(','),
+        (p.value.cs_keywords || []).join(','),
+        p.value.search_name ?? ''
+      ]),
+      queryFn: () => counselorApi.searchPublic(p.value),
+      staleTime: 1000 * 30,
+      ...options
+    })
+  }
+
   // 상담사 마이페이지 업데이트 뮤테이션
   const useUpdateMypage = (
     options?: UseMutationOptions<any, APIError, CounselorMypageUpdatePayload>
@@ -426,6 +478,8 @@ export const useCounselorQueries = () => {
     useCounselorUserInquiries,
     useCounselorAdminInquiries,
     usePublicDetail,
+    usePublicSearch,
+    searchPublic: counselorApi.searchPublic,
     getPublicCounselorReviews: counselorApi.getPublicCounselorReviews,
     getPublicCounselorUserInquiries: counselorApi.getPublicCounselorUserInquiries,
     createUserInquiry: counselorApi.createUserInquiry

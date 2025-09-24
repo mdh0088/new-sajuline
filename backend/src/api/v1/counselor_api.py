@@ -24,7 +24,7 @@ from src.services.inquiry_service import InquiryService
 from src.services.ars.tm60_member_service import Tm60MemberService
 from src.services.ars.tm60_chatlog_service import Tm60ChatlogService
 from src.schemas.auth_schema import LoginRequest, LoginResponse
-from src.schemas.counselor_schema import CounselorResponse, CounselorMypageUpdate
+from src.schemas.counselor_schema import CounselorResponse, CounselorMypageUpdate, CounselorSearchItem
 from src.schemas.user_activity_log_schema import UserType, DeviceType
 from src.common.response import APIResponse, APIResponseBuilder, ok, fail
 from src.common.logging import logger, get_logger_with_request_id
@@ -94,10 +94,11 @@ def get_tm60_chatlog_service() -> Tm60ChatlogService:
 def get_counselor_service(
     counselor_repo: CounselorRepository = Depends(get_counselor_repository),
     auth_service: AuthService = Depends(get_auth_service),
-    tm60_member_service: Tm60MemberService = Depends(get_tm60_member_service)
+    tm60_member_service: Tm60MemberService = Depends(get_tm60_member_service),
+    review_repo: ConsultationReviewRepository = Depends(get_consultation_review_repository)
 ) -> CounselorService:
     """상담사 서비스 의존성 주입"""
-    return CounselorService(counselor_repo, auth_service, tm60_member_service)
+    return CounselorService(counselor_repo, auth_service, tm60_member_service, review_repo)
 
 
 @router.post(
@@ -499,6 +500,69 @@ async def get_monthly_consultation_stats(
 # =====================
 # 공개(게스트) 엔드포인트
 # =====================
+
+@router.get(
+    "/public/search",
+    response_model=APIResponse,
+    summary="상담사 공개 검색 목록",
+    description=(
+        "게스트 가능. 필터: is_best, is_new, cs_specialties[], cs_keywords[], search_name. "
+        "t_counselor에서 필터링 후 counselor_code 목록으로 tm60_member.m_state를 조인하여 상태 반환. "
+        "또한 t_consultation_review의 is_visible=true 기준 review_count와 평균 rating을 포함. 페이징 제공."
+    ),
+)
+async def search_public_counselors(
+    request: Request,
+    page: int = Query(1, ge=1, description="페이지 번호"),
+    limit: int = Query(10, ge=1, le=50, description="페이지당 항목 수"),
+    cs_status: Optional[str] = Query(None, description="tm60_members.m_state 값(예: '1','2','3')"),
+    is_best: Optional[bool] = Query(None),
+    is_new: Optional[bool] = Query(None),
+    cs_specialties: Optional[list[str]] = Query(None, description="전문분야 배열"),
+    cs_keywords: Optional[list[str]] = Query(None, description="키워드 배열"),
+    search_name: Optional[str] = Query(None, description="상담사 닉네임 like"),
+    counselor_service: CounselorService = Depends(get_counselor_service),
+):
+    """공개 검색 목록 (게스트)
+    요구사항 요약:
+    - t_counselor: is_out=false, is_show=true
+    - 상태는 tm60_member.m_state 사용 (필터 cs_status 존재 시 해당 조건 적용)
+    - 1차 필터: is_best, is_new, specialty_types, keywords, search_name
+    - 2차: counselor_code -> tm60_member.m_code IN 검색
+    - 각 항목에 리뷰 총 개수(is_visible=true)와 평균 rating 포함
+    - 페이징 응답 및 전체 count 포함
+    """
+    log = get_logger_with_request_id()
+    log.info(
+        "API: Public counselor search",
+        page=page,
+        limit=limit,
+        cs_status=cs_status,
+        is_best=is_best,
+        is_new=is_new,
+        cs_specialties=cs_specialties,
+        cs_keywords=cs_keywords,
+        search_name=search_name,
+    )
+
+    items, total = await counselor_service.search_public(
+        page=page,
+        limit=limit,
+        cs_status=cs_status,
+        is_best=is_best,
+        is_new=is_new,
+        cs_specialties=cs_specialties,
+        cs_keywords=cs_keywords,
+        search_name=search_name,
+    )
+    return APIResponseBuilder.paginated(
+        data=items,
+        page=page,
+        limit=limit,
+        total=total,
+        message="상담사 공개 검색 목록 조회 성공",
+    )
+
 
 @router.get(
     "/public/{counselor_code}",
