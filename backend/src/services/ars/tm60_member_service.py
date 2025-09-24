@@ -33,4 +33,8 @@ class Tm60MemberService:
             return False
         return await self.repo.update_member_state_by_m_id(counselor_id, m_state)
 
+    async def get_state_map_by_codes(self, m_codes: list[str], m_state: Optional[str] = None) -> dict[str, str]:
+        """m_code 목록에 대한 상태 매핑 조회 (선택적으로 상태 필터)"""
+        return await self.repo.get_state_map_by_codes(m_codes, m_state=m_state)
+
 
