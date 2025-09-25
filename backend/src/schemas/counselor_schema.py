@@ -40,6 +40,9 @@ class CounselorSignup(CounselorBase):
 class CounselorResponse(CounselorBase):
     """상담사 정보 응답 스키마"""
     counselor_id: str = Field(..., description="상담사 ID")
+    # 금액 정보 (선불/후불)
+    after_amount: Optional[int] = Field(None, description="선불 금액 (30초 단위)")
+    before_amount: Optional[str] = Field(None, description="후불 금액 (30초 단위, 표시용)")
     rating_avg: Optional[Decimal] = Field(None, description="평점 평균")
     rating_count: Optional[int] = Field(None, description="평점 개수")
     consultation_count: Optional[int] = Field(None, description="총 상담 횟수")

@@ -14,12 +14,21 @@
         <div class="modal-header">
           <div class="counselor-profile">
             <div class="counselor-avatar">
-              <span>{{ counselor.emoji }}</span>
+              <img
+                v-if="imageUrl"
+                :src="imageUrl"
+                alt="프로필 이미지"
+                class="w-12 h-12 rounded-full object-cover"
+                width="48"
+                height="48"
+                loading="lazy"
+              />
+              <span v-else>🔮</span>
             </div>
             <div class="counselor-info">
               <div class="counselor-name-group">
-                <span class="counselor-name">{{ counselor.name }}</span>
-                <span class="counselor-number">#{{ counselor.number }}</span>
+                <span class="counselor-name">{{ counselor.nickname }}</span>
+                <span class="counselor-number">#{{ resolvedCode }}</span>
               </div>
               <div class="specialty-tags-row">
                 <span
@@ -46,7 +55,7 @@
           </button>
 
           <p class="point-info">
-            포인트상담(선불) <strong>{{ counselor.pointRate }}P</strong>(30초)
+            포인트상담(선불) <strong>{{ resolvedAfterAmount }}P</strong>(30초)
           </p>
           <p class="connect-info">
             전화연결시 선택한 선생님과 바로연결됩니다.
@@ -56,7 +65,7 @@
           <div class="point-status">
             <div class="status-item">
               <span class="status-label">보유 포인트</span>
-              <span class="status-value">{{ userPoints }}P</span>
+              <span class="status-value">{{ displayUserPoints }}P</span>
             </div>
             <div class="status-item">
               <span class="status-label">상담 가능 시간</span>
@@ -90,11 +99,11 @@
                   <span>060상담 (060-800-1300)</span>
                 </button>
                 <p class="fee-info">
-                  060상담(후불) <strong>{{ counselor.rate060 }}원</strong>(30초)(vat별도)
+                  060상담(후불) <strong>{{ resolvedBeforeAmount }}</strong>(30초)(vat별도)
                 </p>
                 <p class="guide-title">상담안내</p>
                 <p class="guide-text">
-                  전화상담 연결 후, 고유번호 {{ counselor.number }}번 누르세요.
+                  전화상담 연결 후, 고유번호 {{ resolvedCode }}번 누르세요.
                 </p>
               </div>
             </div>
@@ -114,14 +123,16 @@
 </template>
 
 <script setup lang="ts">
+import { computed, ref, onMounted, onUnmounted } from 'vue'
+import { useCdn } from '~/composables/utils/useCdn'
+import { useUserPoints } from '~/composables/user/useUserPoints'
 interface Counselor {
-  id: number
-  name: string
-  number: string
-  emoji: string
+  code: string
+  nickname: string
+  profile_image_url?: string | null
   specialties: string[]
-  pointRate: number
-  rate060: number
+  afterAmount?: number | null
+  beforeAmount?: string | null
 }
 
 interface Props {
@@ -136,17 +147,52 @@ const props = withDefaults(defineProps<Props>(), {
 
 const emit = defineEmits<{
   close: []
-  startPointConsult: [counselorId: number]
-  start060Consult: [counselorId: number]
+  startPointConsult: [counselorCode: string]
+  start060Consult: [counselorCode: string]
   goToCharge: []
 }>()
 
 const showPrepayDetails = ref(false)
 
+const { cdnUrl } = useCdn()
+const imageUrl = computed(() => {
+  const raw = (props.counselor.profile_image_url || '').trim()
+  if (!raw) return ''
+  if (/^https?:\/\//i.test(raw)) return cdnUrl(raw)
+  return cdnUrl('cs', raw)
+})
+
+const { points } = useUserPoints()
+const displayUserPoints = computed(() => {
+  const p = props.userPoints
+  if (typeof p === 'number' && p >= 0) return p
+  return points.value
+})
+
+const resolvedCode = computed(() => {
+  const c: any = props.counselor as any
+  return (c.code ?? c.number ?? c.counselor_code ?? c.id ?? '')
+})
+const resolvedAfterAmount = computed(() => {
+  const c: any = props.counselor as any
+  const v = c.afterAmount ?? c.after_amount ?? c.pointRate
+  if (v === null || v === undefined) return 0
+  const n = typeof v === 'string' ? Number(v) : Number(v)
+  return isNaN(n) ? 0 : n
+})
+const resolvedBeforeAmount = computed(() => {
+  const c: any = props.counselor as any
+  if (c.beforeAmount) return c.beforeAmount
+  if (c.before_amount) return c.before_amount
+  if (c.rate060) return `${c.rate060}원`
+  return '0원'
+})
+
 // 상담 가능 시간 계산 (30초당 포인트 소모)
 const availableMinutes = computed(() => {
-  if (props.counselor.pointRate === 0) return 0
-  const totalSeconds = Math.floor(props.userPoints / props.counselor.pointRate) * 30
+  const rate = resolvedAfterAmount.value
+  if (!rate || rate === 0) return 0
+  const totalSeconds = Math.floor(displayUserPoints.value / rate) * 30
   return Math.floor(totalSeconds / 60)
 })
 
@@ -159,11 +205,11 @@ const togglePrepayDetails = () => {
 }
 
 const startPointConsult = () => {
-  emit('startPointConsult', props.counselor.id)
+  emit('startPointConsult', resolvedCode.value)
 }
 
 const start060Consult = () => {
-  emit('start060Consult', props.counselor.id)
+  emit('start060Consult', resolvedCode.value)
 }
 
 const goToCharge = () => {

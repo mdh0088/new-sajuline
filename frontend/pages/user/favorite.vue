@@ -5,108 +5,22 @@
     <main class="pt-[60px] pb-24">
       <div class="px-5 py-6">
         <!-- 즐겨찾기 상담사 리스트 -->
-        <div v-if="favoriteCounselors.length > 0" class="favorite-list">
+        <div v-if="items.length > 0" class="favorite-list">
           <div
-            v-for="counselor in favoriteCounselors"
-            :key="counselor.id"
+            v-for="c in items"
+            :key="c.counselor_id"
             class="favorite-item"
-            @click="goToCounselorProfile(counselor.id)"
           >
-            <!-- 즐겨찾기 해제 버튼 -->
+            <!-- 즐겨찾기 해제 버튼 (요구: class 그대로 유지) -->
             <button
-              @click.stop="confirmUnfavorite(counselor)"
               class="unfavorite-button"
+              @click.stop="onUnfavorite(c)"
+              aria-label="즐겨찾기 해제"
             >
               ×
             </button>
 
-            <!-- 상담사 헤더 -->
-            <div class="counselor-header">
-              <div
-                class="item-thumbnail"
-                :class="{ online: counselor.isOnline }"
-              >
-                <span>{{ counselor.emoji }}</span>
-              </div>
-              <div class="item-info">
-                <div class="item-header">
-                  <div class="item-name-wrapper">
-                    <div class="item-name">{{ counselor.name }}</div>
-                    <div class="item-number">#{{ counselor.number }}</div>
-                  </div>
-                  <div class="item-tier">{{ counselor.tier }}</div>
-                </div>
-
-                <!-- 상태 인디케이터 -->
-                <div class="status-indicator">
-                  <div
-                    class="status-dot"
-                    :class="counselor.isOnline ? 'status-online' : 'status-offline'"
-                  ></div>
-                  <span :class="counselor.isOnline ? 'text-green-400' : 'text-white/50'">
-                    {{ counselor.isOnline ? '상담 가능' : '상담 중' }}
-                  </span>
-                </div>
-
-                <!-- 전문 분야 -->
-                <div class="item-details">
-                  <span
-                    v-for="specialty in counselor.specialties"
-                    :key="specialty"
-                    class="detail-chip"
-                  >
-                    {{ specialty }}
-                  </span>
-                </div>
-
-                <!-- 상담사 소개 -->
-                <div class="item-description">
-                  {{ counselor.description }}
-                </div>
-
-                <!-- 액션 영역 -->
-                <div class="item-actions">
-                  <div class="rating">
-                    <div class="rating-stars">
-                      <span
-                        v-for="n in 5"
-                        :key="n"
-                        class="star"
-                        :style="{ opacity: n <= counselor.rating ? 1 : 0.3 }"
-                      >
-                        ★
-                      </span>
-                    </div>
-                    <span class="rating-info">
-                      {{ counselor.rating }} ({{ counselor.reviewCount }})
-                    </span>
-                  </div>
-
-                  <!-- 상담 유형 버튼 -->
-                  <div class="consult-types">
-                    <button
-                      v-if="counselor.consultTypes.includes('phone')"
-                      @click.stop="openPhoneConsultModal(counselor)"
-                      class="consult-type-btn primary"
-                      :disabled="!counselor.isOnline"
-                    >
-                      전화상담
-                    </button>
-                    <!-- 채팅상담 버튼 주석 처리 -->
-                    <!--
-                    <button
-                      v-if="counselor.consultTypes.includes('chat')"
-                      @click.stop="startConsult(counselor.id, 'chat')"
-                      class="consult-type-btn"
-                      :disabled="!counselor.isOnline"
-                    >
-                      채팅상담
-                    </button>
-                    -->
-                  </div>
-                </div>
-              </div>
-            </div>
+            <CounselorCardCompact :counselor="c" />
           </div>
         </div>
 
@@ -126,59 +40,15 @@
     </main>
 
     <AppBottomNavi />
-
-    <!-- 즐겨찾기 해제 확인 모달 -->
-    <div
-      v-if="showConfirmModal"
-      class="confirm-modal"
-      @click="closeConfirmModal"
-    >
-      <div
-        class="confirm-content"
-        @click.stop
-      >
-        <div class="confirm-title">즐겨찾기 해제</div>
-        <div class="confirm-message">
-          {{ selectedCounselor?.name }} 상담사를<br>
-          즐겨찾기에서 해제하시겠습니까?
-        </div>
-        <div class="confirm-buttons">
-          <button
-            @click="closeConfirmModal"
-            class="confirm-btn confirm-cancel"
-          >
-            취소
-          </button>
-          <button
-            @click="removeFavorite"
-            class="confirm-btn confirm-delete"
-          >
-            해제
-          </button>
-        </div>
-      </div>
-    </div>
-
-    <!-- 전화상담 모달 -->
-    <PhoneConsultModal
-      v-if="selectedCounselorForPhone"
-      :counselor="selectedCounselorForPhone"
-      :is-visible="showPhoneConsultModal"
-      :user-points="userPoints"
-      @close="closePhoneConsultModal"
-      @start-point-consult="handleStartPointConsult"
-      @start060-consult="handleStart060Consult"
-      @go-to-charge="handleGoToCharge"
-    />
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
-import { useRouter } from 'vue-router'
-import AppHeader from '~/components/common/AppHeader.vue'
-import AppBottomNavi from '~/components/common/AppBottomNavi.vue'
-import PhoneConsultModal from '~/components/common/PhoneConsultModal.vue'
+import { computed, ref } from 'vue'
+import CounselorCardCompact from '~/components/counselor/CounselorCardCompact.vue'
+import { useBookmarkQueries } from '~/composables/api/useBookmarkQueries'
+import type { CounselorSearchItem } from '~/types/counselor/search'
+import { useNotify } from '~/composables/utils/useNotify'
 
 definePageMeta({
   middleware: ['auth'],
@@ -186,147 +56,27 @@ definePageMeta({
   requireRole: 'user'
 })
 
-const router = useRouter()
+const { useBookmarkList, useRemoveBookmark } = useBookmarkQueries()
+const page = ref(1)
+const limit = ref(20)
+const { data } = useBookmarkList({ page: page.value, limit: limit.value })
+const items = computed<CounselorSearchItem[]>(() => data?.value?.items ?? [])
 
-// 즐겨찾기 상담사 데이터 (임시 - 실제로는 API에서 가져옴)
-const favoriteCounselors = ref([
-  {
-    id: 1234,
-    name: '김철수',
-    number: '1234',
-    tier: '프리미엄 상담사',
-    emoji: '👨‍💼',
-    isOnline: true,
-    specialties: ['사주명리', '궁합', '운세', '타로', '연애운', '직업운'],
-    description: '20년 경력의 사주명리 전문가입니다. 정확한 사주 분석과 따뜻한 상담으로 많은 분들의 신뢰를 받고 있습니다.',
-    rating: 4.9,
-    reviewCount: 128,
-    consultTypes: ['phone', 'chat'],
-    pointRate: 800,
-    rate060: 1300
-  },
-  {
-    id: 1235,
-    name: '이지은',
-    number: '1235',
-    tier: '골드 상담사',
-    emoji: '👩‍💼',
-    isOnline: false,
-    specialties: ['타로', '연애운', '직업운', '심리상담', '사주풀이'],
-    description: '섬세한 타로 리딩으로 연애와 직업에 대한 정확한 조언을 제공합니다. 따뜻한 상담으로 유명합니다.',
-    rating: 4.8,
-    reviewCount: 95,
-    consultTypes: ['phone', 'chat'],
-    pointRate: 750,
-    rate060: 1200
-  },
-  {
-    id: 1236,
-    name: '박민수',
-    number: '1236',
-    tier: '실버 상담사',
-    emoji: '🧑‍💼',
-    isOnline: true,
-    specialties: ['사주', '타로', '꿈해몽', '궁합', '애정운', '재물운', '건강운'],
-    description: '다양한 분야의 전문 지식을 바탕으로 종합적인 상담을 제공합니다. 친근하고 이해하기 쉬운 설명이 특징입니다.',
-    rating: 4.7,
-    reviewCount: 67,
-    consultTypes: ['phone'],
-    pointRate: 700,
-    rate060: 1100
-  }
-])
-
-// 즐겨찾기 해제 모달 관련
-const showConfirmModal = ref(false)
-const selectedCounselor = ref<any>(null)
-
-// 전화상담 모달 관련
-const showPhoneConsultModal = ref(false)
-const selectedCounselorForPhone = ref<any>(null)
-const userPoints = ref(5000) // 임시 사용자 포인트 (실제로는 API에서 가져옴)
-
-// 즐겨찾기 해제 확인
-const confirmUnfavorite = (counselor: any) => {
-  selectedCounselor.value = counselor
-  showConfirmModal.value = true
-}
-
-// 모달 닫기
-const closeConfirmModal = () => {
-  showConfirmModal.value = false
-  selectedCounselor.value = null
-}
-
-// 즐겨찾기 해제
-const removeFavorite = () => {
-  if (selectedCounselor.value) {
-    const index = favoriteCounselors.value.findIndex(
-      c => c.id === selectedCounselor.value.id
-    )
-    if (index > -1) {
-      favoriteCounselors.value.splice(index, 1)
-    }
-
-    // TODO: API 호출하여 즐겨찾기 해제
-    console.log('즐겨찾기 해제:', selectedCounselor.value.id)
-  }
-  closeConfirmModal()
-}
-
-// 상담사 프로필로 이동
-const goToCounselorProfile = (counselorId: number) => {
-  router.push(`/counselor/${counselorId}`)
-}
-
-// 전화상담 모달 열기
-const openPhoneConsultModal = (counselor: any) => {
-  selectedCounselorForPhone.value = counselor
-  showPhoneConsultModal.value = true
-}
-
-// 전화상담 모달 닫기
-const closePhoneConsultModal = () => {
-  showPhoneConsultModal.value = false
-  selectedCounselorForPhone.value = null
-}
-
-// 포인트 상담 시작
-const handleStartPointConsult = (counselorId: number) => {
-  console.log('포인트 상담 시작:', counselorId)
-  // TODO: 포인트 상담 로직 구현
-  // 실제로는 전화 API 호출
-  closePhoneConsultModal()
-}
-
-// 060 상담 시작
-const handleStart060Consult = (counselorId: number) => {
-  console.log('060 상담 시작:', counselorId)
-  // TODO: 060 상담 로직 구현
-  // 실제로는 전화 번호 복사하거나 전화 걸기 기능
-  closePhoneConsultModal()
-}
-
-// 포인트 충전 페이지로 이동
-const handleGoToCharge = () => {
-  console.log('포인트 충전 페이지로 이동')
-  // TODO: 포인트 충전 페이지로 라우팅
-  router.push('/point/charge')
-  closePhoneConsultModal()
-}
-
-// 상담 시작 (채팅상담용 - 현재 사용하지 않음)
-const startConsult = (counselorId: number, type: string) => {
-  if (type === 'phone') {
-    // 전화상담은 모달로 처리
-    const counselor = favoriteCounselors.value.find(c => c.id === counselorId)
-    if (counselor) {
-      openPhoneConsultModal(counselor)
-    }
-  } else if (type === 'chat') {
-    router.push(`/chat/${counselorId}?type=chat`)
+const { mutate: removeBookmark, isPending: removing } = useRemoveBookmark({})
+const { notifyConfirm, notifySuccess, notifyError } = useNotify()
+const onUnfavorite = async (c: CounselorSearchItem) => {
+  if (!c?.counselor_id || removing.value) return
+  const confirmed = await notifyConfirm(`'${c.nickname}' 상담사를 즐겨찾기에서 해제하시겠습니까?`)
+  if (!confirmed) return
+  try {
+    removeBookmark(c.counselor_id)
+    notifySuccess('즐겨찾기에서 해제되었습니다.')
+  } catch (e: any) {
+    notifyError(e?.message || '해제에 실패했습니다.')
   }
 }
+
+// 모달/전화상담 관련 기존 UI 제거 (요구사항 범위 밖)
 </script>
 
 <style>
