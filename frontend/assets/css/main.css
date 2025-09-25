@@ -1332,3 +1332,297 @@
 .mileage-guide-item li:last-child {
     margin-bottom: 0;
 }
+
+/* 마이페이지 설정 버튼 */
+.title-with-settings {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    width: 100%;
+}
+
+.settings-button {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 12px;
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 12px;
+    color: rgba(255, 255, 255, 0.8);
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    flex-shrink: 0;
+}
+
+.settings-button:hover {
+    background: rgba(255, 255, 255, 0.15);
+    border-color: rgba(255, 255, 255, 0.3);
+    color: #ffffff;
+}
+
+.settings-icon {
+    font-size: 14px;
+}
+
+.settings-text {
+    white-space: nowrap;
+}
+
+/* 앱 푸터 CSS */
+.app-footer {
+    background: #020617;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    padding: 40px 20px 20px;
+    margin-top: auto;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Apple SD Gothic Neo', 'Noto Sans KR', sans-serif;
+}
+
+/* 푸터 링크 섹션 */
+.footer-links {
+    display: flex;
+    justify-content: flex-start;
+    flex-wrap: wrap;
+    gap: 24px;
+    margin-bottom: 32px;
+    padding-bottom: 24px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.footer-link {
+    color: #B794F6;
+    text-decoration: none;
+    font-size: 14px;
+    font-weight: 500;
+    transition: all 0.3s ease;
+    padding: 8px 12px;
+    border-radius: 8px;
+}
+
+.footer-link:hover {
+    color: #ffffff;
+    background: rgba(183, 148, 246, 0.1);
+    transform: translateY(-1px);
+}
+
+/* 책임 고지 섹션 */
+.footer-disclaimer {
+    margin-bottom: 32px;
+    padding: 20px;
+    background: rgba(255, 255, 255, 0.02);
+    border-radius: 12px;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.footer-disclaimer p {
+    color: rgba(255, 255, 255, 0.7);
+    font-size: 12px;
+    line-height: 1.6;
+    margin-bottom: 12px;
+    text-align: justify;
+}
+
+.footer-disclaimer p:last-child {
+    margin-bottom: 0;
+}
+
+/* 회사 정보 섹션 */
+.footer-company-info {
+    padding : 0 20px;
+    margin-bottom: 24px;
+}
+
+.company-info-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 12px;
+    width:100%;
+    margin: 0;
+}
+
+.company-info-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 0;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.company-info-item:last-child {
+    border-bottom: none;
+}
+
+.info-label {
+    font-size: 13px;
+    font-weight: 500;
+    color: rgba(255, 255, 255, 0.6);
+    min-width: 100px;
+}
+
+.info-value {
+    font-size: 13px;
+    color: rgba(255, 255, 255, 0.9);
+    text-align: right;
+}
+
+.info-email {
+    font-size: 13px;
+    color: #B794F6;
+    text-decoration: none;
+    transition: color 0.3s ease;
+}
+
+.info-email:hover {
+    color: #ffffff;
+}
+
+/* 저작권 섹션 */
+.footer-copyright {
+    text-align: left;
+    padding-top: 20px;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.footer-copyright p {
+    color: rgba(255, 255, 255, 0.5);
+    font-size: 12px;
+    margin: 0;
+}
+
+/* 반응형 디자인 */
+
+/* 태블릿 (768px 이상) */
+@media (min-width: 768px) {
+    .app-footer {
+        padding: 24px 20px;
+    }
+
+    .footer-links {
+        gap: 32px;
+        margin-bottom: 40px;
+    }
+
+    .footer-link {
+        font-size: 15px;
+        padding: 10px 16px;
+    }
+
+    .footer-disclaimer {
+        padding: 24px;
+        margin-bottom: 40px;
+    }
+
+    .footer-disclaimer p {
+        font-size: 13px;
+    }
+
+    .company-info-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 16px;
+    }
+
+    .info-label {
+        font-size: 14px;
+        min-width: 120px;
+    }
+
+    .info-value {
+        font-size: 14px;
+    }
+
+    .info-email {
+        font-size: 14px;
+    }
+
+    .footer-copyright p {
+        font-size: 13px;
+    }
+}
+
+/* 데스크탑 (1024px 이상) */
+@media (min-width: 1024px) {
+    .app-footer {
+        padding: 24px 20px;
+    }
+
+    .footer-links {
+        gap: 40px;
+        margin-bottom: 48px;
+    }
+
+    .footer-disclaimer {
+        padding: 28px;
+        margin-bottom: 48px;
+    }
+
+    .footer-disclaimer p {
+        font-size: 14px;
+    }
+
+    .company-info-grid {
+        max-width: 100%;
+        gap: 20px;
+        margin: 0;
+    }
+}
+
+/* 대형 화면 (1440px 이상) */
+@media (min-width: 1440px) {
+    .app-footer {
+        padding: 24px 20px;
+    }
+
+    .company-info-grid {
+        max-width: 100%;
+        margin: 0;
+    }
+}
+
+/* 작은 화면 (480px 이하) */
+@media (max-width: 480px) {
+    .app-footer {
+        padding: 32px 16px 16px;
+    }
+
+    .footer-links {
+        gap: 16px;
+        margin-bottom: 24px;
+    }
+
+    .footer-link {
+        font-size: 13px;
+        padding: 6px 10px;
+    }
+
+    .footer-disclaimer {
+        padding: 16px;
+        margin-bottom: 24px;
+    }
+
+    .footer-disclaimer p {
+        font-size: 11px;
+    }
+
+    .company-info-item {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 4px;
+        padding: 12px 0;
+    }
+
+    .info-label {
+        font-size: 12px;
+        min-width: auto;
+    }
+
+    .info-value {
+        font-size: 12px;
+        text-align: left;
+    }
+
+    .info-email {
+        font-size: 12px;
+    }
+}
