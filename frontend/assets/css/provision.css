@@ -10,8 +10,7 @@
 /* 메인 콘텐츠 */
 .provision-content {
   flex: 1;
-  padding: 20px;
-  padding-bottom: 100px; /* 하단 네비 공간 */
+  padding: 80px 20px 100px 20px; /* 상단 헤더 공간 추가 (60px + 20px 여백) */
   overflow-y: auto;
 }
 
