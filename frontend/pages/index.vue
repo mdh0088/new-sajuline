@@ -92,10 +92,10 @@
         <span class="nav-icon">🏠</span>
         <span class="nav-label">홈</span>
       </NuxtLink>
-      <NuxtLink to="/ai-fortune" class="nav-item">
+      <!-- <NuxtLink to="/ai-fortune" class="nav-item">
         <span class="nav-icon">🤖</span>
         <span class="nav-label">AI운세</span>
-      </NuxtLink>
+      </NuxtLink> -->
       <NuxtLink to="/events" class="nav-item">
         <span class="nav-icon">🎁</span>
         <span class="nav-label">이벤트</span>

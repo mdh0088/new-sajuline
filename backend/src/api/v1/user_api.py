@@ -47,6 +47,7 @@ from src.schemas.user_schema import (
 )
 from src.common.utils.auth_utils import verify_user_role
 from src.schemas.user_bookmark_schema import UserBookmarkResponse
+from src.schemas.counselor_schema import CounselorSearchItem
 from src.schemas.auth_schema import LoginRequest, LoginResponse
 from src.common.response import APIResponse,APIResponseBuilder, ok, fail
 from src.repositories.inquiry_repository import InquiryRepository
@@ -169,10 +170,11 @@ def get_tm60_chatlog_repository():
 
 
 def get_user_bookmark_service(
-    bookmark_repo: UserBookmarkRepository = Depends(get_user_bookmark_repository)
+    bookmark_repo: UserBookmarkRepository = Depends(get_user_bookmark_repository),
+    review_repo: ConsultationReviewRepository = Depends(get_consultation_review_repository)
 ) -> UserBookmarkService:
-    """사용자 북마크 서비스 의존성 주입"""
-    return UserBookmarkService(bookmark_repo)
+    """사용자 북마크 서비스 의존성 주입 (후기 리포지토리 포함)"""
+    return UserBookmarkService(bookmark_repo, review_repo)
 
 
 def get_consultation_review_service(
@@ -870,6 +872,36 @@ async def get_point_history(
 # =====================
 # 즐겨찾기 API
 # =====================
+
+@router.get(
+    "/bookmarks",
+    response_model=APIResponse,
+    summary="사용자 즐겨찾기 상담사 목록",
+    description=(
+        "t_user_bookmark ⋈ t_counselor (counselor_id) 조인으로 상담사 목록 반환.\n"
+        "조건: t_counselor.is_out = false AND t_counselor.is_show = true.\n"
+        "정렬: t_user_bookmark.created_at DESC. 페이지네이션 지원"
+    ),
+)
+async def list_bookmarks(
+    page: int = Query(1, ge=1, description="페이지 번호"),
+    limit: int = Query(20, ge=1, le=100, description="페이지당 항목 수"),
+    current_user: TokenPayload = Depends(get_current_user),
+    bookmark_service: UserBookmarkService = Depends(get_user_bookmark_service),
+):
+    verify_user_role(current_user)
+    items, total = await bookmark_service.get_favorite_counselors(
+        user_id=current_user.sub,
+        page=page,
+        limit=limit,
+    )
+    return APIResponseBuilder.paginated(
+        data=items,
+        page=page,
+        limit=limit,
+        total=total,
+        message="즐겨찾기 상담사 목록 조회 성공",
+    )
 
 @router.get(
     "/bookmarks/check",
