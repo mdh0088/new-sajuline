@@ -6,13 +6,14 @@
  */
 import { ref, computed, onMounted, watch, readonly } from 'vue'
 import { useRouter } from 'vue-router'
-import { useState } from 'nuxt/app'
+import { useState, useNuxtApp } from 'nuxt/app'
 import { useNotify } from '~/composables/utils/useNotify'
 import { useUserQueries } from '~/composables/api/useUserQueries'
 import { useCounselorQueries } from '~/composables/api/useCounselorQueries'
 import { useAuthQueries } from '~/composables/api/useAuthQueries'
 import { isEmailFormat } from '~/composables/utils/validation'
-import type { LoginRequest, LoginData, UserSession, TokenResponse } from '~/types/user/models'
+import type { LoginRequest, LoginData, UserSession, TokenResponse, UserMypageResponse } from '~/types/user/models'
+import { useUserPoints } from '~/composables/user/useUserPoints'
 import type { APIError } from '~/types/common/api'
 
 /**
@@ -117,6 +118,27 @@ export const useAuth = () => {
     if (process.client) {
       // 유틸리티 함수로 간편하게 환영 알림 표시
       notifySuccess(`🎉 ${data.nickname}님, 환영합니다!`)
+    }
+
+    // 로그인 시 사용자 포인트 동기화 (/api/v1/users/mypage)
+    if (process.client && sessionRole === 'user') {
+      const { $api } = useNuxtApp()
+      const { setPoints } = useUserPoints()
+      // 비동기 요청 (대기하지 않음)
+      ;(async () => {
+        try {
+          const res = await $api<UserMypageResponse>('/api/v1/users/mypage')
+          if ((res as any)?.success && (res as any).data) {
+            // 일부 API 래퍼는 data 래핑, 일부는 바로 반환 - 안전 처리
+            const payload: any = (res as any).data
+            setPoints(payload.current_points)
+          } else if ((res as any)?.current_points !== undefined) {
+            setPoints((res as any).current_points)
+          }
+        } catch (_) {
+          // 포인트 동기화 실패는 치명적이지 않으므로 무시
+        }
+      })()
     }
   }
 

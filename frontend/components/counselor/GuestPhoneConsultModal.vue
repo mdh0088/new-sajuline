@@ -14,13 +14,30 @@
         <div class="modal-header">
           <div class="counselor-profile">
             <div class="counselor-avatar">
-              <span>{{ counselor.emoji }}</span>
+              <img
+                v-if="imageUrl"
+                :src="imageUrl"
+                alt="프로필 이미지"
+                class="w-12 h-12 rounded-full object-cover"
+                width="48"
+                height="48"
+                loading="lazy"
+              />
+              <span v-else>🔮</span>
             </div>
             <div class="counselor-info">
-              <div class="counselor-badge">탑로</div>
+              <div class="counselor-badge">
+                <span
+                  v-for="specialty in counselor.specialties"
+                  :key="specialty"
+                  class="specialty-tag"
+                >
+                  {{ specialty }}
+                </span>
+              </div>
               <div class="counselor-name-group">
-                <span class="counselor-name">{{ counselor.name }}</span>
-                <span class="counselor-number">{{ counselor.number }}번</span>
+                <span class="counselor-name">{{ counselor.nickname }}</span>
+                <span class="counselor-number">#{{ resolvedCode }}</span>
               </div>
             </div>
           </div>
@@ -55,14 +72,14 @@
           </button>
 
           <p class="fee-info">
-            060상담(후불) <strong>{{ counselor.rate060 }}원</strong>(30초)(vat별도)
+            060상담(후불) <strong>{{ resolvedBeforeAmount }}</strong>(30초)(vat별도)
           </p>
 
           <!-- 상담 안내 -->
           <div class="guide-section">
             <p class="guide-title">상담안내</p>
             <p class="guide-text">
-              전화상담 연결 후, 고유번호 {{ counselor.number }}번 누르세요.
+              전화상담 연결 후, 고유번호 {{ resolvedCode }}번 누르세요.
             </p>
           </div>
 
@@ -80,14 +97,15 @@
 </template>
 
 <script setup lang="ts">
+import { computed, onMounted, onUnmounted } from 'vue'
+import { useCdn } from '~/composables/utils/useCdn'
 interface Counselor {
-  id: number
-  name: string
-  number: string
-  emoji: string
+  code: string
+  nickname: string
+  profile_image_url?: string | null
   specialties: string[]
-  pointRate: number
-  rate060: number
+  afterAmount?: number | null
+  beforeAmount?: string | null
 }
 
 interface Props {
@@ -96,10 +114,29 @@ interface Props {
 }
 
 const props = defineProps<Props>()
+const { cdnUrl } = useCdn()
+const imageUrl = computed(() => {
+  const raw = (props.counselor.profile_image_url || '').trim()
+  if (!raw) return ''
+  if (/^https?:\/\//i.test(raw)) return cdnUrl(raw)
+  return cdnUrl('cs', raw)
+})
+
+const resolvedCode = computed(() => {
+  const c: any = props.counselor as any
+  return (c.code ?? c.number ?? c.counselor_code ?? c.id ?? '')
+})
+const resolvedBeforeAmount = computed(() => {
+  const c: any = props.counselor as any
+  if (c.beforeAmount) return c.beforeAmount
+  if (c.before_amount) return c.before_amount
+  if (c.rate060) return `${c.rate060}원`
+  return '0원'
+})
 
 const emit = defineEmits<{
   close: []
-  start060Consult: [counselorId: number]
+  start060Consult: [counselorCode: string]
   goToRegisterLogin: []
 }>()
 
@@ -108,7 +145,7 @@ const closeModal = () => {
 }
 
 const start060Consult = () => {
-  emit('start060Consult', props.counselor.id)
+  emit('start060Consult', resolvedCode.value)
 }
 
 const goToRegisterLogin = () => {
@@ -131,4 +168,5 @@ onMounted(() => {
 
 <style>
 @import '~/assets/css/common/guest-phone-consult-modal.css';
+@import '~/assets/css/common/phone-consult-modal.css';
 </style>

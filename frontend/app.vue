@@ -15,7 +15,6 @@
 <script setup>
 import '~/assets/css/main.css'
 import { slateTheme } from 'notivue'
-import AppFooter from '~/components/common/AppFooter.vue'
 </script>
 
 

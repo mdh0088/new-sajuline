@@ -5,9 +5,10 @@
 from typing import List
 
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, func, delete as sqla_delete
+from sqlalchemy import select, func, and_, delete as sqla_delete
 
 from src.models.user_bookmark_model import UserBookmark
+from src.models.counselor_model import Counselor
 from src.schemas.user_bookmark_schema import UserBookmarkCreate
 from src.common.logging import logger, get_logger_with_request_id
 
@@ -95,3 +96,61 @@ class UserBookmarkRepository:
         )
         result = await self.db.execute(stmt)
         return result.rowcount or 0
+
+    @logger.catch(reraise=True)
+    async def get_counselor_list_by_user(self, user_id: str, skip: int = 0, limit: int = 20) -> list[Counselor]:
+        """
+        사용자가 즐겨찾기한 상담사 목록 조회 (t_user_bookmark ⋈ t_counselor)
+        - 조인 조건: UserBookmark.counselor_id == Counselor.counselor_id
+        - 필터: Counselor.is_out = false AND Counselor.is_show = true
+        - 정렬: UserBookmark.created_at DESC
+        - 페이징: offset/limit
+        반환: Counselor 엔티티 리스트
+        """
+        log = get_logger_with_request_id()
+        log.info("Getting counselor list joined by user bookmarks", user_id=user_id, skip=skip, limit=limit)
+
+        stmt = (
+            select(Counselor)
+            .join(UserBookmark, UserBookmark.counselor_id == Counselor.counselor_id)
+            .where(
+                and_(
+                    UserBookmark.user_id == user_id,
+                    Counselor.is_out.is_(False),
+                    Counselor.is_show.is_(True),
+                )
+            )
+            .order_by(UserBookmark.created_at.desc())
+            .offset(skip)
+            .limit(limit)
+        )
+        result = await self.db.execute(stmt)
+        counselors = list(result.scalars().all())
+        log.info("Joined counselor list retrieved", user_id=user_id, count=len(counselors))
+        return counselors
+
+    @logger.catch(reraise=True)
+    async def get_counselor_count_by_user(self, user_id: str) -> int:
+        """
+        사용자가 즐겨찾기한 상담사 수 (조인/필터 적용)
+        - t_user_bookmark ⋈ t_counselor
+        - Counselor.is_out = false AND Counselor.is_show = true
+        """
+        log = get_logger_with_request_id()
+        log.info("Getting joined counselor count by user bookmarks", user_id=user_id)
+
+        stmt = (
+            select(func.count(Counselor.counselor_id))
+            .join(UserBookmark, UserBookmark.counselor_id == Counselor.counselor_id)
+            .where(
+                and_(
+                    UserBookmark.user_id == user_id,
+                    Counselor.is_out.is_(False),
+                    Counselor.is_show.is_(True),
+                )
+            )
+        )
+        result = await self.db.execute(stmt)
+        count = result.scalar() or 0
+        log.info("Joined counselor count lookup completed", user_id=user_id, count=count)
+        return count
