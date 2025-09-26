@@ -290,6 +290,7 @@
 // AppHeader와 PhoneConsultModal은 자동 import됨
 import { computed, ref, onMounted, onBeforeUnmount, watch, watchEffect } from 'vue'
 import { useRoute, useSeoMeta, navigateTo } from 'nuxt/app'
+import { useUserPoints } from '~/composables/user/useUserPoints'
 import { useNotify } from '~/composables/utils/useNotify'
 import { useCounselorQueries } from '~/composables/api/useCounselorQueries'
 import { useBookmarkQueries } from '~/composables/api/useBookmarkQueries'
@@ -371,8 +372,9 @@ const inquirySentinel = ref<HTMLElement | null>(null)
 const inquiryScrollEl = ref<HTMLElement | null>(null)
 let inquiryObserver: IntersectionObserver | null = null
 
-// 목업 사용자 포인트 정보
-const userPoints = ref(1500)
+// 로그인 유저 포인트 (store)
+const { points: storePoints } = useUserPoints()
+const userPoints = computed(() => storePoints.value)
 
 // 즐겨찾기 상태
 const isFavorite = ref(false)
@@ -422,13 +424,13 @@ const { notifySuccess, notifyError } = useNotify()
 const modalCounselorData = computed(() => {
   if (!counselor.value) return null
   return {
-    id: counselor.value.counselor_id,
-    name: counselor.value.nickname,
-    number: counselor.value.counselor_id,
-    emoji: '🌙',
+    code: (counselor.value as any).counselor_code ?? counselor.value.counselor_id,
+    nickname: counselor.value.nickname,
+    profile_image_url: counselor.value.profile_image_url,
     specialties: specialtyList.value,
-    pointRate: counselor.value.after_amount ?? 0,
-    rate060: 0
+    // after_amount, before_amount may not exist in /public/{counselor_code}; allow undefined
+    afterAmount: (counselor.value as any).after_amount ?? null,
+    beforeAmount: (counselor.value as any).before_amount ?? null
   }
 })
 
@@ -441,21 +443,19 @@ const closePhoneModal = () => {
   showPhoneModal.value = false
 }
 
-const handlePointConsult = (counselorId: number) => {
-  // 포인트 상담 시작 로직
+const handlePointConsult = (counselorId: string) => {
   console.log('포인트 상담 시작:', counselorId)
   // TODO: 포인트 상담 시작 API 호출
 }
 
-const handle060Consult = (counselorId: number) => {
-  // 060 상담 시작 로직
+const handle060Consult = (counselorId: string) => {
   console.log('060 상담 시작:', counselorId)
   // TODO: 060 상담 연결 로직
 }
 
 const goToCharge = () => {
   // 포인트 충전 페이지로 이동
-  navigateTo('/payment/charge')
+  navigateTo('/point')
 }
 
 const goToRegisterLogin = () => {
