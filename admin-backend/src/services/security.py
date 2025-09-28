@@ -5,10 +5,14 @@ from fastapi import Request, HTTPException, status, Depends
 
 from src.schemas.auth_schema import TokenPayload
 from src.services.auth_service import AuthService
-from src.services.deps import get_auth_service
+from fastapi import Depends
 
 
-async def get_current_user(request: Request, auth_service: AuthService = Depends(get_auth_service)) -> TokenPayload:
+def _get_auth_service() -> AuthService:
+    return AuthService()
+
+
+async def get_current_user(request: Request, auth_service: AuthService = Depends(_get_auth_service)) -> TokenPayload:
     access_token = request.cookies.get("access_token")
     if not access_token:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="인증 토큰이 없습니다")
