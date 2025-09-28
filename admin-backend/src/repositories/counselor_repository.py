@@ -33,6 +33,33 @@ class CounselorRepository:
         result = await self.db.execute(stmt)
         return result.rowcount > 0
 
+    async def partial_update(
+        self,
+        counselor_id: str,
+        **fields,
+    ) -> bool:
+        """부분 업데이트. None 값은 무시.
+
+        사용 예:
+        await repo.partial_update(counselor_id,
+            is_show=True,
+            nickname="새닉",
+            profile_image_url="file.png",
+        )
+        """
+        updates = {k: v for k, v in fields.items() if v is not None}
+        if not updates:
+            return False
+        updates["updated_at"] = datetime.utcnow()
+        stmt = (
+            update(Counselor)
+            .where(Counselor.counselor_id == counselor_id)
+            .values(**updates)
+            .execution_options(synchronize_session="evaluate")
+        )
+        result = await self.db.execute(stmt)
+        return result.rowcount > 0
+
     async def get_list(
         self,
         *,
