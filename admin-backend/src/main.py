@@ -16,6 +16,7 @@ from src.config.settings import settings
 from src.api.v1.auth_api import router as auth_router
 from src.api.v1.admin_api import router as admin_router
 from src.api.v1.counselor_api import router as counselor_router
+from src.api.v1.user_api import router as user_router
 from src.common.response import fail
 from src.exceptions.custom_exceptions import BaseAppException
 from src.common.logging.config import setup_logging
@@ -196,6 +197,7 @@ async def general_exception_handler(request: Request, exc: Exception):
 app.include_router(auth_router, prefix="/api/v1")
 app.include_router(admin_router, prefix="/api/v1")
 app.include_router(counselor_router, prefix="/api/v1")
+app.include_router(user_router, prefix="/api/v1")
 
 
 class HealthResponse(BaseModel):
