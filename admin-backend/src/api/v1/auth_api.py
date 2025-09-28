@@ -5,14 +5,36 @@ from fastapi import APIRouter, Depends, Response, Request
 
 from src.common.response import ok, APIResponse
 from src.schemas.auth_schema import LoginRequest, LoginResponse, TokenPayload
-from src.services.deps import (
-    get_admin_service,
-    get_counselor_service,
-    get_auth_service,
-)
 from src.services.admin_service import AdminService
 from src.services.counselor_service import CounselorService
 from src.services.auth_service import AuthService
+from fastapi import Depends
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import Session
+from src.core.database import get_db as get_db_maria, get_db_mssql
+from src.repositories.admin_repository import AdminRepository
+from src.repositories.counselor_repository import CounselorRepository
+from src.repositories.ars.tm60_member_repository import Tm60MemberRepository
+from src.services.ars.tm60_member_service import Tm60MemberService
+
+
+def get_auth_service() -> AuthService:
+    return AuthService()
+
+
+def get_admin_service(
+    admin_repo: AdminRepository = Depends(lambda db=Depends(get_db_maria): AdminRepository(db)),
+    auth_service: AuthService = Depends(get_auth_service),
+) -> AdminService:
+    return AdminService(admin_repo, auth_service)
+
+
+def get_counselor_service(
+    counselor_repo: CounselorRepository = Depends(lambda db=Depends(get_db_maria): CounselorRepository(db)),
+    auth_service: AuthService = Depends(get_auth_service),
+    tm60_service: Tm60MemberService = Depends(lambda mssql=Depends(get_db_mssql): Tm60MemberService(Tm60MemberRepository(mssql))),
+) -> CounselorService:
+    return CounselorService(counselor_repo, auth_service, tm60_service)
 from src.common.utils.auth_utils import verify_admin_role, verify_counselor_role
 
 
