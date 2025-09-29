@@ -98,4 +98,14 @@ class UserRepository:
         result = await self.db.execute(stmt)
         return result.rowcount > 0
 
+    async def get_all_by_grade(self, grade_code: str) -> List[User]:
+        """지정된 grade_code의 모든 사용자 created_at DESC 정렬로 조회 (페이징 없음)"""
+        stmt = (
+            select(User)
+            .where(User.grade_code == grade_code)
+            .order_by(desc(User.created_at))
+        )
+        result = await self.db.execute(stmt)
+        return list(result.scalars().all())
+
 
