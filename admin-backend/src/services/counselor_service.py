@@ -20,7 +20,7 @@ from src.core.database import get_db_mssql
 from sqlalchemy.orm import Session
 from src.repositories.ars.tm60_member_repository import Tm60MemberRepository
 from src.services.ars.tm60_member_service import Tm60MemberService
-from src.common.storage.s3 import upload_profile_image
+from src.common.storage.s3 import upload_public_image
 
 
 class CounselorService:
@@ -199,7 +199,7 @@ class CounselorService:
             content = await profile_image.read()
             if not content:
                 raise ValidationError("이미지 파일이 비어있습니다")
-            filename = upload_profile_image(content=content, original_name=profile_image.filename or "image.png")
+            filename = upload_public_image(subdirectory="cs", content=content, original_name=profile_image.filename or "image.png")
             updates["profile_image_url"] = filename
 
         updated = await self.counselor_repo.partial_update(counselor_id, **updates)

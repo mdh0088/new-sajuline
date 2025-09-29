@@ -849,6 +849,21 @@ CREATE TABLE `t_user_bookmark` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 
+-- == 2025-09-30 추가 스키마 ==
 
-
-
+CREATE TABLE `t_mileage_product` (
+  `mileage_id` int(11) NOT NULL AUTO_INCREMENT,
+  `m_product_name` varchar(100) NOT NULL COMMENT '상품명',
+  `m_product_value` int(11) NOT NULL COMMENT '상품가격',
+  `charge_point` int(11) NOT NULL COMMENT '충전 포인트',
+  `m_product_img` varchar(100) DEFAULT NULL,
+  `image_url` varchar(100) DEFAULT NULL,
+  `vaild_from` datetime DEFAULT NULL COMMENT '상품 노출 시작일',
+  `vaild_until` datetime DEFAULT NULL COMMENT '상품 노출 종료일',
+  `ord` int(11) NOT NULL COMMENT '노출 순번',
+  `description` text DEFAULT NULL COMMENT '상품설명',
+  `is_active` tinyint(1) NOT NULL DEFAULT '0' COMMENT '사용유무',
+  `created_at` datetime NOT NULL DEFAULT current_timestamp(),
+  `updated_at` datetime DEFAULT NULL ON UPDATE current_timestamp(),
+  PRIMARY KEY (`mileage_id`)
+) ENGINE=InnoDB AUTO_INCREMENT=8 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
