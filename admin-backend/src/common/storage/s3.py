@@ -1,8 +1,8 @@
 """
 S3 업로드 유틸리티 (관리자 백엔드)
 
-- settings.s3_directory 하위에 하드코딩된 "/cs" 디렉토리로 업로드
-- DB에는 파일명만 저장 (프론트에서 cdnUrl('cs', filename)로 렌더)
+- settings.s3_directory 하위의 서브디렉토리(예: "cs", "grade")를 파라미터로 받아 업로드
+- DB에는 파일명만 저장 (프론트/게이트웨이에서 CDN URL로 렌더)
 """
 from __future__ import annotations
 
@@ -52,15 +52,16 @@ def _gen_filename(original_name: str, data_head: bytes | None = None) -> str:
     return f"{digest}{_safe_ext(original_name)}"
 
 
-def upload_profile_image(*, content: bytes, original_name: str) -> str:
+def upload_public_image(*, subdirectory: str, content: bytes, original_name: str) -> str:
     """
-    프로필 이미지 업로드. 성공 시 저장된 파일명만 반환.
-    - S3 Key: f"{settings.s3_directory}/cs/{filename}"
+    범용 이미지 업로드. 성공 시 저장된 파일명만 반환.
+    - S3 Key: f"{settings.s3_directory}/{subdirectory}/{filename}"
     - Return: filename (예: "abcdef123.png")
     """
     log = get_logger_with_request_id()
     filename = _gen_filename(original_name, content[:64] if content else None)
-    key = f"{settings.s3_directory.strip('/')}/cs/{filename}"
+    safe_subdir = (subdirectory or "").strip("/") or "misc"
+    key = f"{settings.s3_directory.strip('/')}/{safe_subdir}/{filename}"
 
     try:
         client = get_s3_client()

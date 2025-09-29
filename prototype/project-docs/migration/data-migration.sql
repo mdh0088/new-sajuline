@@ -832,6 +832,24 @@ SELECT
 	T1.USER_REGIST_DATE AS updated_at
 FROM TBL_CS_FAQ T1;
 
+
+INSERT INTO t_inquiry
+(
+	inquirer_type, inquirer_id, counselor_id, category, title, content, is_read, reply_content, created_at, answered_at
+)
+SELECT
+	'USER' AS inquirer_type,
+	(SELECT USER_ID FROM TBL_USER WHERE IDX = T1.USER_IDX ) AS inquirer_id,
+	NULL AS counselor_id,
+	'USER_TO_ADMIN' AS category,
+	USER_TITLE AS title,
+	T1.USER_CONT AS content,
+	1 as is_read,
+	T1.ADMIN_CONT AS reply_content,
+	T1.USER_REGIST_DATE AS created_at,
+	T1.ADMIN_REGIST_DATE  as answered_at
+FROM TBL_ADMIN_FAQ T1;
+
 -- INSERT INTO t_inquiry (
 --     inquiry_code,
 --     inquirer_type,
