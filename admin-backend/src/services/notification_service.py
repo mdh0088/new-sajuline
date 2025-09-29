@@ -16,3 +16,5 @@ class NotificationService:
         return [NotificationLogItem.model_validate(r, from_attributes=True) for r in rows]
 
 
+
+

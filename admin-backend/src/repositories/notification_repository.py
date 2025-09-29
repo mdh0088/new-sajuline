@@ -26,3 +26,5 @@ class NotificationRepository:
         return list(result.scalars().all())
 
 
+
+
