@@ -27,3 +27,5 @@ class NotificationLogItem(BaseModel):
 class NotificationLogListResponse(BaseModel):
     logs: List[NotificationLogItem]
 
+
+

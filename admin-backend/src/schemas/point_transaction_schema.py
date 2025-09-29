@@ -24,3 +24,5 @@ class PointTransactionItem(BaseModel):
 class PointTransactionListResponse(BaseModel):
     items: List[PointTransactionItem]
 
+
+
