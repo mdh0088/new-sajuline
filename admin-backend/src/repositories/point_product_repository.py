@@ -52,3 +52,4 @@ class PointProductRepository:
         return result.rowcount > 0
 
 
+

@@ -56,3 +56,4 @@ class Notice(Base):
         return f"<Notice(id={self.notice_id}, type={self.notice_type}, title={self.title})>"
 
 
+

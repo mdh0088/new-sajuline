@@ -50,3 +50,4 @@ class PaymentDetailResponse(BaseModel):
     user: Dict[str, Any]
 
 
+
