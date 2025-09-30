@@ -50,3 +50,4 @@ class PointProduct(Base):
         return f"<PointProduct(product_code={self.product_code}, name={self.product_name}, active={self.is_active})>"
 
 
+

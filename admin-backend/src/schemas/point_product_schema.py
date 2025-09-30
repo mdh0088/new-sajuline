@@ -64,3 +64,4 @@ class PointProductDeleteResponse(BaseModel):
     updated: bool
 
 
+
