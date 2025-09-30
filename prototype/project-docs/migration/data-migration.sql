@@ -1208,5 +1208,41 @@ FROM TBL_USER_BOOKMARK TUB
 	and T1.counselor_id is not null;
 
 
+-- == 2025-09-30 추가 데이터 마이그레이션 ==
 
+CREATE TABLE `TBL_MILEAGE_PRODUCT` (
+  `M_PRODUCT_IDX` int(11) NOT NULL AUTO_INCREMENT,
+  `M_PRODUCT_NAME` varchar(100) NOT NULL COMMENT '상품명',
+  `M_PRODUCT_VALUE` int(11) NOT NULL COMMENT '상품가격',
+  `CHARGE_POINT` int(11) NOT NULL COMMENT '충전 포인트',
+  `M_PRODUCT_IMG` varchar(100) DEFAULT NULL,
+  `FILE_NM` varchar(100) DEFAULT NULL,
+  `START_DT` datetime DEFAULT NULL COMMENT '상품 노출 시작일',
+  `END_DT` datetime DEFAULT NULL COMMENT '상품 노출 종료일',
+  `ORD` int(11) NOT NULL COMMENT '노출 순번',
+  `DESCRIPTION` text DEFAULT NULL COMMENT '상품설명',
+  `IS_USE` char(1) NOT NULL DEFAULT 'N' COMMENT '사용유무',
+  `REGIST_DATE` datetime NOT NULL,
+  `UPDATE_DATE` datetime DEFAULT NULL,
+  PRIMARY KEY (`M_PRODUCT_IDX`),
+  KEY `IDX_M_PRODUCT_NAME` (`M_PRODUCT_NAME`)
+) ENGINE=InnoDB AUTO_INCREMENT=8 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
+INSERT INTO t_mileage_product
+(
+	m_product_name, m_product_value, charge_point, m_product_img, image_url, valid_from, valid_until, ord, description, is_active, created_at, updated_at
+)
+SELECT
+    M_PRODUCT_NAME,
+    M_PRODUCT_VALUE,
+    CHARGE_POINT,
+    M_PRODUCT_IMG,
+    FILE_NM,
+    START_DT,
+    END_DT,
+    ORD,
+    DESCRIPTION,
+    CASE IS_USE WHEN 'Y' THEN 1 ELSE 0 END,
+    REGIST_DATE,
+    UPDATE_DATE
+FROM TBL_MILEAGE_PRODUCT;
