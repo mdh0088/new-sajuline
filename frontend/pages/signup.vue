@@ -95,7 +95,7 @@ import { JoinType, Gender } from '~/types/user/models'
 import type { UserCreateRequest } from '~/types/user/models'
 import type { SignupFormData } from '~/types/auth/signup'
 // CSS 파일 import
-import '~/assets/css/signup/common.css'
+import '~/assets/css/common/signup-common.css'
 
 definePageMeta({
   layout: false
