@@ -1,6 +1,5 @@
 <template>
   <div class="min-h-screen bg-slate-950 text-white">
-    <AppHeader title="즐겨찾기한 상담사" />
 
     <main class="pt-[60px] pb-24">
       <div class="px-5 py-6">
@@ -39,7 +38,6 @@
       </div>
     </main>
 
-    <AppBottomNavi />
   </div>
 </template>
 

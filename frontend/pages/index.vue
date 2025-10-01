@@ -1,18 +1,5 @@
 <template>
   <div class="min-h-screen bg-slate-950 text-white">
-    <!-- 헤더 -->
-    <header class="header">
-      <div class="header-top">
-        <div class="logo">사주라인</div>
-        <div class="header-actions">
-          <div class="coin-balance" @click="$router.push('/point')">
-            <span>💰</span>
-            <span>{{ userPoints }}P</span>
-          </div>
-        </div>
-      </div>
-    </header>
-
     <!-- 메인 콘텐츠 -->
     <main class="main-content">
       <!-- 히어로 배너 -->
@@ -86,32 +73,8 @@
       </section>
     </main>
 
-    <!-- 하단 네비게이션 -->
-    <nav class="bottom-nav">
-      <NuxtLink to="/" class="nav-item active">
-        <span class="nav-icon">🏠</span>
-        <span class="nav-label">홈</span>
-      </NuxtLink>
-      <!-- <NuxtLink to="/ai-fortune" class="nav-item">
-        <span class="nav-icon">🤖</span>
-        <span class="nav-label">AI운세</span>
-      </NuxtLink> -->
-      <NuxtLink to="/events" class="nav-item">
-        <span class="nav-icon">🎁</span>
-        <span class="nav-label">이벤트</span>
-      </NuxtLink>
-      <NuxtLink to="/user/favorite" class="nav-item">
-        <span class="nav-icon">⭐</span>
-        <span class="nav-label">즐겨찾기</span>
-      </NuxtLink>
-      <NuxtLink to="/user/mypage" class="nav-item">
-        <span class="nav-icon">👤</span>
-        <span class="nav-label">마이</span>
-      </NuxtLink>
-    </nav>
-
     <!-- 플로팅 버튼 -->
-    <button class="floating-button" @click="openChat">💬</button>
+    <!-- <button class="floating-button" @click="openChat">💬</button> -->
   </div>
 </template>
 
@@ -126,6 +89,7 @@ import { useHead, useRoute } from 'nuxt/app'
 import { useNotify } from '~/composables/utils/useNotify'
 import MainBannerCarousel from '~/components/home/MainBannerCarousel.vue'
 import CounselorCardCompact from '~/components/counselor/CounselorCardCompact.vue'
+import AppBottomNavi from '~/components/common/AppBottomNavi.vue'
 import { useCounselorQueries } from '~/composables/api/useCounselorQueries'
 import type { CounselorSearchParams, CounselorSearchItem } from '~/types/counselor/search'
 

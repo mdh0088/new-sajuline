@@ -1,32 +1,29 @@
 <template>
-  <nav class="fixed bottom-0 left-0 right-0 bg-slate-950/95 backdrop-blur-xl border-t border-white/10 px-5 py-3 z-50 pointer-events-auto">
-    <div class="flex justify-around max-w-md mx-auto">
-      <button 
-        class="flex flex-col items-center gap-1 text-purple-400 transition-colors"
-        @click="handleNavClick('home')"
-      >
-        <span class="text-xl">🏠</span>
-        <span class="text-xs font-medium">홈</span>
-      </button>
-      <button
-        class="flex flex-col items-center gap-1 text-white/60 hover:text-white/80 transition-colors"
-        @click="handleNavClick('fortune')"
-      >
-        <span class="text-xl">🔮</span>
-        <span class="text-xs font-medium">운세</span>
-      </button>
-      <button
-        class="flex flex-col items-center gap-1 text-white/60 hover:text-white/80 transition-colors"
-        @click="handleNavClick('chat')"
-      >
-        <span class="text-xl">💬</span>
-        <span class="text-xs font-medium">상담</span>
-      </button>
-      <NuxtLink :to="mypagePath" class="flex flex-col items-center gap-1 text-white/60 hover:text-white/80 transition-colors">
-        <span class="text-xl">👤</span>
-        <span class="text-xs font-medium">마이페이지</span>
-      </NuxtLink>
-    </div>
+  <nav class="bottom-nav" style="background: rgba(10, 10, 15, 0.95) !important; backdrop-filter: blur(10px) !important; position: sticky !important; bottom: 0 !important; z-index: 9999 !important; margin-top: auto !important;">
+    <NuxtLink to="/" :class="['nav-item', { active: $route.path === '/' }]">
+      <span class="nav-icon">🏠</span>
+      <span class="nav-label">홈</span>
+    </NuxtLink>
+
+    <NuxtLink to="/user/favorite" :class="['nav-item', { active: $route.path === '/user/favorite' }]">
+      <span class="nav-icon">⭐</span>
+      <span class="nav-label">즐겨찾기</span>
+    </NuxtLink>
+
+    <NuxtLink to="/search" :class="['nav-item', { active: $route.path === '/search' }]">
+      <span class="nav-icon">🔍</span>
+      <span class="nav-label">검색</span>
+    </NuxtLink>
+
+    <NuxtLink to="/events" :class="['nav-item', { active: $route.path === '/events' }]">
+      <span class="nav-icon">🎁</span>
+      <span class="nav-label">이벤트</span>
+    </NuxtLink>
+
+    <NuxtLink :to="mypagePath" :class="['nav-item', { active: $route.path.includes('/mypage') }]">
+      <span class="nav-icon">👤</span>
+      <span class="nav-label">마이</span>
+    </NuxtLink>
   </nav>
 </template>
 
@@ -50,3 +47,7 @@ const handleNavClick = (tab: 'home' | 'fortune' | 'chat' | 'profile') => {
   if (tab === 'profile') return navigateTo(mypagePath.value)
 }
 </script>
+
+<style scoped>
+@import '~/assets/css/main-page.css';
+</style>

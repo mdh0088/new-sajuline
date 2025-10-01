@@ -2,53 +2,49 @@
 
 /* 즐겨찾기 리스트 그리드 */
 .favorite-list {
-  display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 16px;
-  padding: 16px;
+  gap: 20px;
 }
 
 /* 즐겨찾기 아이템 */
 .favorite-item {
-  background: rgba(255, 255, 255, 0.03);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 20px;
-  padding: 20px;
   cursor: pointer;
   transition: all 0.3s ease;
   position: relative;
-  overflow: hidden;
+  margin-bottom: 12px;
 }
 
 .favorite-item:hover {
-  background: rgba(147, 51, 234, 0.08);
   transform: translateY(-2px);
-  box-shadow: 0 4px 20px rgba(147, 51, 234, 0.2);
 }
 
 /* 즐겨찾기 해제 버튼 */
 .unfavorite-button {
   position: absolute;
-  top: 16px;
-  right: 16px;
-  width: 32px;
-  height: 32px;
-  background: rgba(255, 107, 107, 0.2);
-  color: #ff6b6b;
-  border: none;
+  top: -4px;
+  right: -4px;
+  width: 28px;
+  height: 28px;
+  background: rgba(255, 107, 107, 0.95);
+  color: #ffffff;
+  border: 2px solid rgba(255, 255, 255, 0.8);
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
   transition: all 0.3s ease;
-  font-size: 16px;
-  z-index: 1;
+  font-size: 14px;
+  font-weight: bold;
+  z-index: 20;
+  box-shadow: 0 3px 12px rgba(255, 107, 107, 0.6);
 }
 
 .unfavorite-button:hover {
-  background: rgba(255, 107, 107, 0.3);
-  transform: scale(1.1);
+  background: rgba(255, 107, 107, 1);
+  border-color: rgba(255, 255, 255, 0.5);
+  transform: scale(1.05);
+  box-shadow: 0 3px 12px rgba(255, 107, 107, 0.6);
 }
 
 /* 상담사 헤더 */
@@ -293,12 +289,16 @@
 @media (max-width: 768px) {
   .favorite-list {
     grid-template-columns: 1fr;
-    padding: 12px;
-    gap: 12px;
+    padding: 8px;
+    gap: 16px;
   }
 
-  .favorite-item {
-    padding: 16px;
+  .unfavorite-button {
+    top: -3px;
+    right: -3px;
+    width: 26px;
+    height: 26px;
+    font-size: 13px;
   }
 
   .item-thumbnail {
@@ -328,11 +328,16 @@
 
 @media (max-width: 480px) {
   .favorite-list {
-    padding: 8px;
+    padding: 6px;
+    gap: 12px;
   }
 
-  .favorite-item {
-    padding: 12px;
+  .unfavorite-button {
+    top: -2px;
+    right: -2px;
+    width: 24px;
+    height: 24px;
+    font-size: 12px;
   }
 
   .counselor-header {

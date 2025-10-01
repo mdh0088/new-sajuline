@@ -1,13 +1,5 @@
 <template>
   <div class="signup-container">
-    <!-- 헤더 -->
-    <header class="header">
-      <div class="header-top">
-        <button class="back-button" @click="$router.push('/')">←</button>
-        <h1 class="header-title">회원가입</h1>
-      </div>
-    </header>
-
     <!-- 진행 표시 (완료 단계에서는 숨김) -->
     <div class="progress-bar" v-if="currentStep < 5">
       <div class="progress-fill" :style="`width: ${(Math.min(currentStep, totalSteps) / totalSteps) * 100}%`"></div>

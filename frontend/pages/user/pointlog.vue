@@ -1,6 +1,5 @@
 <template>
   <div class="min-h-screen bg-slate-950 text-white">
-    <AppHeader />
 
     <main class="pt-[60px] pb-24">
       <!-- 검색 영역 -->
@@ -148,7 +147,6 @@
       </div>
     </main>
 
-    <AppBottomNavi />
   </div>
 </template>
 

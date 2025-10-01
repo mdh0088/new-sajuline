@@ -1,8 +1,5 @@
 <template>
   <div class="membership-page">
-    <!-- 헤더 -->
-    <AppHeader title="멤버십 혜택" :show-back="true" />
-
     <!-- 메인 콘텐츠 -->
     <main class="membership-content">
       <!-- 인트로 섹션 -->
@@ -105,9 +102,6 @@
         </ul>
       </section>
     </main>
-
-    <!-- 하단 네비게이션 -->
-    <AppBottomNavi />
   </div>
 </template>
 

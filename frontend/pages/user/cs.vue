@@ -1,6 +1,5 @@
 <template>
   <div class="min-h-screen bg-slate-950 text-white">
-    <AppHeader />
 
     <!-- 메인 콘텐츠 -->
     <main class="pt-[60px] pb-24">
@@ -148,7 +147,6 @@
       </NuxtLink>
     </main>
 
-    <AppBottomNavi />
   </div>
 </template>
 

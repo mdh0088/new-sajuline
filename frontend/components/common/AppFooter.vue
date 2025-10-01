@@ -1,5 +1,5 @@
 <template>
-  <footer class="app-footer">
+  <footer class="app-footer" style="margin-top: 40px !important; margin-bottom: 100px !important; padding: 20px !important; background: rgba(15, 15, 25, 0.8) !important; border-radius: 12px !important;">
     <!-- 메인 링크 섹션 -->
     <div class="footer-links">
       <div class="footer-link" @click="goProvision">이용약관</div>
