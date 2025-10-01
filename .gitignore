@@ -86,3 +86,4 @@ docker-compose.override.yml
 *.sql
 *.dump
 *.bak
+*.sql
