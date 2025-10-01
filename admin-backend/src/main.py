@@ -24,6 +24,7 @@ from src.api.v1.notice_api import router as notice_router
 from src.api.v1.payment_api import router as payment_router
 from src.api.v1.inquiry_api import router as inquiry_router
 from src.api.v1.promotion_api import router as promotion_router
+from src.api.v1.mileage_api import router as mileage_router
 from src.common.response import fail
 from src.exceptions.custom_exceptions import BaseAppException
 from src.common.logging.config import setup_logging
@@ -212,6 +213,7 @@ app.include_router(payment_router, prefix="/api/v1")
 app.include_router(notice_router, prefix="/api/v1")
 app.include_router(inquiry_router, prefix="/api/v1")
 app.include_router(promotion_router, prefix="/api/v1")
+app.include_router(mileage_router, prefix="/api/v1")
 
 
 class HealthResponse(BaseModel):

@@ -67,3 +67,4 @@ class PointProductService:
         return PointProductDeleteResponse(product_id=product_id, updated=updated)
 
 
+
