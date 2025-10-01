@@ -119,6 +119,6 @@ const openTermsModal = (type: string) => {
 </script>
 
 <style>
-@import '~/assets/css/signup/common.css';
+@import '~/assets/css/common/signup-common.css';
 @import '~/assets/css/signup/signup_step4.css';
 </style>

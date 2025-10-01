@@ -55,5 +55,5 @@ const handleGoogleLogin = () => {
 </script>
 
 <style>
-@import '~/assets/css/login/common.css';
+@import '~/assets/css/common/auth-common.css';
 </style>

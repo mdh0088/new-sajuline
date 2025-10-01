@@ -94,7 +94,7 @@
 
 <script setup lang="ts">
 // 인증 도메인 CSS 로드
-import '~/assets/css/login/common.css'
+import '~/assets/css/common/auth-common.css'
 
 // SEO 및 메타 데이터 설정
 useHead({
