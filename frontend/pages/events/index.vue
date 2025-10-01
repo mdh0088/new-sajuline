@@ -1,25 +1,7 @@
 <template>
-  <div class="event-page">
-    <!-- 헤더 -->
-    <header class="event-header">
-      <div class="event-header-top">
-        <button class="event-back-button" @click="$router.back()">
-          <Icon name="mdi:arrow-left" />
-        </button>
-        <h1 class="event-header-title">이벤트</h1>
-        <div class="event-header-actions">
-          <button class="event-icon-btn">
-            <Icon name="mdi:magnify" />
-          </button>
-          <button class="event-icon-btn" @click="$router.push('/user/mypage')">
-            <Icon name="mdi:account" />
-          </button>
-        </div>
-      </div>
-    </header>
-
+  <div class="min-h-screen bg-slate-950 text-white">
     <!-- 메인 콘텐츠 -->
-    <main class="event-main-content">
+    <main class="main-content">
       <!-- 이벤트 리스트 -->
       <div v-if="items.length > 0" class="event-list">
         <NuxtLink
@@ -87,14 +69,13 @@
       </div>
     </main>
 
-    <!-- 하단 네비게이션 -->
-    <AppBottomNavi />
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref, computed } from 'vue'
 import { useEventApi } from '~/composables/api/useEvent'
+import '~/assets/css/main-page.css'
 import '~/assets/css/event/list.css'
 
 const { useEventList } = useEventApi()
@@ -155,3 +136,9 @@ const changePage = (page: number) => {
 
 // 버튼은 상세 링크로 대체되므로 추가 액션 없음
 </script>
+
+<style scoped>
+.main-content {
+  padding: 20px;
+}
+</style>

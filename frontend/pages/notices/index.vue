@@ -1,7 +1,5 @@
 <template>
   <div class="notice-page">
-    <!-- 헤더 -->
-    <AppHeader title="공지사항" :show-back="true" />
 
     <!-- 메인 콘텐츠 -->
     <main class="main-content">
@@ -99,7 +97,6 @@
     </main>
 
     <!-- 하단 네비게이션 -->
-    <AppBottomNavi />
   </div>
 </template>
 
@@ -258,7 +255,6 @@ useHead({
 
 /* 메인 콘텐츠 */
 .main-content {
-    margin-top: 60px;
     padding: 20px;
     padding-bottom: 80px;
     max-width: 100%;

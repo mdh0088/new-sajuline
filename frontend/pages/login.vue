@@ -1,24 +1,5 @@
 <template>
   <div class="auth-container">
-    <!-- 헤더 -->
-    <header class="auth-header">
-      <div class="flex justify-between items-center px-5 py-4 h-15">
-        <button 
-          @click="goBack"
-          class="w-9 h-9 bg-transparent hover:bg-white/10 rounded-xl flex items-center justify-center text-xl transition-all duration-300 active:scale-95"
-          aria-label="뒤로가기"
-        >
-          ←
-        </button>
-        
-        <h1 class="absolute left-1/2 transform -translate-x-1/2 text-lg font-semibold">
-          로그인
-        </h1>
-        
-        <div class="w-9"></div> <!-- 헤더 균형 맞추기 -->
-      </div>
-    </header>
-
     <!-- 메인 콘텐츠 -->
     <main class="auth-main">
       <div class="max-w-md mx-auto">

@@ -1,7 +1,5 @@
 <template>
   <div class="min-h-screen bg-slate-950 text-white p-6">
-    <AppHeader />
-
     <main class="pt-[60px] max-w-lg mx-auto">
       <h1 class="text-2xl font-bold mb-4">권한 조회</h1>
       <div class="rounded-2xl border border-white/10 bg-white/5 p-5">

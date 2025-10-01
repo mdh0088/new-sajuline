@@ -1,10 +1,13 @@
 <template>
   <NuxtLayout>
     <NuxtRouteAnnouncer />
-    <NuxtPage />
-
-    <!-- 전역 푸터 -->
-    <AppFooter />
+    <div style="display: flex; flex-direction: column;">
+      <div style="flex: 1;">
+        <NuxtPage />
+      </div>
+      <!-- 전역 푸터를 페이지 하단에 배치 -->
+      <AppFooter />
+    </div>
 
     <Notivue v-slot="item">
       <Notification :item="item" :theme="slateTheme" />

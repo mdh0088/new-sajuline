@@ -1,10 +1,5 @@
 <template>
   <div class="counselor-detail-page">
-    <!-- 헤더 -->
-    <AppHeader
-      title="상담사 상세"
-      :show-back="true"
-    />
 
     <!-- 메인 콘텐츠 -->
     <div class="main-content">

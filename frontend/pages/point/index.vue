@@ -1,17 +1,5 @@
 <template>
   <div class="min-h-screen bg-slate-950 text-white">
-    <!-- 헤더 -->
-    <header class="header">
-      <div class="header-top">
-        <button class="back-button" @click="$router.back()">←</button>
-        <h1 class="header-title">충전하기</h1>
-        <div class="header-actions">
-          <button class="icon-btn" @click="$router.push('/search')">🔍</button>
-          <button class="icon-btn" @click="$router.push('/login')">👤</button>
-        </div>
-      </div>
-    </header>
-
     <!-- 메인 콘텐츠 -->
     <main class="main-content">
       <!-- 현재 포인트 -->
@@ -160,25 +148,6 @@
       </button>
     </div>
 
-    <!-- 하단 네비게이션 -->
-    <nav class="bottom-nav">
-      <NuxtLink to="/" class="nav-item">
-        <span class="nav-icon">🏠</span>
-        <span class="nav-label">홈</span>
-      </NuxtLink>
-      <NuxtLink to="/events" class="nav-item">
-        <span class="nav-icon">🎁</span>
-        <span class="nav-label">이벤트</span>
-      </NuxtLink>
-      <NuxtLink to="/user/favorite" class="nav-item">
-        <span class="nav-icon">⭐</span>
-        <span class="nav-label">즐겨찾기</span>
-      </NuxtLink>
-      <NuxtLink to="/user/mypage" class="nav-item">
-        <span class="nav-icon">👤</span>
-        <span class="nav-label">마이</span>
-      </NuxtLink>
-    </nav>
 
     <!-- PC 결제 모달 -->
     <div v-if="showPaymentModal" class="payment-modal-backdrop" @click.self="showPaymentModal = false">
@@ -217,8 +186,7 @@ useHead({
 
 // 페이지 메타 설정
 definePageMeta({
-  requiresAuth: true,
-  layout: 'default'
+  requiresAuth: true
 })
 
 // 현재 포인트 (임시 값: 실제로는 사용자 포인트 API로 교체 가능)

@@ -1,25 +1,7 @@
 <template>
-  <div class="event-detail-page">
-    <!-- 헤더 -->
-    <header class="event-header">
-      <div class="event-header-top">
-        <button class="event-back-button" @click="$router.back()">
-          <Icon name="mdi:arrow-left" />
-        </button>
-        <h1 class="event-header-title">이벤트 상세</h1>
-        <div class="event-header-actions">
-          <button class="event-icon-btn">
-            <Icon name="mdi:magnify" />
-          </button>
-          <button class="event-icon-btn" @click="$router.push('/user/mypage')">
-            <Icon name="mdi:account" />
-          </button>
-        </div>
-      </div>
-    </header>
-
+  <div class="min-h-screen bg-slate-950 text-white">
     <!-- 메인 콘텐츠 -->
-    <main class="event-main-content">
+    <main class="main-content">
       <div v-if="event" class="event-detail">
         <!-- 배너 이미지 (있을 때만) -->
         <div v-if="event.banner_image_url" class="event-detail-thumbnail">
@@ -68,8 +50,6 @@
       </div>
     </main>
 
-    <!-- 하단 네비게이션 -->
-    <AppBottomNavi />
   </div>
 </template>
 
@@ -78,6 +58,7 @@ import { computed } from 'vue'
 import { useRoute } from 'vue-router'
 import { useEventApi } from '~/composables/api/useEvent'
 import { useCdn } from '~/composables/utils/useCdn'
+import '~/assets/css/main-page.css'
 import '~/assets/css/event/detail.css'
 
 const route = useRoute()
@@ -87,3 +68,9 @@ const { cdnUrl } = useCdn()
 
 const { data: event } = useEventDetail(eventId)
 </script>
+
+<style scoped>
+.main-content {
+  padding: 20px;
+}
+</style>
