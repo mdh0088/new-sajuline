@@ -225,8 +225,7 @@
 }
 
 .charge-item.selected {
-  border-color: #9333EA;
-  background: rgba(147, 51, 234, 0.1);
+  background: linear-gradient(135deg, #561d8a 0%, #7e13df 100%);
 }
 
 .charge-item:active {
@@ -245,9 +244,10 @@
 }
 
 .charge-amount {
-  font-size: 24px;
+  font-size: 20px;
   font-weight: 700;
   margin-bottom: 4px;
+  color:#ffffff;
 }
 
 .charge-bonus {
@@ -431,7 +431,7 @@
 }
 
 .terms-link {
-  color: #B794F6;
+  color: #bc71ff;
   text-decoration: none;
 }
 
@@ -453,7 +453,7 @@
 .summary-title {
   font-size: 16px;
   font-weight: 600;
-  color: #B794F6;
+  color: #bc71ff;
   display: flex;
   align-items: center;
   gap: 8px;
@@ -490,7 +490,7 @@
 }
 
 .amount-negative { color: #FF6B6B; }
-.amount-positive { color: #22C55E; }
+.amount-positive { color: #ffffff; }
 
 .point-value {
   font-size: 16px;
@@ -507,7 +507,7 @@
 .payment-amount {
   font-size: 20px;
   font-weight: 600;
-  color: #B794F6;
+  color: #bc71ff;
 }
 
 .summary-divider {

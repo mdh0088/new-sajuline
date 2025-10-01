@@ -1,6 +1,5 @@
 <template>
   <div class="min-h-screen bg-slate-950 text-white">
-    <AppHeader title="상담 내역" />
 
     <main class="pt-[60px] pb-24">
       <div class="px-5 py-6">
@@ -78,7 +77,6 @@
       </div>
     </main>
 
-    <AppBottomNavi />
 
     <!-- 후기 작성 모달 -->
     <div

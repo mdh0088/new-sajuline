@@ -1,6 +1,5 @@
 <template>
   <div class="min-h-screen bg-slate-950 text-white">
-    <AppHeader />
 
     <main class="pt-[60px] pb-24">
       <!-- 상담사 마이페이지: 프로토타입 반영 -->
@@ -248,7 +247,6 @@
       </section>
     </main>
 
-    <AppBottomNavi />
   </div>
 </template>
 

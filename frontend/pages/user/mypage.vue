@@ -1,8 +1,7 @@
 <template>
-  <div class="min-h-screen bg-slate-950 text-white">
-    <AppHeader />
+  <div class="min-h-screen text-white" style="background: linear-gradient(180deg, rgb(134 0 255 / 15%) 0%, transparent 100%);">
 
-    <main class="pt-[60px] pb-24">
+    <main class="pb-24">
       <!-- 유저 마이페이지: 프로토타입 반영 -->
       <section class="px-5 py-6">
 
@@ -190,14 +189,11 @@
       </section>
     </main>
 
-    <AppBottomNavi />
   </div>
 </template>
 
 <script setup lang="ts">
 import auth from '~/middleware/auth'
-import AppHeader from '~/components/common/AppHeader.vue'
-import AppBottomNavi from '~/components/common/AppBottomNavi.vue'
 import { computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { useUserQueries } from '~/composables/api/useUserQueries'
@@ -281,6 +277,31 @@ const goEdit = () => router.push('/user/edit')
 .menu-right{color:rgba(255,255,255,.3);font-size:14px}
 .point-card{background:linear-gradient(135deg, rgba(147,51,234,.1) 0%, rgba(124,58,237,.05) 100%);border:1px solid rgba(147,51,234,.2);border-radius:20px;padding:16px;text-decoration:none;color:inherit}
 .point-card:active{transform:scale(.98)}
+
+/* profile-info-container 그리드 레이아웃 */
+.profile-info-container {
+  display: grid !important;
+  grid-template-columns: 1fr 1fr !important;
+  grid-template-rows: auto auto !important;
+  gap: 16px !important;
+  width: 100% !important;
+  box-sizing: border-box !important;
+}
+
+.profile-section-item:nth-child(1) {
+  grid-column: 1 / 2 !important;
+  grid-row: 1 / 2 !important;
+}
+
+.profile-section-item:nth-child(2) {
+  grid-column: 2 / 3 !important;
+  grid-row: 1 / 2 !important;
+}
+
+.profile-section-item:nth-child(3) {
+  grid-column: 1 / 3 !important;
+  grid-row: 2 / 3 !important;
+}
 </style>
 
 

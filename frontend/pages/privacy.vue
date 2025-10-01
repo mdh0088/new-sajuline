@@ -1,8 +1,5 @@
 <template>
   <div class="privacy-container">
-    <!-- 헤더 -->
-    <AppHeader title="개인정보처리방침" :show-back="true" />
-
     <!-- 메인 콘텐츠 -->
     <main class="privacy-content">
       <section class="privacy-section">
@@ -142,9 +139,6 @@
         </p>
       </section>
     </main>
-
-    <!-- 하단 네비게이션 -->
-    <AppBottomNavi />
   </div>
 </template>
 

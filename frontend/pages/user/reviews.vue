@@ -1,6 +1,5 @@
 <template>
   <div class="min-h-screen bg-slate-950 text-white">
-    <AppHeader />
 
     <!-- 탭 메뉴 -->
     <div class="tab-menu">
@@ -168,7 +167,6 @@
       @submit="handleModalSubmit"
     />
 
-    <AppBottomNavi />
   </div>
 </template>
 

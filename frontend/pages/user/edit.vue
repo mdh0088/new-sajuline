@@ -1,9 +1,8 @@
 <template>
   <div class="min-h-screen bg-slate-950 text-white">
-    <AppHeader />
 
     <!-- 메인 콘텐츠 -->
-    <main class="pt-[60px] pb-24">
+    <main class="pb-24">
       <section class="px-5 py-6">
         <!-- 헤더 섹션 -->
         <div class="edit-header">
@@ -164,7 +163,6 @@
       </div>
     </div>
 
-    <AppBottomNavi />
   </div>
 </template>
 

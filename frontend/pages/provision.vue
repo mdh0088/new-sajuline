@@ -1,8 +1,5 @@
 <template>
   <div class="provision-container">
-    <!-- 헤더 -->
-    <AppHeader title="이용약관" :show-back="true" />
-
     <!-- 메인 콘텐츠 -->
     <main class="provision-content">
       <section class="provision-section">
@@ -169,9 +166,6 @@
         <p>③ 상담 중개 서비스에 대한 정책은 따로 정한 바에 의합니다.</p>
       </section>
     </main>
-
-    <!-- 하단 네비게이션 -->
-    <AppBottomNavi />
   </div>
 </template>
 

@@ -77,9 +77,6 @@
       </div>
     </main>
 
-    <!-- 하단 네비게이션 -->
-    <AppBottomNavi />
-
     <!-- 모달 오버레이 -->
     <div
       v-show="showModal"

@@ -1,70 +1,77 @@
 <template>
-  <header class="fixed top-0 left-0 right-0 bg-slate-950/95 backdrop-blur-xl z-50 border-b border-white/10">
-    <div class="flex justify-between items-center px-5 py-4 h-[60px]">
-      <div class="flex items-center">
-        <h1 class="text-xl font-bold bg-gradient-to-r from-purple-400 via-purple-300 to-purple-500 bg-clip-text text-transparent">
-          사주라인
-        </h1>
+  <header class="header" style="background: rgba(10, 10, 15, 0.95) !important; backdrop-filter: blur(10px) !important; position: sticky !important; top: 0 !important; z-index: 9999 !important;">
+    <div class="header-top">
+      <!-- 왼쪽: 뒤로가기 버튼 (서브페이지일 때) 또는 로고 (메인페이지일 때) -->
+      <div v-if="isSubPage">
+        <button class="icon-btn" @click="goBack">
+          ←
+        </button>
       </div>
-      
-      <div class="flex items-center gap-2">
-        <!-- 역할 배지 -->
-        <div v-if="isAuthenticated" class="px-3 py-1 rounded-full text-xs font-semibold border" :class="roleBadgeClass" aria-live="polite">
-          {{ roleLabel }}
+      <NuxtLink v-else to="/" class="logo">사주라인</NuxtLink>
+
+      <!-- 중앙: 페이지 제목 (서브페이지일 때만) -->
+      <div v-if="isSubPage" class="page-title-center">{{ pageTitle }}</div>
+
+      <!-- 오른쪽 액션 영역 -->
+      <div class="header-actions">
+        <!-- 포인트 표시 -->
+        <div class="coin-balance" @click="$router.push('/point')">
+          <span>💰</span>
+          <span>{{ userPoints }}P</span>
         </div>
-
-        <!-- 로그인 버튼 (비로그인 시) -->
-        <NuxtLink 
-          v-if="!isAuthenticated"
-          to="/login"
-          class="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white text-sm font-medium rounded-xl transition-all duration-300 active:scale-95"
-        >
-          로그인
-        </NuxtLink>
-
-        <!-- 로그아웃 버튼 (로그인 시) -->
-        <button 
-          v-else
-          class="px-3 py-2 bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl text-sm transition-all duration-300 active:scale-95"
-          @click="handleLogout"
-        >
-          로그아웃
-        </button>
-
-        <!-- 알림 버튼 -->
-        <button 
-          class="w-9 h-9 bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl flex items-center justify-center text-lg transition-all duration-300 active:scale-95"
-          @click="handleNotificationClick"
-        >
-          🔔
-        </button>
-        
-        <!-- 메뉴 버튼 -->
-        <button 
-          class="w-9 h-9 bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl flex items-center justify-center text-lg transition-all duration-300 active:scale-95"
-          @click="handleMenuClick"
-        >
-          ☰
-        </button>
       </div>
     </div>
   </header>
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import { useAuth } from '~/composables/auth/useAuth'
 import { useAuthQueries } from '~/composables/api/useAuthQueries'
+import { useRoute, useRouter } from 'vue-router'
 
 const { isAuthenticated, isUser, isCounselor, logout, setRole } = useAuth()
 const { useWhoAmI } = useAuthQueries()
 const { refetch } = useWhoAmI()
+const route = useRoute()
+const router = useRouter()
 
-const roleLabel = computed(() => isCounselor.value ? '상담사' : '유저')
-const roleBadgeClass = computed(() => isCounselor.value 
-  ? 'bg-purple-600/20 border-purple-500/40 text-purple-200'
-  : 'bg-teal-600/20 border-teal-500/40 text-teal-200'
-)
+// 사용자 포인트 (임시 값)
+const userPoints = ref(1200)
+
+// 서브페이지 판단 로직
+const isSubPage = computed(() => {
+  const path = route.path
+  // 메인페이지들 정의 (하단 네비게이션이 있는 페이지들)
+  const mainPages = ['/', '/search', '/events', '/user/favorite']
+  return !mainPages.includes(path)
+})
+
+// 페이지 제목 매핑
+const pageTitleMap: Record<string, string> = {
+  '/login': '로그인',
+  '/user/mypage': '마이페이지',
+  '/user/favorite': '즐겨찾기',
+  '/user/pointlog': '포인트 내역',
+  '/user/cs': '고객센터',
+  '/user/reviews': '리뷰 관리',
+  '/counselor/mypage': '상담사 마이페이지',
+  '/point': '포인트 충전',
+  '/categories': '카테고리',
+  '/events': '이벤트',
+}
+
+const pageTitle = computed(() => {
+  const path = route.path
+  // 동적 라우트 처리 (예: /counselor/123)
+  if (path.startsWith('/counselor/') && path !== '/counselor/mypage') {
+    return '상담사 정보'
+  }
+  if (path.startsWith('/events/') && path !== '/events') {
+    return '이벤트 상세'
+  }
+  return pageTitleMap[path] || '페이지'
+})
 
 onMounted(async () => {
   // 로그인 상태에서만 whoAmI 요청 (게스트는 호출하지 않음)
@@ -80,6 +87,14 @@ onMounted(async () => {
 })
 
 // 이벤트 핸들러
+const goBack = () => {
+  if (window.history.length > 1) {
+    router.back()
+  } else {
+    router.push('/')
+  }
+}
+
 const handleNotificationClick = () => {
   console.log('알림 버튼 클릭')
 }
@@ -88,13 +103,26 @@ const handleMenuClick = () => {
   console.log('메뉴 버튼 클릭')
 }
 
+const handleUserClick = () => {
+  console.log('유저 버튼 클릭')
+}
+
 const handleLogout = async () => {
   await logout()
 }
 </script>
 
 <style scoped>
-.active\:scale-95:active {
-  transform: scale(0.95);
+@import '~/assets/css/main-page.css';
+
+.page-title-center {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 18px;
+  font-weight: 600;
+  color: white;
+  margin: 0;
 }
 </style>
