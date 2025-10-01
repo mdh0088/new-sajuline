@@ -107,3 +107,4 @@ class Inquiry(Base):
         return f"<Inquiry(inquiry_id={self.inquiry_id}, inquirer_type={self.inquirer_type}, title={self.title})>"
 
 
+
