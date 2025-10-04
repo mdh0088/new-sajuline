@@ -6,10 +6,9 @@ from typing import Optional, List, Dict, Any
 from enum import Enum
 
 from sqlalchemy import String, DateTime, Integer, Boolean, Text, JSON, Index, CheckConstraint, ForeignKey
-from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import Mapped, mapped_column
 
-Base = declarative_base()
+from src.core.database import Base
 
 
 class NoticeType(str, Enum):
