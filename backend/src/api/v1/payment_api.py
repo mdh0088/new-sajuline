@@ -178,42 +178,24 @@ async def payment_return(
         # GET 쿼리 파라미터 파싱
         params = dict(request.query_params)
         log.info("Payment return received (GET)", payload=params)
-        body = PayletterCallbackBody(**params)
+        body_dict = params
     else:
-        # POST body 파싱 - Payletter는 JSON으로 전송
-        content_type = request.headers.get("content-type", "").lower()
+        # POST body 파싱 - 미들웨어에서 이미 파싱한 데이터 사용
+        # (request.body()는 한 번만 읽을 수 있으므로 request.state 사용)
+        body_dict = getattr(request.state, 'request_body', None)
 
-        try:
-            # 1. JSON 파싱 시도 (Payletter 기본 방식)
-            if "application/json" in content_type:
-                body_dict = await request.json()
-                log.info("Payment return received (POST JSON)", payload=body_dict, content_type=content_type)
-            else:
-                # 2. Form data 파싱 시도
-                raw_body = await request.body()
-                log.info("Payment return received (POST RAW)",
-                        raw_body=raw_body.decode('utf-8') if raw_body else "",
-                        content_type=content_type)
+        if not body_dict:
+            log.error("POST request but no body found in request.state")
+            raise HTTPException(status_code=400, detail="요청 본문이 비어있습니다")
 
-                # URL-encoded form data 파싱
-                if raw_body:
-                    import json
-                    from urllib.parse import parse_qs
+        log.info("Payment return received (POST)", payload=body_dict)
 
-                    # JSON 문자열로 전송된 경우
-                    try:
-                        body_dict = json.loads(raw_body)
-                    except json.JSONDecodeError:
-                        # URL-encoded form data
-                        parsed = parse_qs(raw_body.decode('utf-8'))
-                        body_dict = {k: v[0] if len(v) == 1 else v for k, v in parsed.items()}
-                else:
-                    body_dict = {}
-
-            body = PayletterCallbackBody(**body_dict)
-        except Exception as e:
-            log.error("Failed to parse payment return body", error=str(e), content_type=content_type)
-            raise HTTPException(status_code=400, detail=f"요청 본문 파싱 실패: {str(e)}")
+    # PayletterCallbackBody 스키마로 검증
+    try:
+        body = PayletterCallbackBody(**body_dict)
+    except Exception as e:
+        log.error("Failed to validate payment data", error=str(e), payload=body_dict)
+        raise HTTPException(status_code=400, detail=f"결제 데이터 검증 실패: {str(e)}")
 
     # payhash 검증 (가능 시)
     if not verify_payhash_if_present(
