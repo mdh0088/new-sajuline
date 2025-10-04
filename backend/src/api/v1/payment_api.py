@@ -159,18 +159,39 @@ async def request_payment(
     return ok(data=PayletterRequestResponse(**data), message="결제 요청 성공")
 
 
-@router.post("/point_return", response_model=APIResponse[dict])
+@router.api_route("/point_return", methods=["GET", "POST"], response_model=APIResponse[dict])
 async def payment_return(
-    body: PayletterCallbackBody,
+    request: Request,
     payment_service: PaymentService = Depends(get_payment_service),
 ) -> APIResponse[dict]:
     """
     결제 완료 후 Return URL (사용자 브라우저에서 서버로 전송)
+    - GET: 쿼리 파라미터로 전달 (Payletter 리다이렉트 방식)
+    - POST: JSON body로 전달
     - 공식 문서/샘플에 따라 return_url로 결제 결과가 전달될 수 있음
     - 여기서 t_payment 생성 및 포인트 적립 로직을 수행
     """
     log = get_logger_with_request_id()
-    log.info("Payment return received", payload=body.model_dump())
+
+    # GET/POST 방식에 따라 데이터 파싱
+    if request.method == "GET":
+        # GET 쿼리 파라미터 파싱
+        params = dict(request.query_params)
+        log.info("Payment return received (GET)", payload=params)
+
+        # PayletterCallbackBody로 변환
+        body = PayletterCallbackBody(**params)
+    else:
+        # POST body 파싱 (JSON)
+        try:
+            body_dict = await request.json()
+        except Exception:
+            # JSON 파싱 실패 시 Form data 시도
+            form = await request.form()
+            body_dict = dict(form)
+
+        log.info("Payment return received (POST)", payload=body_dict)
+        body = PayletterCallbackBody(**body_dict)
 
     # payhash 검증 (가능 시)
     if not verify_payhash_if_present(

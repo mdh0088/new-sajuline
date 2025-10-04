@@ -1,7 +1,7 @@
 """
 Payletter 연동 전용 스키마
 """
-from typing import Optional
+from typing import Optional, Dict, Any
 from pydantic import BaseModel, Field
 
 
@@ -14,6 +14,17 @@ class PayletterRequestResponse(BaseModel):
     token: str | int
     online_url: Optional[str] = None
     mobile_url: Optional[str] = None
+
+
+class CashReceiptInfo(BaseModel):
+    """현금영수증 정보 (중첩 객체)"""
+    code: Optional[str] = None
+    message: Optional[str] = None
+    cid: Optional[str] = None
+    deal_no: Optional[str] = None
+    issue_type: Optional[str] = None
+    payer_sid: Optional[str] = None
+    type: Optional[str] = None
 
 
 class PayletterCallbackBody(BaseModel):
@@ -43,6 +54,12 @@ class PayletterCallbackBody(BaseModel):
     card_info: Optional[str] = None
     payhash: Optional[str] = None
 
+    # 추가 필드 (2025-10-04 실제 샘플 데이터 기준)
+    disposable_cup_deposit: Optional[int] = None
+    method_info: Optional[str] = None
+    coupon_amount: Optional[int] = None
+    receipt_possible_amount: Optional[int] = None
+
     # 가상계좌
     account_no: Optional[str] = None
     account_name: Optional[str] = None
@@ -53,7 +70,8 @@ class PayletterCallbackBody(BaseModel):
     expire_date: Optional[str] = None
     expire_time: Optional[str] = None
 
-    # 현금영수증
+    # 현금영수증 (중첩 객체 또는 개별 필드)
+    cash_receipt: Optional[CashReceiptInfo | Dict[str, Any]] = None
     cash_receipt_code: Optional[str] = None
     cash_receipt_message: Optional[str] = None
     cash_receipt_type: Optional[str] = None
