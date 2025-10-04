@@ -3,7 +3,7 @@
 """
 from datetime import datetime
 from typing import Optional
-from sqlalchemy import String, DateTime, Integer, Text, Index, ForeignKey
+from sqlalchemy import String, DateTime, Integer, Text, Index
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import Mapped, mapped_column
 
@@ -32,13 +32,11 @@ class Payment(Base):
     )
     user_id: Mapped[str] = mapped_column(
         String(100),
-        ForeignKey("t_user.user_id"),
         nullable=False,
         comment="사용자 ID"
     )
     product_id: Mapped[Optional[int]] = mapped_column(
         Integer,
-        ForeignKey("t_point_product.product_id"),
         nullable=True,
         comment="상품 ID"
     )
