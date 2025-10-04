@@ -6,10 +6,9 @@ from typing import Optional
 from enum import Enum
 
 from sqlalchemy import String, DateTime, Date, Boolean, Integer, CheckConstraint, Index
-from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import Mapped, mapped_column
 
-Base = declarative_base()
+from src.core.database import Base
 
 
 class JoinType(str, Enum):

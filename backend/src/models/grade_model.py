@@ -6,11 +6,10 @@ from typing import Optional, Dict, Any
 from decimal import Decimal
 
 from sqlalchemy import String, DateTime, Integer, Boolean, Text, Index, CheckConstraint, DECIMAL
-from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import Mapped, mapped_column
 from sqlalchemy.types import JSON
 
-Base = declarative_base()
+from src.core.database import Base
 
 
 class Grade(Base):
