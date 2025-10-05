@@ -8,12 +8,14 @@
 """
 
 from datetime import datetime, timezone, timedelta
+import json
 import httpx
 from fastapi import APIRouter, Depends, HTTPException, Request
+from fastapi.responses import HTMLResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.config.settings import settings
-from src.core.database import get_db_maria
+from src.core.database import get_db_maria, get_db_mssql
 from src.services.auth_service import get_current_user, TokenPayload
 from src.common.utils.auth_utils import verify_user_role
 from src.common.response import ok, APIResponse
@@ -27,10 +29,12 @@ from src.repositories.point_product_repository import PointProductRepository
 from src.repositories.payment_repository import PaymentRepository
 from src.repositories.user_repository import UserRepository
 from src.repositories.counselor_repository import CounselorRepository
+from src.repositories.ars.tm60_users_repository import Tm60UsersRepository
 from src.services.payment_service import PaymentService
 from src.services.point_product_service import PointProductService
 from src.services.user_service import UserService
 from src.services.auth_service import AuthService
+from src.services.ars.tm60_users_service import Tm60UsersService
 from src.schemas.payment_schema import PaymentCreate
 from src.schemas.payletter_schema import (
     PaymentRequestPayload,
@@ -63,6 +67,13 @@ def get_payment_service(
     db: AsyncSession = Depends(get_db_maria)
 ) -> PaymentService:
     return PaymentService(PaymentRepository(db))
+
+
+def get_tm60_users_service():
+    """TM60 사용자 서비스 의존성 주입"""
+    for mssql_session in get_db_mssql():
+        repo = Tm60UsersRepository(mssql_session)
+        return Tm60UsersService(repo)
 
 KST = timezone(timedelta(hours=9))
 
@@ -113,6 +124,13 @@ async def request_payment(
     # Payletter 요청 페이로드 구성
     # payment_method는 프론트에서 pgcode(allthegate|virtualaccount|kakaopay)로 전달됨
     pgcode = payload.payment_method
+
+    # custom_parameter를 JSON 객체로 구성
+    custom_param_obj = {
+        "point_amount": product.point_amount + product.bonus_point,
+        "product_id": product.product_id
+    }
+
     body = build_payletter_request_body(
         client_id=settings.payment_client_id,
         user_id=user_id,
@@ -122,7 +140,7 @@ async def request_payment(
         order_no=order_no,
         amount=amount+tax_amount,
         tax_amount=tax_amount,
-        custom_parameter=f"{product.point_amount + product.bonus_point}",
+        custom_parameter=json.dumps(custom_param_obj),
         return_url=settings.payment_return_url,
         callback_url=settings.payment_callback_url,
         cancel_url=settings.payment_cancel_url,
@@ -158,11 +176,12 @@ async def request_payment(
     return ok(data=PayletterRequestResponse(**data), message="결제 요청 성공")
 
 
-@router.api_route("/point_return", methods=["GET", "POST"], response_model=APIResponse[dict])
+@router.api_route("/point_return", methods=["GET", "POST"])
 async def payment_return(
     request: Request,
     payment_service: PaymentService = Depends(get_payment_service),
-) -> APIResponse[dict]:
+    tm60_users_service: Tm60UsersService = Depends(get_tm60_users_service),
+):
     """
     결제 완료 후 Return URL (사용자 브라우저에서 서버로 전송)
     - GET: 쿼리 파라미터로 전달 (Payletter 리다이렉트 방식)
@@ -227,14 +246,31 @@ async def payment_return(
 
     log.info("Payment create 1111111111111111", payload=body.model_dump())
     log.info("Payment create 22222222222222222", payload=body)
-    
+
+    # custom_parameter JSON 파싱
+    custom_param = {}
+    product_id = None
+    point_amount = 0
+
+    if body.custom_parameter:
+        try:
+            custom_param = json.loads(body.custom_parameter)
+            product_id = custom_param.get("product_id")
+            point_amount = custom_param.get("point_amount", 0)
+        except (json.JSONDecodeError, TypeError):
+            # 구 버전 호환: 숫자 문자열인 경우
+            try:
+                point_amount = int(body.custom_parameter)
+            except (ValueError, TypeError):
+                point_amount = 0
+
     create = PaymentCreate(
         order_no=order_no,
         user_id=body.user_id,
-        product_id=None,  # 필요시 역참조로 보완
+        product_id=product_id,
         payment_type="POINT_CHARGE",
         amount=int(body.amount),
-        point_amount=int(body.custom_parameter or 0),
+        point_amount=point_amount,
         mileage_used=0,
         payment_method=body.pgcode or "",
         payment_status=payment_status,
@@ -258,7 +294,56 @@ async def payment_return(
     )
     created = await payment_service.create_payment(create)
 
-    return ok(data={"status": payment_status.lower(), "order_no": order_no}, message="결제 처리되었습니다")
+    # 결제 성공 시 tm60_users 포인트 증가
+    if payment_status == "SUCCESS" and point_amount > 0:
+        try:
+            new_points = await tm60_users_service.update_user_points(body.user_id, point_amount)
+            log.info("User points increased", user_id=body.user_id, point_amount=point_amount, new_points=new_points)
+        except Exception as e:
+            log.error("Failed to increase user points", user_id=body.user_id, point_amount=point_amount, error=str(e))
+            # 포인트 증가 실패는 로그만 남기고 결제는 성공 처리
+
+    # HTML 응답 반환
+    if payment_status == "SUCCESS":
+        html_content = """
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <meta charset="UTF-8">
+            <title>결제 성공</title>
+        </head>
+        <body>
+            <script>
+                alert('결제가 성공적으로 완료되었습니다.');
+                window.close();
+                if (!window.closed) {
+                    window.location.href = '/';
+                }
+            </script>
+        </body>
+        </html>
+        """
+    else:
+        html_content = """
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <meta charset="UTF-8">
+            <title>결제 실패</title>
+        </head>
+        <body>
+            <script>
+                alert('결제가 실패했습니다. 다시 시도해주세요.');
+                window.close();
+                if (!window.closed) {
+                    window.location.href = '/';
+                }
+            </script>
+        </body>
+        </html>
+        """
+    
+    return HTMLResponse(content=html_content)
 
 
 @router.get("/point_cancel", response_model=APIResponse[dict])
