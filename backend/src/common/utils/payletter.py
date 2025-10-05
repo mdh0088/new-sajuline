@@ -36,7 +36,7 @@ def build_payletter_request_body(
     return_url: str,
     callback_url: str,
     cancel_url: str,
-    pgcode: str = "allthegate",
+    pgcode: str,
 ) -> Dict[str, object]:
     now = datetime.now(KST)
     expire_date = (now + timedelta(days=1)).strftime("%Y%m%d")

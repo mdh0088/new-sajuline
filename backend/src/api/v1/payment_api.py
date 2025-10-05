@@ -198,14 +198,14 @@ async def payment_return(
         raise HTTPException(status_code=400, detail=f"결제 데이터 검증 실패: {str(e)}")
 
     # payhash 검증 (가능 시)
-    # if not verify_payhash_if_present(
-    #     user_id=body.user_id,
-    #     amount=body.amount,
-    #     tid=body.tid,
-    #     api_key=settings.payment_gateway_key,
-    #     payhash=body.payhash,
-    # ):
-    #     raise HTTPException(status_code=400, detail="유효하지 않은 결제 해시")
+    if not verify_payhash_if_present(
+        user_id=body.user_id,
+        amount=body.amount,
+        tid=body.tid,
+        api_key=settings.payment_gateway_key,
+        payhash=body.payhash,
+    ):
+        raise HTTPException(status_code=400, detail="유효하지 않은 결제 해시")
 
     if body.amount is None or body.user_id is None:
         raise HTTPException(status_code=400, detail="필수 필드 누락")
