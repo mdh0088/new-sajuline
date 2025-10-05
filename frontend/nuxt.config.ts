@@ -238,8 +238,18 @@ export default defineNuxtConfig({
   // 개발 서버 프록시 설정 (CORS 해결) 및 보안 헤더 (즉시 적용 권장)
   nitro: {
     routeRules: {
-      '/api/v1/**': { 
+      '/api/v1/**': {
         proxy: `${process.env.NUXT_PROXY_TARGET}/api/v1/**`
+      },
+      // 결제 Return URL은 iframe 허용 (SAMEORIGIN)
+      '/point': {
+        headers: {
+          'X-Frame-Options': 'SAMEORIGIN',
+          'X-Content-Type-Options': 'nosniff',
+          'Referrer-Policy': 'strict-origin-when-cross-origin',
+          'Permissions-Policy': 'camera=(), microphone=(), geolocation=()',
+          'X-XSS-Protection': '1; mode=block'
+        }
       },
       '/**': {
         headers: {
