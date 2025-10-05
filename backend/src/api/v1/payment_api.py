@@ -176,59 +176,42 @@ async def request_payment(
     return ok(data=PayletterRequestResponse(**data), message="결제 요청 성공")
 
 
-@router.api_route("/point_return", methods=["GET", "POST"])
-async def payment_return(
+@router.post("/point_callback")
+async def payment_callback(
     request: Request,
     payment_service: PaymentService = Depends(get_payment_service),
     tm60_users_service: Tm60UsersService = Depends(get_tm60_users_service),
 ):
     """
-    결제 완료 후 Return URL (사용자 브라우저에서 서버로 전송)
-    - GET: 쿼리 파라미터로 전달 (Payletter 리다이렉트 방식)
-    - POST: JSON body로 전달
-    - 공식 문서/샘플에 따라 return_url로 결제 결과가 전달될 수 있음
-    - 여기서 t_payment 생성 및 포인트 적립 로직을 수행
+    Payletter Callback URL (Server-to-Server)
+    - 결제 성공 시에만 호출됨
+    - JSON body로 전달
+    - 주요 비즈니스 로직 처리: 결제 생성, 포인트 충전
+    - 응답: {"code": 0, "message": "success"} (실패시 5분마다 20번 재전송)
     """
     log = get_logger_with_request_id()
 
-    # GET/POST 방식에 따라 데이터 파싱
-    if request.method == "GET":
-        # GET 쿼리 파라미터 파싱
-        params = dict(request.query_params)
-        log.info("Payment return received (GET)", payload=params)
-        body_dict = params
-    else:
-        # POST body 파싱 - 미들웨어에서 이미 파싱한 데이터 사용
-        # (request.body()는 한 번만 읽을 수 있으므로 request.state 사용)
-        body_dict = getattr(request.state, 'request_body', None)
+    # POST body 파싱
+    body_dict = getattr(request.state, 'request_body', None)
+    if not body_dict:
+        log.error("POST request but no body found in request.state")
+        return {"code": 9999, "message": "요청 본문이 비어있습니다"}
 
-        if not body_dict:
-            log.error("POST request but no body found in request.state")
-            raise HTTPException(status_code=400, detail="요청 본문이 비어있습니다")
-
-        log.info("Payment return received (POST)", payload=body_dict)
+    log.info("Payment callback received", payload=body_dict)
 
     # PayletterCallbackBody 스키마로 검증
     try:
         body = PayletterCallbackBody(**body_dict)
     except Exception as e:
         log.error("Failed to validate payment data", error=str(e), payload=body_dict)
-        raise HTTPException(status_code=400, detail=f"결제 데이터 검증 실패: {str(e)}")
-
-    # # payhash 검증 (가능 시) - 불필요하여 주석처리
-    # if not verify_payhash_if_present(
-    #     user_id=body.user_id,
-    #     amount=body.amount,
-    #     tid=body.tid,
-    #     api_key=settings.payment_gateway_key,
-    #     payhash=body.payhash,
-    # ):
-    #     raise HTTPException(status_code=400, detail="유효하지 않은 결제 해시")
+        return {"code": 9999, "message": f"데이터 검증 실패: {str(e)}"}
 
     if body.amount is None or body.user_id is None:
-        raise HTTPException(status_code=400, detail="필수 필드 누락")
+        return {"code": 9999, "message": "필수 필드 누락"}
 
-    # t_payment 생성 (완료 시점)
+    # Callback은 성공시에만 호출되므로 payment_status는 항상 SUCCESS
+    payment_status = "SUCCESS"
+    
     # order_no는 body에서 전달된 값 사용, 없으면 현재 시간 기반 생성
     now = datetime.now(KST)
     order_no = body.order_no or generate_order_no(now)
@@ -240,12 +223,6 @@ async def payment_return(
             paid_at = datetime.strptime(body.transaction_date, "%Y-%m-%d %H:%M:%S")
         except ValueError:
             log.warning("Failed to parse transaction_date", transaction_date=body.transaction_date)
-
-    # code 값으로 결제 상태 결정 (0이면 SUCCESS, 아니면 FAIL)
-    payment_status = "SUCCESS" if body.code == "0" else "FAIL"
-
-    log.info("Payment create 1111111111111111", payload=body.model_dump())
-    log.info("Payment create 22222222222222222", payload=body)
 
     # custom_parameter JSON 파싱
     custom_param = {}
@@ -264,6 +241,7 @@ async def payment_return(
             except (ValueError, TypeError):
                 point_amount = 0
 
+    # t_payment 생성
     create = PaymentCreate(
         order_no=order_no,
         user_id=body.user_id,
@@ -289,69 +267,28 @@ async def payment_return(
         point_use_flag=None,
         disposable_cup_deposit=str(body.disposable_cup_deposit) if body.disposable_cup_deposit else None,
         paid_at=paid_at,
-        code=body.code,
-        result_message=body.message,
+        code="0",  # Callback은 성공시에만 호출
+        result_message=body.message or "결제 성공",
     )
-    created = await payment_service.create_payment(create)
+    
+    try:
+        created = await payment_service.create_payment(create)
+        log.info("Payment created via callback", payment_id=created.payment_id, order_no=order_no)
+    except Exception as e:
+        log.error("Failed to create payment", error=str(e), order_no=order_no)
+        return {"code": 9999, "message": f"결제 생성 실패: {str(e)}"}
 
-    # 결제 성공 시 tm60_users 포인트 증가
-    if payment_status == "SUCCESS" and point_amount > 0:
+    # 포인트 충전
+    if point_amount > 0:
         try:
             new_points = await tm60_users_service.update_user_points(body.user_id, point_amount)
             log.info("User points increased", user_id=body.user_id, point_amount=point_amount, new_points=new_points)
         except Exception as e:
             log.error("Failed to increase user points", user_id=body.user_id, point_amount=point_amount, error=str(e))
-            # 포인트 증가 실패는 로그만 남기고 결제는 성공 처리
+            return {"code": 9999, "message": f"포인트 충전 실패: {str(e)}"}
 
-    # HTML 응답 반환 - PC(window.opener 이용) / Mobile(페이지 이동) 분기 처리
-    if payment_status == "SUCCESS":
-        html_content = """
-        <!DOCTYPE html>
-        <html>
-        <head>
-            <meta charset="UTF-8">
-            <title>결제 성공</title>
-        </head>
-        <body>
-            <script>
-                if (window.opener) {
-                    // PC: 부모 창에 메시지 전달 후 팝업 닫기
-                    window.opener.postMessage({type: 'payment_success'}, '*');
-                    window.close();
-                } else {
-                    // Mobile: /point 페이지로 이동
-                    alert('결제가 성공적으로 완료되었습니다.');
-                    window.location.href = '/point';
-                }
-            </script>
-        </body>
-        </html>
-        """
-    else:
-        html_content = """
-        <!DOCTYPE html>
-        <html>
-        <head>
-            <meta charset="UTF-8">
-            <title>결제 실패</title>
-        </head>
-        <body>
-            <script>
-                if (window.opener) {
-                    // PC: 부모 창에 메시지 전달 후 팝업 닫기
-                    window.opener.postMessage({type: 'payment_fail'}, '*');
-                    window.close();
-                } else {
-                    // Mobile: /point 페이지로 이동
-                    alert('결제가 실패했습니다. 다시 시도해주세요.');
-                    window.location.href = '/point';
-                }
-            </script>
-        </body>
-        </html>
-        """
-    
-    return HTMLResponse(content=html_content)
+    # 성공 응답
+    return {"code": 0, "message": "success"}
 
 
 @router.get("/point_cancel", response_model=APIResponse[dict])
@@ -362,38 +299,116 @@ async def payment_cancel(request: Request) -> APIResponse[dict]:
     return ok(data={"status": "cancelled"}, message="결제가 취소되었습니다.")
 
 
-@router.post("/callback")
-async def payment_callback(
-    body: PayletterCallbackBody,
+@router.api_route("/point_return", methods=["GET", "POST"])
+async def payment_return(
+    request: Request,
     payment_service: PaymentService = Depends(get_payment_service),
 ):
     """
-    Payletter 콜백 수신 엔드포인트
-    - CallBack.php 샘플과 동일하게 JSON 본문 수신
-    - 성공 응답: {"code":0, "message":"success"}
-    - 실패 응답: code != 0 이면 재전송됨(문서 규정)
+    Payletter Return URL (사용자 브라우저 리다이렉트)
+    - Callback 이후 호출됨
+    - GET/POST 방식으로 전달
+    - order_no로 결제 조회 후 실패시 상태 업데이트
+    - 성공/실패 여부에 따라 HTML 응답 반환 (PC/모바일 분기)
     """
     log = get_logger_with_request_id()
 
-    # payhash 검증은 결제 수단에 따라 미제공될 수 있음. 제공 시 아래와 같이 계산해 비교 권장:
-    # expected = sha256(user_id + amount + tid + PAYMENT_KEY)
-    # 여기서는 필드 존재시에만 비교하도록 placeholder만 남김(실제 구현은 보안 정책에 맞춰 보강)
+    # GET/POST 방식에 따라 데이터 파싱
+    if request.method == "GET":
+        params = dict(request.query_params)
+        log.info("Payment return received (GET)", payload=params)
+        body_dict = params
+    else:
+        body_dict = getattr(request.state, 'request_body', None)
+        if not body_dict:
+            log.error("POST request but no body found in request.state")
+            return HTMLResponse(content="<html><body><script>alert('요청 오류'); window.location.href='/point';</script></body></html>")
+        log.info("Payment return received (POST)", payload=body_dict)
 
+    # PayletterCallbackBody 스키마로 검증
     try:
-        # 관련 결제 레코드 찾기 및 상태 업데이트
-        log.info("Payment callback received", payload=body.model_dump())
-
-        # 최근 PENDING 중 사용자/금액 일치 건을 찾는다 (order_no 미제공 대비)
-        candidate = None
-        if body.user_id and body.amount:
-            candidate = await payment_service.get_recent_pending_by_user_and_amount(body.user_id, int(body.amount))
-
-        if candidate:
-            await payment_service.update_payment_status(candidate.payment_id, "SUCCESS", pg_tid=body.tid)
-
-        return {"code": 0, "message": "success"}
+        body = PayletterCallbackBody(**body_dict)
     except Exception as e:
-        log.error("Payment callback handling failed", error=str(e))
-        return {"code": 9999, "message": "callback error"}
+        log.error("Failed to validate payment data", error=str(e), payload=body_dict)
+        return HTMLResponse(content="<html><body><script>alert('데이터 검증 실패'); window.location.href='/point';</script></body></html>")
+
+    order_no = body.order_no
+    if not order_no:
+        log.error("order_no is missing in return URL")
+        return HTMLResponse(content="<html><body><script>alert('주문번호 누락'); window.location.href='/point';</script></body></html>")
+
+    # order_no로 기존 결제 조회
+    existing_payment = await payment_service.get_payment_by_order_no(order_no)
+    
+    if not existing_payment:
+        log.warning("Payment not found for order_no", order_no=order_no)
+        # Callback이 먼저 와야 하는데 없는 경우 (비정상)
+        return HTMLResponse(content="<html><body><script>alert('결제 정보를 찾을 수 없습니다'); window.location.href='/point';</script></body></html>")
+
+    # code 값 확인: 0이 아니면 실패
+    return_code = body.code or ""
+    
+    if return_code != "0":
+        # 실패 처리: payment_status, code, result_message, updated_at 업데이트
+        from src.schemas.payment_schema import PaymentUpdate
+        from datetime import datetime
+        
+        update_data = PaymentUpdate(
+            payment_status="FAIL",
+            code=return_code,
+            result_message=body.message or "결제 실패",
+        )
+        
+        await payment_service.update_payment(existing_payment.payment_id, update_data)
+        log.info("Payment status updated to FAIL", order_no=order_no, code=return_code)
+        
+        # 실패 HTML 응답
+        html_content = """
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <meta charset="UTF-8">
+            <title>결제 실패</title>
+        </head>
+        <body>
+            <script>
+                if (window.opener) {
+                    window.opener.postMessage({type: 'payment_fail'}, '*');
+                    window.close();
+                } else {
+                    alert('결제가 실패했습니다. 다시 시도해주세요.');
+                    window.location.href = '/point';
+                }
+            </script>
+        </body>
+        </html>
+        """
+        return HTMLResponse(content=html_content)
+    
+    # 성공 처리: Callback에서 이미 처리했으므로 HTML만 반환
+    log.info("Payment return success", order_no=order_no)
+    
+    html_content = """
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <meta charset="UTF-8">
+        <title>결제 성공</title>
+    </head>
+    <body>
+        <script>
+            if (window.opener) {
+                window.opener.postMessage({type: 'payment_success'}, '*');
+                window.close();
+            } else {
+                alert('결제가 성공적으로 완료되었습니다.');
+                window.location.href = '/point';
+            }
+        </script>
+    </body>
+    </html>
+    """
+    return HTMLResponse(content=html_content)
+
 
 

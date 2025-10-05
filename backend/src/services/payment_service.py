@@ -297,6 +297,65 @@ class PaymentService:
         log.info("Payment retrieved successfully", payment_id=payment_id)
         return PaymentResponse.model_validate(payment)
 
+    async def get_payment_by_order_no(self, order_no: str) -> Optional[PaymentResponse]:
+        """주문번호로 결제 조회"""
+        log = get_logger_with_request_id()
+        log.info("Getting payment by order_no", order_no=order_no)
+        
+        payment = await self.payment_repo.get_by_order_no(order_no)
+        
+        if not payment:
+            log.warning("Payment not found", order_no=order_no)
+            return None
+        
+        log.info("Payment retrieved successfully", order_no=order_no, payment_id=payment.payment_id)
+        return PaymentResponse.model_validate(payment)
+    
+    async def update_payment(
+        self,
+        payment_id: int,
+        update_data: PaymentUpdate
+    ) -> PaymentResponse:
+        """
+        결제 정보 업데이트
+        - PaymentUpdate 스키마로 전달된 필드만 업데이트
+        """
+        log = get_logger_with_request_id()
+        log.info("Updating payment", payment_id=payment_id)
+        
+        try:
+            success = await self.payment_repo.update(
+                payment_id=payment_id,
+                update_data=update_data
+            )
+            
+            if not success:
+                log.warning("Payment not found for update", payment_id=payment_id)
+                raise NotFoundError("업데이트할 결제를 찾을 수 없습니다.")
+            
+            await self.payment_repo.db.commit()
+            
+            # 업데이트된 결제 조회하여 반환
+            updated_payment = await self.payment_repo.get_by_id(payment_id)
+            
+            if not updated_payment:
+                raise NotFoundError("업데이트된 결제를 찾을 수 없습니다.")
+            
+            log.info("Payment updated successfully", payment_id=payment_id)
+            
+            return PaymentResponse.model_validate(updated_payment)
+            
+        except ValidationError:
+            raise
+        except NotFoundError:
+            raise
+        except Exception as e:
+            await self.payment_repo.db.rollback()
+            log.warning("Payment update failed", 
+                       payment_id=payment_id,
+                       error=str(e))
+            raise ValidationError(f"결제 업데이트 중 오류가 발생했습니다: {str(e)}")
+
     async def get_recent_pending_by_user_and_amount(
         self,
         user_id: str,
