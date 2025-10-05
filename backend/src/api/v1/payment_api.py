@@ -225,6 +225,9 @@ async def payment_return(
     # code 값으로 결제 상태 결정 (0이면 SUCCESS, 아니면 FAIL)
     payment_status = "SUCCESS" if body.code == "0" else "FAIL"
 
+    log.info("Payment create 1111111111111111", payload=body.model_dump())
+    log.info("Payment create 22222222222222222", payload=body)
+    
     create = PaymentCreate(
         order_no=order_no,
         user_id=body.user_id,
