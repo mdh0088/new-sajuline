@@ -35,12 +35,26 @@ class PaymentRepository:
             point_amount=payment_data.point_amount,
             mileage_used=payment_data.mileage_used,
             payment_method=payment_data.payment_method,
+            payment_status=payment_data.payment_status,
+            pg_tid=payment_data.pg_tid,
             cid=payment_data.cid,
+            billkey=payment_data.billkey,
+            card_info=payment_data.card_info,
             pay_info=payment_data.pay_info,
             tax_amount=payment_data.tax_amount,
-            domestic_flag=payment_data.domestic_flag
+            install_month=payment_data.install_month,
+            pay_hash=payment_data.pay_hash,
+            taxfree_amount=payment_data.taxfree_amount,
+            nonsettle_amount=payment_data.nonsettle_amount,
+            discount_amount=payment_data.discount_amount,
+            point_use_flag=payment_data.point_use_flag,
+            disposable_cup_deposit=payment_data.disposable_cup_deposit,
+            domestic_flag=payment_data.domestic_flag,
+            paid_at=payment_data.paid_at,
+            code=payment_data.code,
+            result_message=payment_data.result_message,
         )
-        
+
         self.db.add(payment)
         await self.db.flush()
         await self.db.refresh(payment)
