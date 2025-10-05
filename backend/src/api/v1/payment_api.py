@@ -303,7 +303,7 @@ async def payment_return(
             log.error("Failed to increase user points", user_id=body.user_id, point_amount=point_amount, error=str(e))
             # 포인트 증가 실패는 로그만 남기고 결제는 성공 처리
 
-    # HTML 응답 반환
+    # HTML 응답 반환 - PC(window.opener 이용) / Mobile(페이지 이동) 분기 처리
     if payment_status == "SUCCESS":
         html_content = """
         <!DOCTYPE html>
@@ -314,10 +314,14 @@ async def payment_return(
         </head>
         <body>
             <script>
-                alert('결제가 성공적으로 완료되었습니다.');
-                window.close();
-                if (!window.closed) {
-                    window.location.href = '/';
+                if (window.opener) {
+                    // PC: 부모 창에 메시지 전달 후 팝업 닫기
+                    window.opener.postMessage({type: 'payment_success'}, '*');
+                    window.close();
+                } else {
+                    // Mobile: /point 페이지로 이동
+                    alert('결제가 성공적으로 완료되었습니다.');
+                    window.location.href = '/point';
                 }
             </script>
         </body>
@@ -333,10 +337,14 @@ async def payment_return(
         </head>
         <body>
             <script>
-                alert('결제가 실패했습니다. 다시 시도해주세요.');
-                window.close();
-                if (!window.closed) {
-                    window.location.href = '/';
+                if (window.opener) {
+                    // PC: 부모 창에 메시지 전달 후 팝업 닫기
+                    window.opener.postMessage({type: 'payment_fail'}, '*');
+                    window.close();
+                } else {
+                    // Mobile: /point 페이지로 이동
+                    alert('결제가 실패했습니다. 다시 시도해주세요.');
+                    window.location.href = '/point';
                 }
             </script>
         </body>

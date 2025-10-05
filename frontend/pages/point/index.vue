@@ -165,7 +165,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useHead } from 'nuxt/app'
 import { useNotify } from '~/composables/utils/useNotify'
 import { usePointProductApi, type PointProduct } from '~/composables/api/usePointProduct'
@@ -322,6 +322,31 @@ function processPayment() {
       notifyError(err?.message || '결제 요청 중 오류가 발생했습니다')
     })
 }
+
+// PC 결제 완료 postMessage 이벤트 핸들러
+function handlePaymentMessage(event: MessageEvent) {
+  if (event.data?.type === 'payment_success') {
+    showPaymentModal.value = false
+    notifySuccess('결제가 성공적으로 완료되었습니다.')
+    // 페이지 새로고침으로 포인트 갱신
+    setTimeout(() => {
+      window.location.reload()
+    }, 1000)
+  } else if (event.data?.type === 'payment_fail') {
+    showPaymentModal.value = false
+    notifyError('결제가 실패했습니다. 다시 시도해주세요.')
+  }
+}
+
+// 컴포넌트 마운트 시 이벤트 리스너 등록
+onMounted(() => {
+  window.addEventListener('message', handlePaymentMessage)
+})
+
+// 컴포넌트 언마운트 시 이벤트 리스너 제거
+onUnmounted(() => {
+  window.removeEventListener('message', handlePaymentMessage)
+})
 </script>
 
 <style scoped>
