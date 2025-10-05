@@ -352,6 +352,8 @@ CREATE TABLE `t_payment` (
   payment_status varchar(20) NOT NULL DEFAULT 'PENDING' COMMENT '결제 상태',
   pg_tid varchar(100) DEFAULT NULL COMMENT 'PG 거래번호',
   cid varchar(100) DEFAULT '' COMMENT 'cid',
+  billkey varchar(200) DEFAULT NULL COMMENT '자 동결제 재결제용 키',
+  card_info varchar(100) DEFAULT NULL COMMENT '마스킹 카드번호',
   pay_info varchar(100) DEFAULT '' COMMENT '결제정보',
   tax_amount varchar(100) DEFAULT '0' COMMENT '세금',
   install_month varchar(100) DEFAULT NULL,

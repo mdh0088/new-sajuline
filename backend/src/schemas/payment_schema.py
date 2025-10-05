@@ -20,7 +20,11 @@ class PaymentBase(BaseModel):
 
 class PaymentCreate(PaymentBase):
     """결제 생성 요청 스키마"""
+    payment_status: str = Field(default="PENDING", description="결제 상태")
+    pg_tid: Optional[str] = Field(None, description="PG 거래번호")
     cid: str = Field(default="", description="cid")
+    billkey: Optional[str] = Field(None, description="자동결제 재결제용 키")
+    card_info: Optional[str] = Field(None, description="마스킹 카드번호")
     pay_info: str = Field(default="", description="결제정보")
     tax_amount: str = Field(default="0", description="세금")
     install_month: Optional[str] = Field(None, description="할부개월")
@@ -31,6 +35,9 @@ class PaymentCreate(PaymentBase):
     point_use_flag: Optional[str] = Field(None, description="포인트 사용 여부")
     disposable_cup_deposit: Optional[str] = Field(None, description="일회용컵 보증금")
     domestic_flag: str = Field(default="", description="도메스틱 플래그")
+    paid_at: Optional[datetime] = Field(None, description="결제 완료 시간")
+    code: Optional[str] = Field(None, description="결과 코드")
+    result_message: Optional[str] = Field(None, description="결과 메시지")
 
 
 class PaymentUpdate(BaseModel):
@@ -50,6 +57,8 @@ class PaymentResponse(PaymentBase):
     payment_status: str = Field(..., description="결제 상태")
     pg_tid: Optional[str] = Field(None, description="PG 거래번호")
     cid: str = Field(..., description="cid")
+    billkey: Optional[str] = Field(None, description="자동결제 재결제용 키")
+    card_info: Optional[str] = Field(None, description="마스킹 카드번호")
     pay_info: str = Field(..., description="결제정보")
     tax_amount: str = Field(..., description="세금")
     install_month: Optional[str] = Field(None, description="할부개월")
