@@ -120,7 +120,7 @@ async def request_payment(
         user_email=user_email,
         product_name=product.product_name,
         order_no=order_no,
-        amount=amount,
+        amount=amount+tax_amount,
         tax_amount=tax_amount,
         custom_parameter=f"{product.point_amount + product.bonus_point}",
         return_url=settings.payment_return_url,
