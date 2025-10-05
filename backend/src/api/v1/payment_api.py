@@ -345,23 +345,52 @@ async def payment_return(
         # Callback이 먼저 와야 하는데 없는 경우 (비정상)
         return HTMLResponse(content="<html><body><script>alert('결제 정보를 찾을 수 없습니다'); window.location.href='/point';</script></body></html>")
 
-    # code 값 확인: 0이 아니면 실패
+    # 가상계좌 체크: payment_method가 virtualaccount인 경우 입금 대기 상태
+    payment_method = existing_payment.payment_method
+
+    # code 값 확인: 0이 아니면 실패 (가상계좌 제외)
     return_code = body.code or ""
-    
+
+    if payment_method == "virtualaccount":
+        # 가상계좌는 입금 대기 상태로 처리
+        log.info("Virtual account payment pending", order_no=order_no)
+
+        html_content = """
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <meta charset="UTF-8">
+            <title>가상계좌 발급</title>
+        </head>
+        <body>
+            <script>
+                if (window.opener) {
+                    window.opener.postMessage({type: 'payment_pending', message: '입금해주세요'}, '*');
+                    window.close();
+                } else {
+                    alert('입금해주세요');
+                    window.location.href = '/point';
+                }
+            </script>
+        </body>
+        </html>
+        """
+        return HTMLResponse(content=html_content)
+
     if return_code != "0":
         # 실패 처리: payment_status, code, result_message, updated_at 업데이트
         from src.schemas.payment_schema import PaymentUpdate
         from datetime import datetime
-        
+
         update_data = PaymentUpdate(
             payment_status="FAIL",
             code=return_code,
             result_message=body.message or "결제 실패",
         )
-        
+
         await payment_service.update_payment(existing_payment.payment_id, update_data)
         log.info("Payment status updated to FAIL", order_no=order_no, code=return_code)
-        
+
         # 실패 HTML 응답
         html_content = """
         <!DOCTYPE html>
@@ -384,10 +413,10 @@ async def payment_return(
         </html>
         """
         return HTMLResponse(content=html_content)
-    
+
     # 성공 처리: Callback에서 이미 처리했으므로 HTML만 반환
     log.info("Payment return success", order_no=order_no)
-    
+
     html_content = """
     <!DOCTYPE html>
     <html>
