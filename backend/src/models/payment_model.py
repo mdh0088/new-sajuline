@@ -86,6 +86,16 @@ class Payment(Base):
         default="",
         comment="cid"
     )
+    billkey: Mapped[Optional[str]] = mapped_column(
+        String(200),
+        nullable=True,
+        comment="자동결제 재결제용 키"
+    )
+    card_info: Mapped[Optional[str]] = mapped_column(
+        String(100),
+        nullable=True,
+        comment="마스킹 카드번호"
+    )
     pay_info: Mapped[str] = mapped_column(
         String(100),
         default="",

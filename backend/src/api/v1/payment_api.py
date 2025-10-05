@@ -22,7 +22,6 @@ from src.common.utils.payletter import (
     generate_order_no,
     calc_amounts,
     build_payletter_request_body,
-    verify_payhash_if_present,
 )
 from src.repositories.point_product_repository import PointProductRepository
 from src.repositories.payment_repository import PaymentRepository
@@ -197,24 +196,34 @@ async def payment_return(
         log.error("Failed to validate payment data", error=str(e), payload=body_dict)
         raise HTTPException(status_code=400, detail=f"결제 데이터 검증 실패: {str(e)}")
 
-    # payhash 검증 (가능 시)
-    if not verify_payhash_if_present(
-        user_id=body.user_id,
-        amount=body.amount,
-        tid=body.tid,
-        api_key=settings.payment_gateway_key,
-        payhash=body.payhash,
-    ):
-        raise HTTPException(status_code=400, detail="유효하지 않은 결제 해시")
+    # # payhash 검증 (가능 시) - 불필요하여 주석처리
+    # if not verify_payhash_if_present(
+    #     user_id=body.user_id,
+    #     amount=body.amount,
+    #     tid=body.tid,
+    #     api_key=settings.payment_gateway_key,
+    #     payhash=body.payhash,
+    # ):
+    #     raise HTTPException(status_code=400, detail="유효하지 않은 결제 해시")
 
     if body.amount is None or body.user_id is None:
         raise HTTPException(status_code=400, detail="필수 필드 누락")
 
     # t_payment 생성 (완료 시점)
-    # 주의: order_no는 return body에 있는 경우가 많지만, 표준화되지 않은 경우가 있어
-    # 여기서는 현재 시간 기반 생성. 실제 운영에서는 order_no를 custom_parameter 등에 포함해 역참조 권장.
+    # order_no는 body에서 전달된 값 사용, 없으면 현재 시간 기반 생성
     now = datetime.now(KST)
-    order_no = generate_order_no(now)
+    order_no = body.order_no or generate_order_no(now)
+
+    # transaction_date를 paid_at으로 변환
+    paid_at = None
+    if body.transaction_date:
+        try:
+            paid_at = datetime.strptime(body.transaction_date, "%Y-%m-%d %H:%M:%S")
+        except ValueError:
+            log.warning("Failed to parse transaction_date", transaction_date=body.transaction_date)
+
+    # code 값으로 결제 상태 결정 (0이면 SUCCESS, 아니면 FAIL)
+    payment_status = "SUCCESS" if body.code == "0" else "FAIL"
 
     create = PaymentCreate(
         order_no=order_no,
@@ -225,24 +234,28 @@ async def payment_return(
         point_amount=int(body.custom_parameter or 0),
         mileage_used=0,
         payment_method=body.pgcode or "",
+        payment_status=payment_status,
+        pg_tid=body.tid,
         cid=body.cid or "",
+        billkey=body.billkey,
+        card_info=body.card_info,
         pay_info=body.pay_info or "",
-        tax_amount=str((int(body.amount) // 10) if body.amount else 0),
+        tax_amount=str(body.tax_amount) if body.tax_amount else str((int(body.amount) // 10) if body.amount else 0),
         domestic_flag=body.domestic_flag or "",
         install_month=body.install_month,
         pay_hash=body.payhash,
-        taxfree_amount=str(0),
+        taxfree_amount=str(body.taxfree_amount) if body.taxfree_amount else None,
         nonsettle_amount=None,
         discount_amount=None,
         point_use_flag=None,
-        disposable_cup_deposit=None,
+        disposable_cup_deposit=str(body.disposable_cup_deposit) if body.disposable_cup_deposit else None,
+        paid_at=paid_at,
+        code=body.code,
+        result_message=body.message,
     )
     created = await payment_service.create_payment(create)
 
-    # 상태를 SUCCESS로 갱신
-    await payment_service.update_payment_status(created.payment_id, "SUCCESS", pg_tid=body.tid)
-
-    return ok(data={"status": "success", "order_no": order_no}, message="결제 완료 처리되었습니다")
+    return ok(data={"status": payment_status.lower(), "order_no": order_no}, message="결제 처리되었습니다")
 
 
 @router.get("/point_cancel", response_model=APIResponse[dict])
