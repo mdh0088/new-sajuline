@@ -42,7 +42,7 @@ def _get_notification_service(
 async def get_user_list(
     page: int = Query(1, ge=1, description="페이지 번호"),
     limit: int = Query(10, ge=1, le=100, description="페이지당 항목 수"),
-    search_type: str = Query("all", description="검색 타입: all|nickname|email|phone"),
+    search_type: str = Query("all", description="검색 타입: all|user_id|nickname|email|phone"),
     search_name: Optional[str] = Query(None, description="검색 키워드"),
     join_type: Optional[str] = Query(None, description="가입 유형: COMMON|NAVER|KAKAO"),
     grade: Optional[str] = Query(None, description="등급코드"),

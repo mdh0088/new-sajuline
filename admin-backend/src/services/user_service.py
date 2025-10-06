@@ -11,8 +11,8 @@ from src.repositories.ars.tm60_users_repository import Tm60UsersRepository
 from src.schemas.user_schema import (
     UserListParams,
     UserListItem,
-    UserWithTm60Response,
-    Tm60UserBrief,
+    UserListItemResponse,
+    ArsUserInfo,
     UserDetailResponse,
     UserUpdateRequest,
     UserUpdateResponse,
@@ -35,8 +35,8 @@ class UserService:
     async def get_user_list(
         self,
         params: UserListParams
-    ) -> tuple[list[UserWithTm60Response], int, int, int]:
-        """유저 목록 조회 및 각 유저의 tm60_users 매칭 목록 포함"""
+    ) -> tuple[list[UserListItemResponse], int, int, int]:
+        """유저 목록 조회 및 각 유저의 ars_user_info 매칭 정보 포함"""
 
         # 페이지/리밋 보정
         if params.page < 1:
@@ -76,14 +76,18 @@ class UserService:
         user_ids: List[str] = [u.user_id for u in users]
         tm_map = await self.tm60_repo.find_by_user_ids(user_ids)
 
-        items: list[UserWithTm60Response] = []
+        items: list[UserListItemResponse] = []
         for u in users:
-            user_item = UserListItem.model_validate(u, from_attributes=True)
-            tm_list = [
-                Tm60UserBrief(
+            # 첫 번째 매칭된 ARS 레코드만 사용
+            tm_records = tm_map.get(u.user_id, [])
+            ars_info = None
+            if tm_records:
+                r = tm_records[0]
+                ars_info = ArsUserInfo(
                     idx=r.idx,
                     u_id=r.u_id,
                     u_tel=r.u_tel,
+                    u_passwd=r.u_passwd,
                     u_kname=r.u_kname,
                     u_memcd=r.u_memcd,
                     u_login=r.u_login,
@@ -94,24 +98,38 @@ class UserService:
                     regdate=r.regdate,
                     u_memo=r.u_memo,
                 )
-                for r in tm_map.get(u.user_id, [])
-            ]
-            items.append(UserWithTm60Response(user=user_item, tm60_users=tm_list))
+
+            items.append(UserListItemResponse(
+                user_id=u.user_id,
+                email=u.email,
+                nickname=u.nickname,
+                phone=u.phone,
+                join_type=u.join_type,
+                grade_code=u.grade_code,
+                mileage_point=getattr(u, 'mileage_point', 0),
+                created_at=u.created_at,
+                ars_user_info=ars_info
+            ))
 
         return items, params.page, params.limit, total
 
     async def get_user_detail(self, user_id: str) -> UserDetailResponse:
-        """회원 상세 조회: t_user 모든 필드 + tm60_users 전체 목록"""
+        """회원 상세 조회: t_user 모든 필드 + ars_user_info"""
         user = await self.user_repo.get_by_id(user_id)
         if not user:
             raise NotFoundError("사용자를 찾을 수 없습니다")
 
         tm_list_rows = await self.tm60_repo.find_all_by_user_id(user.user_id)
-        tm_list = [
-            Tm60UserBrief(
+
+        # 첫 번째 매칭된 ARS 레코드만 사용
+        ars_info = None
+        if tm_list_rows:
+            r = tm_list_rows[0]
+            ars_info = ArsUserInfo(
                 idx=r.idx,
                 u_id=r.u_id,
                 u_tel=r.u_tel,
+                u_passwd=r.u_passwd,
                 u_kname=r.u_kname,
                 u_memcd=r.u_memcd,
                 u_login=r.u_login,
@@ -122,8 +140,6 @@ class UserService:
                 regdate=r.regdate,
                 u_memo=r.u_memo,
             )
-            for r in tm_list_rows
-        ]
 
         # t_user 모든 필드 dict 변환 (from_attributes)
         user_dict = {
@@ -150,7 +166,7 @@ class UserService:
             "withdrawn_at": getattr(user, "withdrawn_at", None),
         }
 
-        return UserDetailResponse(user=user_dict, tm60_users=tm_list)
+        return UserDetailResponse(user=user_dict, ars_user_info=ars_info)
 
     async def update_user(self, payload: UserUpdateRequest) -> UserUpdateResponse:
         user = await self.user_repo.get_by_id(payload.user_id)

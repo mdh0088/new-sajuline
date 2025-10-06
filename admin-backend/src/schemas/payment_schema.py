@@ -50,4 +50,16 @@ class PaymentDetailResponse(BaseModel):
     user: Dict[str, Any]
 
 
+class PaymentCancelRequest(BaseModel):
+    payment_id: int = Field(..., description="결제 ID")
+
+
+class PaymentCancelResponse(BaseModel):
+    success: bool = Field(..., description="취소 성공 여부")
+    payment_id: int = Field(..., description="결제 ID")
+    cancel_amount: int = Field(..., description="취소 금액")
+    cancelled_at: datetime = Field(..., description="취소 시간")
+    message: str = Field(..., description="결과 메시지")
+
+
 

@@ -4,7 +4,7 @@
 - 목록 조회: 전체 반환
 - 상품 추가: product_code = POINT_총개수+1 규칙으로 생성
 - 상품 수정: 필드 부분 업데이트
-- 상품 삭제: 실제 삭제 대신 is_active=False로 비활성화
+- 상품 삭제: 실제 DB에서 삭제
 """
 from fastapi import APIRouter, Depends, Body, Query
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -54,21 +54,21 @@ async def update_product(
     return ok(data=data, message="상품 수정 성공")
 
 
-@router.post("/delete", response_model=APIResponse[PointProductDeleteResponse], summary="포인트 상품 비활성화")
+@router.post("/delete", response_model=APIResponse[PointProductDeleteResponse], summary="포인트 상품 삭제")
 async def delete_product(
     payload: PointProductDeleteRequest = Body(...),
     service: PointProductService = Depends(_get_service),
 ):
-    data = await service.disable(payload.product_id)
-    return ok(data=data, message="상품 비활성화 성공")
+    data = await service.delete(payload.product_id)
+    return ok(data=data, message="상품 삭제 성공")
 
 
-@router.delete("/delete", response_model=APIResponse[PointProductDeleteResponse], summary="포인트 상품 비활성화(DELETE)")
+@router.delete("/delete", response_model=APIResponse[PointProductDeleteResponse], summary="포인트 상품 삭제(DELETE)")
 async def delete_product_query(
     product_id: int = Query(..., description="상품 PK"),
     service: PointProductService = Depends(_get_service),
 ):
-    data = await service.disable(product_id)
-    return ok(data=data, message="상품 비활성화 성공")
+    data = await service.delete(product_id)
+    return ok(data=data, message="상품 삭제 성공")
 
 

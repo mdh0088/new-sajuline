@@ -47,7 +47,7 @@ class Tm60Member(ARSBase):
 
     idx: Mapped[int] = mapped_column(Integer, Identity(start=1, increment=1), primary_key=True)
 
-    m_s: Mapped[str] = mapped_column(String(8), nullable=False, default="")
+    m_dnis: Mapped[str] = mapped_column(String(8), nullable=False, default="")
     m_code: Mapped[str] = mapped_column(String(3), nullable=False, default="")
     m_name: Mapped[str] = mapped_column(String(20), nullable=False, default="")
     m_nickname: Mapped[str] = mapped_column(String(20), nullable=False, default="")
@@ -63,7 +63,7 @@ class Tm60Member(ARSBase):
 
     m_id: Mapped[str] = mapped_column(String(50), nullable=False, default="")
     m_passwd: Mapped[str] = mapped_column(String(4), nullable=False, default="")
-    m_memo: Mapped[Optional[str]] = mapped_column(String(50), nullable=True)
+    m_memo: Mapped[Optional[str]] = mapped_column(String(50), nullable=True, default="")
 
     last_chat: Mapped[str] = mapped_column(CHAR(14), nullable=False, default="")
     chat_level: Mapped[str] = mapped_column(CHAR(1), nullable=False, default="1")
@@ -82,6 +82,7 @@ class Tm60Member(ARSBase):
     __table_args__ = (
         Index('idx_bang', 'bang'),
         Index('idx_chat_level', 'chat_level'),
+        Index('idx_dnis', 'm_dnis'),
         Index('idx_m_code', 'm_code'),
         Index('idx_m_counselling', 'm_counselling'),
         Index('idx_m_name', 'm_name'),
@@ -91,51 +92,5 @@ class Tm60Member(ARSBase):
         Index('idx_m_bunho', 'm_bunho'),
         {'schema': 'dbo'}
     )
-
-    def to_dict(self) -> dict:
-        return {
-            "idx": self.idx,
-            "m_s": self.m_s,
-            "m_code": self.m_code,
-            "m_name": self.m_name,
-            "m_nickname": self.m_nickname,
-            "m_tel": self.m_tel,
-            "m_tel1": self.m_tel1,
-            "m_tel2": self.m_tel2,
-            "m_mobile": self.m_mobile,
-            "m_state": self.m_state,
-            "m_nextstate": self.m_nextstate,
-            "m_counselling": self.m_counselling,
-            "m_id": self.m_id,
-            "m_memo": self.m_memo,
-            "last_chat": self.last_chat,
-            "chat_level": self.chat_level,
-            "class": self.class_,
-            "turn": self.turn,
-            "bang": self.bang,
-            "holdoff": self.holdoff,
-            "m_bunho": self.m_bunho,
-            "m_writer": self.m_writer,
-            "m_prate": self.m_prate,
-            "m_fdate": self.m_fdate.isoformat() if self.m_fdate else None,
-        }
-
-"""
-관리자 백엔드용 ARS tm60_member 최소 모델 (MSSQL)
-"""
-from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import Mapped, mapped_column
-from sqlalchemy import String
-
-
-ARSBase = declarative_base()
-
-
-class Tm60Member(ARSBase):
-    __tablename__ = "tm60_member"
-    __table_args__ = {"schema": "dbo"}
-
-    m_code: Mapped[str] = mapped_column(String(3), primary_key=True)
-    m_state: Mapped[str] = mapped_column(String(1))
 
 

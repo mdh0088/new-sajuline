@@ -1,0 +1,123 @@
+
+.swal2-container {
+  z-index: 9999;
+}
+
+// 커스텀 switch
+.switch-sm .custom-switch {
+  width: 50px !important;
+  height: 20px !important;
+  #margin-top: 10px !important;
+  margin-bottom: 0px !important;
+}
+
+.switch input:checked + .custom-switch-state:before {
+  transform: translateX(29px) !important;
+}
+
+.switch-sm .switch .custom-switch-state:before {
+  height: 12px !important;
+  width: 12px !important;
+}
+
+
+.switch {
+  position: relative;
+  display: inline-block;
+  width: 60px;
+  height: 34px;
+
+  input {
+    display: none;
+
+    &:checked+.switch-state {
+      background-color: royalblue;
+
+      &:before {
+        transform: translateX(26px);
+      }
+    }
+
+    &:focus+.switch-state {
+      box-shadow: 0 0 1px var(--switch-deafult);
+    }
+  }
+}
+
+.switch {
+  input {
+    &:checked+.switch-state.bg-primary {
+      background-color: $transparent-color !important;
+      border: 1px solid var(--theme-deafult);
+
+      &:before {
+        background-color: var(--theme-deafult);
+      }
+    }
+  }
+}
+
+.switch-state {
+  border-radius: 20px;
+  position: absolute;
+  cursor: pointer;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: $light-color;
+  transition: .4s;
+
+  &:before {
+    position: absolute;
+    content: "";
+    left: 4px;
+    bottom: 4px;
+    background-color: $white;
+    transition: .4s;
+    border-radius: 20px;
+  }
+}
+
+// 커서 링크 포인터
+.cursor-link-pointer {
+  cursor: pointer;
+  color: royalblue;
+}
+
+// el-form-label css
+.el-form-item__label{
+  font-size: 12px !important;
+}
+
+.el-select__selection {
+  font-size: 12px;
+}
+
+.el-range-input {
+  font-size: 12px !important;
+}
+
+.f-10 {
+  font-size: 10px;
+}
+
+.f-12 {
+  font-size: 12px;
+}
+
+.f-14 {
+  font-size: 12px;
+}
+
+.f-16 {
+  font-size: 12px;
+}
+
+.f-18 {
+  font-size: 12px;
+}
+
+.f-20 {
+  font-size: 12px;
+}

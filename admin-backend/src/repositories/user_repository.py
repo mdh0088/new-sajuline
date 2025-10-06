@@ -28,7 +28,7 @@ class UserRepository:
     ) -> Tuple[List[User], int]:
         """유저 목록 조회 (페이징)
         - 기본 정렬: created_at DESC
-        - search_type=all: nickname/email/phone OR LIKE
+        - search_type=all: user_id/nickname/email/phone OR LIKE
         - join_type, grade: 정확 일치
         - created_at 범위 필터
         """
@@ -49,11 +49,14 @@ class UserRepository:
             if not search_type or search_type == "all":
                 conditions.append(
                     or_(
+                        User.user_id.like(kw),
                         User.nickname.like(kw),
                         User.email.like(kw),
                         User.phone.like(kw),
                     )
                 )
+            elif search_type == "user_id":
+                conditions.append(User.user_id.like(kw))
             elif search_type == "nickname":
                 conditions.append(User.nickname.like(kw))
             elif search_type == "email":

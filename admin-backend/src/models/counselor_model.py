@@ -7,6 +7,7 @@ from typing import Optional
 from decimal import Decimal
 
 from sqlalchemy import String, DateTime, Boolean, Integer, Text, DECIMAL, CheckConstraint, Index
+from sqlalchemy.dialects.mysql import LONGTEXT
 from sqlalchemy.orm import Mapped, mapped_column
 
 from src.core.database import Base
@@ -47,7 +48,7 @@ class Counselor(Base):
     grade: Mapped[Optional[str]] = mapped_column(String(20), nullable=True, default="BRONZE", comment="등급: BRONZE, SILVER, GOLD")
 
     # 전문 분야/키워드/업무시간
-    specialty_types: Mapped[Optional[str]] = mapped_column(Text, nullable=True, comment='전문 분야 (JSON 배열 형식 예: ["TARO","SAJU"])')
+    specialty_types: Mapped[Optional[str]] = mapped_column(LONGTEXT, nullable=True, comment='전문 분야 (JSON 배열 형식 예: ["TARO","SAJU"])')
     keywords: Mapped[Optional[str]] = mapped_column(Text, nullable=True, comment="키워드")
     work_time: Mapped[Optional[str]] = mapped_column(Text, nullable=True, comment="업무 시간")
 
@@ -61,7 +62,7 @@ class Counselor(Base):
     after_amount: Mapped[Optional[int]] = mapped_column(Integer, nullable=True, default=1000, comment="선불 금액")
     before_amount: Mapped[str] = mapped_column(String(100), nullable=False, default="1000", comment="후불 금액")
 
-    is_best: Mapped[Optional[bool]] = mapped_column(Boolean, nullable=True, default=True, comment="best 여부")
+    is_best: Mapped[Optional[bool]] = mapped_column(Boolean, nullable=True, default=False, comment="best 여부")
 
     # 상태 플래그들
     is_new: Mapped[Optional[bool]] = mapped_column(Boolean, nullable=True, default=True, comment="신규 상담사 여부")
@@ -80,7 +81,7 @@ class Counselor(Base):
     __table_args__ = (
         Index("idx_counselor_status", "counselor_status"),
         Index("idx_grade", "grade"),
-        Index("idx_rating", "rating_avg", "rating_count"),
+        Index("idx_rating", "rating_avg", "rating_count", mysql_prefix="DESC"),
         CheckConstraint("counselor_status IN ('WAITING','CONSULTING','ABSENT')", name="chk_counselor_status"),
         CheckConstraint("grade IN ('BRONZE','SILVER','GOLD')", name="chk_grade"),
         {"comment": "상담사 정보"},

@@ -7,14 +7,16 @@ from pydantic import BaseModel, Field, ConfigDict
 
 
 class NotificationLogItem(BaseModel):
-    notification_seq: int
+    log_id: int
     recipient_type: str
     recipient_id: str
     channel: str
-    template_code: Optional[str] = None
+    template_id: Optional[int] = None
     title: Optional[str] = None
     content: str
-    status: str
+    variables: Optional[dict] = None
+    send_status: str
+    provider_response: Optional[dict] = None
     sent_at: Optional[datetime] = None
     read_at: Optional[datetime] = None
     failed_reason: Optional[str] = None
@@ -26,6 +28,9 @@ class NotificationLogItem(BaseModel):
 
 class NotificationLogListResponse(BaseModel):
     logs: List[NotificationLogItem]
+
+
+
 
 
 

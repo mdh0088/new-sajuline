@@ -27,22 +27,18 @@ class Tm60MemberRepository:
     def get_states_by_codes(self, codes: Iterable[str]) -> Dict[str, str]:
         """
         코드 목록으로 상태 맵 조회 { m_code: m_state }
-        가장 최근 m_fdate 기준으로 우선 선택
         """
         code_list = list({c for c in codes if c})
         if not code_list:
             return {}
-        rows: List[Tuple[str, str, Optional[datetime]]] = (
-            self.db.query(Tm60Member.m_code, Tm60Member.m_state, Tm60Member.m_fdate)
+        rows = (
+            self.db.query(Tm60Member.m_code, Tm60Member.m_state)
             .filter(Tm60Member.m_code.in_(code_list))
             .all()
         )
-        result: Dict[str, Tuple[str, Optional[datetime]]] = {}
-        for code, state, fdate in rows:
-            prev = result.get(code)
-            if prev is None or (fdate and (prev[1] is None or fdate > prev[1])):
-                result[code] = (state, fdate)
-        return {k: v[0] for k, v in result.items()}
+        # 단순 매핑: m_code -> m_state
+        result = {code: state for code, state in rows if code and state}
+        return result
 
     def update_state_by_code(self, *, m_code: str, m_state: str) -> bool:
         """m_code로 tm60_member.m_state 값을 갱신

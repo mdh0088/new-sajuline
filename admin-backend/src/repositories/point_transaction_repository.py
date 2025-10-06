@@ -56,12 +56,12 @@ class PointTransactionRepository:
         return list(result.scalars().all())
 
     async def find_mileage_earn_logs(self, user_id: str) -> List[PointTransaction]:
+        """마일리지 적립 내역 조회 (EARN, CHARGE, ADMIN 타입 포함)"""
         stmt = (
             select(PointTransaction)
             .where(
                 PointTransaction.user_id == user_id,
-                func.upper(PointTransaction.transaction_type) == "EARN",
-                func.upper(PointTransaction.currency_type) == "MILEAGE",
+                PointTransaction.amount > 0,  # 양수 금액만 (적립/충전/지급)
             )
             .order_by(desc(PointTransaction.created_at))
         )

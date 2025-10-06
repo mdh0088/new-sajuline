@@ -1,0 +1,214 @@
+{
+  "data": [
+    {
+      "headTitle1": "DashBoard",
+      "headTitle2": "DashBoard",
+      "korTitle": "대시보드",
+      "type": "link",
+      "icon": "fa-home",
+      "icon1": "home",
+      "icon2": "fill-home",
+      "path": "/dashboard",
+      "active": false
+    },
+
+    {
+      "headTitle1": "Counselor",
+      "headTitle2": "Counselor",
+      "korTitle": "상담사 관리",
+      "type": "link",
+      "icon": "fa-male",
+      "icon1": "home",
+      "icon2": "fill-home",
+      "path": "/counselor",
+      "active": false
+    },
+
+
+    {
+      "headTitle1": "Users",
+      "headTitle2": "Users",
+      "korTitle": "회원 관리",
+      "type": "headtitle",
+      "icon": "fa-group",
+      "icon1": "home",
+      "icon2": "fill-home",
+      "active": false,
+      "children": [
+        {
+          "title": "회원 관리",
+          "icon1": "stroke-ui-kits",
+          "icon2": "fill-ui-kits",
+          "type": "link",
+          "active": false,
+          "path": "/user/users"
+        },
+        {
+          "title": "등급관리",
+          "icon1": "stroke-ui-kits",
+          "icon2": "fill-ui-kits",
+          "type": "link",
+          "active": false,
+          "path": "/user/grade"
+        }
+      ]
+    },
+
+    {
+      "headTitle1": "Product",
+      "headTitle2": "Product",
+      "korTitle": "상품 관리",
+      "type": "link",
+      "icon": "fa-archive",
+      "icon1": "home",
+      "icon2": "fill-home",
+      "path": "/product",
+      "active": false
+    },
+
+    {
+      "headTitle1": "Payments",
+      "headTitle2": "Payments",
+      "korTitle": "결제 관리",
+      "type": "link",
+      "icon": "fa-male",
+      "icon1": "home",
+      "icon2": "fill-home",
+      "path": "/payment",
+      "active": false
+    },
+
+    {
+      "headTitle1": "Management",
+      "headTitle2": "Management",
+      "korTitle": "고객지원",
+      "type": "headtitle",
+      "icon": "fa-desktop",
+      "icon1": "home",
+      "icon2": "fill-home",
+      "active": false,
+      "children": [
+        {
+          "title": "공지사항",
+          "icon1": "stroke-ui-kits",
+          "icon2": "fill-ui-kits",
+          "type": "link",
+          "active": false,
+          "path": "/customer-support/notice"
+        },
+        {
+          "title": "문의관리",
+          "icon1": "stroke-ui-kits",
+          "icon2": "fill-ui-kits",
+          "type": "link",
+          "active": false,
+          "path": "/customer-support/inquiry"
+        }
+      ]
+    },
+
+    {
+      "headTitle1": "Promotion",
+      "headTitle2": "Promotion",
+      "korTitle": "프로모션",
+      "type": "headtitle",
+      "icon": "fa-star-o",
+      "icon1": "home",
+      "icon2": "fill-home",
+      "active": false,
+      "children": [
+        {
+          "title": "기획전 관리",
+          "icon1": "stroke-ui-kits",
+          "icon2": "fill-ui-kits",
+          "type": "link",
+          "active": false,
+          "path": "/promotion/exhibition"
+        },
+        {
+          "title": "배너 관리",
+          "icon1": "stroke-ui-kits",
+          "icon2": "fill-ui-kits",
+          "type": "link",
+          "active": false,
+          "path": "/promotion/banner"
+        },
+        {
+          "title": "팝업 관리",
+          "icon1": "stroke-ui-kits",
+          "icon2": "fill-ui-kits",
+          "type": "link",
+          "active": false,
+          "path": "/promotion/popup"
+        }
+      ]
+    },
+
+    {
+      "headTitle1": "Mileage",
+      "headTitle2": "Mileage",
+      "korTitle": "마일리지",
+      "type": "headtitle",
+      "icon": "fa-star-o",
+      "icon1": "home",
+      "icon2": "fill-home",
+      "active": false,
+      "children": [
+        {
+          "title": "마일리지 상품 관리",
+          "icon1": "stroke-ui-kits",
+          "icon2": "fill-ui-kits",
+          "type": "link",
+          "active": false,
+          "path": "/mileage/mileage-product"
+        }
+      ]
+    },
+
+    {
+      "headTitle1": "Reviews",
+      "headTitle2": "Reviews",
+      "korTitle": "후기 관리",
+      "type": "headtitle",
+      "icon": "fa-pencil-square",
+      "icon1": "home",
+      "icon2": "fill-home",
+      "active": false,
+      "children": [
+        {
+          "title": "후기 관리",
+          "icon1": "stroke-ui-kits",
+          "icon2": "fill-ui-kits",
+          "type": "link",
+          "active": false,
+          "path": "/review/cs-review"
+        },
+        {
+          "title": "더미 후기 관리",
+          "icon1": "stroke-ui-kits",
+          "icon2": "fill-ui-kits",
+          "type": "link",
+          "active": false,
+          "path": "/review/dumy-review"
+        }
+      ]
+    },
+
+
+
+
+    {
+      "headTitle1": "Statistics",
+      "headTitle2": "Statistics",
+      "korTitle": "통계",
+      "type": "headtitle",
+      "icon": "fa-bar-chart-o",
+      "icon1": "home",
+      "icon2": "fill-home",
+      "active": false
+    }
+
+
+
+  ]
+}

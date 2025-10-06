@@ -28,6 +28,7 @@ CREATE TABLE t_user (
     profile_image_url VARCHAR(500) DEFAULT NULL COMMENT '프로필 이미지 URL',
     birth_date varchar(30) DEFAULT NULL COMMENT '생년월일',
     gender VARCHAR(10) DEFAULT NULL COMMENT '성별: MALE, FEMALE',
+    mileage_point int(11) DEFAULT 0 COMMENT '마일리지 포인트',
     is_marketing_agreed TINYINT(1) DEFAULT 1 COMMENT '마케팅 동의',
     password_changed_at DATETIME DEFAULT NULL COMMENT '비밀번호 변경일시',
     failed_login_count INT(11) DEFAULT 0 COMMENT '로그인 실패 횟수',

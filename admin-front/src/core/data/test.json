@@ -1,0 +1,51 @@
+{
+  "headTitle1": "UI Kits",
+  "headTitle2": "Ui Kits",
+  "korTitle": "테스트용",
+  "type": "headtitle",
+  "icon1": "Ui-kites",
+  "icon2": "fill-ui",
+  "active": false,
+  "children": [
+    {
+      "title": "UI Kits",
+      "icon1": "stroke-ui-kits",
+      "icon2": "fill-ui-kits",
+      "type": "sub",
+      "active": false,
+      "children": [
+        {
+          "path": "/uikits/typography",
+          "title": "Typography",
+          "type": "link"
+        },
+        {
+          "path": "/uikits/avatars",
+          "title": "Avatars",
+          "type": "link"
+        }
+      ]
+    },
+    {
+      "title": "Animation",
+      "icon1": "stroke-animation",
+      "icon2": "fill-animation",
+      "type": "sub",
+      "active": false,
+      "children": [
+        {
+          "path": "/animation/animate",
+          "title": "Animate",
+          "icon": "cloud-drizzle",
+          "type": "link"
+        },
+        {
+          "path": "/animation/aos_animation",
+          "title": "AOS Animation",
+          "icon": "cloud-drizzle",
+          "type": "link"
+        }
+      ]
+    }
+  ]
+}

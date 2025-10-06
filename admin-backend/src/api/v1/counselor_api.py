@@ -19,6 +19,7 @@ from src.schemas.counselor_schema import (
     CounselorStateUpdateResponse,
     CounselorResponse,
 )
+from src.schemas.ars.tm60_member_schema import Tm60MemberResponse
 from src.services.counselor_service import CounselorService
 from src.services.counselor_status_service import CounselorStatusService
 from src.services.auth_service import AuthService
@@ -98,6 +99,21 @@ async def get_counselor_list(
 
 
 @router.patch(
+    "/{counselor_id}/show",
+    response_model=APIResponse,
+    summary="상담사 노출여부 수정 (간단 버전)",
+    description="counselor_id와 is_show만으로 노출여부를 수정합니다.",
+)
+async def update_counselor_show(
+    counselor_id: str,
+    is_show: bool = Query(..., description="노출 여부"),
+    counselor_service: CounselorService = Depends(_get_counselor_service),
+):
+    await counselor_service.update_show_status(counselor_id=counselor_id, is_show=is_show)
+    return ok(data={"counselor_id": counselor_id, "is_show": is_show}, message="노출여부 수정 성공")
+
+
+@router.patch(
     "/{counselor_id}",
     response_model=APIResponse[CounselorDetailResponse],
     summary="상담사 상세 수정 (이미지 업로드 포함)",
@@ -160,7 +176,12 @@ async def get_counselor_detail(
 ):
     #verify_admin_role(current_user)
     counselor, member = await counselor_service.get_detail(counselor_id)
-    member_dict = member.to_dict() if member is not None else None
+
+    # member를 dict로 변환 (Pydantic 스키마 사용)
+    member_dict = None
+    if member is not None:
+        member_dict = Tm60MemberResponse.model_validate(member, from_attributes=True).model_dump()
+
     return ok(
         data=CounselorFullDetailResponse(
             counselor=CounselorResponse.model_validate(counselor, from_attributes=True),

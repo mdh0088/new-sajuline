@@ -23,6 +23,7 @@ INSERT INTO t_user (
     password_hash,
     nickname,
     phone,
+    mileage_point,
     join_type,
     social_provider,
     social_id,
@@ -42,6 +43,7 @@ SELECT
     END,
     NICK_NAME,
     PHONE,
+    MILEAGE,
     CASE 
         WHEN JOIN_TYPE = 'common' THEN 'COMMON'
         WHEN JOIN_TYPE = 'kakao' THEN 'KAKAO'
