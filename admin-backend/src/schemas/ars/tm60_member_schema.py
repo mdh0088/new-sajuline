@@ -8,7 +8,7 @@ from pydantic import BaseModel, Field, ConfigDict
 
 class Tm60MemberResponse(BaseModel):
     idx: int
-    m_s: str
+    m_dnis: str
     m_code: str
     m_name: str
     m_nickname: str
@@ -20,7 +20,7 @@ class Tm60MemberResponse(BaseModel):
     m_nextstate: str
     m_counselling: str
     m_id: str
-    m_memo: Optional[str] = None
+    m_memo: Optional[str] = ""
     last_chat: str
     chat_level: str
     class_: str = Field(alias="class")

@@ -129,14 +129,42 @@ class CounselorService:
                 "counselor_code": c.counselor_code,
                 "name": c.name,
                 "nickname": c.nickname,
+                "phone": c.phone,
+                "profile_image_url": c.profile_image_url,
+                "introduction_short": c.introduction_short,
+                "greeting_message": c.greeting_message,
+                "career_info": c.career_info,
+                "grade": c.grade,
+                "specialty_types": sp_list,
+                "keywords": c.keywords,
+                "work_time": c.work_time,
+                "rating_avg": c.rating_avg,
+                "rating_count": c.rating_count,
+                "consultation_count": c.consultation_count,
+                "consultation_time_total": c.consultation_time_total,
+                "after_amount": c.after_amount,
+                "before_amount": c.before_amount or "",
+                "is_best": bool(c.is_best) if c.is_best is not None else None,
+                "is_new": bool(c.is_new) if c.is_new is not None else None,
                 "is_show": bool(c.is_show),
                 "is_out": bool(c.is_out),
+                "approved_at": c.approved_at,
                 "created_at": c.created_at,
-                "specialty_types": sp_list,
+                "updated_at": c.updated_at,
+                "last_login_at": c.last_login_at,
+                "withdrawn_at": c.withdrawn_at,
                 "m_state": state_map.get(c.counselor_code),
             }))
 
         return resp_items, params.page, params.limit, total
+
+    async def update_show_status(self, *, counselor_id: str, is_show: bool) -> None:
+        """상담사 노출여부만 수정"""
+        counselor = await self.counselor_repo.get_by_id(counselor_id)
+        if not counselor:
+            raise NotFoundError("상담사를 찾을 수 없습니다")
+
+        await self.counselor_repo.partial_update(counselor_id, is_show=is_show)
 
     async def update_counselor_detail(
         self,

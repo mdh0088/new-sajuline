@@ -42,7 +42,13 @@ class PaymentRepository:
 
         # 기본 조인
         stmt = select(Payment, User).join(User, Payment.user_id == User.user_id)
-        count_stmt = select(func.count()).select_from(select(Payment.payment_id).join(User, Payment.user_id == User.user_id).subquery())
+
+        # COUNT 쿼리 - Payment만 카운트
+        count_stmt = (
+            select(func.count(Payment.payment_id))
+            .select_from(Payment)
+            .join(User, Payment.user_id == User.user_id)
+        )
 
         # 금액/수단/상태 필터
         if amount is not None:
@@ -105,6 +111,33 @@ class PaymentRepository:
         result = await self.db.execute(stmt)
         row = result.first()
         return row
+
+    async def get_by_id(self, payment_id: int) -> Optional[Payment]:
+        """결제 ID로 결제 정보 조회"""
+        stmt = select(Payment).where(Payment.payment_id == payment_id)
+        result = await self.db.execute(stmt)
+        return result.scalar_one_or_none()
+
+    async def update_cancel_info(
+        self,
+        payment_id: int,
+        cancel_amount: int,
+        cancelled_at: datetime,
+        payment_status: str = "CANCEL"
+    ) -> Payment:
+        """결제 취소 정보 업데이트"""
+        payment = await self.get_by_id(payment_id)
+        if not payment:
+            raise ValueError(f"결제를 찾을 수 없습니다: payment_id={payment_id}")
+
+        payment.cancel_amount = cancel_amount
+        payment.cancelled_at = cancelled_at
+        payment.payment_status = payment_status
+        payment.updated_at = datetime.utcnow()
+
+        await self.db.commit()
+        await self.db.refresh(payment)
+        return payment
 
 
 

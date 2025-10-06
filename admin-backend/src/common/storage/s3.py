@@ -70,7 +70,7 @@ def upload_public_image(*, subdirectory: str, content: bytes, original_name: str
             Key=key,
             Body=content,
             ContentType=_guess_content_type(filename),
-            ACL="public-read",
+            # ACL 제거: 버킷 정책에서 ACL 비활성화됨
         )
         log.info("S3 upload success", key=key)
         return filename

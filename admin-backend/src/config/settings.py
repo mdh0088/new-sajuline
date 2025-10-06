@@ -112,6 +112,11 @@ class Settings(BaseSettings):
     pagination_default_limit: int = Field(..., env="PAGINATION_DEFAULT_LIMIT")
     pagination_max_limit: int = Field(..., env="PAGINATION_MAX_LIMIT")
 
+    # 결제 설정
+    payment_gateway_url: str = Field(..., env="PAYMENT_GATEWAY_URL")
+    payment_gateway_key: str = Field(..., env="PAYMENT_GATEWAY_KEY")
+    payment_client_id: str = Field(..., env="PAYMENT_CLIENT_ID")
+
     class Config:
         # 환경에 따라 자동으로 env 파일 선택
         env_file = ".env.development" if os.getenv("APP_ENV", "development") == "development" else ".env.production"

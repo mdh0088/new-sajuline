@@ -9,7 +9,7 @@ from pydantic import BaseModel, Field, ConfigDict
 class UserListParams(BaseModel):
     page: int = Field(default=1, ge=1, description="페이지 번호")
     limit: int = Field(default=10, ge=1, le=100, description="페이지당 항목 수")
-    search_type: str = Field(default="all", description="검색 타입: all|nickname|email|phone")
+    search_type: str = Field(default="all", description="검색 타입: all|user_id|nickname|email|phone")
     search_name: Optional[str] = Field(default=None, description="검색 키워드")
     join_type: Optional[str] = Field(default=None, description="가입유형: COMMON|NAVER|KAKAO")
     grade: Optional[str] = Field(default=None, description="등급코드")
@@ -29,10 +29,12 @@ class UserListItem(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
 
-class Tm60UserBrief(BaseModel):
+class ArsUserInfo(BaseModel):
+    """ARS tm60_users 사용자 정보"""
     idx: int
     u_id: str
     u_tel: str
+    u_passwd: str
     u_kname: str
     u_memcd: str
     u_login: str
@@ -44,15 +46,25 @@ class Tm60UserBrief(BaseModel):
     u_memo: str
 
 
-class UserWithTm60Response(BaseModel):
-    user: UserListItem
-    tm60_users: List[Tm60UserBrief] = Field(default_factory=list, description="해당 user_id로 매칭된 tm60_users 전체 목록")
+class UserListItemResponse(BaseModel):
+    """유저 목록 아이템 - t_user + mileage_point + ars_user_info 통합"""
+    user_id: str
+    email: str
+    nickname: str
+    phone: str
+    join_type: str
+    grade_code: str
+    mileage_point: int
+    created_at: datetime
+    ars_user_info: Optional[ArsUserInfo] = Field(default=None, description="ARS 연동 정보 (u_id 매칭된 첫 번째 레코드)")
+
+    model_config = ConfigDict(from_attributes=True)
 
 
 class UserDetailResponse(BaseModel):
-    """회원 상세 응답: t_user 전체 + tm60_users 전체 목록"""
+    """회원 상세 응답: t_user 전체 + ars_user_info"""
     user: dict = Field(..., description="t_user 모든 필드")
-    tm60_users: List[Tm60UserBrief] = Field(default_factory=list)
+    ars_user_info: Optional[ArsUserInfo] = Field(default=None, description="ARS 연동 정보 (u_id 매칭된 첫 번째 레코드)")
 
 
 class UserUpdateRequest(BaseModel):

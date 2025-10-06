@@ -1,0 +1,13 @@
+{
+  "settings": {
+    "layout_type": "ltr",
+    "layout": "default",
+    "sidebar_icon": "stroke-svg",
+    "sidebar_setting": "compact-sidebar compact-small material-icon "
+  },
+  "color": {
+    "layout_version": "light",
+    "primary_color": "#35bfbf",
+    "secondary_color": "#FF6150"
+  }
+}

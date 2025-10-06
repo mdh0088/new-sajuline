@@ -10,7 +10,7 @@ from pydantic import BaseModel, Field, ConfigDict
 class CounselorResponse(BaseModel):
     counselor_id: str
     counselor_code: str
-    password_hash: str
+    # password_hash는 보안상 제외
     name: str
     nickname: str
     phone: str
@@ -92,15 +92,35 @@ class CounselorListParams(BaseModel):
 
 
 class CounselorListItem(BaseModel):
-    """상담사 목록 아이템 (m_state 포함)"""
+    """상담사 목록 아이템 (m_state 포함, 모든 t_counselor 필드)"""
     counselor_id: str
     counselor_code: str
     name: str
     nickname: str
-    is_show: bool
-    is_out: bool
-    created_at: datetime
+    phone: str
+    profile_image_url: Optional[str] = None
+    introduction_short: Optional[str] = None
+    greeting_message: Optional[str] = None
+    career_info: Optional[str] = None
+    grade: Optional[str] = None
     specialty_types: Optional[List[str]] = None
+    keywords: Optional[str] = None
+    work_time: Optional[str] = None
+    rating_avg: Optional[Decimal] = None
+    rating_count: Optional[int] = None
+    consultation_count: Optional[int] = None
+    consultation_time_total: Optional[int] = None
+    after_amount: Optional[int] = None
+    before_amount: str
+    is_best: Optional[bool] = None
+    is_new: Optional[bool] = None
+    is_out: bool
+    is_show: bool
+    approved_at: Optional[datetime] = None
+    created_at: datetime
+    updated_at: Optional[datetime] = None
+    last_login_at: Optional[datetime] = None
+    withdrawn_at: Optional[datetime] = None
     m_state: Optional[str] = Field(default=None, description="tm60_member.m_state")
 
     model_config = ConfigDict(from_attributes=True)

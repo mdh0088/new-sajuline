@@ -62,9 +62,9 @@ class PointProductService:
         assert refetched is not None
         return PointProductItem.model_validate(refetched)
 
-    async def disable(self, product_id: int) -> PointProductDeleteResponse:
-        updated = await self.repo.partial_update(product_id, is_active=False)
-        return PointProductDeleteResponse(product_id=product_id, updated=updated)
+    async def delete(self, product_id: int) -> PointProductDeleteResponse:
+        deleted = await self.repo.delete_by_id(product_id)
+        return PointProductDeleteResponse(product_id=product_id, updated=deleted)
 
 
 
