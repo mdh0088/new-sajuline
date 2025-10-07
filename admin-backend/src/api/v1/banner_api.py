@@ -33,8 +33,11 @@ def _get_service(db: AsyncSession = Depends(get_db_maria)) -> BannerService:
 
 
 @router.get("/list", response_model=APIResponse[BannerListResponse], summary="배너 목록 조회")
-async def list_banners(service: BannerService = Depends(_get_service)):
-    data = await service.list_all()
+async def list_banners(
+    banner_type: str = Query(default="MAIN", description="배너 타입: MAIN, POPUP, SUB"),
+    service: BannerService = Depends(_get_service)
+):
+    data = await service.list_by_type(banner_type)
     return ok(data=data, message="배너 목록 조회 성공")
 
 
@@ -55,8 +58,8 @@ async def create_banner(
     link_target: str = Form(default="SELF"),
     display_order: int = Form(default=0),
     is_active: bool = Form(default=True),
-    valid_from: str = Form(..., description="YYYY-MM-DD HH:MM:SS[.mmm]"),
-    valid_until: str = Form(..., description="YYYY-MM-DD HH:MM:SS[.mmm]"),
+    valid_from: str = Form(..., description="YYYY-MM-DD HH:MM:SS"),
+    valid_until: str = Form(..., description="YYYY-MM-DD HH:MM:SS"),
     image: UploadFile | None = File(default=None),
     image_url: Optional[str] = Form(default=None, description="이미 업로드된 파일명 직접 지정 시 사용"),
     service: BannerService = Depends(_get_service),
@@ -64,13 +67,13 @@ async def create_banner(
     # 문자열로 받은 날짜를 파싱하여 datetime으로 변환
     from datetime import datetime
     def _parse_dt(s: str) -> datetime:
-        # 지원 포맷: 'YYYY-MM-DD HH:MM:SS' 또는 'YYYY-MM-DD HH:MM:SS.mmm'
-        for fmt in ("%Y-%m-%d %H:%M:%S.%f", "%Y-%m-%d %H:%M:%S"):
+        # 여러 날짜 형식 지원: ISO 8601, 일반 datetime 형식
+        for fmt in ("%Y-%m-%dT%H:%M:%S", "%Y-%m-%d %H:%M:%S", "%Y-%m-%dT%H:%M:%S.%f", "%Y-%m-%d %H:%M:%S.%f"):
             try:
                 return datetime.strptime(s, fmt)
             except ValueError:
                 continue
-        raise ValueError("날짜 형식이 올바르지 않습니다. 예: 2024-10-31 15:00:00.000")
+        raise ValueError(f"날짜 형식이 올바르지 않습니다. 입력값: '{s}'")
 
     payload = BannerCreateRequest(
         banner_name=banner_name,
@@ -104,14 +107,15 @@ async def update_banner(
 ):
     from datetime import datetime
     def _parse_optional_dt(s: Optional[str]):
-        if not s:
+        if not s or s.strip() == "":
             return None
-        for fmt in ("%Y-%m-%d %H:%M:%S.%f", "%Y-%m-%d %H:%M:%S"):
+        # 여러 날짜 형식 지원: ISO 8601, 일반 datetime 형식
+        for fmt in ("%Y-%m-%dT%H:%M:%S", "%Y-%m-%d %H:%M:%S", "%Y-%m-%dT%H:%M:%S.%f", "%Y-%m-%d %H:%M:%S.%f"):
             try:
                 return datetime.strptime(s, fmt)
             except ValueError:
                 continue
-        raise ValueError("날짜 형식이 올바르지 않습니다. 예: 2024-10-31 15:00:00.000")
+        raise ValueError(f"날짜 형식이 올바르지 않습니다. 입력값: '{s}'")
 
     payload = BannerUpdateRequest(
         banner_id=banner_id,

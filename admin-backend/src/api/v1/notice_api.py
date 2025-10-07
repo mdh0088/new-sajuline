@@ -80,21 +80,21 @@ async def get_notice_detail(
 @router.post("/create", response_model=APIResponse[NoticeDetailResponse], summary="공지사항 등록")
 async def create_notice(
     payload: NoticeCreateRequest = Body(...),
-    current_user: TokenPayload = Depends(get_current_user),
+    #current_user: TokenPayload = Depends(get_current_user),
     service: NoticeService = Depends(_get_notice_service),
 ):
-    verify_admin_role(current_user)
-    data = await service.create(payload, created_by=current_user.sub)
+    #verify_admin_role(current_user)
+    data = await service.create(payload, created_by=1)  # 임시: 관리자 ID 1
     return ok(data=data, message="공지 등록 성공")
 
 
 @router.post("/update", response_model=APIResponse[NoticeDetailResponse], summary="공지사항 수정")
 async def update_notice(
     payload: NoticeUpdateRequest = Body(...),
-    current_user: TokenPayload = Depends(get_current_user),
+    #current_user: TokenPayload = Depends(get_current_user),
     service: NoticeService = Depends(_get_notice_service),
 ):
-    verify_admin_role(current_user)
+    #verify_admin_role(current_user)
     data = await service.update(payload)
     return ok(data=data, message="공지 수정 성공")
 
@@ -102,10 +102,10 @@ async def update_notice(
 @router.delete("/delete", response_model=APIResponse[NoticeDeleteResponse], summary="공지사항 삭제")
 async def delete_notice(
     notice_id: int = Query(..., description="공지 PK"),
-    current_user: TokenPayload = Depends(get_current_user),
+    #current_user: TokenPayload = Depends(get_current_user),
     service: NoticeService = Depends(_get_notice_service),
 ):
-    verify_admin_role(current_user)
+    #verify_admin_role(current_user)
     data = await service.delete(notice_id)
     return ok(data=data, message="공지 삭제 성공")
 

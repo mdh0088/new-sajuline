@@ -16,12 +16,12 @@ class BannerItem(BaseModel):
     mobile_image_url: Optional[str] = None
     link_url: Optional[str] = None
     link_target: str
-    display_order: int
+    display_order: Optional[int] = 0
     is_active: bool
     valid_from: datetime
     valid_until: datetime
-    click_count: int
-    impression_count: int
+    click_count: Optional[int] = 0
+    impression_count: Optional[int] = 0
     created_at: datetime
     updated_at: Optional[datetime] = None
 

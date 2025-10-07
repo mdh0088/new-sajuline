@@ -28,7 +28,23 @@ class NoticeListItem(BaseModel):
     is_important: bool
     is_active: bool
     view_count: int
-    created_by: str
+    created_by: int  # 관리자 ID (정수)
+    created_at: datetime
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class NoticeDetail(BaseModel):
+    """공지사항 상세 (content 포함)"""
+    notice_id: int
+    notice_type: str
+    target_audience: str
+    title: str
+    content: str
+    is_important: bool
+    is_active: bool
+    view_count: int
+    created_by: int
     created_at: datetime
 
     model_config = ConfigDict(from_attributes=True)
@@ -40,7 +56,7 @@ class NoticeListResponse(BaseModel):
 
 
 class NoticeDetailResponse(BaseModel):
-    notice: NoticeListItem
+    notice: NoticeDetail
 
 
 class NoticeCreateRequest(BaseModel):
@@ -58,6 +74,7 @@ class NoticeUpdateRequest(BaseModel):
     content: Optional[str] = None
     target_audience: Optional[str] = None
     is_important: Optional[bool] = None
+    is_active: Optional[bool] = None
 
 
 class NoticeDeleteResponse(BaseModel):

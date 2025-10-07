@@ -142,31 +142,43 @@ export const cancelPayment = async (
 ): Promise<boolean> => {
     try {
         // 확인 팝업
-        const confirmed = await swal.swalConfirm(
-            '결제를 취소하시겠습니까?',
-            '취소된 결제는 복구할 수 없습니다.',
+        const result = await swal.swalConfirm(
+            '결제를 취소하시겠습니까?\n취소된 결제는 복구할 수 없습니다.',
             'warning'
         );
 
-        if (!confirmed) {
+        if (!result.isConfirmed) {
             return false;
         }
 
-        // API 호출
-        const response = await http.post(`${paymentApi.cancelPaymentURL}?payment_id=${payment_id}`);
+        // 전체 로딩 시작
+        const { ElLoading } = await import('element-plus');
+        const loading = ElLoading.service({
+            lock: true,
+            text: '결제 취소 중...',
+            background: 'rgba(0, 0, 0, 0.7)',
+        });
 
-        if (response.data && response.data.success) {
-            await swal.swalAlert('결제가 취소되었습니다.', 'success');
+        try {
+            // API 호출
+            const response = await http.post(`${paymentApi.cancelPaymentURL}?payment_id=${payment_id}`);
 
-            // 목록 새로고침
-            if (refreshCallback) {
-                await refreshCallback();
+            if (response.data && response.data.success) {
+                await swal.swalAlert('결제가 취소되었습니다.', 'success');
+
+                // 목록 새로고침
+                if (refreshCallback) {
+                    await refreshCallback();
+                }
+
+                return true;
+            } else {
+                await swal.swalAlert('결제 취소에 실패했습니다.', 'error');
+                return false;
             }
-
-            return true;
-        } else {
-            await swal.swalAlert('결제 취소에 실패했습니다.', 'error');
-            return false;
+        } finally {
+            // 전체 로딩 종료
+            loading.close();
         }
     } catch (error: any) {
         console.error('결제 취소 실패:', error);

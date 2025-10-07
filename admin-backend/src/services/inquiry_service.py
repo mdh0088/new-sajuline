@@ -13,6 +13,7 @@ from src.schemas.inquiry_schema import (
     InquiryWithCounselorItem,
     InquiryDetailResponse,
     InquiryReplyUpdateRequest,
+    InquiryUpdateRequest,
     InquiryDeleteResponse,
     UserInquiryListParams,
     UserInquiryListResponse,
@@ -82,6 +83,22 @@ class InquiryService:
         await self.repo.update_reply(payload.inquiry_id, payload.reply_content, answered_at=datetime.utcnow())
         return await self.get_counselor_inquiry_detail(payload.inquiry_id)
 
+    async def update_counselor_inquiry(self, payload: InquiryUpdateRequest, *, admin_id: str | None = None) -> InquiryDetailResponse:
+        # 문의 제목/내용/답변 수정
+        values = {}
+        if payload.title is not None:
+            values['title'] = payload.title
+        if payload.content is not None:
+            values['content'] = payload.content
+        if payload.reply_content is not None:
+            values['reply_content'] = payload.reply_content
+            values['answered_at'] = datetime.utcnow()
+            # replied_by는 DB에 컬럼이 없으므로 제거
+
+        if values:
+            await self.repo.update_inquiry(payload.inquiry_id, **values)
+        return await self.get_counselor_inquiry_detail(payload.inquiry_id)
+
     async def delete_counselor_inquiry(self, inquiry_id: int) -> InquiryDeleteResponse:
         deleted = await self.repo.delete_by_id(inquiry_id)
         return InquiryDeleteResponse(inquiry_id=inquiry_id, deleted=bool(deleted))
@@ -137,6 +154,21 @@ class InquiryService:
 
     async def update_user_inquiry_reply(self, payload: InquiryReplyUpdateRequest, *, admin_id: str | None = None) -> InquiryUserDetailResponse:
         await self.repo.update_reply(payload.inquiry_id, payload.reply_content, answered_at=datetime.utcnow())
+        return await self.get_user_inquiry_detail(payload.inquiry_id)
+
+    async def update_user_inquiry(self, payload: InquiryUpdateRequest, *, admin_id: str | None = None) -> InquiryUserDetailResponse:
+        values = {}
+        if payload.title is not None:
+            values['title'] = payload.title
+        if payload.content is not None:
+            values['content'] = payload.content
+        if payload.reply_content is not None:
+            values['reply_content'] = payload.reply_content
+            values['answered_at'] = datetime.utcnow()
+            # replied_by는 DB에 컬럼이 없으므로 제거
+
+        if values:
+            await self.repo.update_inquiry(payload.inquiry_id, **values)
         return await self.get_user_inquiry_detail(payload.inquiry_id)
 
     async def delete_user_inquiry(self, inquiry_id: int) -> InquiryDeleteResponse:
@@ -197,6 +229,21 @@ class InquiryService:
 
     async def update_user_to_cs_reply(self, payload: InquiryReplyUpdateRequest, *, admin_id: str | None = None) -> UserToCsDetailResponse:
         await self.repo.update_reply(payload.inquiry_id, payload.reply_content, answered_at=datetime.utcnow())
+        return await self.get_user_to_cs_detail(payload.inquiry_id)
+
+    async def update_user_to_cs_inquiry(self, payload: InquiryUpdateRequest, *, admin_id: str | None = None) -> UserToCsDetailResponse:
+        values = {}
+        if payload.title is not None:
+            values['title'] = payload.title
+        if payload.content is not None:
+            values['content'] = payload.content
+        if payload.reply_content is not None:
+            values['reply_content'] = payload.reply_content
+            values['answered_at'] = datetime.utcnow()
+            # replied_by는 DB에 컬럼이 없으므로 제거
+
+        if values:
+            await self.repo.update_inquiry(payload.inquiry_id, **values)
         return await self.get_user_to_cs_detail(payload.inquiry_id)
 
     async def delete_user_to_cs(self, inquiry_id: int) -> InquiryDeleteResponse:

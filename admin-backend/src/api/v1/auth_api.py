@@ -42,12 +42,17 @@ router = APIRouter(prefix="/auth", tags=["auth"])
 
 
 def _set_auth_cookies(response: Response, access_token: str, refresh_token: str) -> None:
+    from src.config.settings import settings
+
+    # 개발 환경에서는 HTTP를 사용하므로 secure=False
+    is_secure = settings.app_env == "production"
+
     # Access Token (쿠키: 30분)
     response.set_cookie(
         key="access_token",
         value=access_token,
         httponly=True,
-        secure=True,
+        secure=is_secure,
         samesite="lax",
         max_age=30 * 60,
     )
@@ -56,7 +61,7 @@ def _set_auth_cookies(response: Response, access_token: str, refresh_token: str)
         key="refresh_token",
         value=refresh_token,
         httponly=True,
-        secure=True,
+        secure=is_secure,
         samesite="lax",
         max_age=7 * 24 * 60 * 60,
     )

@@ -2,10 +2,13 @@ import axios from 'axios';
 import * as swal from '@/commonUtils/swal';
 import * as crypto from '@/commonUtils/crypto';
 
-const instance = axios.create({});
+const instance = axios.create({
+    withCredentials: true  // 쿠키 전송을 위해 필수
+});
 instance.defaults.headers.common['Access-Control-Allow-Origin'] = '*';
 instance.defaults.timeout = 120000;
 instance.defaults.headers.post['Content-Type'] = 'application/json';
+instance.defaults.headers.put['Content-Type'] = 'application/json';
 // PATCH는 FormData도 사용하므로 기본값 설정하지 않음 (axios가 자동 감지)
 // instance.defaults.headers.patch['Content-Type'] = 'application/json';
 // instance.defaults.headers.post['Content-Type'] =
@@ -76,7 +79,10 @@ instance.interceptors.request.use(
                         config.data = JSON.parse(config.data); // JSON 문자열인 경우 객체로 변환
                     }
                     config.data.managerId = managerId;
-                    config.data = JSON.stringify(config.data);
+                    // PUT, DELETE 요청은 객체 그대로 유지 (axios가 자동으로 JSON.stringify 처리)
+                    if (config.method?.toLowerCase() !== 'put' && config.method?.toLowerCase() !== 'delete') {
+                        config.data = JSON.stringify(config.data);
+                    }
                 }
             }
         }
