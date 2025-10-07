@@ -16,6 +16,7 @@ export interface SignupFormData {
   name: string
   nickname: string
   phone: string
+  phone_chk: boolean  // 휴대폰 인증 완료 여부 (true: 인증 완료, false: 미인증)
   gender: Gender
   birth_date: string  // YYYY-MM-DD HH:MM 형식 (예: "1993-06-19 14:30")
   join_type: JoinType

@@ -67,9 +67,20 @@ class Settings(BaseSettings):
     s3_bucket_name: Optional[str] = Field(None, env="S3_BUCKET_NAME")
     
     # 소셜 로그인 설정
+    # Kakao OAuth
     kakao_client_id: str = Field(..., env="KAKAO_CLIENT_ID")
+    kakao_auth_url: str = Field(..., env="KAKAO_AUTH_URL")
+    kakao_token_url: str = Field(..., env="KAKAO_TOKEN_URL")
+    kakao_user_info_url: str = Field(..., env="KAKAO_USER_INFO_URL")
+    kakao_redirect_uri: str = Field(..., env="KAKAO_REDIRECT_URI")
+
+    # Naver OAuth
     naver_client_id: str = Field(..., env="NAVER_CLIENT_ID")
     naver_client_secret: str = Field(..., env="NAVER_CLIENT_SECRET")
+    naver_auth_url: str = Field(..., env="NAVER_AUTH_URL")
+    naver_token_url: str = Field(..., env="NAVER_TOKEN_URL")
+    naver_user_info_url: str = Field(..., env="NAVER_USER_INFO_URL")
+    naver_redirect_uri: str = Field(..., env="NAVER_REDIRECT_URI")
     
     
     # 모니터링 설정

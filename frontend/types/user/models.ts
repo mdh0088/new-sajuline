@@ -65,6 +65,7 @@ export interface UserBase {
 export interface UserCreateRequest extends UserBase {
   user_id: string
   password?: string               // 소셜로그인 시 불필요
+  phone_chk: boolean              // 휴대폰 인증 완료 여부 (필수)
   social_provider?: string
   social_id?: string
 }

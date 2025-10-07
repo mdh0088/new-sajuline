@@ -40,3 +40,36 @@ class TokenPayload(BaseModel):
     iat: int = Field(..., description="발급 시간")
     jti: str = Field(..., description="JWT ID")
     token_type: str = Field(default="access", description="토큰 타입 (access/refresh)")
+
+
+# ==================== 소셜 로그인 관련 스키마 ====================
+
+class SocialAuthURLResponse(BaseModel):
+    """소셜 로그인 URL 응답"""
+    authorization_url: str = Field(..., description="OAuth 인증 페이지 URL")
+    state: str = Field(..., description="CSRF 방지용 state 파라미터")
+
+
+class SocialCallbackRequest(BaseModel):
+    """소셜 로그인 콜백 요청"""
+    code: str = Field(..., description="OAuth 인증 코드")
+    state: Optional[str] = Field(None, description="CSRF 방지용 state 파라미터 (Naver 필수)")
+
+
+class SocialUserInfo(BaseModel):
+    """소셜 로그인 사용자 정보"""
+    provider: str = Field(..., description="소셜 제공자 (kakao/naver)")
+    social_id: str = Field(..., description="소셜 고유 ID")
+    email: Optional[str] = Field(None, description="이메일")
+    name: Optional[str] = Field(None, description="이름")
+    profile_image: Optional[str] = Field(None, description="프로필 이미지 URL")
+
+
+class SocialSignupRequired(BaseModel):
+    """소셜 회원가입 필요 응답"""
+    requires_signup: bool = Field(default=True, description="회원가입 필요 여부")
+    provider: str = Field(..., description="소셜 제공자 (kakao/naver)")
+    social_id: str = Field(..., description="소셜 고유 ID")
+    email: Optional[str] = Field(None, description="이메일")
+    name: Optional[str] = Field(None, description="이름 (선택)")
+    profile_image: Optional[str] = Field(None, description="프로필 이미지 URL (선택)")
