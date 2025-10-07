@@ -18,6 +18,7 @@ from slowapi.errors import RateLimitExceeded
 
 from src.config.settings import settings
 from src.api.v1.auth_api import router as auth_router
+from src.api.v1.social_auth_api import router as social_auth_router
 from src.api.v1.user_api import router as user_router
 from src.api.v1.counselor_api import router as counselor_router
 from src.api.v1.notice_api import router as notice_router
@@ -26,6 +27,7 @@ from src.api.v1.event_api import router as event_router
 from src.api.v1.point_product_api import router as point_product_router
 from src.api.v1.banner_api import router as banner_router
 from src.api.v1.payment_api import router as payment_router
+from src.api.v1.phone_verification_api import router as phone_verification_router
 from src.common.response import fail
 from src.exceptions.custom_exceptions import BaseAppException
 from src.common.logging.config import setup_logging
@@ -51,6 +53,10 @@ app = FastAPI(
             "description": "인증 관리 - 토큰 갱신, 인증 관련 기능",
         },
         {
+            "name": "social-auth",
+            "description": "소셜 로그인 - Kakao, Naver OAuth 2.0 인증",
+        },
+        {
             "name": "users",
             "description": "사용자 관리 - 회원가입, 로그인, 프로필 관리",
         },
@@ -69,6 +75,10 @@ app = FastAPI(
         {
             "name": "banners",
             "description": "배너 - 공개 조회 및 클릭 카운트",
+        },
+        {
+            "name": "phone-verification",
+            "description": "휴대폰 본인인증 - KCP 본인인증 서비스",
         },
         {
             "name": "health",
@@ -199,6 +209,7 @@ async def general_exception_handler(request: Request, exc: Exception):
 
 # API 라우터 등록
 app.include_router(auth_router, prefix="/api/v1")
+app.include_router(social_auth_router, prefix="/api/v1")
 app.include_router(user_router, prefix="/api/v1")
 app.include_router(counselor_router, prefix="/api/v1")
 app.include_router(notice_router, prefix="/api/v1")
@@ -207,6 +218,7 @@ app.include_router(event_router, prefix="/api/v1")
 app.include_router(point_product_router, prefix="/api/v1")
 app.include_router(payment_router, prefix="/api/v1")
 app.include_router(banner_router, prefix="/api/v1")
+app.include_router(phone_verification_router, prefix="/api/v1")
 
 
 class HealthResponse(BaseModel):

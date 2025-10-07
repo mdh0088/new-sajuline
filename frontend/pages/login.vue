@@ -59,16 +59,8 @@
           <div class="flex-1 h-px bg-white/10"></div>
         </div>
 
-        <!-- 로그인 폼 컴포넌트 -->
-        <!-- <SocialLogin
-          @kakao-login="handleKakaoLogin"
-          @naver-login="handleNaverLogin"
-          @google-login="handleGoogleLogin"
-        /> -->
-        <SocialLogin
-          @kakao-login="handleKakaoLogin"
-          @naver-login="handleNaverLogin"
-        />
+        <!-- 소셜 로그인 버튼 -->
+        <SocialLogin />
 
         <!-- 회원가입 링크 -->
         <div class="text-center mt-8">
@@ -116,19 +108,6 @@ const route = useRoute()
 const handleLoginSuccess = () => {
   const redirect = (route.query.redirect as string) || '/'
   navigateTo(redirect)
-}
-
-// 소셜 로그인 핸들러들
-const handleKakaoLogin = async () => {
-  console.log('카카오 로그인')
-}
-
-const handleNaverLogin = async () => {
-  console.log('네이버 로그인')
-}
-
-const handleGoogleLogin = async () => {
-  console.log('구글 로그인')
 }
 
 // 비밀번호 찾기

@@ -31,7 +31,8 @@ class UserSignup(UserBase):
     """통합 회원가입 요청 스키마 (일반 + 소셜)"""
     user_id: str = Field(..., min_length=4, max_length=20, description="사용자 ID")
     password: Optional[str] = Field(None, min_length=8, max_length=128, description="비밀번호 (일반 회원가입시 필수)")
-    
+    phone_chk: bool = Field(..., description="휴대폰 인증 완료 여부 (필수)")
+
     # 필수 약관 동의는 프론트엔드에서만 검증, 서버로는 전송하지 않음
     # is_marketing_agreed, social_provider, social_id는 UserBase에서 상속
 

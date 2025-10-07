@@ -50,14 +50,16 @@ services:
       # Docker 컨테이너용 HOST/PORT 설정
       - HOST=0.0.0.0
       - PORT=8000
+      # Docker 네트워크용 Redis 연결
+      #- REDIS_URL=redis://redis:6379/0
     volumes:
       - ../backend/src:/app/src
       - ../backend/logs:/app/logs
     depends_on:
-      mariadb:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
+      #  mariadb:
+      #    condition: service_healthy
+       redis:
+         condition: service_healthy
     networks:
       - sajuline-network
     restart: unless-stopped
@@ -68,7 +70,7 @@ services:
       retries: 3
       start_period: 40s
 
-  # Redis 캐시 서버
+  # # Redis 캐시 서버
   redis:
     image: redis:7.2-alpine
     container_name: sajuline-redis
@@ -96,62 +98,62 @@ services:
       retries: 5
       start_period: 10s
 
-  # MariaDB 데이터베이스
-  mariadb:
-    image: mariadb:10.11
-    container_name: sajuline-mariadb
-    environment:
-      MYSQL_ROOT_PASSWORD: root123
-      MYSQL_DATABASE: sajuline
-      MYSQL_USER: sajuline
-      MYSQL_PASSWORD: sajuline123
-      MYSQL_CHARSET: utf8mb4
-      MYSQL_COLLATION: utf8mb4_unicode_ci
-      TZ: Asia/Seoul
-    ports:
-      - "3306:3306"
-    volumes:
-      - mariadb_data:/var/lib/mysql
-      - ./init-db-mysql:/docker-entrypoint-initdb.d:ro
-    networks:
-      - sajuline-network
-    restart: unless-stopped
-    healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-proot123"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-      start_period: 30s
-    command: >
-      --character-set-server=utf8mb4
-      --collation-server=utf8mb4_unicode_ci
-      --max-connections=200
-      --innodb-buffer-pool-size=256M
-      --default-time-zone=Asia/Seoul
+  # # MariaDB 데이터베이스
+  # mariadb:
+  #   image: mariadb:10.11
+  #   container_name: sajuline-mariadb
+  #   environment:
+  #     MYSQL_ROOT_PASSWORD: root123
+  #     MYSQL_DATABASE: sajuline
+  #     MYSQL_USER: sajuline
+  #     MYSQL_PASSWORD: sajuline123
+  #     MYSQL_CHARSET: utf8mb4
+  #     MYSQL_COLLATION: utf8mb4_unicode_ci
+  #     TZ: Asia/Seoul
+  #   ports:
+  #     - "3306:3306"
+  #   volumes:
+  #     - mariadb_data:/var/lib/mysql
+  #     - ./init-db-mysql:/docker-entrypoint-initdb.d:ro
+  #   networks:
+  #     - sajuline-network
+  #   restart: unless-stopped
+  #   healthcheck:
+  #     test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-proot123"]
+  #     interval: 10s
+  #     timeout: 5s
+  #     retries: 5
+  #     start_period: 30s
+  #   command: >
+  #     --character-set-server=utf8mb4
+  #     --collation-server=utf8mb4_unicode_ci
+  #     --max-connections=200
+  #     --innodb-buffer-pool-size=256M
+  #     --default-time-zone=Asia/Seoul
 
   # MSSQL 2019 (ARS) 데이터베이스
-  mssql-ars:
-    image: mcr.microsoft.com/mssql/server:2019-latest
-    container_name: mssql-ars
-    environment:
-      ACCEPT_EULA: "Y"
-      SA_PASSWORD: "Str0ng!Passw0rd"
-      MSSQL_PID: Developer
-      MSSQL_COLLATION: SQL_Latin1_General_CP1_CI_AS
-    ports:
-      - "127.0.0.1:1433:1433"
-    volumes:
-      - mssql_data:/var/opt/mssql
-      - ./mssql/init:/init
-    networks:
-      - sajuline-network
-    restart: unless-stopped
-    healthcheck:
-      test: ["CMD-SHELL", "bash -c '</dev/tcp/127.0.0.1/1433' || exit 1"]
-      interval: 15s
-      timeout: 5s
-      retries: 30
-      start_period: 90s
+  # mssql-ars:
+  #   image: mcr.microsoft.com/mssql/server:2019-latest
+  #   container_name: mssql-ars
+  #   environment:
+  #     ACCEPT_EULA: "Y"
+  #     SA_PASSWORD: "Str0ng!Passw0rd"
+  #     MSSQL_PID: Developer
+  #     MSSQL_COLLATION: SQL_Latin1_General_CP1_CI_AS
+  #   ports:
+  #     - "127.0.0.1:1433:1433"
+  #   volumes:
+  #     - mssql_data:/var/opt/mssql
+  #     - ./mssql/init:/init
+  #   networks:
+  #     - sajuline-network
+  #   restart: unless-stopped
+  #   healthcheck:
+  #     test: ["CMD-SHELL", "bash -c '</dev/tcp/127.0.0.1/1433' || exit 1"]
+  #     interval: 15s
+  #     timeout: 5s
+  #     retries: 30
+  #     start_period: 90s
 
   # MSSQL 초기화 일회성 서비스 (현재 사용안함)
   # mssql-ars-init:

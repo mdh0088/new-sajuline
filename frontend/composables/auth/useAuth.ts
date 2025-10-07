@@ -331,12 +331,12 @@ export const useAuth = () => {
     role,
     isUser,
     isCounselor,
-    
+
     // 로딩 상태
     isLoginLoading: computed(() => userLoginMutation.isPending.value || counselorLoginMutation.isPending.value),
     isLogoutLoading: computed(() => userLogoutMutation.isPending.value || counselorLogoutMutation.isPending.value),
     isRefreshLoading: computed(() => refreshMutation.isPending.value),
-    
+
     // 메서드
     login,
     logout,
@@ -346,11 +346,12 @@ export const useAuth = () => {
     setRole,
     hasRole,
     getCurrentRole,
-    
+    handleLoginSuccessWithRole, // 소셜 로그인용 export
+
     // 가드 함수들
     requireAuth,
     requireGuest,
-    
+
     // 유틸리티
     restoreSession,
     clearSession

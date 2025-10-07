@@ -243,12 +243,15 @@ async def signup(
     user_service: UserService = Depends(get_user_service)
 ) -> APIResponse[UserResponse]:
     """통합 회원가입 - 일반/소셜 가입 통합 처리"""
+    if not signup_data.phone_chk:
+        raise BaseAppException("휴대폰 인증이 필요합니다.", status_code=400)
+
     result = await user_service.signup(signup_data)
     return ok(data=result, message="회원가입이 완료되었습니다.")
 
 
 @router.post(
-    "/social/signup", 
+    "/social/signup",
     response_model=APIResponse[UserResponse],
     status_code=status.HTTP_201_CREATED,
     summary="소셜 회원가입 (자동 로그인)",
@@ -269,11 +272,15 @@ async def social_signup_with_login(
     """소셜 회원가입 + 자동 로그인"""
     log = get_logger_with_request_id()
     log.info("Social signup with auto-login attempt", user_id=signup_data.user_id, provider=signup_data.social_provider)
-    
+
+    # 휴대폰 인증 검증
+    if not signup_data.phone_chk:
+        raise BaseAppException("휴대폰 인증이 필요합니다.", status_code=400)
+
     # 소셜 정보 필수 검증
     if not signup_data.social_provider or not signup_data.social_id:
         raise BaseAppException("소셜 회원가입에는 social_provider와 social_id가 필수입니다.", status_code=400)
-    
+
     # 회원가입 처리
     result = await user_service.signup(signup_data)
     
