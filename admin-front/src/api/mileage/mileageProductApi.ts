@@ -1,26 +1,36 @@
+/**
+ * 마일리지 상품 API
+ * 백엔드 API: /api/v1/mileage
+ */
 import http from '@/api/_config/http';
-const proxyURL = '/api/mileage';
 
-export const getMileageProductListURL = `${proxyURL}/mileage-products`;
-export const createMileageProductURL = `${proxyURL}/create-mileage-product`;
-export const updateMileageProductURL = `${proxyURL}/modify-mileage-product`;
+const proxyURL = '/api/v1/mileage';
 
-export const getUserMileageSaveListURL = `${proxyURL}/user-mileage-save-list`;
-export const getUserMileageUsageListURL = `${proxyURL}/user-mileage-usage-list`;
+// API URL 상수
+export const getMileageProductListURL = `${proxyURL}/list`;
+export const getMileageProductDetailURL = `${proxyURL}`;
+export const createMileageProductURL = `${proxyURL}/create`;
+export const updateMileageProductURL = `${proxyURL}`;
+export const deleteMileageProductURL = `${proxyURL}`;
 
-
-// 등급 개별 조회
-export async function getMileageProduct(mileage_product_idx) {
-    return http.get(proxyURL+'/mileage-product/'+mileage_product_idx);
+/**
+ * 마일리지 상품 목록 조회 (페이징)
+ */
+export async function getMileageProductList(params: { page: number; limit: number }) {
+    return http.get(getMileageProductListURL, { params });
 }
 
-// 등급 목록 조회
-export async function getMileageProductList(data) {
-    return http.post(getMileageProductListURL, data);
+/**
+ * 마일리지 상품 상세 조회
+ */
+export async function getMileageProductDetail(mileage_id: number) {
+    return http.get(`${getMileageProductDetailURL}/${mileage_id}`);
 }
 
-// 등급 생성
-export async function createMileageProduct(data, formData) {
+/**
+ * 마일리지 상품 생성
+ */
+export async function createMileageProduct(data: any, formData: FormData) {
     return http.post(createMileageProductURL, data, {
         headers: {
             'Content-Type': 'multipart/form-data',
@@ -34,9 +44,11 @@ export async function createMileageProduct(data, formData) {
     });
 }
 
-// 등급 수정
-export async function updateMileageProduct(data, formData) {
-    return http.patch(updateMileageProductURL, data, {
+/**
+ * 마일리지 상품 수정
+ */
+export async function updateMileageProduct(mileage_id: number, data: any, formData: FormData) {
+    return http.put(`${updateMileageProductURL}/${mileage_id}`, data, {
         headers: {
             'Content-Type': 'multipart/form-data',
         },
@@ -49,11 +61,9 @@ export async function updateMileageProduct(data, formData) {
     });
 }
 
-export async function getUserMileageSaveList(user_id:string) {
-    return http.get(getUserMileageSaveListURL+'/'+user_id);
+/**
+ * 마일리지 상품 삭제
+ */
+export async function deleteMileageProduct(mileage_id: number) {
+    return http.delete(`${deleteMileageProductURL}/${mileage_id}`);
 }
-
-export async function getUserMileageUsageList(user_id:string) {
-    return http.get(getUserMileageUsageListURL+'/'+user_id);
-}
-

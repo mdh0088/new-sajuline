@@ -1,81 +1,133 @@
 <template>
   <el-drawer
       v-model="isDrawerActive"
-      title="배너 등록"
+      :title="drawerTitle"
       size="50%"
+      :close-on-click-modal="!isSaving"
+      :close-on-press-escape="!isSaving"
       @open="openDrawer"
       @close="closeDrawer"
   >
     <div>
+      <!-- 배너 기본 정보 -->
       <div>
+        <div class="m-b-20">
+          <el-row :gutter="20">
+            <el-col :span="6">
+              <h4>배너 기본 정보</h4>
+            </el-col>
+            <el-col :span="6" :offset="12" v-if="bannerData && bannerData.created_at">
+              <span class="f-12">
+                등록일 : {{ formatDate(bannerData.created_at) }}
+              </span>
+            </el-col>
+          </el-row>
+        </div>
         <el-form
             ref="ruleFormRef"
             label-position="left"
-            label-width="auto"
-            status-icon>
-
-          <el-form-item label="노출여부">
-            <div>
-              <CustomSwitch v-model:switchValue="bannerInfo.showYn"/>
-            </div>
-
-            <div class="m-l-10" v-if="bannerInfo.showYn == 'Y'">
-              <el-select
-                  class="m-r-10"
-                  v-model="bannerInfo.ord"
-                  placeholder="Select"
-                  style="width: 500px"
-              >
-                <el-option
-                    v-for="item in bannerOrdList"
-                    :key="item.ord"
-                    :label="item.ord+' - '+item.bannerNm"
-                    :value="item.ord"
-                />
-              </el-select>
-            </div>
-
-
+            label-width="120px"
+            :model="formData"
+            :rules="rules"
+            status-icon
+        >
+          <el-form-item label="배너명" prop="banner_name">
+            <el-input v-model="formData.banner_name" placeholder="배너명을 입력하세요" />
           </el-form-item>
 
-          <el-form-item label="클릭 가능 여부">
-            <CustomSwitch v-model:switchValue="bannerInfo.clickable"/>
-          </el-form-item>
-
-          <el-form-item label="시작일/종료일">
-            <el-config-provider :locale="kor">
-              <el-date-picker
-                  v-model="dateTimeValue"
-                  type="datetimerange"
-                  range-separator="To"
-                  start-placeholder="Start date"
-                  end-placeholder="End date"
-              />
-            </el-config-provider>
-          </el-form-item>
-          <el-form-item label="배너명">
-            <el-input v-model="bannerInfo.bannerNm"></el-input>
-          </el-form-item>
-          <el-form-item label="랜딩 URL">
-            <el-input v-model="bannerInfo.randingUrl"></el-input>
-          </el-form-item>
-          <el-form-item label="노출 형태">
-            <el-select
-                class="m-r-10"
-                v-model="bannerInfo.target"
-                placeholder="Select"
-                style="width: 80px"
-            >
+          <el-form-item label="배너 타입" prop="banner_type">
+            <el-select v-model="formData.banner_type" placeholder="배너 타입을 선택하세요" style="width: 100%">
               <el-option
-                  v-for="item in targetType"
+                  v-for="item in bannerTypeOptions"
                   :key="item.value"
                   :label="item.label"
                   :value="item.value"
               />
             </el-select>
           </el-form-item>
-          <el-form-item label="배너 이미지">
 
+          <el-form-item label="노출 순서">
+            <el-input-number v-model="formData.display_order" :min="1" :max="999" :disabled="true" />
+            <span class="f-12 m-l-10" style="color: #909399;">활성화 시 자동으로 마지막 순서로 배치됩니다</span>
+          </el-form-item>
+
+          <el-form-item label="활성 여부">
+            <el-switch v-model="formData.is_active" />
+          </el-form-item>
+        </el-form>
+      </div>
+
+      <el-divider />
+
+      <!-- 링크 설정 -->
+      <div>
+        <div class="m-b-20">
+          <h4>링크 설정</h4>
+        </div>
+        <el-form label-position="left" label-width="120px" :model="formData">
+          <el-form-item label="링크 URL">
+            <el-input v-model="formData.link_url" placeholder="https://example.com" />
+          </el-form-item>
+
+          <el-form-item label="링크 타겟">
+            <el-select v-model="formData.link_target" placeholder="링크 타겟을 선택하세요" style="width: 100%">
+              <el-option
+                  v-for="item in linkTargetOptions"
+                  :key="item.value"
+                  :label="item.label"
+                  :value="item.value"
+              />
+            </el-select>
+          </el-form-item>
+        </el-form>
+      </div>
+
+      <el-divider />
+
+      <!-- 게시 기간 -->
+      <div>
+        <div class="m-b-20">
+          <h4>게시 기간</h4>
+        </div>
+        <el-form
+            label-position="left"
+            label-width="120px"
+            :model="formData"
+            :rules="rules"
+        >
+          <el-form-item label="시작일" prop="valid_from">
+            <el-date-picker
+                v-model="formData.valid_from"
+                type="datetime"
+                placeholder="시작일을 선택하세요"
+                format="YYYY-MM-DD HH:mm:ss"
+                value-format="YYYY-MM-DD HH:mm:ss"
+                style="width: 100%"
+            />
+          </el-form-item>
+
+          <el-form-item label="종료일" prop="valid_until">
+            <el-date-picker
+                v-model="formData.valid_until"
+                type="datetime"
+                placeholder="종료일을 선택하세요"
+                format="YYYY-MM-DD HH:mm:ss"
+                value-format="YYYY-MM-DD HH:mm:ss"
+                style="width: 100%"
+            />
+          </el-form-item>
+        </el-form>
+      </div>
+
+      <el-divider />
+
+      <!-- 이미지 업로드 -->
+      <div>
+        <div class="m-b-20">
+          <h4>배너 이미지</h4>
+        </div>
+        <el-form label-position="left" label-width="120px" :model="formData">
+          <el-form-item label="이미지 파일">
             <el-upload
                 v-model:file-list="attachFile"
                 list-type="picture"
@@ -83,9 +135,8 @@
                 drag
                 :show-file-list="true"
                 :auto-upload="false"
-                :on-change="uploadImgs"
-                :on-preview="handlePreview"
-                :on-remove="handleRemove"
+                :on-change="handleFileChange"
+                :on-remove="handleFileRemove"
                 :limit="1"
             >
               <el-icon class="el-icon--upload"><upload-filled /></el-icon>
@@ -94,173 +145,274 @@
               </div>
               <template #tip>
                 <div class="el-upload__tip">
-                  500kb이하의 jpg/png파일만 업로드 간으합니다.
+                  jpg/png 파일만 업로드 가능합니다.
                 </div>
               </template>
             </el-upload>
           </el-form-item>
 
-          <el-form-item label="배너 설명" prop="title">
-            <el-input
-                :autosize="{ minRows: 10 }"
-                maxlength="200"
-                type="textarea" v-model="bannerInfo.description" :disabled="false"/>
+          <el-form-item v-if="currentImageUrl" label="현재 이미지">
+            <el-image
+                :src="currentImageUrl"
+                fit="contain"
+                style="width: 200px; height: 150px"
+            />
           </el-form-item>
-
         </el-form>
       </div>
     </div>
 
     <template #footer>
       <div style="flex: auto">
-        <el-button @click="isDrawerActive = false">취소</el-button>
-        <el-button type="primary" :loading="isLoading" @click="confirmClick()">저장</el-button>
+        <el-button v-if="!isCreateMode" type="danger" @click="handleDelete" :disabled="isSaving">
+          삭제
+        </el-button>
+        <div style="float: right">
+          <el-button @click="isDrawerActive = false" :disabled="isSaving">취소</el-button>
+          <el-button type="primary" @click="handleSave(ruleFormRef)" :loading="isSaving" :disabled="isSaving">
+            {{ isSaving ? '저장 중...' : '저장' }}
+          </el-button>
+        </div>
       </div>
     </template>
   </el-drawer>
-
-
-
-  <!--  -->
 </template>
+
 <script lang="ts" setup>
-import kor from 'element-plus/dist/locale/ko.mjs';
-import {ref, defineAsyncComponent } from 'vue'
-const CustomSwitch = defineAsyncComponent(() => import("@/views/common/switch/CustomSwitch.vue"))
-import {getBannerInfo, updateBanner, createBanner, getBannerOrderNo } from "@/views/pages/banner/bannerPage"
-import {BannerClass} from "@/models/banner"
-import {UploadProps, UploadUserFile} from "element-plus";
-import * as swal from "@/commonUtils/swal";
-import {targetType} from "@/views/pages/banner/bannerContants"
+import {ref, reactive, computed} from 'vue'
+import type {FormInstance, FormRules, UploadUserFile} from 'element-plus'
+import { UploadFilled } from '@element-plus/icons-vue';
+import * as swal from '@/commonUtils/swal';
+import {
+  getBannerDetail,
+  createBanner,
+  updateBanner,
+  deleteBanner
+} from '@/views/pages/banner/bannerPage';
+import { linkTargetOptions, bannerTypeOptions } from '@/views/pages/banner/bannerConstants';
+import type { BannerItem, BannerCreateRequest, BannerUpdateRequest } from '@/types/banner';
 
 const props = defineProps({
-  chooseRow: { Type: Object, default: {} },
-  doSearch: {Type:Function, default: null}
+  chooseRow: {Type: Object, default: {}},
+  doSearch: {Type: Function, default: null},
 });
 
-const attachFile = ref<UploadUserFile[]>([])
-const dateTimeValue = ref<[Date, Date]>([]);
+const isDrawerActive = defineModel<boolean>("isDrawerActive", {default: false});
+const openType = defineModel<string>("openType", {default: "update"});
 
-const bannerInfo = ref<BannerInfo>(new BannerClass());
-const bannerOrdList = ref<Array<BannerInfo>>([]); // 빈 배열로 초기화
+// 백엔드에서 받아온 원본 데이터
+const bannerData = ref<BannerItem | null>(null);
 
-const isDrawerActive = defineModel<boolean>("isDrawerActive",{ default: false});
-const openType = defineModel<string>("openType",{ default: "update"});
-const isLoading = ref<boolean>(false)
+// 수정용 폼 데이터
+const formData = reactive<Partial<BannerItem>>({
+  banner_name: undefined,
+  banner_type: undefined,
+  link_url: undefined,
+  link_target: undefined,
+  display_order: undefined,
+  is_active: undefined,
+  valid_from: undefined,
+  valid_until: undefined,
+  image_url: undefined
+});
 
-const confirmClick = async () => {
-    const msg = '정말 저장하시겠습니까?.';
-    const swalResult = await swal.swalConfirm(msg, 'warning');
-    if (swalResult.isConfirmed) {
-      bannerInfo.value.startDate = dateTimeValue.value[0];
-      bannerInfo.value.endDate = dateTimeValue.value[1];
+const attachFile = ref<UploadUserFile[]>([]);
+const currentImageUrl = ref<string>('');
+const imageFile = ref<File | null>(null);
+const isSaving = ref<boolean>(false);
+const ruleFormRef = ref<FormInstance>();
 
-      isLoading.value = true;
-      try {
-        if (openType.value == "update") {
-          await updateBanner(bannerInfo, attachFile, props.doSearch as Function)
-        } else {
+const isCreateMode = computed(() => openType.value === "create");
 
-          await createBanner(bannerInfo, attachFile, props.doSearch as Function)
-        }
-      } finally {
-        isLoading.value = false;
-      }
+const drawerTitle = computed(() => {
+  return isCreateMode.value ? '배너 추가' : '배너 정보';
+});
 
-    }
-}
+const rules = reactive<FormRules>({
+  banner_name: [{required: true, message: '배너명을 입력해주세요', trigger: 'blur'}],
+  banner_type: [{required: true, message: '배너 타입을 선택해주세요', trigger: 'change'}],
+  valid_from: [{required: true, message: '시작일을 선택해주세요', trigger: 'change'}],
+  valid_until: [{required: true, message: '종료일을 선택해주세요', trigger: 'change'}],
+});
 
-const closeDrawer = () => {
-  openType.value = "update"
-}
-
-const openDrawer = async () => {
-  bannerInfo.value = new BannerClass();
-  dateTimeValue.value = [];
-  attachFile.value = [];
-  // 배너 순번 리스트 조회
-  await getBannerOrderNo(bannerOrdList);
-
-  if (openType.value == "update") {
-    console.log('chk props >>>',props.chooseRow)
-    bannerInfo.value.banner_idx = props.chooseRow.banner_idx;
-    console.log('chk bannerInfo >>>',bannerInfo.value)
-
-    await getBannerInfo(bannerInfo, attachFile)
-    dateTimeValue.value[0] = bannerInfo.value.startDate
-    dateTimeValue.value[1] = bannerInfo.value.endDate
-  } else {
-
-    // 생성 drawer라면 신규 추가
-    const banner = new BannerClass();
-    banner.ord = bannerOrdList.value.length+1
-    banner.bannerNm = "신규"
-    bannerOrdList.value.push(banner)
-  }
-}
-
-const handleRemove: UploadProps['onRemove'] = (uploadFile, uploadFiles) => {
-  console.log(uploadFile, uploadFiles)
-  bannerInfo.value.bannerImg = "";
-  bannerInfo.value.fileNm = "";
-  attachFile.value = [];
-}
-
-const handlePreview: UploadProps['onPreview'] = (file) => {
-  console.log(file)
-}
-
-const uploadImgs = async (target) => {
-
-  let file = target.raw;  // 'raw' 속성에서 실제 File 객체를 접근
-  console.log('chk file .>>',file)
+const handleFileChange = (file: any) => {
   const validExtensions = ['png', 'jpg', 'jpeg'];
-  const fileExtension = file.name.split('.').pop().toLowerCase();
+  const fileExtension = file.name.split('.').pop()?.toLowerCase();
 
-  if (!validExtensions.includes(fileExtension)) {
-    await swal.swalAlert('이미지 파일만 업로드 가능합니다.', 'warning');
+  if (!validExtensions.includes(fileExtension || '')) {
+    swal.swalAlert('이미지 파일만 업로드 가능합니다.', 'warning');
     attachFile.value = [];
     return;
   }
 
-  // 이미지 width, height 계산
-  const getImageSize = (file) => {
-    return new Promise((resolve, reject) => {
-      const imageUrl = URL.createObjectURL(file);  // 임시 url 생성
-      const img = new Image();
-      img.onload = () => {
-        resolve({ width: img.width, height: img.height, name: file.name,imageUrl:imageUrl });
-        URL.revokeObjectURL(img.src); // width, height 구하고 임시 url 제거
-      };
-      img.onerror = () => {
-        URL.revokeObjectURL(imageUrl);
-        reject(new Error("Failed to load image"));
-      };
-      img.src = imageUrl;
-    });
-  }
+  imageFile.value = file.raw;
+};
 
-  if (target.raw && target.raw instanceof File) {
-    try {
-      // 이미지 사이즈를 가져오기 위한 비동기 처리
-      const { width, height, imageUrl, name } = await getImageSize(target.raw);
-      target.imgWidth = width;
-      target.imgHeight = height;
-      target.imageUrl = imageUrl;
-      bannerInfo.value.fileNm = name;
-      // 중복 이미지 업로드 방지처리
-      if (!attachFile.value.some(file => file.name === target.name)) {
-        bannerInfo.value.bannerImg = "";
-        bannerInfo.value.fileNm = "";
-        attachFile.value.push(target);
+const handleFileRemove = () => {
+  imageFile.value = null;
+  attachFile.value = [];
+};
+
+const handleSave = async (formEl: FormInstance | undefined) => {
+  if (!formEl) return;
+
+  await formEl.validate(async (valid) => {
+    if (valid) {
+      const result = await swal.swalConfirm('저장하시겠습니까?', 'question');
+      if (!result.isConfirmed) return;
+
+      try {
+        isSaving.value = true;
+        let success = false;
+
+        if (!isCreateMode.value && bannerData.value?.banner_id) {
+          // 수정 모드
+          const payload: BannerUpdateRequest = {
+            banner_id: bannerData.value.banner_id,
+            banner_name: formData.banner_name,
+            banner_type: formData.banner_type,
+            link_url: formData.link_url || undefined,
+            link_target: formData.link_target,
+            display_order: formData.display_order,
+            is_active: formData.is_active,
+            valid_from: formData.valid_from,
+            valid_until: formData.valid_until,
+            image: imageFile.value || undefined
+          };
+          success = await updateBanner(payload, props.doSearch);
+        } else {
+          // 생성 모드
+          const payload: BannerCreateRequest = {
+            banner_name: formData.banner_name!,
+            banner_type: formData.banner_type!,
+            link_url: formData.link_url,
+            link_target: formData.link_target,
+            display_order: formData.display_order,
+            is_active: formData.is_active,
+            valid_from: formData.valid_from!,
+            valid_until: formData.valid_until!,
+            image: imageFile.value || undefined
+          };
+          success = await createBanner(payload, props.doSearch);
+        }
+
+        if (success) {
+          isDrawerActive.value = false;
+        }
+      } finally {
+        isSaving.value = false;
       }
-
-    } catch (error) {
-      console.error("Error loading image size:", error);
     }
-  } else {
-    console.error("No file found in target.raw");
+  });
+};
+
+const handleDelete = async () => {
+  if (!bannerData.value?.banner_id) return;
+
+  const result = await swal.swalConfirm('정말 삭제하시겠습니까?', 'warning');
+  if (!result.isConfirmed) return;
+
+  try {
+    isSaving.value = true;
+    const success = await deleteBanner(bannerData.value.banner_id);
+    if (success) {
+      await props.doSearch();
+      isDrawerActive.value = false;
+    }
+  } finally {
+    isSaving.value = false;
   }
+};
+
+// Drawer 열릴 때
+const openDrawer = async () => {
+  if (isCreateMode.value) {
+    // 생성 모드: 폼 데이터 초기화
+    bannerData.value = null;
+    formData.banner_name = '';
+    formData.banner_type = 'MAIN';
+    formData.link_url = '';
+    formData.link_target = 'SELF';
+    formData.display_order = 1;
+    formData.is_active = true;
+    formData.valid_from = '';
+    formData.valid_until = '';
+    formData.image_url = '';
+    currentImageUrl.value = '';
+    attachFile.value = [];
+    imageFile.value = null;
+    return;
+  }
+
+  // 수정 모드: 배너 상세 정보 조회
+  const banner_id = props.chooseRow?.banner_id;
+  if (!banner_id) return;
+
+  const detail = await getBannerDetail(banner_id, attachFile);
+
+  if (detail) {
+    bannerData.value = detail;
+
+    // 폼 데이터 초기화
+    formData.banner_name = detail.banner_name;
+    formData.banner_type = detail.banner_type;
+    formData.link_url = detail.link_url || '';
+    formData.link_target = detail.link_target;
+    formData.display_order = detail.display_order || 1;
+    formData.is_active = detail.is_active;
+    formData.valid_from = detail.valid_from;
+    formData.valid_until = detail.valid_until;
+    formData.image_url = detail.image_url;
+
+    // 이미지 URL 설정 (attachFile에 이미 설정되어 있음)
+    if (detail.image_url) {
+      const cdnBase = import.meta.env.VITE_APP_UPLOAD_URL;
+      currentImageUrl.value = detail.image_url.startsWith('http')
+        ? detail.image_url
+        : `${cdnBase}banner/${detail.image_url}`;
+    } else {
+      currentImageUrl.value = '';
+    }
+
+    imageFile.value = null;
+  }
+};
+
+// Drawer 닫힐 때
+const closeDrawer = () => {
+  openType.value = "update";
+  isDrawerActive.value = false;
+  bannerData.value = null;
+  attachFile.value = [];
+  imageFile.value = null;
+
+  // 폼 데이터 초기화
+  Object.keys(formData).forEach(key => {
+    formData[key as keyof typeof formData] = undefined;
+  });
+};
+
+// 날짜 포맷팅
+const formatDate = (dateString: string | null) => {
+  if (!dateString) return '-';
+  return new Date(dateString).toLocaleDateString('ko-KR');
+};
+</script>
+
+<style scoped>
+.m-b-20 {
+  margin-bottom: 20px;
 }
 
-</script>
+.m-l-10 {
+  margin-left: 10px;
+}
+
+.f-12 {
+  font-size: 12px;
+}
+
+.w-100 {
+  width: 100%;
+}
+</style>

@@ -39,7 +39,7 @@ class Notice(Base):
 
     # 첨부/작성자
     attachments: Mapped[Optional[Any]] = mapped_column(JSON, nullable=True, comment="첨부파일(JSON)")
-    created_by: Mapped[str] = mapped_column(String(100), nullable=False, comment="작성자 관리자 ID")
+    created_by: Mapped[int] = mapped_column(Integer, nullable=False, comment="작성자 관리자 ID")
 
     # 타임스탬프
     created_at: Mapped[datetime] = mapped_column(DateTime, nullable=False, default=datetime.utcnow, comment="등록일시")

@@ -13,16 +13,9 @@
         <div class="col-10">
           <div class="text-end d-flex justify-content-end">
             <div>
-              <el-button class="m-r-10" type="primary" :icon="Edit" @click="createBanner">
+              <el-button class="m-r-10" type="primary" :icon="Edit" @click="handleCreateBanner">
                 배너 등록
               </el-button>
-            </div>
-            <div>
-              <el-badge :value="tableOptions.selectedItems.length" :max="99" class="item">
-                <el-button type="danger" :icon="Delete" @click="deleteNotice">
-                  배너 삭제
-                </el-button>
-              </el-badge>
             </div>
           </div>
         </div>
@@ -33,39 +26,40 @@
   <div>
     <el-card>
       <el-tabs v-model="activeTab" class="demo-tabs">
-        <el-tab-pane :label="`배너 목록 (${tableOptions.totalCnt})`" name="counselor"/>
+        <el-tab-pane :label="`배너 목록 (${tableOptions.totalCnt})`" name="banner"/>
 
         <CommonList
             v-model:tableOptions="tableOptions"
             :doSearch="doSearch"
         >
-          <template v-slot:customSlot-target="{ data }">
-            {{getTypeNm[data.target]}}
-          </template>
-          <template v-slot:customSlot-ord="{ data }">
+          <template v-slot:customSlot-display_order="{ data }">
             <el-select
-                v-if="data.showYn == 'Y'"
-                class="m-r-10"
-                v-model="data.ord"
-                @change="updateBannerInfo(data)"
+                v-if="data.is_active"
+                v-model="data.display_order"
+                @change="handleBannerUpdate(data)"
                 placeholder="노출 순번"
                 style="width: 100px"
             >
               <el-option
-                  v-for="item in bannerOrdList"
-                  :key="item.ord"
-                  :label="item.ord"
-                  :value="item.ord"
+                  v-for="item in getBannerOrderOptions(data.banner_type)"
+                  :key="item.value"
+                  :label="item.label"
+                  :value="item.value"
               />
             </el-select>
+            <span v-else>-</span>
           </template>
 
-          <template v-slot:customSlot-showYn="{ data }">
+          <template v-slot:customSlot-is_active="{ data }">
             <CustomSwitch
-                v-model:switchValue="data.showYn"
+                v-model:switchValue="data.is_active"
                 :rowValue="data"
-                :switchEvent="updateBannerInfo"
+                :switchEvent="handleBannerUpdate"
             />
+          </template>
+
+          <template v-slot:customSlot-link_target="{ data }">
+            {{ getLinkTargetLabel(data.link_target) }}
           </template>
         </CommonList>
 
@@ -81,100 +75,84 @@
   />
 
 </template>
+
 <script lang="ts" setup>
-import {  Edit, Delete } from '@element-plus/icons-vue'
-import {defineAsyncComponent, onMounted, ref} from "vue";
-import {bannerHeader, bannerSearchOptions} from "@/views/pages/banner/bannerContants"
-import {TableOptionsClass, SearchOptionsClassList} from "@/models/common"
-import {getBannerList, getBannerOrderNo ,deleteBanner, updateBanner} from "@/views/pages/banner/bannerPage"
-import * as swal from "@/commonUtils/swal";
-import {BannerClass} from "@/models/banner";
+import { Edit } from '@element-plus/icons-vue'
+import { defineAsyncComponent, onMounted, ref, computed } from "vue";
+import { bannerHeaders, bannerSearchOptions, linkTargetOptions } from "@/views/pages/banner/bannerConstants"
+import { TableOptionsClass, SearchOptionsClassList } from "@/models/common"
+import { getBannerList, updateBannerQuick } from "@/views/pages/banner/bannerPage"
+import type { BannerItem } from '@/types/banner';
 
 const CommonSearch = defineAsyncComponent(() => import("@/views/common/search/CommonSearch.vue"))
-const CustomSwitch = defineAsyncComponent(() => import("@/views/common/switch/CustomSwitch.vue"))
 const CommonList = defineAsyncComponent(() => import("@/views/common/list/CommonList.vue"))
+const CustomSwitch = defineAsyncComponent(() => import("@/views/common/switch/CustomSwitch.vue"))
 const BannerDetailDrawer = defineAsyncComponent(() => import("@/views/pages/banner/components/BannerDetailDrawer.vue"))
+
+const activeTab = ref('banner')
 const openType = ref("update"); // create or update
 
+const tableOptions = ref<TableOptions<BannerItem>>(new TableOptionsClass({headers: bannerHeaders}))
+const searchOptions = ref(new SearchOptionsClassList(bannerSearchOptions))
 
-const activeTab = ref('')
+// 배너 타입별 순서 옵션 목록을 반환하는 함수
+const getBannerOrderOptions = (banner_type: string) => {
+  const activeBannersOfType = tableOptions.value.items.filter(
+    item => item.is_active && item.banner_type === banner_type
+  );
+  return Array.from({ length: activeBannersOfType.length }, (_, i) => ({ value: i + 1, label: (i + 1).toString() }));
+};
 
-const tableOptions = ref<TableOptions<BannerInfo>>(new TableOptionsClass({headers: bannerHeader}))
- const searchOptions = ref(new SearchOptionsClassList(bannerSearchOptions))
+// 링크 타겟 라벨 조회
+const getLinkTargetLabel = (target: string) => {
+  const option = linkTargetOptions.find(opt => opt.value === target);
+  return option ? option.label : target;
+}
 
-
-// 배너 생성요 drawer open
-const createBanner = () => {
+// 배너 생성 drawer open
+const handleCreateBanner = () => {
   openType.value = "create";
+  tableOptions.value.chooseRow = {};
   tableOptions.value.isDrawerActive = true;
 }
 
-// 배너 삭제
-const deleteNotice = async () => {
-  const result = await swal.swalConfirm('정말 삭제 시키겠습니까?','warning');
-  if (result.isConfirmed) {
-    for (const item of tableOptions.value.selectedItems) {
-      await deleteBanner(item);
-    }
-    await doSearch();
-  }
-}
-const getTypeNm = {
-  BLANK:'새창',
-  SELF:"현재창"
-}
-const bannerOrdList = ref<Array<BannerInfo>>([]);
-const bannerInfo = ref<BannerInfo>(new BannerClass());
-const attachFile = ref([]);
-
-// 배너 노출 여부 수정
-const updateBannerInfo = async (info:BannerInfo) => {
-  const msg = '정말 저장하시겠습니까?.';
-  const swalResult = await swal.swalConfirm(msg, 'warning');
-  if (swalResult.isConfirmed) {
-    bannerInfo.value = new BannerClass(info)
-
-    if (bannerInfo.value.ord == null) {
-      bannerInfo.value.ord = bannerOrdList.value.length + 1;
-    }
-
-    await updateBanner(bannerInfo, attachFile, doSearch)
-  } else {
-    await doSearch()
-  }
-
-  await getBannerOrderNo(bannerOrdList);
+// 배너 순서 또는 노출여부 변경
+const handleBannerUpdate = async (banner: BannerItem) => {
+  await updateBannerQuick(banner, doSearch);
 }
 
+// 배너 목록 조회
+const doSearch = async () => {
+  await getBannerList(searchOptions, tableOptions)
+}
 
-const targetSort = ref<string>('asc');
-const targetSortKey = ref<string>('');
-// 배너 목로 조회
-const doSearch = async (sort:string='asc', sortKey:string='') => {
-  targetSort.value = typeof sort === 'number' ? 'asc' : sort;
-  targetSortKey.value = sortKey;
-
-  const startDt = searchOptions.value.getOptionByKey('dateValue').value[0]
-  const endDt = searchOptions.value.getOptionByKey('dateValue').value[1]
-
-  const queryParams:BannerRequest = {
-    searchName: searchOptions.value.getOptionByKey('searchName').value,
-    type: searchOptions.value.getOptionByKey('type').value,
-    startDt:startDt,
-    endDt:endDt,
-    showYn:searchOptions.value.getOptionByKey('showYn').value,
-    page: tableOptions.value.currentPage ?? 1,
-    pageSize: tableOptions.value.rowPage ?? 10,
-    sort:targetSort.value,
-    sortKey:targetSortKey.value
-  };
-
-  await getBannerList(queryParams, tableOptions)
+// 테이블 row 클릭 시
+tableOptions.value.rowClick = (row: BannerItem) => {
+  openType.value = "update";
+  tableOptions.value.chooseRow = row;
+  tableOptions.value.isDrawerActive = true;
 }
 
 onMounted(async () => {
   await doSearch();
-  await getBannerOrderNo(bannerOrdList);
 })
 
 </script>
+
+<style scoped>
+.m-b-20 {
+  margin-bottom: 20px;
+}
+
+.m-b-10 {
+  margin-bottom: 10px;
+}
+
+.m-t-10 {
+  margin-top: 10px;
+}
+
+.m-r-10 {
+  margin-right: 10px;
+}
+</style>

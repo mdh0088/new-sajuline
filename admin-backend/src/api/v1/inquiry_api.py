@@ -18,6 +18,7 @@ from src.services.inquiry_service import InquiryService
 from src.schemas.inquiry_schema import (
     InquiryListParams,
     InquiryReplyUpdateRequest,
+    InquiryUpdateRequest,
     UserInquiryListParams,
     UserToCsListParams,
 )
@@ -75,21 +76,30 @@ async def get_counselor_inquiry_detail(
 @router.post("/reply", response_model=APIResponse, summary="상담사 문의 관리자 답변 수정")
 async def update_counselor_inquiry_reply(
     payload: InquiryReplyUpdateRequest = Body(...),
-    current_user: TokenPayload = Depends(get_current_user),
+    #current_user: TokenPayload = Depends(get_current_user),
     service: InquiryService = Depends(_get_inquiry_service),
 ):
-    verify_admin_role(current_user)
-    data = await service.update_counselor_inquiry_reply(payload, admin_id=current_user.sub)
+    #verify_admin_role(current_user)
+    data = await service.update_counselor_inquiry_reply(payload, admin_id=1)
     return ok(data=data.model_dump(), message="상담사 문의 답변 수정 성공")
+
+
+@router.put("/update", response_model=APIResponse, summary="상담사 문의 수정 (제목/내용/답변)")
+async def update_counselor_inquiry(
+    payload: InquiryUpdateRequest = Body(...),
+    #current_user: TokenPayload = Depends(get_current_user),
+    service: InquiryService = Depends(_get_inquiry_service),
+):
+    #verify_admin_role(current_user)
+    data = await service.update_counselor_inquiry(payload, admin_id=1)
+    return ok(data=data.model_dump(), message="상담사 문의 수정 성공")
 
 
 @router.delete("/delete", response_model=APIResponse, summary="상담사 문의 삭제")
 async def delete_counselor_inquiry(
     inquiry_id: int = Query(..., description="문의 ID"),
-    current_user: TokenPayload = Depends(get_current_user),
     service: InquiryService = Depends(_get_inquiry_service),
 ):
-    verify_admin_role(current_user)
     data = await service.delete_counselor_inquiry(inquiry_id)
     return ok(data=data.model_dump(), message="상담사 문의 삭제 성공")
 
@@ -139,21 +149,30 @@ async def get_user_inquiry_detail(
 @router.post("/user/reply", response_model=APIResponse, summary="1:1 고객센터 문의 관리자 답변 수정")
 async def update_user_inquiry_reply(
     payload: InquiryReplyUpdateRequest = Body(...),
-    current_user: TokenPayload = Depends(get_current_user),
+    #current_user: TokenPayload = Depends(get_current_user),
     service: InquiryService = Depends(_get_inquiry_service),
 ):
-    verify_admin_role(current_user)
-    data = await service.update_user_inquiry_reply(payload, admin_id=current_user.sub)
+    #verify_admin_role(current_user)
+    data = await service.update_user_inquiry_reply(payload, admin_id=1)
     return ok(data=data.model_dump(), message="고객센터 문의 답변 수정 성공")
+
+
+@router.put("/user/update", response_model=APIResponse, summary="1:1 고객센터 문의 수정 (제목/내용/답변)")
+async def update_user_inquiry(
+    payload: InquiryUpdateRequest = Body(...),
+    #current_user: TokenPayload = Depends(get_current_user),
+    service: InquiryService = Depends(_get_inquiry_service),
+):
+    #verify_admin_role(current_user)
+    data = await service.update_user_inquiry(payload, admin_id=1)
+    return ok(data=data.model_dump(), message="고객센터 문의 수정 성공")
 
 
 @router.delete("/user/delete", response_model=APIResponse, summary="1:1 고객센터 문의 삭제")
 async def delete_user_inquiry(
     inquiry_id: int = Query(..., description="문의 ID"),
-    current_user: TokenPayload = Depends(get_current_user),
     service: InquiryService = Depends(_get_inquiry_service),
 ):
-    verify_admin_role(current_user)
     data = await service.delete_user_inquiry(inquiry_id)
     return ok(data=data.model_dump(), message="고객센터 문의 삭제 성공")
 
@@ -205,21 +224,30 @@ async def get_user_to_cs_detail(
 @router.post("/user-to-cs/reply", response_model=APIResponse, summary="1:1 상담사 문의 답변 수정")
 async def update_user_to_cs_reply(
     payload: InquiryReplyUpdateRequest = Body(...),
-    current_user: TokenPayload = Depends(get_current_user),
+    #current_user: TokenPayload = Depends(get_current_user),
     service: InquiryService = Depends(_get_inquiry_service),
 ):
-    verify_admin_role(current_user)
-    data = await service.update_user_to_cs_reply(payload, admin_id=current_user.sub)
+    #verify_admin_role(current_user)
+    data = await service.update_user_to_cs_reply(payload, admin_id=1)
     return ok(data=data.model_dump(), message="1:1 상담사 문의 답변 수정 성공")
+
+
+@router.put("/user-to-cs/update", response_model=APIResponse, summary="1:1 상담사 문의 수정 (제목/내용/답변)")
+async def update_user_to_cs_inquiry(
+    payload: InquiryUpdateRequest = Body(...),
+    #current_user: TokenPayload = Depends(get_current_user),
+    service: InquiryService = Depends(_get_inquiry_service),
+):
+    #verify_admin_role(current_user)
+    data = await service.update_user_to_cs_inquiry(payload, admin_id=1)
+    return ok(data=data.model_dump(), message="1:1 상담사 문의 수정 성공")
 
 
 @router.delete("/user-to-cs/delete", response_model=APIResponse, summary="1:1 상담사 문의 삭제")
 async def delete_user_to_cs(
     inquiry_id: int = Query(..., description="문의 ID"),
-    current_user: TokenPayload = Depends(get_current_user),
     service: InquiryService = Depends(_get_inquiry_service),
 ):
-    verify_admin_role(current_user)
     data = await service.delete_user_to_cs(inquiry_id)
     return ok(data=data.model_dump(), message="1:1 상담사 문의 삭제 성공")
 

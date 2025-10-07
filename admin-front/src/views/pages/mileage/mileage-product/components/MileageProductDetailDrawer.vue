@@ -1,56 +1,128 @@
 <template>
   <el-drawer
       v-model="isDrawerActive"
-      title="등급정보"
+      :title="drawerTitle"
       size="50%"
+      :close-on-click-modal="!isSaving"
+      :close-on-press-escape="!isSaving"
       @open="openDrawer"
       @close="closeDrawer"
   >
     <div>
+      <!-- 상품 기본 정보 -->
       <div>
+        <div class="m-b-20">
+          <el-row :gutter="20">
+            <el-col :span="6">
+              <h4>상품 기본 정보</h4>
+            </el-col>
+            <el-col :span="6" :offset="12" v-if="productData && productData.created_at">
+              <span class="f-12">
+                등록일 : {{ formatDate(productData.created_at) }}
+              </span>
+            </el-col>
+          </el-row>
+        </div>
         <el-form
             ref="ruleFormRef"
             label-position="left"
-            label-width="auto"
-            status-icon>
-
-          <el-form-item label="노출여부">
-            <div>
-              <CustomSwitch v-model:switchValue="mileageProductInfo.is_use"/>
-            </div>
+            label-width="120px"
+            :model="formData"
+            :rules="rules"
+            status-icon
+        >
+          <el-form-item label="상품명" prop="m_product_name">
+            <el-input v-model="formData.m_product_name" placeholder="상품명을 입력하세요" />
           </el-form-item>
 
-          <el-form-item label="상품 명">
-            <el-input v-model="mileageProductInfo.m_product_name"></el-input>
+          <el-form-item label="상품 금액" prop="m_product_value">
+            <el-input-number
+              v-model="formData.m_product_value"
+              :min="0"
+              :step="1000"
+              :controls="true"
+              style="width: 100%"
+            />
           </el-form-item>
 
-          <el-form-item label="상품 금액">
-            <el-input-number v-model="mileageProductInfo.m_product_value"/>
+          <el-form-item label="충전 포인트" prop="charge_point">
+            <el-input-number
+              v-model="formData.charge_point"
+              :min="0"
+              :step="100"
+              :controls="true"
+              style="width: 100%"
+            />
           </el-form-item>
 
-          <el-form-item label="충전 포인트">
-            <el-input-number v-model="mileageProductInfo.charge_point"/>
+          <el-form-item label="노출 순서">
+            <el-input-number v-model="formData.ord" :min="0" :max="999" />
+            <span class="f-12 m-l-10" style="color: #909399;">순서가 낮을수록 먼저 노출됩니다</span>
           </el-form-item>
 
-          <el-form-item label="시작일/종료일">
-            <el-config-provider :locale="kor">
-              <el-date-picker
-                  v-model="dateTimeValue"
-                  type="datetimerange"
-                  range-separator="To"
-                  start-placeholder="Start date"
-                  end-placeholder="End date"
-              />
-            </el-config-provider>
+          <el-form-item label="활성 여부">
+            <el-switch v-model="formData.is_active" />
           </el-form-item>
+
           <el-form-item label="상품 설명">
             <el-input
-                :autosize="{ minRows: 10 }"
-                maxlength="200"
-                type="textarea" v-model="mileageProductInfo.description" :disabled="false"/>
+                v-model="formData.description"
+                type="textarea"
+                :autosize="{ minRows: 4, maxRows: 8 }"
+                maxlength="500"
+                show-word-limit
+                placeholder="상품 설명을 입력하세요"
+            />
+          </el-form-item>
+        </el-form>
+      </div>
+
+      <el-divider />
+
+      <!-- 판매 기간 -->
+      <div>
+        <div class="m-b-20">
+          <h4>판매 기간</h4>
+        </div>
+        <el-form
+            label-position="left"
+            label-width="120px"
+            :model="formData"
+            :rules="rules"
+        >
+          <el-form-item label="시작일" prop="valid_from">
+            <el-date-picker
+                v-model="formData.valid_from"
+                type="datetime"
+                placeholder="시작일을 선택하세요"
+                format="YYYY-MM-DD HH:mm:ss"
+                value-format="YYYY-MM-DD HH:mm:ss"
+                style="width: 100%"
+            />
           </el-form-item>
 
-          <el-form-item label="상품 이미지">
+          <el-form-item label="종료일" prop="valid_until">
+            <el-date-picker
+                v-model="formData.valid_until"
+                type="datetime"
+                placeholder="종료일을 선택하세요"
+                format="YYYY-MM-DD HH:mm:ss"
+                value-format="YYYY-MM-DD HH:mm:ss"
+                style="width: 100%"
+            />
+          </el-form-item>
+        </el-form>
+      </div>
+
+      <el-divider />
+
+      <!-- 이미지 업로드 -->
+      <div>
+        <div class="m-b-20">
+          <h4>상품 이미지</h4>
+        </div>
+        <el-form label-position="left" label-width="120px" :model="formData">
+          <el-form-item label="이미지 파일">
             <el-upload
                 v-model:file-list="attachFile"
                 list-type="picture"
@@ -58,9 +130,8 @@
                 drag
                 :show-file-list="true"
                 :auto-upload="false"
-                :on-change="uploadImgs"
-                :on-preview="handlePreview"
-                :on-remove="handleRemove"
+                :on-change="handleFileChange"
+                :on-remove="handleFileRemove"
                 :limit="1"
             >
               <el-icon class="el-icon--upload"><upload-filled /></el-icon>
@@ -69,10 +140,18 @@
               </div>
               <template #tip>
                 <div class="el-upload__tip">
-                  500kb이하의 jpg/png파일만 업로드 가능합니다.
+                  jpg/png 파일만 업로드 가능합니다.
                 </div>
               </template>
             </el-upload>
+          </el-form-item>
+
+          <el-form-item v-if="currentImageUrl" label="현재 이미지">
+            <el-image
+                :src="currentImageUrl"
+                fit="contain"
+                style="width: 200px; height: 150px"
+            />
           </el-form-item>
         </el-form>
       </div>
@@ -80,152 +159,257 @@
 
     <template #footer>
       <div style="flex: auto">
-        <el-button @click="isDrawerActive = false">취소</el-button>
-        <el-button type="primary" :loading="isLoading" @click="confirmClick()">저장</el-button>
+        <el-button v-if="!isCreateMode" type="danger" @click="handleDelete" :disabled="isSaving">
+          삭제
+        </el-button>
+        <div style="float: right">
+          <el-button @click="isDrawerActive = false" :disabled="isSaving">취소</el-button>
+          <el-button type="primary" @click="handleSave(ruleFormRef)" :loading="isSaving" :disabled="isSaving">
+            {{ isSaving ? '저장 중...' : '저장' }}
+          </el-button>
+        </div>
       </div>
     </template>
   </el-drawer>
-
-
-
-  <!--  -->
 </template>
+
 <script lang="ts" setup>
-import kor from 'element-plus/dist/locale/ko.mjs';
-import {defineAsyncComponent, ref} from 'vue'
-import {getMileageProductInfo, updateMileageProduct, createMileageProduct } from "@/views/pages/mileage/mileage-product/mileageProductPage"
-import {MileageProductClass} from "@/models/mileage"
-import {UploadProps, UploadUserFile} from "element-plus";
-import * as swal from "@/commonUtils/swal";
-import {targetType} from "@/views/pages/banner/bannerContants"
-const CustomSwitch = defineAsyncComponent(() => import("@/views/common/switch/CustomSwitch.vue"))
+import { ref, reactive, computed } from 'vue'
+import type { FormInstance, FormRules, UploadUserFile } from 'element-plus'
+import { UploadFilled } from '@element-plus/icons-vue';
+import * as swal from '@/commonUtils/swal';
+import {
+  getMileageProductDetail,
+  createMileageProduct,
+  updateMileageProduct,
+  deleteMileageProduct
+} from '@/views/pages/mileage/mileage-product/mileageProductPage';
+import type { MileageProductItem, MileageProductCreateRequest, MileageProductUpdateRequest } from '@/types/mileage';
+
 const props = defineProps({
   chooseRow: { Type: Object, default: {} },
-  doSearch: {Type:Function, default: null}
+  doSearch: { Type: Function, default: null },
 });
 
-const attachFile = ref<UploadUserFile[]>([])
-const dateTimeValue = ref<[Date, Date]>([]);
+const isDrawerActive = defineModel<boolean>("isDrawerActive", { default: false });
+const openType = defineModel<string>("openType", { default: "update" });
 
-const mileageProductInfo = ref<MileageProductInfo>(new MileageProductClass());
+// 백엔드에서 받아온 원본 데이터
+const productData = ref<MileageProductItem | null>(null);
 
-const isDrawerActive = defineModel<boolean>("isDrawerActive",{ default: false});
-const openType = defineModel<string>("openType",{ default: "update"});
-const isLoading = ref<boolean>(false)
+// 수정용 폼 데이터
+const formData = reactive<Partial<MileageProductItem>>({
+  m_product_name: '',
+  m_product_value: 0,
+  charge_point: 0,
+  valid_from: '',
+  valid_until: '',
+  ord: 0,
+  description: '',
+  is_active: true,
+});
 
-const confirmClick = async () => {
-  const msg = '정말 저장하시겠습니까?.';
-  const swalResult = await swal.swalConfirm(msg, 'warning');
-  if (swalResult.isConfirmed) {
+const attachFile = ref<UploadUserFile[]>([]);
+const currentImageUrl = ref<string>('');
+const imageFile = ref<File | null>(null);
+const isSaving = ref<boolean>(false);
+const ruleFormRef = ref<FormInstance>();
 
-    if (!dateTimeValue.value[0]) {
-      swal.swalAlert("시작일 / 종료일을 설정해주세요.","warning")
-      return
-    }
+const isCreateMode = computed(() => openType.value === "create");
 
-    mileageProductInfo.value.start_dt = dateTimeValue.value[0];
-    mileageProductInfo.value.end_dt = dateTimeValue.value[1];
+const drawerTitle = computed(() => {
+  return isCreateMode.value ? '마일리지 상품 추가' : '마일리지 상품 정보';
+});
 
-    isLoading.value = true;
-    try {
-      if (openType.value == "update") {
-        await updateMileageProduct(mileageProductInfo, attachFile, props.doSearch as Function)
-      } else {
+const rules = reactive<FormRules>({
+  m_product_name: [{ required: true, message: '상품명을 입력해주세요', trigger: 'blur' }],
+  m_product_value: [{ required: true, message: '상품 금액을 입력해주세요', trigger: 'blur' }],
+  charge_point: [{ required: true, message: '충전 포인트를 입력해주세요', trigger: 'blur' }],
+  valid_from: [{ required: true, message: '시작일을 선택해주세요', trigger: 'change' }],
+  valid_until: [{ required: true, message: '종료일을 선택해주세요', trigger: 'change' }],
+});
 
-        await createMileageProduct(mileageProductInfo, attachFile, props.doSearch as Function)
-      }
-    } finally {
-      isLoading.value = false;
-    }
-
-  }
-}
-
-const closeDrawer = () => {
-  openType.value = "update"
-}
-
-const openDrawer = async () => {
-  mileageProductInfo.value = new MileageProductClass();
-  attachFile.value = [];
-
-  if (openType.value == "update") {
-    console.log('chk props >>>',props.chooseRow)
-    mileageProductInfo.value.m_product_idx = props.chooseRow.m_product_idx;
-    console.log('chk mileageProductInfo >>>',mileageProductInfo.value)
-
-    await getMileageProductInfo(mileageProductInfo, attachFile)
-    dateTimeValue.value[0] = mileageProductInfo.value.start_dt
-    dateTimeValue.value[1] = mileageProductInfo.value.end_dt
-  } else {
-
-    // 생성 drawer라면 신규 추가
-    const mileageProduct = new MileageProductClass();
-  }
-}
-
-const handleRemove: UploadProps['onRemove'] = (uploadFile, uploadFiles) => {
-  console.log(uploadFile, uploadFiles)
-  mileageProductInfo.value.m_product_img = "";
-  mileageProductInfo.value.file_nm = "";
-  attachFile.value = [];
-}
-
-const handlePreview: UploadProps['onPreview'] = (file) => {
-  console.log(file)
-}
-
-const uploadImgs = async (target) => {
-
-  let file = target.raw;  // 'raw' 속성에서 실제 File 객체를 접근
-  console.log('chk file .>>',file)
+const handleFileChange = (file: any) => {
   const validExtensions = ['png', 'jpg', 'jpeg'];
-  const fileExtension = file.name.split('.').pop().toLowerCase();
+  const fileExtension = file.name.split('.').pop()?.toLowerCase();
 
-  if (!validExtensions.includes(fileExtension)) {
-    await swal.swalAlert('이미지 파일만 업로드 가능합니다.', 'warning');
+  if (!validExtensions.includes(fileExtension || '')) {
+    swal.swalAlert('이미지 파일만 업로드 가능합니다.', 'warning');
     attachFile.value = [];
     return;
   }
 
-  // 이미지 width, height 계산
-  const getImageSize = (file) => {
-    return new Promise((resolve, reject) => {
-      const imageUrl = URL.createObjectURL(file);  // 임시 url 생성
-      const img = new Image();
-      img.onload = () => {
-        resolve({ width: img.width, height: img.height, name: file.name,imageUrl:imageUrl });
-        URL.revokeObjectURL(img.src); // width, height 구하고 임시 url 제거
-      };
-      img.onerror = () => {
-        URL.revokeObjectURL(imageUrl);
-        reject(new Error("Failed to load image"));
-      };
-      img.src = imageUrl;
-    });
-  }
+  imageFile.value = file.raw;
+};
 
-  if (target.raw && target.raw instanceof File) {
-    try {
-      // 이미지 사이즈를 가져오기 위한 비동기 처리
-      const { width, height, imageUrl, name } = await getImageSize(target.raw);
-      target.imgWidth = width;
-      target.imgHeight = height;
-      target.imageUrl = imageUrl;
-      mileageProductInfo.value.file_nm = name;
-      // 중복 이미지 업로드 방지처리
-      if (!attachFile.value.some(file => file.name === target.name)) {
-        mileageProductInfo.value.m_product_img = "";
-        mileageProductInfo.value.file_nm = "";
-        attachFile.value.push(target);
+const handleFileRemove = () => {
+  imageFile.value = null;
+  attachFile.value = [];
+};
+
+const handleSave = async (formEl: FormInstance | undefined) => {
+  if (!formEl) return;
+
+  await formEl.validate(async (valid) => {
+    if (valid) {
+      const result = await swal.swalConfirm('저장하시겠습니까?', 'question');
+      if (!result.isConfirmed) return;
+
+      // 생성 모드에서는 이미지 필수
+      if (isCreateMode.value && !imageFile.value) {
+        await swal.swalAlert('상품 이미지를 업로드해주세요.', 'warning');
+        return;
       }
 
-    } catch (error) {
-      console.error("Error loading image size:", error);
+      try {
+        isSaving.value = true;
+        let success = false;
+
+        if (!isCreateMode.value && productData.value?.mileage_id) {
+          // 수정 모드
+          const payload: MileageProductUpdateRequest = {
+            m_product_name: formData.m_product_name,
+            m_product_value: formData.m_product_value,
+            charge_point: formData.charge_point,
+            valid_from: formData.valid_from,
+            valid_until: formData.valid_until,
+            ord: formData.ord,
+            description: formData.description,
+            is_active: formData.is_active,
+            image: imageFile.value || undefined
+          };
+          success = await updateMileageProduct(productData.value.mileage_id, payload, props.doSearch);
+        } else {
+          // 생성 모드
+          const payload: MileageProductCreateRequest = {
+            m_product_name: formData.m_product_name!,
+            m_product_value: formData.m_product_value!,
+            charge_point: formData.charge_point!,
+            valid_from: formData.valid_from!,
+            valid_until: formData.valid_until!,
+            ord: formData.ord,
+            description: formData.description,
+            is_active: formData.is_active,
+            image: imageFile.value!
+          };
+          success = await createMileageProduct(payload, props.doSearch);
+        }
+
+        if (success) {
+          isDrawerActive.value = false;
+        }
+      } finally {
+        isSaving.value = false;
+      }
     }
-  } else {
-    console.error("No file found in target.raw");
+  });
+};
+
+const handleDelete = async () => {
+  if (!productData.value?.mileage_id) return;
+
+  const result = await swal.swalConfirm('정말 삭제하시겠습니까?', 'warning');
+  if (!result.isConfirmed) return;
+
+  try {
+    isSaving.value = true;
+    const success = await deleteMileageProduct(productData.value.mileage_id);
+    if (success) {
+      await props.doSearch();
+      isDrawerActive.value = false;
+    }
+  } finally {
+    isSaving.value = false;
   }
+};
+
+// Drawer 열릴 때
+const openDrawer = async () => {
+  if (isCreateMode.value) {
+    // 생성 모드: 폼 데이터 초기화
+    productData.value = null;
+    formData.m_product_name = '';
+    formData.m_product_value = 0;
+    formData.charge_point = 0;
+    formData.valid_from = '';
+    formData.valid_until = '';
+    formData.ord = 0;
+    formData.description = '';
+    formData.is_active = true;
+    currentImageUrl.value = '';
+    attachFile.value = [];
+    imageFile.value = null;
+    return;
+  }
+
+  // 수정 모드: 상품 상세 정보 조회
+  const mileage_id = props.chooseRow?.mileage_id;
+  if (!mileage_id) return;
+
+  const detail = await getMileageProductDetail(mileage_id, attachFile);
+
+  if (detail) {
+    productData.value = detail;
+
+    // 폼 데이터 초기화
+    formData.m_product_name = detail.m_product_name;
+    formData.m_product_value = detail.m_product_value;
+    formData.charge_point = detail.charge_point;
+    formData.valid_from = detail.valid_from;
+    formData.valid_until = detail.valid_until;
+    formData.ord = detail.ord;
+    formData.description = detail.description || '';
+    formData.is_active = detail.is_active;
+
+    // 이미지 URL 설정
+    if (detail.m_product_img) {
+      const cdnBase = import.meta.env.VITE_APP_UPLOAD_URL;
+      currentImageUrl.value = detail.m_product_img.startsWith('http')
+        ? detail.m_product_img
+        : `${cdnBase}mileage/${detail.m_product_img}`;
+    } else {
+      currentImageUrl.value = '';
+    }
+
+    imageFile.value = null;
+  }
+};
+
+// Drawer 닫힐 때
+const closeDrawer = () => {
+  openType.value = "update";
+  isDrawerActive.value = false;
+  productData.value = null;
+  attachFile.value = [];
+  imageFile.value = null;
+
+  // 폼 데이터 초기화
+  Object.keys(formData).forEach(key => {
+    formData[key as keyof typeof formData] = undefined;
+  });
+};
+
+// 날짜 포맷팅
+const formatDate = (dateString: string | null) => {
+  if (!dateString) return '-';
+  return new Date(dateString).toLocaleDateString('ko-KR');
+};
+</script>
+
+<style scoped>
+.m-b-20 {
+  margin-bottom: 20px;
 }
 
-</script>
+.m-l-10 {
+  margin-left: 10px;
+}
+
+.f-12 {
+  font-size: 12px;
+}
+
+.w-100 {
+  width: 100%;
+}
+</style>

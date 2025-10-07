@@ -86,8 +86,9 @@ class PaymentService:
         """
         결제 취소 처리
         1. t_payment에서 결제 정보 조회
-        2. Payletter API 호출
-        3. 취소 성공 시 DB 업데이트
+        2. tm60_users에서 포인트 잔액 확인
+        3. Payletter API 호출
+        4. 취소 성공 시 DB 업데이트 및 포인트 차감
         """
         log = get_logger_with_request_id()
 
@@ -103,6 +104,18 @@ class PaymentService:
         # 취소 가능한 상태인지 확인
         if payment.payment_status != "SUCCESS":
             raise ValueError(f"취소할 수 없는 결제 상태입니다: {payment.payment_status}")
+
+        # 2. tm60_users 포인트 잔액 확인
+        if self.tm60_users_repo and payment.point_amount and payment.point_amount > 0:
+            users = await self.tm60_users_repo.find_all_by_user_id(str(payment.user_id))
+            if not users:
+                raise ValueError("ARS 사용자 정보를 찾을 수 없어 취소할 수 없습니다")
+
+            user = users[0]
+            if user.u_point < payment.point_amount:
+                raise ValueError(f"포인트 잔액이 부족하여 취소할 수 없습니다 (필요: {payment.point_amount}, 보유: {user.u_point})")
+
+            log.info("Point balance verified", user_id=payment.user_id, required=payment.point_amount, current=user.u_point)
 
         # 2. Payletter 취소 API 호출
         cancel_url = settings.payment_gateway_url.replace("/request", "/cancel")
@@ -143,8 +156,8 @@ class PaymentService:
                 response_data = response.json()
                 log.info("Payletter cancel response", payment_id=payment_id, response=response_data)
 
-                # 3. 응답 처리
-                if response_data.get("code") == "0000":
+                # 3. 응답 처리 - cancel_date가 있으면 성공
+                if "cancel_date" in response_data and response_data.get("cancel_date"):
                     # 취소 성공
                     cancelled_at = datetime.utcnow()
                     updated_payment = await self.payment_repo.update_cancel_info(
@@ -170,7 +183,7 @@ class PaymentService:
                         except Exception as point_error:
                             log.error("Failed to deduct points from tm60_users", user_id=payment.user_id, payment_id=payment_id, error=str(point_error))
 
-                    log.info("Payment cancelled successfully", payment_id=payment_id, cancel_amount=payment.amount)
+                    log.info("Payment cancelled successfully", payment_id=payment_id, cancel_amount=payment.amount, payletter_cancel_date=response_data.get("cancel_date"))
                     return PaymentCancelResponse(
                         success=True,
                         payment_id=payment_id,
@@ -181,7 +194,7 @@ class PaymentService:
                 else:
                     # 취소 실패
                     error_message = response_data.get("message", "결제 취소 실패")
-                    log.error("Payletter cancel failed", payment_id=payment_id, error=error_message)
+                    log.error("Payletter cancel failed", payment_id=payment_id, error=error_message, response=response_data)
                     raise ValueError(f"결제 취소 실패: {error_message}")
 
         except httpx.HTTPError as e:

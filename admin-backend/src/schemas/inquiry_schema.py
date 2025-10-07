@@ -39,6 +39,13 @@ class InquiryReplyUpdateRequest(BaseModel):
     reply_content: str = Field(..., min_length=1)
 
 
+class InquiryUpdateRequest(BaseModel):
+    inquiry_id: int
+    title: Optional[str] = Field(None, min_length=1)
+    content: Optional[str] = Field(None, min_length=1)
+    reply_content: Optional[str] = Field(None)
+
+
 class InquiryDeleteResponse(BaseModel):
     inquiry_id: int
     deleted: bool

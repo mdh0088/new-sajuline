@@ -53,7 +53,7 @@ class InquiryRepository:
             conditions.append(Inquiry.created_at <= end_dt)
 
         if counselor_id:
-            conditions.append(Inquiry.inquirer_id == counselor_id)
+            conditions.append(Inquiry.inquirer_id.like(f"%{counselor_id}%"))
 
         if search_name:
             kw = f"%{search_name}%"
@@ -131,15 +131,23 @@ class InquiryRepository:
         result = await self.db.execute(stmt)
         return result.rowcount > 0
 
-    async def delete_by_id(self, inquiry_id: int) -> bool:
-        stmt = delete(Inquiry).where(
-            and_(
-                Inquiry.inquiry_id == inquiry_id,
-                Inquiry.inquirer_type == COUNSELOR_TYPE,
-                Inquiry.category == COUNSELOR_CS_CATEGORY,
-            )
+    async def update_inquiry(self, inquiry_id: int, **values) -> bool:
+        """문의 제목/내용/답변 수정 (조건 없이 모든 타입)"""
+        stmt = (
+            update(Inquiry)
+            .where(Inquiry.inquiry_id == inquiry_id)
+            .values(**values)
+            .execution_options(synchronize_session="evaluate")
         )
         result = await self.db.execute(stmt)
+        await self.db.commit()
+        return result.rowcount > 0
+
+    async def delete_by_id(self, inquiry_id: int) -> bool:
+        """문의 삭제 (조건 없이 모든 타입)"""
+        stmt = delete(Inquiry).where(Inquiry.inquiry_id == inquiry_id)
+        result = await self.db.execute(stmt)
+        await self.db.commit()
         return result.rowcount > 0
 
     async def get_user_list_with_user(
@@ -167,7 +175,7 @@ class InquiryRepository:
         if end_dt is not None:
             conditions.append(Inquiry.created_at <= end_dt)
         if user_id:
-            conditions.append(Inquiry.inquirer_id == user_id)
+            conditions.append(Inquiry.inquirer_id.like(f"%{user_id}%"))
 
         if search_name:
             kw = f"%{search_name}%"
@@ -241,9 +249,9 @@ class InquiryRepository:
         if end_dt is not None:
             conditions.append(Inquiry.created_at <= end_dt)
         if user_id:
-            conditions.append(Inquiry.inquirer_id == user_id)
+            conditions.append(Inquiry.inquirer_id.like(f"%{user_id}%"))
         if counselor_id:
-            conditions.append(Inquiry.counselor_id == counselor_id)
+            conditions.append(Inquiry.counselor_id.like(f"%{counselor_id}%"))
 
         if search_name:
             kw = f"%{search_name}%"

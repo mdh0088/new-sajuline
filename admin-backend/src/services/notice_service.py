@@ -9,6 +9,7 @@ from src.repositories.notice_repository import NoticeRepository
 from src.schemas.notice_schema import (
     NoticeListParams,
     NoticeListItem,
+    NoticeDetail,
     NoticeListResponse,
     NoticeDetailResponse,
     NoticeCreateRequest,
@@ -62,9 +63,9 @@ class NoticeService:
         if row is None:
             from src.exceptions.custom_exceptions import NotFoundError
             raise NotFoundError("공지사항을 찾을 수 없습니다")
-        return NoticeDetailResponse(notice=NoticeListItem.model_validate(row, from_attributes=True))
+        return NoticeDetailResponse(notice=NoticeDetail.model_validate(row, from_attributes=True))
 
-    async def create(self, payload: NoticeCreateRequest, *, created_by: str) -> NoticeDetailResponse:
+    async def create(self, payload: NoticeCreateRequest, *, created_by: int) -> NoticeDetailResponse:
         created = await self.repo.create(
             notice_type=payload.notice_type or "GENERAL",
             title=payload.title,

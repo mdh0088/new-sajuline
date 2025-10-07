@@ -51,3 +51,7 @@ class ConsultationReviewUpdateRequest(BaseModel):
 
     content: Optional[str] = Field(None, description="후기 내용")
     counselor_reply: Optional[str] = Field(None, description="상담사 답변")
+    is_visible: Optional[bool] = Field(None, description="노출 여부")
+    is_best: Optional[bool] = Field(None, description="베스트 여부")
+    rating: Optional[int] = Field(None, ge=1, le=5, description="별점 (1-5)")
+    review_tags: Optional[str] = Field(None, description="후기 태그 (JSON 문자열)")

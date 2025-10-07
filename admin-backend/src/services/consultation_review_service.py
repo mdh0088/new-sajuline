@@ -66,6 +66,22 @@ class ConsultationReviewService:
             if review.counselor_replied_at is None and payload.counselor_reply:
                 review.counselor_replied_at = datetime.utcnow()
 
+        # is_visible 수정
+        if payload.is_visible is not None:
+            review.is_visible = payload.is_visible
+
+        # is_best 수정
+        if payload.is_best is not None:
+            review.is_best = payload.is_best
+
+        # rating 수정
+        if payload.rating is not None:
+            review.rating = payload.rating
+
+        # review_tags 수정
+        if payload.review_tags is not None:
+            review.review_tags = payload.review_tags
+
         updated = await self.repo.update(review)
 
         # 수정 후 상세 정보 반환 (JOIN 포함)

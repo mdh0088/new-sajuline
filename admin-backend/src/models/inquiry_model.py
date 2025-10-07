@@ -79,6 +79,8 @@ class Inquiry(Base):
         nullable=True,
         comment="답변 시간",
     )
+    # replied_by는 DB에 없는 컬럼이므로 제거
+    # replied_at은 answered_at과 동일한 의미
 
     # 타임스탬프
     created_at: Mapped[datetime] = mapped_column(
