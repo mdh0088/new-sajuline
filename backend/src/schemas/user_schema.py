@@ -24,6 +24,7 @@ class UserBase(BaseModel):
     profile_image_url: Optional[str] = Field(None, description="프로필 이미지 URL")
     birth_date: Optional[str] = Field(None, description="생년월일시 (YYYY-MM-DD HH:MM 형식)")
     gender: Optional[Gender] = Field(None, description="성별")
+    mileage_point: int = Field(default=0, ge=0, description="마일리지 포인트")
     is_marketing_agreed: bool = Field(default=False, description="마케팅 동의")
 
 

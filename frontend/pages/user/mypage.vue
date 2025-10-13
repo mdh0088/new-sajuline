@@ -28,7 +28,14 @@
                     </div>
                     <div class="profile-user-info">
                         <div class="profile-main-info">
-                            <h2 class="profile-name">김사주</h2>
+                            <h2 class="profile-name">
+                                <template v-if="isLoading">
+                                    <div class="bg-white/20 animate-pulse rounded h-7 w-24"></div>
+                                </template>
+                                <template v-else>
+                                    {{ userNickname }}
+                                </template>
+                            </h2>
                         </div>
                         <div class="profile-stats-mini">
                             <span>총 상담 {{ stats.consults }}회 | 후기 작성 {{ stats.reviews }}건</span>
@@ -45,11 +52,27 @@
                         <div class="membership-main-info">
                             <div class="membership-badge gold">
                                 <span>👑</span>
-                                <span>{{ currentGrade }}</span>
+                                <span>
+                                    <template v-if="isLoading">
+                                        <div class="bg-white/20 animate-pulse rounded h-5 w-16"></div>
+                                    </template>
+                                    <template v-else>
+                                        {{ currentGrade }}
+                                    </template>
+                                </span>
                             </div>
                         </div>
                         <div class="membership-benefits">
-                            10% 적립
+                            <template v-if="isLoading">
+                                <div class="bg-white/20 animate-pulse rounded h-4 w-32"></div>
+                            </template>
+                            <template v-else>
+                                <div class="flex items-center gap-2 text-sm">
+                                    <span>{{ pointEarnRate }} 적립</span>
+                                    <span class="text-white/40">|</span>
+                                    <span>{{ discountRate }} 할인</span>
+                                </div>
+                            </template>
                         </div>
                     </div>
                 </div>
@@ -61,7 +84,14 @@
                     </div>
                     <div class="mileage-content">
                         <div class="mileage-main-info">
-                            <div class="profile-mileage-amount">2,450M</div>
+                            <div class="profile-mileage-amount">
+                                <template v-if="isLoading">
+                                    <div class="bg-white/20 animate-pulse rounded h-7 w-24"></div>
+                                </template>
+                                <template v-else>
+                                    {{ mileagePoints }}M
+                                </template>
+                            </div>
                         </div>
                         <div class="mileage-actions">
                             <button class="mileage-btn">적립내역</button>
@@ -207,7 +237,16 @@ definePageMeta({
 const { useUserMypage } = useUserQueries()
 const { data: mypage, isLoading, error } = useUserMypage()
 
-// 포인트
+// 사용자 정보
+const userNickname = computed(() => mypage.value?.user_info.nickname ?? '사용자')
+
+// 마일리지 포인트
+const mileagePoints = computed(() => {
+  const points = mypage.value?.user_info.mileage_point ?? 0
+  return points.toLocaleString()
+})
+
+// 포인트 (tm60_users)
 const points = computed(() => Number(mypage.value?.current_points ?? 0))
 
 // 요약 통계
@@ -220,6 +259,22 @@ const stats = computed(() => ({
 // 등급 정보
 const currentGrade = computed(() => mypage.value?.grade_info.current_grade.grade_name ?? '-')
 const nextGrade = computed(() => mypage.value?.grade_info.next_grade?.grade_name ?? '최고등급')
+
+// 멤버십 혜택 - 적립률
+const pointEarnRate = computed(() => {
+  const gradeInfo = mypage.value?.grade_info.current_grade
+  if (!gradeInfo) return '0%'
+  const earnRate = Number(gradeInfo.point_earn_rate ?? 0)
+  return earnRate > 0 ? `${earnRate}%` : '0%'
+})
+
+// 멤버십 혜택 - 할인율
+const discountRate = computed(() => {
+  const gradeInfo = mypage.value?.grade_info.current_grade
+  if (!gradeInfo) return '0%'
+  const discount = Number(gradeInfo.discount_rate ?? 0)
+  return discount > 0 ? `${discount}%` : '0%'
+})
 
 // 진행도 계산: (이번 달 결제 총액) / (다음 등급까지 필요한 금액) * 100
 const requiredAmount = computed(() => {
