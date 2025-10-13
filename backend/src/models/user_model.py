@@ -110,12 +110,17 @@ class User(Base):
         comment="생년월일시 (YYYY-MM-DD HH:MM 형식)"
     )
     gender: Mapped[Optional[str]] = mapped_column(
-        String(10), 
+        String(10),
         nullable=True,
         comment="성별: MALE, FEMALE"
     )
+    mileage_point: Mapped[int] = mapped_column(
+        Integer,
+        default=0,
+        comment="마일리지 포인트"
+    )
     is_marketing_agreed: Mapped[bool] = mapped_column(
-        Boolean, 
+        Boolean,
         default=False,
         comment="마케팅 동의"
     )

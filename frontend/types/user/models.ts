@@ -52,9 +52,12 @@ export interface UserBase {
   nickname: string
   phone: string
   join_type: JoinType
+  social_provider?: string
+  social_id?: string
   profile_image_url?: string
-  birth_date?: string              // YYYY-MM-DD 형식
+  birth_date?: string              // YYYY-MM-DD HH:MM 형식
   gender?: Gender
+  mileage_point?: number           // 마일리지 포인트 (서버에서 자동 설정, 기본값 0)
   is_marketing_agreed: boolean
 }
 
@@ -91,12 +94,18 @@ export interface UserResponse extends UserBase {
   user_id: string
   user_status: UserStatus
   grade_code: string
-  social_provider?: string
+  mileage_point: number            // Override: 응답에서는 항상 존재
   failed_login_count: number
   locked_until?: string            // ISO datetime string
   created_at: string               // ISO datetime string
-  updated_at?: string              // ISO datetime string  
+  updated_at?: string              // ISO datetime string
   last_login_at?: string           // ISO datetime string
+  signup_reward?: {
+    event_name: string
+    reward_value: number
+    balance_after: number
+    message: string
+  }
 }
 
 /**
@@ -181,11 +190,18 @@ export interface UserSession {
 // =============================================================================
 
 export interface GradeResponse {
+  grade_code: string
   grade_name: string
   grade_level: number
   min_purchase_amount: number
   point_earn_rate: string | number
   discount_rate: string | number
+  benefits?: any | null
+  grade_image_url?: string | null
+  description?: string | null
+  is_active: boolean
+  created_at: string
+  updated_at?: string | null
 }
 
 export interface NextGradeInfo {
