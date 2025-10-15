@@ -1,12 +1,13 @@
 <template>
   <div class="signup-container">
-    <!-- 진행 표시 (완료 단계에서는 숨김) -->
-    <div class="progress-bar" v-if="currentStep < 5">
-      <div class="progress-fill" :style="`width: ${(Math.min(currentStep, totalSteps) / totalSteps) * 100}%`"></div>
-    </div>
-
     <!-- 메인 콘텐츠 -->
     <main class="main-content">
+      <!-- 진행 표시 (완료 단계에서는 숨김) -->
+      <div v-if="currentStep < 5" class="progress-bar-wrapper">
+        <div class="progress-bar-inline">
+          <div class="progress-fill" :style="`width: ${(Math.min(currentStep, totalSteps) / totalSteps) * 100}%`"></div>
+        </div>
+      </div>
       <!-- 단계 표시 -->
       <div class="step-indicator">
         <div 
@@ -98,7 +99,7 @@ import type { SignupFormData } from '~/types/auth/signup'
 import '~/assets/css/common/signup-common.css'
 
 definePageMeta({
-  layout: false
+  layout: 'default'
 })
 
 const router = useRouter()

@@ -15,10 +15,26 @@
       <!-- 오른쪽 액션 영역 -->
       <div class="header-actions">
         <!-- 포인트 표시 -->
-        <div class="coin-balance" @click="$router.push('/point')">
+        <div v-if="isAuthenticated" class="coin-balance" @click="$router.push('/point')">
           <span>💰</span>
           <span>{{ userPoints }}P</span>
         </div>
+
+        <!-- 로그인/로그아웃 버튼 -->
+        <button
+          v-if="!isAuthenticated"
+          class="auth-button login-button"
+          @click="$router.push('/login')"
+        >
+          로그인
+        </button>
+        <button
+          v-else
+          class="auth-button logout-button"
+          @click="handleLogout"
+        >
+          로그아웃
+        </button>
       </div>
     </div>
   </header>
@@ -124,5 +140,49 @@ const handleLogout = async () => {
   font-weight: 600;
   color: white;
   margin: 0;
+}
+
+/* 로그인/로그아웃 버튼 스타일 */
+.auth-button {
+  padding: 8px 16px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  border: none;
+  white-space: nowrap;
+}
+
+.login-button {
+  background: linear-gradient(135deg, #9333EA 0%, #7C3AED 100%);
+  color: white;
+}
+
+.login-button:hover {
+  background: linear-gradient(135deg, #7C3AED 0%, #6B21A8 100%);
+  transform: translateY(-1px);
+}
+
+.logout-button {
+  background: rgba(255, 255, 255, 0.1);
+  color: rgba(255, 255, 255, 0.9);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.logout-button:hover {
+  background: rgba(255, 255, 255, 0.15);
+  border-color: rgba(255, 255, 255, 0.3);
+}
+
+.auth-button:active {
+  transform: scale(0.98);
+}
+
+/* header-actions 내부 요소들 간격 조정 */
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
 }
 </style>

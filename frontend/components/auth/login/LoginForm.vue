@@ -43,18 +43,10 @@
     </div>
 
     <!-- 옵션 -->
-    <div class="flex items-center justify-between py-2">
+    <div class="flex items-center py-2">
       <el-checkbox v-model="formData.rememberMe" class="auth-checkbox-wrapper">
         로그인 상태 유지
       </el-checkbox>
-      
-      <button
-        type="button"
-        @click="handleForgotPassword"
-        class="text-sm text-purple-400 hover:text-purple-300 hover:underline transition-colors duration-300"
-      >
-        비밀번호 찾기
-      </button>
     </div>
 
     <!-- 로그인 버튼 -->
