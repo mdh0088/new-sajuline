@@ -69,10 +69,10 @@
 
         <!-- 하단 버튼 -->
         <div class="inquiry-detail-actions">
-          <NuxtLink to="/user/cs/inquiries" class="inquiry-detail-action-btn secondary">
+          <NuxtLink to="/cs/inquiries" class="inquiry-detail-action-btn secondary">
             목록으로
           </NuxtLink>
-          <NuxtLink to="/user/cs/write" class="inquiry-detail-action-btn primary">
+          <NuxtLink to="/cs/write" class="inquiry-detail-action-btn primary">
             새 문의하기
           </NuxtLink>
         </div>
@@ -84,6 +84,7 @@
 <script setup lang="ts">
 definePageMeta({
   layout: 'default'
+  // TODO: 실제 구현 시 middleware: 'auth' 추가 (로그인 필수)
 })
 
 // URL에서 ID 가져오기

@@ -139,7 +139,7 @@
     </main>
 
     <!-- 플로팅 문의하기 버튼 -->
-    <NuxtLink to="/user/cs/write" class="inquiry-floating-write-btn">
+    <NuxtLink to="/cs/write" class="inquiry-floating-write-btn">
       <span>✏️</span>
       <span>문의하기</span>
     </NuxtLink>
@@ -202,7 +202,7 @@
                 <button class="inquiry-detail-action-btn secondary" @click="closeInquiryModal">
                   닫기
                 </button>
-                <NuxtLink to="/user/cs/write" class="inquiry-detail-action-btn primary">
+                <NuxtLink to="/cs/write" class="inquiry-detail-action-btn primary">
                   새 문의하기
                 </NuxtLink>
               </div>
@@ -219,6 +219,7 @@ import { ref } from 'vue'
 
 definePageMeta({
   layout: 'default'
+  // TODO: 실제 구현 시 middleware: 'auth' 추가 (로그인 필수)
 })
 
 interface IInquiry {

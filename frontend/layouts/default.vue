@@ -17,9 +17,10 @@
           @click="handleAdClick(ad)"
         >
           <img
+            v-if="ad.imageLoaded !== false"
             :src="ad.image"
             :alt="ad.title"
-            @error="$event.target.src = '/images/placeholder-ad.jpg'"
+            @error="handleImageError(ad)"
           />
           <div class="banner-overlay">
             <h3>{{ ad.title }}</h3>
@@ -92,6 +93,12 @@ const adBanners = ref([
     link: '/'
   }
 ])
+
+// 이미지 로드 에러 처리 (무한 루프 방지)
+const handleImageError = (ad) => {
+  // 이미지 로드 실패 시 더 이상 표시하지 않음
+  ad.imageLoaded = false
+}
 
 // 광고 배너 클릭 처리
 const handleAdClick = (ad) => {

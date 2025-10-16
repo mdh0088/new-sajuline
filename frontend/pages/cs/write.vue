@@ -92,6 +92,7 @@ import { ref, computed, onMounted } from 'vue'
 
 definePageMeta({
   layout: 'default'
+  // TODO: 실제 구현 시 middleware: 'auth' 추가 (로그인 필수)
 })
 
 // 라우트에서 카테고리 가져오기
@@ -131,7 +132,7 @@ const handleSubmit = () => {
   console.log('문의 제출:', formData.value)
   // TODO: API 연동
   alert('문의가 제출되었습니다.')
-  navigateTo('/user/cs')
+  navigateTo('/cs')
 }
 </script>
 

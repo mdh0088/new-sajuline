@@ -35,31 +35,31 @@
       <section class="cs-quick-category-section">
         <h3 class="cs-section-title">무엇을 도와드릴까요?</h3>
         <div class="cs-category-grid">
-          <NuxtLink to="/user/cs/write?category=결제/환불" class="cs-category-card">
+          <div @click="handleCategoryClick('결제/환불')" class="cs-category-card">
             <div class="cs-category-icon">💳</div>
             <div class="cs-category-name">결제/환불</div>
             <div class="cs-category-desc">포인트 충전, 환불 관련</div>
-          </NuxtLink>
-          <NuxtLink to="/user/cs/write?category=계정 문의" class="cs-category-card">
+          </div>
+          <div @click="handleCategoryClick('계정 문의')" class="cs-category-card">
             <div class="cs-category-icon">👤</div>
             <div class="cs-category-name">계정 문의</div>
             <div class="cs-category-desc">로그인, 비밀번호 찾기</div>
-          </NuxtLink>
-          <NuxtLink to="/user/cs/write?category=상담 문의" class="cs-category-card">
+          </div>
+          <div @click="handleCategoryClick('상담 문의')" class="cs-category-card">
             <div class="cs-category-icon">💬</div>
             <div class="cs-category-name">상담 문의</div>
             <div class="cs-category-desc">상담 진행, 상담사 관련</div>
-          </NuxtLink>
-          <NuxtLink to="/user/cs/write?category=이벤트/혜택" class="cs-category-card">
+          </div>
+          <div @click="handleCategoryClick('이벤트/혜택')" class="cs-category-card">
             <div class="cs-category-icon">🎁</div>
             <div class="cs-category-name">이벤트/혜택</div>
             <div class="cs-category-desc">프로모션, 쿠폰 사용</div>
-          </NuxtLink>
+          </div>
         </div>
       </section>
 
-      <!-- 문의내역 섹션 -->
-      <section class="cs-inquiry-section">
+      <!-- 문의내역 섹션 - 로그인 상태에 따라 다르게 표시 -->
+      <section v-if="isLoggedIn" class="cs-inquiry-section">
         <div class="cs-inquiry-header">
           <h2 class="cs-inquiry-title">
             <span>📝</span>
@@ -77,7 +77,7 @@
           </div>
         </div>
         <div class="cs-inquiry-list">
-          <NuxtLink to="/user/cs/inquiries/1" class="cs-inquiry-item">
+          <NuxtLink to="/cs/inquiries/1" class="cs-inquiry-item">
             <div class="cs-inquiry-item-header">
               <span class="cs-inquiry-category">결제문의</span>
               <span class="cs-inquiry-date">2024.03.15</span>
@@ -90,7 +90,7 @@
               <span>답변완료</span>
             </div>
           </NuxtLink>
-          <NuxtLink to="/user/cs/inquiries/2" class="cs-inquiry-item">
+          <NuxtLink to="/cs/inquiries/2" class="cs-inquiry-item">
             <div class="cs-inquiry-item-header">
               <span class="cs-inquiry-category">서비스문의</span>
               <span class="cs-inquiry-date">2024.03.14</span>
@@ -102,6 +102,21 @@
               <span class="cs-status-icon">⏳</span>
               <span>답변대기</span>
             </div>
+          </NuxtLink>
+        </div>
+      </section>
+
+      <!-- 비로그인 상태 안내 -->
+      <section v-else class="cs-inquiry-section">
+        <div class="cs-login-required">
+          <div class="cs-login-icon">🔒</div>
+          <h3 class="cs-login-title">로그인이 필요합니다</h3>
+          <p class="cs-login-desc">
+            문의 내역을 확인하고 새로운 문의를 작성하려면<br>
+            로그인해 주세요.
+          </p>
+          <NuxtLink to="/login" class="cs-login-button">
+            로그인하기
           </NuxtLink>
         </div>
       </section>
@@ -153,6 +168,10 @@ definePageMeta({
   layout: 'default'
 })
 
+// 임시 로그인 상태 (UI 테스트용 - 실제로는 인증 스토어와 연동 필요)
+// TODO: 실제 구현 시 useAuthStore()로 교체
+const isLoggedIn = ref(false) // false로 기본값 설정하여 비로그인 상태 테스트
+
 // FAQ 관련 상태
 const activeFaq = ref(-1)
 
@@ -189,16 +208,87 @@ const toggleFaq = (index: number) => {
   }
 }
 
+// 카테고리 클릭 핸들러
+const handleCategoryClick = (category: string) => {
+  if (!isLoggedIn.value) {
+    navigateTo('/login')
+    return
+  }
+  navigateTo(`/cs/write?category=${encodeURIComponent(category)}`)
+}
+
 // 네비게이션 함수
 const goToInquiries = () => {
-  navigateTo('/user/cs/inquiries')
+  if (!isLoggedIn.value) {
+    navigateTo('/login')
+    return
+  }
+  navigateTo('/cs/inquiries')
 }
 
 const goToWrite = () => {
-  navigateTo('/user/cs/write')
+  if (!isLoggedIn.value) {
+    navigateTo('/login')
+    return
+  }
+  navigateTo('/cs/write')
 }
 </script>
 
 <style>
 @import '~/assets/css/cs.css';
+
+/* 비로그인 상태 안내 스타일 */
+.cs-login-required {
+  text-align: center;
+  padding: 60px 20px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 16px;
+  margin: 20px;
+}
+
+.cs-login-icon {
+  font-size: 48px;
+  margin-bottom: 20px;
+}
+
+.cs-login-title {
+  font-size: 20px;
+  font-weight: 700;
+  margin-bottom: 12px;
+  color: white;
+}
+
+.cs-login-desc {
+  font-size: 15px;
+  color: rgba(255, 255, 255, 0.7);
+  line-height: 1.6;
+  margin-bottom: 24px;
+}
+
+.cs-login-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 14px 32px;
+  background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
+  color: white;
+  border-radius: 12px;
+  font-size: 16px;
+  font-weight: 600;
+  text-decoration: none;
+  transition: all 0.3s;
+}
+
+.cs-login-button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(139, 92, 246, 0.3);
+}
+
+/* 카테고리 카드 클릭 가능하게 */
+.cs-category-card {
+  cursor: pointer;
+  transition: all 0.3s;
+}
 </style>
