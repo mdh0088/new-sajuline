@@ -1,6 +1,5 @@
 <template>
   <div class="min-h-screen bg-slate-950 text-white">
-
     <!-- 메인 콘텐츠 -->
     <main class="pt-[60px] pb-24">
       <!-- 상단 안내 섹션 -->
@@ -31,30 +30,31 @@
           </div>
         </div>
       </div>
-        <!-- 빠른 문의 카테고리 -->
-            <section class="cs-quick-category-section">
+
+      <!-- 빠른 문의 카테고리 -->
+      <section class="cs-quick-category-section">
         <h3 class="cs-section-title">무엇을 도와드릴까요?</h3>
         <div class="cs-category-grid">
-          <div class="cs-category-card" @click="() => goInquiryWrite('결제/환불')">
+          <NuxtLink to="/user/cs/write?category=결제/환불" class="cs-category-card">
             <div class="cs-category-icon">💳</div>
             <div class="cs-category-name">결제/환불</div>
             <div class="cs-category-desc">포인트 충전, 환불 관련</div>
-          </div>
-          <div class="cs-category-card" @click="() => goInquiryWrite('계정 문의')">
+          </NuxtLink>
+          <NuxtLink to="/user/cs/write?category=계정 문의" class="cs-category-card">
             <div class="cs-category-icon">👤</div>
             <div class="cs-category-name">계정 문의</div>
             <div class="cs-category-desc">로그인, 비밀번호 찾기</div>
-          </div>
-          <div class="cs-category-card" @click="() => goInquiryWrite('상담 문의')">
+          </NuxtLink>
+          <NuxtLink to="/user/cs/write?category=상담 문의" class="cs-category-card">
             <div class="cs-category-icon">💬</div>
             <div class="cs-category-name">상담 문의</div>
             <div class="cs-category-desc">상담 진행, 상담사 관련</div>
-          </div>
-          <div class="cs-category-card" @click="() => goInquiryWrite('이벤트/혜택')">
+          </NuxtLink>
+          <NuxtLink to="/user/cs/write?category=이벤트/혜택" class="cs-category-card">
             <div class="cs-category-icon">🎁</div>
             <div class="cs-category-name">이벤트/혜택</div>
             <div class="cs-category-desc">프로모션, 쿠폰 사용</div>
-          </div>
+          </NuxtLink>
         </div>
       </section>
 
@@ -66,18 +66,18 @@
             <span>내 문의내역</span>
           </h2>
           <div class="cs-inquiry-actions">
-            <NuxtLink to="/user/cs/inquiries" class="cs-view-all">
+            <button class="cs-view-all" @click="goToInquiries">
               <span>전체보기</span>
               <span>›</span>
-            </NuxtLink>
-            <button class="cs-inquiry-button" @click="() => goInquiryWrite()">
+            </button>
+            <button class="cs-inquiry-button" @click="goToWrite">
               <span>✏️</span>
               <span>문의하기</span>
             </button>
           </div>
         </div>
         <div class="cs-inquiry-list">
-          <div class="cs-inquiry-item" @click="() => goInquiryDetail(1)">
+          <NuxtLink to="/user/cs/inquiries/1" class="cs-inquiry-item">
             <div class="cs-inquiry-item-header">
               <span class="cs-inquiry-category">결제문의</span>
               <span class="cs-inquiry-date">2024.03.15</span>
@@ -89,8 +89,8 @@
               <span class="cs-status-icon">✓</span>
               <span>답변완료</span>
             </div>
-          </div>
-          <div class="cs-inquiry-item" @click="() => goInquiryDetail(2)">
+          </NuxtLink>
+          <NuxtLink to="/user/cs/inquiries/2" class="cs-inquiry-item">
             <div class="cs-inquiry-item-header">
               <span class="cs-inquiry-category">서비스문의</span>
               <span class="cs-inquiry-date">2024.03.14</span>
@@ -102,11 +102,9 @@
               <span class="cs-status-icon">⏳</span>
               <span>답변대기</span>
             </div>
-          </div>
+          </NuxtLink>
         </div>
       </section>
-
-
 
       <!-- 자주 묻는 질문 -->
       <section class="cs-faq-section">
@@ -117,7 +115,7 @@
             :key="index"
             class="cs-faq-item"
             :class="{ active: activeFaq === index }"
-            @click="() => toggleFaq(index)"
+            @click="toggleFaq(index)"
           >
             <div class="cs-faq-question">
               <div class="cs-faq-text">
@@ -133,7 +131,6 @@
         </div>
       </section>
 
-
       <!-- 공지사항 링크 -->
       <NuxtLink to="/notices" class="cs-notice-link">
         <div class="cs-notice-content">
@@ -146,22 +143,20 @@
         </div>
       </NuxtLink>
     </main>
-
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref } from 'vue'
-import { useRouter } from 'vue-router'
-import AppHeader from '~/components/common/AppHeader.vue'
-import AppBottomNavi from '~/components/common/AppBottomNavi.vue'
 
-const router = useRouter()
+definePageMeta({
+  layout: 'default'
+})
 
 // FAQ 관련 상태
 const activeFaq = ref(-1)
 
-// FAQ 데이터 (UI만)
+// FAQ 데이터
 const faqList = ref([
   {
     question: '포인트는 어떻게 충전하나요?',
@@ -185,7 +180,7 @@ const faqList = ref([
   }
 ])
 
-// FAQ 토글 (UI만)
+// FAQ 토글
 const toggleFaq = (index: number) => {
   if (activeFaq.value === index) {
     activeFaq.value = -1
@@ -194,19 +189,13 @@ const toggleFaq = (index: number) => {
   }
 }
 
-// 네비게이션 함수들
-const goInquiryWrite = (category?: string) => {
-  console.log('goInquiryWrite 호출됨:', category)
-  if (category) {
-    router.push(`/user/cs/write?category=${encodeURIComponent(category)}`)
-  } else {
-    router.push('/user/cs/write')
-  }
+// 네비게이션 함수
+const goToInquiries = () => {
+  navigateTo('/user/cs/inquiries')
 }
 
-const goInquiryDetail = (id: number) => {
-  console.log('goInquiryDetail 호출됨:', id)
-  router.push(`/user/cs/inquiries/${id}`)
+const goToWrite = () => {
+  navigateTo('/user/cs/write')
 }
 </script>
 
