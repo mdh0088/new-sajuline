@@ -1,7 +1,6 @@
 <template>
-  <div class="membership-page">
-    <!-- 메인 콘텐츠 -->
-    <main class="membership-content">
+  <div class="min-h-screen bg-slate-950 text-white">
+    <main class="pt-[60px] pb-24">
       <!-- 인트로 섹션 -->
       <section class="intro-section">
         <h2 class="intro-title">사주라인 회원을 위한 특별 혜택 안내</h2>
@@ -13,61 +12,114 @@
       <!-- 등급 시각화 -->
       <section class="tier-visualization">
         <div class="tier-steps">
-          <div
-            v-for="g in grades"
-            :key="g.grade_code"
-            class="tier-step"
-          >
-            <div class="tier-step-icon">
-              <img
-                v-if="g.grade_image_url"
-                :src="cdnUrl('grade', g.grade_image_url)"
-                alt="grade image"
-                class="tier-icon-img"
-                loading="lazy"
-              />
-              <span v-else class="tier-icon-fallback">⭐</span>
-            </div>
-            <div class="tier-step-info">
-              <div class="tier-step-label">{{ g.grade_code }}</div>
-              <div class="tier-step-amount">
-                {{ shortAmountRange(g.min_purchase_amount) }}
-              </div>
-            </div>
+          <div class="tier-step">
+            <div class="tier-step-icon white">⚪</div>
+            <div class="tier-step-label">WHITE</div>
+            <div class="tier-step-amount">10만원 미만</div>
+          </div>
+          <div class="tier-step">
+            <div class="tier-step-icon bronze">🥉</div>
+            <div class="tier-step-label">BRONZE</div>
+            <div class="tier-step-amount">~30만원</div>
+          </div>
+          <div class="tier-step">
+            <div class="tier-step-icon silver">🥈</div>
+            <div class="tier-step-label">SILVER</div>
+            <div class="tier-step-amount">~50만원</div>
+          </div>
+          <div class="tier-step">
+            <div class="tier-step-icon gold">🥇</div>
+            <div class="tier-step-label">GOLD</div>
+            <div class="tier-step-amount">~100만원</div>
+          </div>
+          <div class="tier-step">
+            <div class="tier-step-icon vip">👑</div>
+            <div class="tier-step-label">VIP</div>
+            <div class="tier-step-amount">~300만원</div>
+          </div>
+          <div class="tier-step">
+            <div class="tier-step-icon vip-plus">👑</div>
+            <div class="tier-step-label">VIP+</div>
+            <div class="tier-step-amount">~700만원</div>
+          </div>
+          <div class="tier-step">
+            <div class="tier-step-icon vvip">💎</div>
+            <div class="tier-step-label">VVIP</div>
+            <div class="tier-step-amount">700만원↑</div>
           </div>
         </div>
       </section>
 
       <!-- 등급 상세 카드 -->
       <section class="tier-cards">
-        <div
-          v-for="g in grades"
-          :key="g.grade_code"
-          class="tier-card"
-        >
-          <div class="tier-card-header">
-            <div class="tier-icon">
-              <img
-                v-if="g.grade_image_url"
-                :src="cdnUrl('grade', g.grade_image_url)"
-                alt="grade image"
-                class="tier-icon-img"
-                loading="lazy"
-              />
-              <span v-else class="tier-icon-fallback">⭐</span>
-            </div>
-            <h3 class="tier-name">{{ g.grade_code }}</h3>
+        <!-- WHITE -->
+        <div class="tier-card">
+          <div class="tier-name">
+            <div class="tier-icon white">⚪</div>
+            WHITE
           </div>
-          <div class="tier-range">
-            {{ fullAmountRange(g.min_purchase_amount, nextMin(g)) }}
+          <div class="tier-range">전월 결제금액 10만원 미만</div>
+          <div class="tier-benefit">등급 혜택: 마일리지 적립 0%</div>
+        </div>
+
+        <!-- BRONZE -->
+        <div class="tier-card">
+          <div class="tier-name">
+            <div class="tier-icon bronze">🥉</div>
+            BRONZE
           </div>
-          <div v-if="numberVal(g.point_earn_rate) >= 1" class="tier-benefit">
-            적립 혜택: 마일리지 적립 {{ numberVal(g.point_earn_rate) }}%
+          <div class="tier-range">전월 결제금액 10만원 이상 ~ 30만원 미만</div>
+          <div class="tier-benefit">등급 혜택: 마일리지 적립 1%</div>
+        </div>
+
+        <!-- SILVER -->
+        <div class="tier-card">
+          <div class="tier-name">
+            <div class="tier-icon silver">🥈</div>
+            SILVER
           </div>
-          <div v-if="numberVal(g.discount_rate) >= 1" class="tier-benefit">
-            할인 혜택 : 상품 할인 {{ numberVal(g.discount_rate) }}%
+          <div class="tier-range">전월 결제금액 30만원 이상 ~ 50만원 미만</div>
+          <div class="tier-benefit">등급 혜택: 마일리지 적립 2%</div>
+        </div>
+
+        <!-- GOLD -->
+        <div class="tier-card">
+          <div class="tier-name">
+            <div class="tier-icon gold">🥇</div>
+            GOLD
           </div>
-          <div v-if="g.description" class="tier-desc">{{ g.description }}</div>
+          <div class="tier-range">전월 결제금액 50만원 이상 ~ 100만원 미만</div>
+          <div class="tier-benefit">등급 혜택: 마일리지 적립 3%</div>
+        </div>
+
+        <!-- VIP -->
+        <div class="tier-card">
+          <div class="tier-name">
+            <div class="tier-icon vip">👑</div>
+            VIP
+          </div>
+          <div class="tier-range">전월 결제금액 100만원 이상 ~ 300만원 미만</div>
+          <div class="tier-benefit">등급 혜택: 마일리지 적립 4%</div>
+        </div>
+
+        <!-- VIP+ -->
+        <div class="tier-card">
+          <div class="tier-name">
+            <div class="tier-icon vip-plus">👑</div>
+            VIP+
+          </div>
+          <div class="tier-range">전월 결제금액 300만원 이상 ~ 700만원 미만</div>
+          <div class="tier-benefit">등급 혜택: 마일리지 적립 5%</div>
+        </div>
+
+        <!-- VVIP -->
+        <div class="tier-card">
+          <div class="tier-name">
+            <div class="tier-icon vvip">💎</div>
+            VVIP
+          </div>
+          <div class="tier-range">전월 결제금액 700만원 이상</div>
+          <div class="tier-benefit">등급 혜택: 마일리지 적립 7%</div>
         </div>
       </section>
 
@@ -106,37 +158,6 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue';
-import '~/assets/css/membership/benefit.css';
-import { useGradeApi } from '~/composables/api/useGrade'
-import { useCdn } from '~/composables/utils/useCdn'
-
-const { usePublicGrades } = useGradeApi()
-const { data } = usePublicGrades()
-const grades = computed(() => (data.value ?? []).sort((a, b) => a.grade_level - b.grade_level))
-const { cdnUrl } = useCdn()
-
-const shortAmountRange = (min: number) => {
-  if (!min || min === 0) return '10만원 미만'
-  return `~${(min / 10000).toLocaleString()}만원`
-}
-
-const fullAmountRange = (min: number, nextMin?: number | null) => {
-  const fmt = (v: number) => v >= 10000 ? `${(v/10000).toLocaleString()}만원` : `${v.toLocaleString()}원`
-  if (!min || min === 0) return '전월 결제금액 10만원 미만'
-  if (!nextMin || nextMin <= min) return `전월 결제금액 ${fmt(min)} 이상`
-  return `전월 결제금액 ${fmt(min)} 이상 ~ ${fmt(nextMin)} 미만`
-}
-
-const numberVal = (v: number | string | undefined) => Number(v ?? 0)
-
-const nextMin = (g: any) => {
-  const arr = grades.value
-  const idx = arr.findIndex(it => it.grade_code === g.grade_code)
-  const next = idx >= 0 && idx + 1 < arr.length ? arr[idx + 1] : undefined
-  return next?.min_purchase_amount ?? null
-}
-
 // SEO 설정
 useHead({
   title: '멤버십 혜택 - 사주라인',
@@ -154,15 +175,5 @@ useHead({
 </script>
 
 <style scoped>
-/* 모바일에서 tier-step 내부 정보 그룹핑 */
-@media (max-width: 768px) {
-  .tier-step-info {
-    display: flex;
-    flex-direction: column;
-    gap: 4px;
-    flex: 1;
-  }
-}
-.tier-icon-img{width:36px;height:36px;object-fit:contain;border-radius:8px;border:1px solid rgba(0,0,0,.06);background:#fff}
-.tier-icon-fallback{font-size:20px}
+@import '~/assets/css/membership/benefit.css';
 </style>

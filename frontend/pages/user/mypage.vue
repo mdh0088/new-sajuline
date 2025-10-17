@@ -74,6 +74,9 @@
                                 </div>
                             </template>
                         </div>
+                        <div class="membership-actions">
+                            <NuxtLink to="/membership/benefit" class="membership-btn">혜택 보기</NuxtLink>
+                        </div>
                     </div>
                 </div>
 
