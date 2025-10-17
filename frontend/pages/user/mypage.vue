@@ -47,6 +47,7 @@
                 <div class="profile-section-item">
                     <div class="section-header">
                         <h3 class="section-title">멤버십</h3>
+                        <NuxtLink to="/membership/benefit" class="benefit-link-btn">혜택 보기</NuxtLink>
                     </div>
                     <div class="membership-content">
                         <div class="membership-main-info">
@@ -73,9 +74,6 @@
                                     <span>{{ discountRate }} 할인</span>
                                 </div>
                             </template>
-                        </div>
-                        <div class="membership-actions">
-                            <NuxtLink to="/membership/benefit" class="membership-btn">혜택 보기</NuxtLink>
                         </div>
                     </div>
                 </div>

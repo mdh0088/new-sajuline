@@ -1,0 +1,697 @@
+/* 랜덤카드 뽑기 이벤트 페이지 스타일 */
+
+/* 타이틀 스타일 */
+.title-subtitle {
+  font-size: 14px;
+  font-weight: 600;
+  color: #B794F6;
+  margin-bottom: 12px;
+  letter-spacing: 0.5px;
+}
+
+.title-main {
+  font-size: 32px;
+  font-weight: 800;
+  margin-bottom: 8px;
+}
+
+.title-highlight {
+  background: linear-gradient(135deg, #B794F6 0%, #9F7AEA 50%, #805AD5 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.title-sub {
+  font-size: 28px;
+  font-weight: 800;
+  color: #ffffff;
+}
+
+/* 안내 텍스트 */
+.info-text {
+  font-size: 15px;
+  color: rgba(255, 255, 255, 0.8);
+  line-height: 1.6;
+}
+
+/* 카드 컨테이너 */
+.card-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 40px 20px;
+  min-height: 300px;
+  background: transparent;
+}
+
+.cards-wrapper {
+  position: relative;
+  width: 100%;
+  max-width: 400px;
+  height: 280px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background: transparent;
+}
+
+/* 카드 공통 스타일 */
+.card {
+  position: absolute;
+  width: 180px;
+  height: 240px;
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  cursor: pointer;
+  perspective: 1000px;
+  pointer-events: auto;
+  background: transparent;
+}
+
+.card-inner {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  transform-style: preserve-3d;
+  transition: transform 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+  pointer-events: none;
+  background: transparent;
+}
+
+.card-front,
+.card-back {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+  -moz-backface-visibility: hidden;
+  border-radius: 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 20px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5),
+              0 1px 8px rgba(0, 0, 0, 0.3);
+  inset: 0;
+}
+
+.card-front {
+  background: linear-gradient(135deg,
+    rgb(60, 10, 110) 0%,
+    rgb(40, 0, 80) 50%,
+    rgb(30, 0, 60) 100%);
+  border: none;
+  pointer-events: auto;
+  position: absolute;
+  overflow: hidden;
+  transform: rotateY(0deg);
+}
+
+.card-front::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: radial-gradient(
+    circle at center,
+    rgba(147, 51, 234, 0.15) 0%,
+    transparent 70%
+  );
+  opacity: 0.6;
+  pointer-events: none;
+}
+
+.card-back {
+  background: linear-gradient(135deg,
+    rgb(80, 30, 140) 0%,
+    rgb(60, 10, 110) 50%,
+    rgb(50, 0, 95) 100%);
+  border: none;
+  transform: rotateY(180deg);
+  pointer-events: none;
+  position: absolute;
+  overflow: hidden;
+}
+
+.card-back::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: radial-gradient(
+    circle at center,
+    rgba(183, 148, 246, 0.08) 0%,
+    transparent 70%
+  );
+  opacity: 0.3;
+  pointer-events: none;
+}
+
+/* 카드 뒤집기 애니메이션 */
+.card-flipping {
+  transform: translate(0, 0) rotate(0deg) scale(1.15) !important;
+  transition: all 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+  z-index: 100;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  margin-left: -90px;
+  margin-top: -120px;
+}
+
+.card-flipping .card-inner {
+  transform: rotateY(180deg);
+  z-index: 100;
+}
+
+.card-hidden {
+  opacity: 0;
+  transform: scale(0.8);
+  pointer-events: none;
+}
+
+.card-disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.cards-selecting {
+  /* pointer-events는 제거 - 카드 클릭을 막지 않음 */
+}
+
+/* 카드 결과 내용 */
+.card-result {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+}
+
+.result-icon {
+  font-size: 48px;
+  animation: bounce 0.6s ease-in-out;
+}
+
+.result-amount {
+  font-size: 36px;
+  font-weight: 800;
+  color: #FFD700;
+  text-shadow: 0 4px 12px rgba(255, 215, 0, 0.6);
+  animation: glow 1s ease-in-out infinite alternate;
+}
+
+.result-label {
+  font-size: 18px;
+  font-weight: 700;
+  color: #B794F6;
+}
+
+/* 카드 위치 */
+.card-left {
+  transform: translateX(-120px) translateY(10px) rotate(-8deg);
+  z-index: 1;
+}
+
+.card-center {
+  z-index: 3;
+  transform: scale(1.05);
+}
+
+.card-right {
+  transform: translateX(120px) translateY(10px) rotate(8deg);
+  z-index: 1;
+}
+
+/* 카드 호버 효과 */
+.card-left:not(.card-disabled):hover {
+  transform: translateX(-120px) translateY(-10px) rotate(-8deg) scale(1.08);
+  z-index: 10;
+}
+
+.card-center:not(.card-disabled):hover {
+  transform: translateY(-10px) scale(1.12);
+  z-index: 10;
+}
+
+.card-right:not(.card-disabled):hover {
+  transform: translateX(120px) translateY(-10px) rotate(8deg) scale(1.08);
+  z-index: 10;
+}
+
+.card:not(.card-disabled):hover .card-front {
+  box-shadow: 0 15px 40px rgba(147, 51, 234, 0.6),
+              0 5px 15px rgba(147, 51, 234, 0.4),
+              0 0 30px rgba(147, 51, 234, 0.3);
+}
+
+/* 카드 아이콘 */
+.card-icon {
+  width: 80px;
+  height: 80px;
+  background: rgba(147, 51, 234, 0.1);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 40px;
+  border: 2px solid rgba(183, 148, 246, 0.2);
+  box-shadow: 0 8px 16px rgba(147, 51, 234, 0.2);
+}
+
+/* 카드 라벨 */
+.card-label {
+  font-size: 15px;
+  font-weight: 600;
+  color: rgba(183, 148, 246, 0.9);
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+  letter-spacing: 0.5px;
+}
+
+/* 뽑을 수 있는 기회 박스 */
+.chance-box {
+  display: flex;
+  justify-content: center;
+  padding: 0 20px;
+}
+
+.chance-content {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px 32px;
+  background: rgba(147, 51, 234, 0.1);
+  border: 2px solid rgba(147, 51, 234, 0.3);
+  border-radius: 100px;
+  box-shadow: 0 4px 12px rgba(147, 51, 234, 0.2);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+
+.chance-icon {
+  font-size: 24px;
+}
+
+.chance-text {
+  font-size: 15px;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.chance-count {
+  font-size: 18px;
+  font-weight: 700;
+  color: #B794F6;
+}
+
+/* 힌트 버튼 */
+.hint-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 24px;
+  background: transparent;
+  border: none;
+  color: rgba(255, 255, 255, 0.6);
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.hint-button:hover {
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.hint-icon {
+  width: 20px;
+  height: 20px;
+  background: rgba(183, 148, 246, 0.3);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  color: #B794F6;
+  font-weight: 700;
+}
+
+/* 반응형 디자인 */
+@media (max-width: 480px) {
+  .card {
+    width: 140px;
+    height: 200px;
+  }
+
+  .card-left {
+    transform: translateX(-90px) translateY(10px) rotate(-8deg);
+  }
+
+  .card-right {
+    transform: translateX(90px) translateY(10px) rotate(8deg);
+  }
+
+  .card-left:not(.card-disabled):hover {
+    transform: translateX(-90px) translateY(-10px) rotate(-8deg) scale(1.08);
+  }
+
+  .card-right:not(.card-disabled):hover {
+    transform: translateX(90px) translateY(-10px) rotate(8deg) scale(1.08);
+  }
+
+  .card-icon {
+    width: 60px;
+    height: 60px;
+    font-size: 32px;
+  }
+
+  .card-label {
+    font-size: 15px;
+  }
+
+  .cards-wrapper {
+    height: 240px;
+  }
+}
+
+@media (max-width: 360px) {
+  .card {
+    width: 120px;
+    height: 180px;
+  }
+
+  .card-left {
+    transform: translateX(-75px) translateY(10px) rotate(-8deg);
+  }
+
+  .card-right {
+    transform: translateX(75px) translateY(10px) rotate(8deg);
+  }
+
+  .card-left:not(.card-disabled):hover {
+    transform: translateX(-75px) translateY(-10px) rotate(-8deg) scale(1.08);
+  }
+
+  .card-right:not(.card-disabled):hover {
+    transform: translateX(75px) translateY(-10px) rotate(8deg) scale(1.08);
+  }
+
+  .card-icon {
+    width: 50px;
+    height: 50px;
+    font-size: 28px;
+  }
+
+  .card-label {
+    font-size: 14px;
+  }
+
+  .cards-wrapper {
+    height: 220px;
+  }
+
+  .chance-content {
+    padding: 12px 24px;
+  }
+
+  .chance-text {
+    font-size: 14px;
+  }
+
+  .chance-count {
+    font-size: 16px;
+  }
+}
+
+/* 결과 화면 */
+.result-screen {
+  text-align: center;
+  padding: 40px 20px;
+  animation: fadeInUp 0.6s ease-out;
+}
+
+.result-confetti {
+  font-size: 48px;
+  margin-bottom: 24px;
+  animation: confetti 1s ease-in-out;
+}
+
+.result-title {
+  font-size: 32px;
+  font-weight: 800;
+  background: linear-gradient(135deg, #B794F6 0%, #9F7AEA 50%, #805AD5 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  margin-bottom: 32px;
+}
+
+.result-prize {
+  background: linear-gradient(135deg, rgba(147, 51, 234, 0.2) 0%, rgba(124, 58, 237, 0.1) 100%);
+  border: 2px solid rgba(183, 148, 246, 0.4);
+  border-radius: 24px;
+  padding: 40px 32px;
+  margin-bottom: 32px;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+
+.prize-amount {
+  font-size: 56px;
+  font-weight: 800;
+  color: #FFD700;
+  text-shadow: 0 4px 16px rgba(255, 215, 0, 0.6);
+  margin-bottom: 16px;
+  animation: prizeGlow 1.5s ease-in-out infinite alternate;
+}
+
+.prize-label {
+  font-size: 18px;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.result-button {
+  width: 100%;
+  padding: 16px 32px;
+  background: linear-gradient(135deg, #9333EA 0%, #7C3AED 100%);
+  border: none;
+  border-radius: 16px;
+  color: white;
+  font-size: 18px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 8px 24px rgba(147, 51, 234, 0.4);
+}
+
+.result-button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 32px rgba(147, 51, 234, 0.6);
+}
+
+.result-button:active {
+  transform: translateY(0);
+}
+
+/* 애니메이션 */
+@keyframes cardFloat {
+  0%, 100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+}
+
+@keyframes bounce {
+  0%, 100% {
+    transform: translateY(0) scale(1);
+  }
+  50% {
+    transform: translateY(-10px) scale(1.1);
+  }
+}
+
+@keyframes glow {
+  from {
+    text-shadow: 0 4px 12px rgba(255, 215, 0, 0.6);
+  }
+  to {
+    text-shadow: 0 4px 20px rgba(255, 215, 0, 1);
+  }
+}
+
+@keyframes prizeGlow {
+  from {
+    text-shadow: 0 4px 16px rgba(255, 215, 0, 0.6);
+    transform: scale(1);
+  }
+  to {
+    text-shadow: 0 4px 24px rgba(255, 215, 0, 1);
+    transform: scale(1.05);
+  }
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes confetti {
+  0% {
+    opacity: 0;
+    transform: scale(0.5) rotate(-45deg);
+  }
+  50% {
+    transform: scale(1.2) rotate(10deg);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1) rotate(0deg);
+  }
+}
+
+.card-center:not(.card-flipping) {
+  animation: cardFloat 3s ease-in-out infinite;
+}
+
+/* 모달 스타일 */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.8);
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  z-index: 1000;
+  animation: fadeIn 0.3s ease-out;
+}
+
+.modal-content {
+  background: linear-gradient(180deg, #1a1a2e 0%, #16213e 100%);
+  border-radius: 24px 24px 0 0;
+  padding: 32px 24px 24px;
+  width: 100%;
+  max-width: 600px;
+  animation: slideUp 0.3s ease-out;
+  border-top: 2px solid rgba(183, 148, 246, 0.3);
+}
+
+.modal-title {
+  font-size: 20px;
+  font-weight: 700;
+  color: #ffffff;
+  text-align: center;
+  margin-bottom: 24px;
+}
+
+.modal-body {
+  margin-bottom: 24px;
+}
+
+.modal-highlight {
+  text-align: center;
+  font-size: 16px;
+  line-height: 1.6;
+  color: rgba(255, 255, 255, 0.9);
+  margin-bottom: 24px;
+  padding: 20px;
+  background: rgba(147, 51, 234, 0.15);
+  border: 1px solid rgba(183, 148, 246, 0.2);
+  border-radius: 12px;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+
+.modal-emphasis {
+  color: #B794F6;
+  font-weight: 700;
+}
+
+.modal-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  background: rgba(147, 51, 234, 0.1);
+  border: 1px solid rgba(183, 148, 246, 0.15);
+  border-radius: 12px;
+  padding: 20px;
+}
+
+.modal-list li {
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.7);
+  line-height: 1.8;
+  position: relative;
+  padding-left: 12px;
+  margin-bottom: 8px;
+}
+
+.modal-list li:last-child {
+  margin-bottom: 0;
+}
+
+.modal-list li::before {
+  content: '•';
+  position: absolute;
+  left: 0;
+  color: rgba(183, 148, 246, 0.6);
+}
+
+.modal-button {
+  width: 100%;
+  padding: 16px;
+  background: linear-gradient(135deg, #9333EA 0%, #7C3AED 100%);
+  border: none;
+  border-radius: 12px;
+  color: white;
+  font-size: 16px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 12px rgba(147, 51, 234, 0.4);
+}
+
+.modal-button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(147, 51, 234, 0.5);
+}
+
+.modal-button:active {
+  transform: scale(0.98);
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(100%);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
