@@ -41,19 +41,26 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, ref } from 'vue'
+import { computed, onMounted, ref, watch } from 'vue'
 import { useAuth } from '~/composables/auth/useAuth'
 import { useAuthQueries } from '~/composables/api/useAuthQueries'
+import { useUserQueries } from '~/composables/api/useUserQueries'
 import { useRoute, useRouter } from 'vue-router'
 
 const { isAuthenticated, isUser, isCounselor, logout, setRole } = useAuth()
 const { useWhoAmI } = useAuthQueries()
+const { useUserMypage } = useUserQueries()
 const { refetch } = useWhoAmI()
 const route = useRoute()
 const router = useRouter()
 
-// 사용자 포인트 (임시 값)
-const userPoints = ref(1200)
+// 마이페이지 데이터 조회 (포인트 포함)
+const { data: mypageData, refetch: refetchMypage } = useUserMypage({
+  enabled: isAuthenticated
+})
+
+// 사용자 포인트
+const userPoints = computed(() => mypageData.value?.current_points ?? 0)
 
 // 서브페이지 판단 로직
 const isSubPage = computed(() => {
@@ -97,8 +104,17 @@ onMounted(async () => {
     if (result.data) {
       setRole(result.data.role)
     }
+    // 마이페이지 데이터도 가져오기
+    await refetchMypage()
   } catch (_e) {
     // 무시 (토큰 만료 등 전역 인터셉터에서 처리)
+  }
+})
+
+// 로그인 상태 변경 감지하여 마이페이지 데이터 갱신
+watch(isAuthenticated, async (newValue) => {
+  if (newValue) {
+    await refetchMypage()
   }
 })
 

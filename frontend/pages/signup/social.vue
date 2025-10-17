@@ -104,7 +104,7 @@ import type { SignupFormData } from '~/types/auth/signup'
 import '~/assets/css/common/signup-common.css'
 
 definePageMeta({
-  layout: false
+  layout: 'default'
 })
 
 const route = useRoute()
