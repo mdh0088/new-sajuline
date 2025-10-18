@@ -47,6 +47,7 @@
                 <div class="profile-section-item">
                     <div class="section-header">
                         <h3 class="section-title">멤버십</h3>
+                        <NuxtLink to="/membership/benefit" class="benefit-link-btn">혜택 보기</NuxtLink>
                     </div>
                     <div class="membership-content">
                         <div class="membership-main-info">
@@ -64,10 +65,10 @@
                         </div>
                         <div class="membership-benefits">
                             <template v-if="isLoading">
-                                <div class="bg-white/20 animate-pulse rounded h-4 w-32"></div>
+                                <div class="bg-white/20 animate-pulse rounded h-4 w-32 mx-auto"></div>
                             </template>
                             <template v-else>
-                                <div class="flex items-center gap-2 text-sm">
+                                <div class="flex items-center justify-center gap-2 text-sm">
                                     <span>{{ pointEarnRate }} 적립</span>
                                     <span class="text-white/40">|</span>
                                     <span>{{ discountRate }} 할인</span>
@@ -94,7 +95,7 @@
                             </div>
                         </div>
                         <div class="mileage-actions">
-                            <button class="mileage-btn">적립내역</button>
+                            <NuxtLink to="/user/mileagelog" class="mileage-btn">적립내역</NuxtLink>
                             <NuxtLink to="/mileageshop" class="mileage-btn">사용하기</NuxtLink>
                         </div>
                     </div>
@@ -165,22 +166,6 @@
               </span>
             </div>
           </div>
-        </div>
-
-        <!-- 요약 카드들 -->
-        <div class="grid grid-cols-3 gap-3 mb-6">
-          <NuxtLink to="/user/cslog" class="point-card">
-            <div class="text-2xl font-bold text-purple-200">{{ stats.consults }}</div>
-            <div class="text-xs text-white/60">총 상담</div>
-          </NuxtLink>
-          <NuxtLink to="/user/favorite" class="point-card">
-            <div class="text-2xl font-bold text-purple-200">{{ stats.favorites }}</div>
-            <div class="text-xs text-white/60">즐겨찾기</div>
-          </NuxtLink>
-          <NuxtLink to="/user/reviews" class="point-card">
-            <div class="text-2xl font-bold text-purple-200">{{ stats.reviews }}</div>
-            <div class="text-xs text-white/60">후기작성</div>
-          </NuxtLink>
         </div>
 
         <!-- 메뉴 그룹 -->
@@ -316,7 +301,7 @@ const gradeRemaining = computed(() => {
 
 const router = useRouter()
 const goNotice = () => router.push('/notices')
-const goCs = () => router.push('/user/cs')
+const goCs = () => router.push('/cs')
 const goProvision = () => router.push('/provision')
 const goPrivacy = () => router.push('/privacy')
 const goEdit = () => router.push('/user/edit')

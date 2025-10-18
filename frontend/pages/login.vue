@@ -62,8 +62,25 @@
         <!-- 소셜 로그인 버튼 -->
         <SocialLogin />
 
+        <!-- 아이디/비밀번호 찾기 링크 -->
+        <div class="flex items-center justify-center gap-4 mt-6">
+          <NuxtLink
+            to="/user/find-id"
+            class="text-white/60 hover:text-white/90 text-sm transition-colors"
+          >
+            아이디 찾기
+          </NuxtLink>
+          <div class="w-px h-3 bg-white/20"></div>
+          <NuxtLink
+            to="/user/find-password"
+            class="text-white/60 hover:text-white/90 text-sm transition-colors"
+          >
+            비밀번호 찾기
+          </NuxtLink>
+        </div>
+
         <!-- 회원가입 링크 -->
-        <div class="text-center mt-8">
+        <div class="text-center mt-6">
           <p class="text-white/60 text-sm">
             아직 계정이 없으신가요?
             <NuxtLink to="/signup" class="text-purple-400 hover:text-purple-300 hover:underline font-medium ml-1">

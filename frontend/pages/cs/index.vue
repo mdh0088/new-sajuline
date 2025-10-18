@@ -1,6 +1,5 @@
 <template>
   <div class="min-h-screen bg-slate-950 text-white">
-
     <!-- 메인 콘텐츠 -->
     <main class="pt-[60px] pb-24">
       <!-- 상단 안내 섹션 -->
@@ -31,26 +30,27 @@
           </div>
         </div>
       </div>
-        <!-- 빠른 문의 카테고리 -->
-            <section class="cs-quick-category-section">
+
+      <!-- 빠른 문의 카테고리 -->
+      <section class="cs-quick-category-section">
         <h3 class="cs-section-title">무엇을 도와드릴까요?</h3>
         <div class="cs-category-grid">
-          <div class="cs-category-card" @click="() => goInquiryWrite('결제/환불')">
+          <div @click="handleCategoryClick('결제/환불')" class="cs-category-card">
             <div class="cs-category-icon">💳</div>
             <div class="cs-category-name">결제/환불</div>
             <div class="cs-category-desc">포인트 충전, 환불 관련</div>
           </div>
-          <div class="cs-category-card" @click="() => goInquiryWrite('계정 문의')">
+          <div @click="handleCategoryClick('계정 문의')" class="cs-category-card">
             <div class="cs-category-icon">👤</div>
             <div class="cs-category-name">계정 문의</div>
             <div class="cs-category-desc">로그인, 비밀번호 찾기</div>
           </div>
-          <div class="cs-category-card" @click="() => goInquiryWrite('상담 문의')">
+          <div @click="handleCategoryClick('상담 문의')" class="cs-category-card">
             <div class="cs-category-icon">💬</div>
             <div class="cs-category-name">상담 문의</div>
             <div class="cs-category-desc">상담 진행, 상담사 관련</div>
           </div>
-          <div class="cs-category-card" @click="() => goInquiryWrite('이벤트/혜택')">
+          <div @click="handleCategoryClick('이벤트/혜택')" class="cs-category-card">
             <div class="cs-category-icon">🎁</div>
             <div class="cs-category-name">이벤트/혜택</div>
             <div class="cs-category-desc">프로모션, 쿠폰 사용</div>
@@ -58,26 +58,26 @@
         </div>
       </section>
 
-      <!-- 문의내역 섹션 -->
-      <section class="cs-inquiry-section">
+      <!-- 문의내역 섹션 - 로그인 상태에 따라 다르게 표시 -->
+      <section v-if="isLoggedIn" class="cs-inquiry-section">
         <div class="cs-inquiry-header">
           <h2 class="cs-inquiry-title">
             <span>📝</span>
             <span>내 문의내역</span>
           </h2>
           <div class="cs-inquiry-actions">
-            <NuxtLink to="/user/cs/inquiries" class="cs-view-all">
+            <button class="cs-view-all" @click="goToInquiries">
               <span>전체보기</span>
               <span>›</span>
-            </NuxtLink>
-            <button class="cs-inquiry-button" @click="() => goInquiryWrite()">
+            </button>
+            <button class="cs-inquiry-button" @click="goToWrite">
               <span>✏️</span>
               <span>문의하기</span>
             </button>
           </div>
         </div>
         <div class="cs-inquiry-list">
-          <div class="cs-inquiry-item" @click="() => goInquiryDetail(1)">
+          <NuxtLink to="/cs/inquiries/1" class="cs-inquiry-item">
             <div class="cs-inquiry-item-header">
               <span class="cs-inquiry-category">결제문의</span>
               <span class="cs-inquiry-date">2024.03.15</span>
@@ -89,8 +89,8 @@
               <span class="cs-status-icon">✓</span>
               <span>답변완료</span>
             </div>
-          </div>
-          <div class="cs-inquiry-item" @click="() => goInquiryDetail(2)">
+          </NuxtLink>
+          <NuxtLink to="/cs/inquiries/2" class="cs-inquiry-item">
             <div class="cs-inquiry-item-header">
               <span class="cs-inquiry-category">서비스문의</span>
               <span class="cs-inquiry-date">2024.03.14</span>
@@ -102,11 +102,24 @@
               <span class="cs-status-icon">⏳</span>
               <span>답변대기</span>
             </div>
-          </div>
+          </NuxtLink>
         </div>
       </section>
 
-
+      <!-- 비로그인 상태 안내 -->
+      <section v-else class="cs-inquiry-section">
+        <div class="cs-login-required">
+          <div class="cs-login-icon">🔒</div>
+          <h3 class="cs-login-title">로그인이 필요합니다</h3>
+          <p class="cs-login-desc">
+            문의 내역을 확인하고 새로운 문의를 작성하려면<br>
+            로그인해 주세요.
+          </p>
+          <NuxtLink to="/login" class="cs-login-button">
+            로그인하기
+          </NuxtLink>
+        </div>
+      </section>
 
       <!-- 자주 묻는 질문 -->
       <section class="cs-faq-section">
@@ -117,7 +130,7 @@
             :key="index"
             class="cs-faq-item"
             :class="{ active: activeFaq === index }"
-            @click="() => toggleFaq(index)"
+            @click="toggleFaq(index)"
           >
             <div class="cs-faq-question">
               <div class="cs-faq-text">
@@ -133,7 +146,6 @@
         </div>
       </section>
 
-
       <!-- 공지사항 링크 -->
       <NuxtLink to="/notices" class="cs-notice-link">
         <div class="cs-notice-content">
@@ -146,22 +158,24 @@
         </div>
       </NuxtLink>
     </main>
-
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref } from 'vue'
-import { useRouter } from 'vue-router'
-import AppHeader from '~/components/common/AppHeader.vue'
-import AppBottomNavi from '~/components/common/AppBottomNavi.vue'
 
-const router = useRouter()
+definePageMeta({
+  layout: 'default'
+})
+
+// 임시 로그인 상태 (UI 테스트용 - 실제로는 인증 스토어와 연동 필요)
+// TODO: 실제 구현 시 useAuthStore()로 교체
+const isLoggedIn = ref(false) // false로 기본값 설정하여 비로그인 상태 테스트
 
 // FAQ 관련 상태
 const activeFaq = ref(-1)
 
-// FAQ 데이터 (UI만)
+// FAQ 데이터
 const faqList = ref([
   {
     question: '포인트는 어떻게 충전하나요?',
@@ -185,7 +199,7 @@ const faqList = ref([
   }
 ])
 
-// FAQ 토글 (UI만)
+// FAQ 토글
 const toggleFaq = (index: number) => {
   if (activeFaq.value === index) {
     activeFaq.value = -1
@@ -194,22 +208,87 @@ const toggleFaq = (index: number) => {
   }
 }
 
-// 네비게이션 함수들
-const goInquiryWrite = (category?: string) => {
-  console.log('goInquiryWrite 호출됨:', category)
-  if (category) {
-    router.push(`/user/cs/write?category=${encodeURIComponent(category)}`)
-  } else {
-    router.push('/user/cs/write')
+// 카테고리 클릭 핸들러
+const handleCategoryClick = (category: string) => {
+  if (!isLoggedIn.value) {
+    navigateTo('/login')
+    return
   }
+  navigateTo(`/cs/write?category=${encodeURIComponent(category)}`)
 }
 
-const goInquiryDetail = (id: number) => {
-  console.log('goInquiryDetail 호출됨:', id)
-  router.push(`/user/cs/inquiries/${id}`)
+// 네비게이션 함수
+const goToInquiries = () => {
+  if (!isLoggedIn.value) {
+    navigateTo('/login')
+    return
+  }
+  navigateTo('/cs/inquiries')
+}
+
+const goToWrite = () => {
+  if (!isLoggedIn.value) {
+    navigateTo('/login')
+    return
+  }
+  navigateTo('/cs/write')
 }
 </script>
 
 <style>
 @import '~/assets/css/cs.css';
+
+/* 비로그인 상태 안내 스타일 */
+.cs-login-required {
+  text-align: center;
+  padding: 60px 20px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 16px;
+  margin: 20px;
+}
+
+.cs-login-icon {
+  font-size: 48px;
+  margin-bottom: 20px;
+}
+
+.cs-login-title {
+  font-size: 20px;
+  font-weight: 700;
+  margin-bottom: 12px;
+  color: white;
+}
+
+.cs-login-desc {
+  font-size: 15px;
+  color: rgba(255, 255, 255, 0.7);
+  line-height: 1.6;
+  margin-bottom: 24px;
+}
+
+.cs-login-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 14px 32px;
+  background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
+  color: white;
+  border-radius: 12px;
+  font-size: 16px;
+  font-weight: 600;
+  text-decoration: none;
+  transition: all 0.3s;
+}
+
+.cs-login-button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(139, 92, 246, 0.3);
+}
+
+/* 카테고리 카드 클릭 가능하게 */
+.cs-category-card {
+  cursor: pointer;
+  transition: all 0.3s;
+}
 </style>
