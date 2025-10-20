@@ -107,6 +107,16 @@
   flex-shrink: 0;
 }
 
+.active-filter-tag .tag-text {
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.active-filter-tag .tag-text:hover {
+  color: #ffffff;
+  text-decoration: underline;
+}
+
 .remove-filter {
   font-size: 16px;
   cursor: pointer;

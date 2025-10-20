@@ -183,15 +183,30 @@ class CounselorRepository:
                 # 다중 전문분야는 OR 매칭 (선택한 것 중 하나라도 포함)
                 stmt = stmt.where(or_(*like_clauses))
 
-        # keywords LIKE match: any of provided keywords
+        # keywords LIKE match: nickname OR keywords에서 각 키워드를 OR 검색
         if cs_keywords:
             kws = [k for k in cs_keywords if k]
             if kws:
-                kw_clauses = [Counselor.keywords.like(f"%{k}%") for k in kws]
+                kw_clauses = []
+                for k in kws:
+                    # 각 키워드마다 (nickname OR keywords) 조건 추가
+                    kw_clauses.append(
+                        or_(
+                            Counselor.nickname.like(f"%{k}%"),
+                            Counselor.keywords.like(f"%{k}%")
+                        )
+                    )
+                # 모든 키워드 조건을 OR로 연결
                 stmt = stmt.where(or_(*kw_clauses))
 
         if search_name:
-            stmt = stmt.where(Counselor.nickname.like(f"%{search_name}%"))
+            # nickname OR keywords LIKE 검색 (OR 조건)
+            stmt = stmt.where(
+                or_(
+                    Counselor.nickname.like(f"%{search_name}%"),
+                    Counselor.keywords.like(f"%{search_name}%")
+                )
+            )
 
         result = await self.db.execute(stmt)
         rows = list(result.all())
