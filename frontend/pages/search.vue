@@ -55,52 +55,6 @@
           :key="counselor.counselor_code"
           :counselor="counselor"
         />
-        <div
-          class="counselor-card-compact"
-          v-for="counselor in counselors"
-          :key="counselor.id"
-          @click="goToCounselorDetail(counselor.counselorCode)"
-        >
-          <div class="counselor-avatar-small" :class="{ online: counselor.isOnline }">
-            <img :src="counselor.image" :alt="counselor.name" v-if="counselor.image">
-            <span v-else>{{ counselor.avatar }}</span>
-          </div>
-          <div class="counselor-info-compact">
-            <div class="counselor-main-info">
-              <div class="counselor-left-info">
-                <div class="counselor-name-row">
-                  <span class="counselor-name-small">{{ counselor.name }}</span>
-                  <span class="counselor-code">{{ counselor.counselorCode }}</span>
-                </div>
-                <div class="counselor-specialty-small">{{ counselor.specialty }}</div>
-                <div class="counselor-tags-small">
-                  <span
-                    class="tag-small"
-                    v-for="tag in counselor.tags"
-                    :key="tag"
-                  >
-                    {{ tag }}
-                  </span>
-                </div>
-                <div class="counselor-desc-small">
-                  {{ counselor.description }}
-                </div>
-              </div>
-              <div class="counselor-right-info">
-                <div class="counselor-price-small">{{ counselor.price }}P/30초</div>
-                <div class="counselor-rating-small">
-                  <span class="rating-stars-small">⭐⭐⭐⭐⭐</span>
-                  <span class="rating-score">{{ counselor.rating }}</span>
-                </div>
-                <div class="counselor-experience">{{ counselor.experience }} · 리뷰 {{ counselor.reviewCount }}</div>
-                <button class="consult-button" @click.stop="openConsultModal(counselor)">
-                  상담하기
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-
       </div>
 
       <!-- 빈 상태 -->
@@ -168,47 +122,18 @@
         <button class="modal-action" @click="applySortFilter">적용하기</button>
       </div>
     </div>
-
-    <!-- 전화 상담 모달 (로그인 유저용) -->
-    <PhoneConsultModal
-      v-if="isUser && selectedCounselor"
-      :counselor="modalCounselorData"
-      :is-visible="showPhoneModal"
-      :user-points="userPoints"
-      @close="closePhoneModal"
-      @start-point-consult="handlePointConsult"
-      @start060-consult="handle060Consult"
-      @go-to-charge="goToCharge"
-    />
-
-    <!-- 전화 상담 모달 (비로그인 유저용) -->
-    <GuestPhoneConsultModal
-      v-if="!isUser && selectedCounselor"
-      :counselor="modalCounselorData"
-      :is-visible="showPhoneModal"
-      @close="closePhoneModal"
-      @start060-consult="handle060Consult"
-      @go-to-register-login="goToRegisterLogin"
-    />
   </div>
 </template>
 
 <script setup lang="ts">
-
 import { ref, computed, watch, onMounted } from 'vue'
 import CounselorCardCompact from '~/components/counselor/CounselorCardCompact.vue'
 import { useCounselorQueries } from '~/composables/api/useCounselorQueries'
 import type { CounselorSearchParams, CounselorSearchItem } from '~/types/counselor/search'
-import { ref, computed } from 'vue'
-import { useAuth } from '~/composables/auth/useAuth'
-import { useUserPoints } from '~/composables/user/useUserPoints'
 
 definePageMeta({
   requiresAuth: false
 })
-
-const { isUser } = useAuth()
-const { points: storePoints } = useUserPoints()
 
 // 반응형 데이터
 const searchQuery = ref('')
@@ -217,11 +142,6 @@ const isLoading = ref(false)
 const showModal = ref(false)
 const currentModal = ref('')
 const selectedModalOption = ref('')
-
-// 전화 상담 모달 관련
-const showPhoneModal = ref(false)
-const selectedCounselor = ref<any>(null)
-const userPoints = computed(() => storePoints.value)
 
 // 필터 상태
 const selectedFilters = ref({
@@ -427,50 +347,6 @@ onMounted(async () => {
 
   io.observe(sentinel)
 })
-const goToCounselorDetail = (counselorCode: string) => {
-  navigateTo(`/counselor/${counselorCode}`)
-}
-
-// 전화 상담 모달 관련 메서드
-const openConsultModal = (counselor: any) => {
-  selectedCounselor.value = counselor
-  showPhoneModal.value = true
-}
-
-const closePhoneModal = () => {
-  showPhoneModal.value = false
-  selectedCounselor.value = null
-}
-
-const modalCounselorData = computed(() => {
-  if (!selectedCounselor.value) return null
-  return {
-    code: selectedCounselor.value.counselorCode,
-    nickname: selectedCounselor.value.name,
-    profile_image_url: selectedCounselor.value.image,
-    specialties: [selectedCounselor.value.specialty],
-    afterAmount: selectedCounselor.value.price ?? null,
-    beforeAmount: null
-  }
-})
-
-const handlePointConsult = (counselorId: string) => {
-  console.log('포인트 상담 시작:', counselorId)
-  // TODO: 포인트 상담 시작 API 호출
-}
-
-const handle060Consult = (counselorId: string) => {
-  console.log('060 상담 시작:', counselorId)
-  // TODO: 060 상담 연결 로직
-}
-
-const goToCharge = () => {
-  navigateTo('/point')
-}
-
-const goToRegisterLogin = () => {
-  navigateTo('/login')
-}
 
 // SEO 설정
 useHead({
