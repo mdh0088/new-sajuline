@@ -28,6 +28,7 @@ from src.api.v1.point_product_api import router as point_product_router
 from src.api.v1.banner_api import router as banner_router
 from src.api.v1.payment_api import router as payment_router
 from src.api.v1.phone_verification_api import router as phone_verification_router
+from src.api.v1.counselor_application_api import router as counselor_application_router
 from src.common.response import fail
 from src.exceptions.custom_exceptions import BaseAppException
 from src.common.logging.config import setup_logging
@@ -79,6 +80,10 @@ app = FastAPI(
         {
             "name": "phone-verification",
             "description": "휴대폰 본인인증 - KCP 본인인증 서비스",
+        },
+        {
+            "name": "counselor-applications",
+            "description": "상담사 지원 - 상담사 신청 및 관리",
         },
         {
             "name": "health",
@@ -219,6 +224,7 @@ app.include_router(point_product_router, prefix="/api/v1")
 app.include_router(payment_router, prefix="/api/v1")
 app.include_router(banner_router, prefix="/api/v1")
 app.include_router(phone_verification_router, prefix="/api/v1")
+app.include_router(counselor_application_router, prefix="/api/v1")
 
 
 class HealthResponse(BaseModel):

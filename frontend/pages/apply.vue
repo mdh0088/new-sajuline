@@ -16,27 +16,27 @@
           <div class="apply-form-group">
             <label class="apply-form-label">분야 선택 <span class="apply-form-required">*</span></label>
             <div class="apply-category-grid">
-              <div class="apply-category-option">
-                <input type="radio" v-model="form.category" id="tarot" value="타로" required>
-                <label class="apply-category-label" for="tarot">
+              <label class="apply-category-option">
+                <input type="radio" v-model="form.category" value="타로" name="category">
+                <span class="apply-category-label">
                   <span class="apply-category-icon">🔮</span>
                   <span class="apply-category-name">타로</span>
-                </label>
-              </div>
-              <div class="apply-category-option">
-                <input type="radio" v-model="form.category" id="shinjeom" value="신점">
-                <label class="apply-category-label" for="shinjeom">
+                </span>
+              </label>
+              <label class="apply-category-option">
+                <input type="radio" v-model="form.category" value="신점" name="category">
+                <span class="apply-category-label">
                   <span class="apply-category-icon">🧿</span>
                   <span class="apply-category-name">신점</span>
-                </label>
-              </div>
-              <div class="apply-category-option">
-                <input type="radio" v-model="form.category" id="saju" value="사주">
-                <label class="apply-category-label" for="saju">
+                </span>
+              </label>
+              <label class="apply-category-option">
+                <input type="radio" v-model="form.category" value="사주" name="category">
+                <span class="apply-category-label">
                   <span class="apply-category-icon">📜</span>
                   <span class="apply-category-name">사주</span>
-                </label>
-              </div>
+                </span>
+              </label>
             </div>
           </div>
         </section>
@@ -61,8 +61,8 @@
               <input type="tel" v-model="form.phone" class="apply-form-input" placeholder="010-0000-0000" required>
             </div>
             <div>
-              <label class="apply-form-label">이메일 주소</label>
-              <input type="email" v-model="form.email" class="apply-form-input" placeholder="you@example.com">
+              <label class="apply-form-label">이메일 주소<span class="apply-form-required">*</span></label>
+              <input type="email" v-model="form.email" class="apply-form-input" placeholder="you@example.com" required>
             </div>
           </div>
 
@@ -143,7 +143,14 @@
 
     <!-- 제출 버튼 -->
     <section class="apply-submit-section">
-      <button type="submit" @click="submitForm" class="apply-submit-button">신청하기</button>
+      <button
+        type="button"
+        @click="submitForm"
+        class="apply-submit-button"
+        :disabled="isSubmitting"
+      >
+        {{ isSubmitting ? '신청 중...' : '신청하기' }}
+      </button>
     </section>
 
     <!-- 이용약관 모달 -->
@@ -196,8 +203,24 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
+import { useCounselorApplicationQueries } from '~/composables/api/useCounselorApplicationQueries'
+import { useNotify } from '~/composables/utils/useNotify'
 
 const router = useRouter()
+const { useCreateApplication } = useCounselorApplicationQueries()
+const { notifySuccess, notifyError } = useNotify()
+
+// API 뮤테이션
+const { mutate: createApplication, isPending: isSubmitting } = useCreateApplication({
+  onSuccess: () => {
+    notifySuccess('상담사 신청이 완료되었습니다. 검토 후 연락드리겠습니다.')
+    router.push('/')
+  },
+  onError: (error: any) => {
+    const errorMessage = error?.statusMessage || error?.message || error?.data?.message || '상담사 신청 중 오류가 발생했습니다.'
+    notifyError(errorMessage)
+  }
+})
 
 // Form data
 const form = ref({
@@ -265,7 +288,7 @@ const handleFileSelect = (event: Event) => {
   }
 
   if (files.length > 3) {
-    alert('사진은 최대 3장까지 첨부 가능합니다.')
+    notifyError('사진은 최대 3장까지 첨부 가능합니다.')
     target.value = ''
     return
   }
@@ -273,12 +296,12 @@ const handleFileSelect = (event: Event) => {
   // Validate files
   for (const file of files) {
     if (!file.type.startsWith('image/')) {
-      alert('이미지 파일만 첨부 가능합니다.')
+      notifyError('이미지 파일만 첨부 가능합니다.')
       target.value = ''
       return
     }
     if (file.size > 5 * 1024 * 1024) {
-      alert('각 파일 크기는 5MB를 초과할 수 없습니다.')
+      notifyError('각 파일 크기는 5MB를 초과할 수 없습니다.')
       target.value = ''
       return
     }
@@ -308,50 +331,61 @@ const closeModal = (type: 'terms' | 'privacy') => {
 }
 
 const validateForm = () => {
-  if (!form.value.category) {
-    alert('분야를 선택해주세요.')
+  if (!form.value.category || form.value.category.trim() === '') {
+    notifyError('분야를 선택해주세요.')
     return false
   }
 
   if (!form.value.nickname.trim()) {
-    alert('닉네임을 입력해주세요.')
+    notifyError('닉네임을 입력해주세요.')
     return false
   }
 
   if (!form.value.name.trim()) {
-    alert('이름을 입력해주세요.')
+    notifyError('이름을 입력해주세요.')
     return false
   }
 
   if (!form.value.phone.trim()) {
-    alert('휴대폰 번호를 입력해주세요.')
+    notifyError('휴대폰 번호를 입력해주세요.')
     return false
   }
 
   const phoneRegex = /^01[0-9]{8,9}$/
   const phoneNumber = form.value.phone.replace(/-/g, '')
   if (!phoneRegex.test(phoneNumber)) {
-    alert('휴대폰 번호 형식을 확인해주세요.')
+    notifyError('휴대폰 번호 형식을 확인해주세요.')
+    return false
+  }
+
+  if (!form.value.email.trim()) {
+    notifyError('이메일 주소를 입력해주세요.')
+    return false
+  }
+
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+  if (!emailRegex.test(form.value.email.trim())) {
+    notifyError('이메일 형식을 확인해주세요.')
     return false
   }
 
   if (!form.value.tagline.trim()) {
-    alert('짧은 한마디를 입력해주세요.')
+    notifyError('짧은 한마디를 입력해주세요.')
     return false
   }
 
   if (!form.value.greeting.trim()) {
-    alert('인사말(긴 소개)을 입력해주세요.')
+    notifyError('인사말(긴 소개)을 입력해주세요.')
     return false
   }
 
   if (!agreements.value.terms || !agreements.value.privacy) {
-    alert('이용약관과 개인정보 수집 및 이용에 모두 동의해 주세요.')
+    notifyError('이용약관과 개인정보 수집 및 이용에 모두 동의해 주세요.')
     return false
   }
 
   if (selectedFiles.value.length < 1 || selectedFiles.value.length > 3) {
-    alert('사진을 1~3장 첨부해주세요.')
+    notifyError('사진을 1~3장 첨부해주세요.')
     return false
   }
 
@@ -360,28 +394,30 @@ const validateForm = () => {
 
 const submitForm = () => {
   if (!validateForm()) return
+  if (isSubmitting.value) return
 
-  // Create FormData for submission
-  const formData = new FormData()
-  formData.append('category', form.value.category)
-  formData.append('nickname', form.value.nickname.trim())
-  formData.append('name', form.value.name.trim())
-  formData.append('phone', form.value.phone.trim())
-  formData.append('email', form.value.email.trim())
-  formData.append('tagline', form.value.tagline.trim())
-  formData.append('greeting', form.value.greeting.trim())
-  formData.append('career', form.value.career.trim())
-  formData.append('keywords', form.value.keywords.trim())
+  // specialty_types 매핑 (category -> 대문자)
+  const specialtyTypesMap: Record<string, string> = {
+    '타로': 'TARO',
+    '사주': 'SAJU',
+    '신점': 'FORTUNE'
+  }
 
-  selectedFiles.value.forEach((file) => {
-    formData.append('photos[]', file)
-  })
+  // API 요청 데이터 준비
+  const requestData = {
+    name: form.value.name.trim(),
+    nickname: form.value.nickname.trim(),
+    email: form.value.email.trim(),
+    phone: form.value.phone.replace(/-/g, '').trim(),
+    address: undefined,
+    specialty_types: [specialtyTypesMap[form.value.category] || 'TARO'],
+    keywords: form.value.keywords.trim() || undefined,
+    introduction: `${form.value.tagline.trim()}\n\n${form.value.greeting.trim()}${form.value.career.trim() ? '\n\n[경력]\n' + form.value.career.trim() : ''}`,
+    photos: selectedFiles.value
+  }
 
-  // TODO: API call
-  // fetch('/api/counselor/apply', { method: 'POST', body: formData })
-
-  alert('신청이 접수되었습니다. 감사합니다.')
-  router.back()
+  // API 호출
+  createApplication(requestData)
 }
 
 // URL params check for pre-selected category
