@@ -45,10 +45,15 @@ export default defineNuxtPlugin(() => {
     async onRequest({ request, options }) {
       // HttpOnly 쿠키는 브라우저가 자동으로 전송
       // Authorization 헤더 설정 불필요
-      
+
       // 공통 헤더 설정 (Headers 안전 처리)
       const headers = new Headers(options.headers as HeadersInit)
-      headers.set('Content-Type', 'application/json')
+
+      // FormData인 경우 Content-Type을 설정하지 않음 (브라우저가 자동으로 multipart/form-data boundary 설정)
+      if (!(options.body instanceof FormData)) {
+        headers.set('Content-Type', 'application/json')
+      }
+
       headers.set('Accept', 'application/json')
       headers.set('X-Requested-With', 'XMLHttpRequest')
 

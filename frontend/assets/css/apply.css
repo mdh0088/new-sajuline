@@ -159,12 +159,15 @@ textarea.apply-form-input {
 
 .apply-category-option {
   position: relative;
+  cursor: pointer;
+  display: block;
 }
 
 .apply-category-option input[type="radio"] {
   position: absolute;
   opacity: 0;
-  pointer-events: none;
+  width: 0;
+  height: 0;
 }
 
 .apply-category-label {
@@ -181,12 +184,12 @@ textarea.apply-form-input {
   text-align: center;
 }
 
-.apply-category-label:hover {
+.apply-category-option:hover .apply-category-label {
   border-color: rgba(183, 148, 246, 0.5);
   background: rgba(183, 148, 246, 0.05);
 }
 
-.apply-category-option input[type="radio"]:checked + .apply-category-label {
+.apply-category-option input[type="radio"]:checked ~ .apply-category-label {
   border-color: #B794F6;
   background: rgba(183, 148, 246, 0.1);
 }

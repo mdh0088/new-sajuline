@@ -122,27 +122,30 @@ CREATE TABLE t_counselor (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci COMMENT='상담사 정보';
 
 -- 2.2 상담사 신청 정보
-CREATE TABLE t_counselor_application (
-    application_id INT(11) NOT NULL AUTO_INCREMENT,
-    name VARCHAR(50) NOT NULL COMMENT '실명',
-    nickname VARCHAR(100) NOT NULL COMMENT '희망 활동명',
-    email VARCHAR(100) NOT NULL COMMENT '이메일',
-    phone VARCHAR(50) NOT NULL COMMENT '전화번호',
-    address VARCHAR(500) DEFAULT NULL COMMENT '주소',
-    specialty_types JSON DEFAULT NULL COMMENT '신청 분야 ["TARO", "SAJU", "FORTUNE", "EASY"]',
-    keywords VARCHAR(500) DEFAULT NULL COMMENT '키워드',
-    introduction TEXT DEFAULT NULL COMMENT '자기소개',
-    selected_image_url VARCHAR(500) DEFAULT NULL COMMENT '선택된 이미지',
-    application_status VARCHAR(20) NOT NULL DEFAULT 'PENDING' COMMENT '상태: PENDING, REVIEWING, APPROVED, REJECTED',
-    admin_note TEXT DEFAULT NULL COMMENT '관리자 메모',
-    reviewed_by INT(11) DEFAULT NULL COMMENT '검토한 관리자',
-    reviewed_at DATETIME DEFAULT NULL COMMENT '검토일시',
-    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    updated_at DATETIME DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP,
-    PRIMARY KEY (application_id),
-    KEY idx_application_status (application_status),
-    KEY idx_created_at (created_at)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci COMMENT='상담사 신청 정보';
+CREATE TABLE `t_counselor_application` (
+  application_id int(11) NOT NULL AUTO_INCREMENT,
+  name varchar(50) NOT NULL COMMENT '실명',
+  nickname varchar(100) NOT NULL COMMENT '희망 활동명',
+  email varchar(100) NOT NULL COMMENT '이메일',
+  phone varchar(50) NOT NULL COMMENT '전화번호',
+  address varchar(500) DEFAULT NULL COMMENT '주소',
+  specialty_types longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL COMMENT '신청 분야 ["TARO", "SAJU", "FORTUNE", "EASY"]' CHECK (json_valid(`specialty_types`)),
+  keywords varchar(500) DEFAULT NULL COMMENT '키워드',
+  introduction text DEFAULT NULL COMMENT '자기소개',
+  selected_image_url varchar(500) DEFAULT NULL COMMENT '선택된 이미지',
+  upload_image1 varchar(500) DEFAULT NULL,
+  upload_image2 varchar(500) DEFAULT NULL,
+  upload_image3 varchar(500) DEFAULT NULL,
+  application_status varchar(20) NOT NULL DEFAULT 'PENDING' COMMENT '상태: PENDING,  APPROVED, REJECTED',
+  admin_note text DEFAULT NULL COMMENT '관리자 메모',
+  reviewed_by int(11) DEFAULT NULL COMMENT '검토한 관리자',
+  reviewed_at datetime DEFAULT NULL COMMENT '검토일시',
+  created_at datetime NOT NULL DEFAULT current_timestamp(),
+  updated_at datetime DEFAULT NULL ON UPDATE current_timestamp(),
+  PRIMARY KEY (`application_id`),
+  KEY `idx_application_status` (`application_status`),
+  KEY `idx_created_at` (`created_at`)
+) ENGINE=InnoDB AUTO_INCREMENT=235 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci COMMENT='상담사 신청 정보';
 
 -- 2.3 상담사 신청 이미지
 CREATE TABLE t_counselor_application_image (

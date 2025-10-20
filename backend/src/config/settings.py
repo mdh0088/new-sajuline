@@ -64,7 +64,10 @@ class Settings(BaseSettings):
     aws_access_key_id: Optional[str] = Field(None, env="AWS_ACCESS_KEY_ID")
     aws_secret_access_key: Optional[str] = Field(None, env="AWS_SECRET_ACCESS_KEY")
     aws_region: str = Field(..., env="AWS_REGION")
-    s3_bucket_name: Optional[str] = Field(None, env="S3_BUCKET_NAME")
+    s3_bucket_name: str = Field(..., env="S3_BUCKET_NAME")
+    s3_directory: str = Field(..., env="S3_DIRECTORY")
+
+
     
     # 소셜 로그인 설정
     # Kakao OAuth
