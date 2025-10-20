@@ -117,12 +117,12 @@ const userPoints = ref(1200)
 
 // 카테고리 목록
 const categories = ref([
-  { name: '타로', path: '/categories/tarot', icon: '🔮' },
-  { name: '사주', path: '/categories/saju', icon: '📜' },
-  { name: '신점', path: '/categories/divine', icon: '✨' },
-  { name: '연애운', path: '/categories/love', icon: '💕' },
-  { name: '재물운', path: '/categories/money', icon: '💰' },
-  { name: '직장운', path: '/categories/career', icon: '💼' }
+  { name: '타로', path: '/categories?category=tarot', icon: '🔮' },
+  { name: '사주', path: '/categories?category=saju', icon: '📜' },
+  { name: '신점', path: '/categories?category=divine', icon: '✨' },
+  { name: '연애운', path: '/categories?category=love', icon: '💕' },
+  { name: '재물운', path: '/categories?category=money', icon: '💰' },
+  { name: '직장운', path: '/categories?category=work', icon: '💼' }
 ])
 
 // 필터 목록 - 상태 필터와 카테고리 필터 분리

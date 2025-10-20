@@ -1,5 +1,5 @@
 <template>
-  <nav class="bottom-nav" style="background: rgba(10, 10, 15, 0.95) !important; backdrop-filter: blur(10px) !important; position: sticky !important; bottom: 0 !important; z-index: 9999 !important; margin-top: auto !important;">
+  <nav v-if="!shouldHide" class="bottom-nav" style="background: rgba(10, 10, 15, 0.95) !important; backdrop-filter: blur(10px) !important; position: sticky !important; bottom: 0 !important; z-index: 9999 !important; margin-top: auto !important;">
     <NuxtLink to="/" :class="['nav-item', { active: $route.path === '/' }]">
       <span class="nav-icon">🏠</span>
       <span class="nav-label">홈</span>
@@ -29,10 +29,15 @@
 
 <script setup lang="ts">
 import { computed } from 'vue'
+import { useRoute } from 'vue-router'
 import { useAuth } from '~/composables/auth/useAuth'
 
+const route = useRoute()
 const { isCounselor } = useAuth()
 const mypagePath = computed(() => isCounselor.value ? '/counselor/mypage' : '/user/mypage')
+
+// 페이지 메타에서 hideBottomNav 설정 확인
+const shouldHide = computed(() => route.meta?.hideBottomNav === true)
 // 네비게이션 클릭 처리
 const handleNavClick = (tab: 'home' | 'fortune' | 'chat' | 'profile') => {
   if (tab === 'home') return navigateTo('/')

@@ -8,7 +8,6 @@
 }
 
 .main-content {
-  padding-top: 60px; /* 헤더 높이만큼 */
 }
 
 /* 로딩 및 에러 상태 */
@@ -97,14 +96,36 @@
   box-shadow: 0 0 12px rgba(76, 175, 80, 0.6);
 }
 
+.profile-name-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  margin-bottom: 8px;
+}
+
 .profile-name {
   font-size: 28px;
   font-weight: 800;
-  margin-bottom: 8px;
+  margin-bottom: 0;
   background: linear-gradient(135deg, #ffffff 0%, #B794F6 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
+}
+
+.profile-counselor-code {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 6px 14px;
+  background: linear-gradient(135deg, #9264e6 0%, #8244ff 50%, #6b30f2 100%);
+  border: 1px solid rgba(147, 51, 234, 0.6);
+  border-radius: 8px;
+  font-size: 16px;
+  font-weight: 700;
+  color: #ffffff;
+  letter-spacing: 1px;
 }
 
 .profile-specialty {
