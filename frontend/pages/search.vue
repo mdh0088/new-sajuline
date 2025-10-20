@@ -8,6 +8,7 @@
           class="search-input"
           placeholder="상담사 이름 또는 전문분야 검색"
           v-model="searchQuery"
+          @keyup.enter="addSearchTag"
         >
         <span class="search-icon">🔍</span>
       </div>
@@ -15,36 +16,33 @@
 
     <!-- 필터 영역 -->
     <section class="filter-section">
-      <!-- 활성 필터 -->
-      <div class="active-filters-container" v-if="activeFilters.length > 0">
+      <!-- 활성 필터 (검색 태그) -->
+      <div class="active-filters-container" v-if="searchTags.length > 0">
         <div class="active-filters">
           <div
             class="active-filter-tag"
-            v-for="(filter, index) in activeFilters"
+            v-for="(tag, index) in searchTags"
             :key="index"
           >
-            <span>{{ filter.text }}</span>
-            <span class="remove-filter" @click="removeFilter(index)">×</span>
+            <span class="tag-text" @click="searchByTag(tag)">{{ tag }}</span>
+            <span class="remove-filter" @click.stop="removeSearchTag(index)">×</span>
           </div>
         </div>
       </div>
 
       <!-- 필터 버튼들 -->
       <div class="filter-buttons">
-        <button class="filter-btn" @click="openFilterModal('style')">
-          <span>🗣️ {{ selectedFilters.style || '#상담스타일' }}</span>
+        <button class="filter-btn" :class="{ active: selectedFilters.style }" @click="openFilterModal('style')">
+          <span>🗣️ {{ styleFilterLabel }}</span>
         </button>
-        <button class="filter-btn" @click="openFilterModal('topic')">
-          <span>💘 {{ selectedFilters.topic || '#상담주제' }}</span>
-        </button>
-        <button class="filter-btn" @click="openFilterModal('sort')">
-          <span>↕️ {{ selectedFilters.sort || '추천순' }}</span>
+        <button class="filter-btn" :class="{ active: selectedFilters.sort }" @click="openFilterModal('sort')">
+          <span>↕️ {{ sortFilterLabel }}</span>
         </button>
       </div>
     </section>
 
     <!-- 메인 콘텐츠 -->
-    <main class="main-content">
+    <main class="main-content" :class="{ 'has-active-filters': searchTags.length > 0 }">
       <!-- 검색 결과 정보 -->
       <div class="search-info">
         <span class="result-count">총 <strong>{{ totalCount }}명</strong>의 상담사</span>
@@ -52,49 +50,15 @@
 
       <!-- 상담사 리스트 -->
       <div class="counselor-grid-container">
-        <div
-          class="counselor-card-compact"
-          v-for="counselor in counselors"
-          :key="counselor.id"
-          @click="goToCounselorDetail(counselor.id)"
-        >
-          <div class="counselor-avatar-small" :class="{ online: counselor.isOnline }">
-            <img :src="counselor.image" :alt="counselor.name" v-if="counselor.image">
-            <span v-else>{{ counselor.avatar }}</span>
-          </div>
-          <div class="counselor-info-compact">
-            <div class="counselor-main-info">
-              <div class="counselor-left-info">
-                <div class="counselor-name-small">{{ counselor.name }}</div>
-                <div class="counselor-specialty-small">{{ counselor.specialty }}</div>
-                <div class="counselor-tags-small">
-                  <span
-                    class="tag-small"
-                    v-for="tag in counselor.tags"
-                    :key="tag"
-                  >
-                    {{ tag }}
-                  </span>
-                </div>
-              </div>
-              <div class="counselor-right-info">
-                <div class="counselor-price-small">{{ counselor.price }}원/분</div>
-                <div class="counselor-rating-small">
-                  <span class="rating-stars-small">⭐⭐⭐⭐⭐</span>
-                  <span class="rating-score">{{ counselor.rating }}</span>
-                </div>
-                <div class="counselor-experience">{{ counselor.experience }} · 리뷰 {{ counselor.reviewCount }}</div>
-              </div>
-            </div>
-            <div class="counselor-desc-small">
-              {{ counselor.description }}
-            </div>
-          </div>
-        </div>
+        <CounselorCardCompact
+          v-for="counselor in sortedCounselors"
+          :key="counselor.counselor_code"
+          :counselor="counselor"
+        />
       </div>
 
       <!-- 빈 상태 -->
-      <div class="empty-state" v-if="counselors.length === 0 && !isLoading">
+      <div class="empty-state" v-if="sortedCounselors.length === 0 && !isLoading">
         <div class="empty-icon">🔍</div>
         <div class="empty-title">검색 결과가 없습니다</div>
         <div class="empty-desc">다른 키워드로 검색해보세요</div>
@@ -134,30 +98,6 @@
       </div>
     </div>
 
-    <!-- 상담주제 모달 -->
-    <div class="filter-modal" :class="{ active: showModal && currentModal === 'topic' }">
-      <div class="modal-header">
-        <h3 class="modal-title">상담 주제 선택</h3>
-        <p class="modal-subtitle">가장 고민되는 분야의 전문가를 찾아보세요.</p>
-        <button class="close-button" @click="closeFilterModal">×</button>
-      </div>
-      <div class="modal-content">
-        <div class="radio-group">
-          <div
-            class="radio-option"
-            :class="{ selected: selectedModalOption === option.value }"
-            v-for="option in topicOptions"
-            :key="option.value"
-            @click="selectModalOption(option.value)"
-          >
-            <div class="radio-button"></div>
-            <span class="radio-label">{{ option.label }}</span>
-          </div>
-        </div>
-        <button class="modal-action" @click="applyTopicFilter">선택 완료</button>
-      </div>
-    </div>
-
     <!-- 정렬 모달 -->
     <div class="filter-modal" :class="{ active: showModal && currentModal === 'sort' }">
       <div class="modal-header">
@@ -186,7 +126,10 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref, computed, watch, onMounted } from 'vue'
+import CounselorCardCompact from '~/components/counselor/CounselorCardCompact.vue'
+import { useCounselorQueries } from '~/composables/api/useCounselorQueries'
+import type { CounselorSearchParams, CounselorSearchItem } from '~/types/counselor/search'
 
 definePageMeta({
   requiresAuth: false
@@ -194,95 +137,169 @@ definePageMeta({
 
 // 반응형 데이터
 const searchQuery = ref('')
+const searchTags = ref<string[]>([])
 const isLoading = ref(false)
 const showModal = ref(false)
 const currentModal = ref('')
 const selectedModalOption = ref('')
 
 // 필터 상태
-const activeFilters = ref([
-  { text: '상담가능' },
-  { text: '20년 이상' }
-])
-
 const selectedFilters = ref({
-  style: '',
-  topic: '',
-  sort: ''
+  style: '' as string,
+  sort: '' as string
 })
 
 // 필터 옵션들
 const styleOptions = [
-  { value: 'tarot', label: '타로' },
-  { value: 'saju', label: '사주/신점' },
-  { value: 'fortune', label: '운세' }
-]
-
-const topicOptions = [
-  { value: 'reunion', label: '재회/이별' },
-  { value: 'love', label: '짝사랑/연애' },
-  { value: 'career', label: '이직/취업' },
-  { value: 'business', label: '사업/재물' }
+  { value: '', label: '전체' },
+  { value: 'TARO', label: '타로' },
+  { value: 'SAJU', label: '사주/신점' },
+  { value: 'FORTUNE', label: '운세' }
 ]
 
 const sortOptions = [
-  { value: 'return-rate', label: '재상담률 높은 순', icon: '🔄' },
+  { value: '', label: '전체', icon: '📋' },
   { value: 'review', label: '리뷰 높은 순', icon: '⭐' },
   { value: 'price', label: '가격 낮은 순', icon: '💰' }
 ]
 
-// 목업 상담사 데이터
-const counselors = ref([
-  {
-    id: 1,
-    name: '명월 선생님',
-    avatar: '🌙',
-    image: '/images/cs_1.png',
-    isOnline: true,
-    specialty: '타로 마스터',
-    experience: '20년 경력',
-    tags: ['🔮 타로', '💕 연애', '🔄 재회'],
-    description: '모든 인연에는 의미가 있습니다. 20년간 수만건의 상담을 통해 쌓은 통찰력으로 당신의 마음을 읽어드립니다.',
-    rating: 4.9,
-    reviewCount: 3456,
-    price: 3900
-  },
-  {
-    id: 2,
-    name: '천기누설 선생님',
-    avatar: '🔥',
-    image: '/images/cs_2.png',
-    isOnline: true,
-    specialty: '사주/신점 전문',
-    experience: '30년 경력',
-    tags: ['📅 사주', '✨ 신점', '💼 취업'],
-    description: '정통 사주명리학과 신점을 통해 인생의 큰 그림을 그려드립니다.',
-    rating: 4.8,
-    reviewCount: 2892,
-    price: 4500
-  },
-  {
-    id: 3,
-    name: '별빛 선생님',
-    avatar: '💫',
-    image: '/images/cs_2.png',
-    isOnline: false,
-    specialty: '신통력',
-    experience: '15년 경력',
-    tags: ['🌟 신통력', '💰 재물', '🍀 행운'],
-    description: '타고난 영감과 신통력으로 막힌 운을 뚫어드립니다.',
-    rating: 5.0,
-    reviewCount: 1234,
-    price: 5900
+// 필터 레이블 computed
+const styleFilterLabel = computed(() => {
+  const option = styleOptions.find(opt => opt.value === selectedFilters.value.style)
+  return option ? option.label : '전체'
+})
+
+const sortFilterLabel = computed(() => {
+  const option = sortOptions.find(opt => opt.value === selectedFilters.value.sort)
+  return option ? option.label : '전체'
+})
+
+// API 검색 결과
+const { searchPublic } = useCounselorQueries()
+const counselors = ref<CounselorSearchItem[]>([])
+const searchParams = ref<CounselorSearchParams>({
+  page: 1,
+  limit: 10,
+  cs_status: null,
+  is_best: null,
+  is_new: null,
+  cs_specialties: null,
+  cs_keywords: null,
+  search_name: null
+})
+const totalPages = ref(1)
+const totalCount = ref(0)
+
+// 검색 태그 추가 (최대 4개, FIFO)
+const addSearchTag = () => {
+  const trimmed = searchQuery.value.trim()
+  if (!trimmed) return
+
+  // 중복 체크
+  if (searchTags.value.includes(trimmed)) {
+    searchQuery.value = ''
+    return
   }
-])
 
-const totalCount = computed(() => counselors.value.length)
+  // 최대 4개 제한, FIFO
+  if (searchTags.value.length >= 4) {
+    searchTags.value.shift() // 첫 번째 요소 제거
+  }
 
-// 메서드들
+  searchTags.value.push(trimmed)
+  searchQuery.value = ''
+}
+
+// 검색 태그 제거
+const removeSearchTag = (index: number) => {
+  searchTags.value.splice(index, 1)
+}
+
+// 태그 클릭 시 해당 태그만으로 검색
+const searchByTag = (tag: string) => {
+  // 클릭한 태그만 남기고 나머지 제거
+  searchTags.value = [tag]
+  // watch가 자동으로 검색 실행
+}
+
+// 다음 페이지 로드
+async function fetchNext() {
+  if (isLoading.value) return
+  isLoading.value = true
+  try {
+    // 검색 태그를 cs_keywords로 변환
+    const csKeywords = searchTags.value.length > 0 ? searchTags.value : null
+
+    // cs_specialties 매핑 (빈 문자열이면 null)
+    const csSpecialties = selectedFilters.value.style && selectedFilters.value.style !== ''
+      ? [selectedFilters.value.style]
+      : null
+
+    searchParams.value.cs_specialties = csSpecialties
+    searchParams.value.cs_keywords = csKeywords
+
+    const result = await searchPublic(searchParams.value)
+    totalPages.value = Math.max(1, result.total_pages || 1)
+    totalCount.value = result.total || 0
+
+    if ((searchParams.value.page || 1) === 1) {
+      counselors.value = result.items
+    } else {
+      counselors.value = [...counselors.value, ...result.items]
+    }
+  } catch (error) {
+    console.error('Search error:', error)
+  } finally {
+    isLoading.value = false
+  }
+}
+
+// 검색 초기화 및 재검색
+async function resetAndFetch() {
+  counselors.value = []
+  searchParams.value.page = 1
+  await fetchNext()
+}
+
+// 정렬된 상담사 목록
+const sortedCounselors = computed(() => {
+  const list = [...counselors.value]
+
+  // 정렬 필터가 '전체'이거나 없으면 원래 순서 유지
+  if (!selectedFilters.value.sort || selectedFilters.value.sort === '') {
+    return list
+  }
+
+  if (selectedFilters.value.sort === 'review') {
+    // 리뷰 수 내림차순
+    return list.sort((a, b) => (b.review_count || 0) - (a.review_count || 0))
+  } else if (selectedFilters.value.sort === 'price') {
+    // 가격 오름차순
+    return list.sort((a, b) => (a.after_amount || 0) - (b.after_amount || 0))
+  }
+
+  // 기본: 원래 순서
+  return list
+})
+
+// Watch: 검색 태그 변경 시 자동 검색
+watch(searchTags, () => {
+  resetAndFetch()
+}, { deep: true })
+
+// Watch: 필터 변경 시 자동 검색
+watch(() => selectedFilters.value.style, () => {
+  resetAndFetch()
+})
+
+watch(() => selectedFilters.value.sort, () => {
+  // 정렬은 클라이언트 사이드에서 처리되므로 API 호출 불필요
+})
+
+// 모달 메서드들
 const openFilterModal = (type: string) => {
   currentModal.value = type
-  selectedModalOption.value = ''
+  selectedModalOption.value = selectedFilters.value[type as keyof typeof selectedFilters.value] || ''
   showModal.value = true
 }
 
@@ -297,43 +314,39 @@ const selectModalOption = (value: string) => {
 }
 
 const applyStyleFilter = () => {
-  if (selectedModalOption.value) {
-    const option = styleOptions.find(opt => opt.value === selectedModalOption.value)
-    if (option) {
-      selectedFilters.value.style = option.label
-    }
-  }
-  closeFilterModal()
-}
-
-const applyTopicFilter = () => {
-  if (selectedModalOption.value) {
-    const option = topicOptions.find(opt => opt.value === selectedModalOption.value)
-    if (option) {
-      selectedFilters.value.topic = option.label
-    }
-  }
+  // 빈 문자열('')도 허용 ('전체' 옵션)
+  selectedFilters.value.style = selectedModalOption.value
   closeFilterModal()
 }
 
 const applySortFilter = () => {
-  if (selectedModalOption.value) {
-    const option = sortOptions.find(opt => opt.value === selectedModalOption.value)
-    if (option) {
-      selectedFilters.value.sort = option.label
-    }
-  }
+  // 빈 문자열('')도 허용 ('전체' 옵션)
+  selectedFilters.value.sort = selectedModalOption.value
   closeFilterModal()
 }
 
-const removeFilter = (index: number) => {
-  activeFilters.value.splice(index, 1)
-}
+// 초기 로드 및 무한 스크롤 설정
+onMounted(async () => {
+  await resetAndFetch()
 
-const goToCounselorDetail = (id: number) => {
-  console.log('상담사 상세 페이지로 이동:', id)
-  // 라우터 이동 로직 (기능 구현 시 추가)
-}
+  // IntersectionObserver 설정 (index.vue와 동일한 패턴)
+  const sentinel = document.createElement('div')
+  sentinel.style.height = '1px'
+  sentinel.setAttribute('data-sentinel', 'counselor-search')
+  document.body.appendChild(sentinel)
+
+  const io = new IntersectionObserver(async (entries) => {
+    const entry = entries[0]
+    if (!entry || !entry.isIntersecting) return
+    if (isLoading.value) return
+    if ((searchParams.value.page || 1) >= totalPages.value) return
+
+    searchParams.value.page = (searchParams.value.page || 1) + 1
+    await fetchNext()
+  })
+
+  io.observe(sentinel)
+})
 
 // SEO 설정
 useHead({
