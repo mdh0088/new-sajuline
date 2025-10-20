@@ -22,7 +22,10 @@
             <img v-if="profileImageUrl" :src="profileImageUrl" alt="프로필" />
             <div v-else class="avatar-skeleton" />
           </div>
-          <h1 class="profile-name">{{ counselor.nickname }}</h1>
+          <div class="profile-name-row">
+            <h1 class="profile-name">{{ counselor.nickname }}</h1>
+            <span class="profile-counselor-code">{{ counselor.counselor_code }}</span>
+          </div>
           <div class="profile-specialty">{{ specialtyLabel }}</div>
           <p class="profile-intro">{{ counselor.introduction_short }}</p>
 
@@ -285,6 +288,10 @@
 // AppHeader와 PhoneConsultModal은 자동 import됨
 import { computed, ref, onMounted, onBeforeUnmount, watch, watchEffect } from 'vue'
 import { useRoute, useSeoMeta, navigateTo } from 'nuxt/app'
+
+definePageMeta({
+  hideBottomNav: true // 하단 네비게이션 숨김
+})
 import { useUserPoints } from '~/composables/user/useUserPoints'
 import { useNotify } from '~/composables/utils/useNotify'
 import { useCounselorQueries } from '~/composables/api/useCounselorQueries'

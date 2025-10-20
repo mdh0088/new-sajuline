@@ -1,5 +1,6 @@
 export interface CounselorPublic {
   counselor_id: string
+  counselor_code: string
   nickname: string
   profile_image_url?: string | null
   introduction_short?: string | null

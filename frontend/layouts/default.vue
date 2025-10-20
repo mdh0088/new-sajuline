@@ -144,11 +144,15 @@ const handleAdClick = (ad) => {
     z-index: 9999 !important;
     width: 100% !important;
     position: fixed !important;
+    visibility: visible !important;
+  }
+
+  /* v-if로 숨겨진 경우 완전히 제거 */
+  .mobile-only .bottom-nav:not([style*="display: none"]) {
     display: flex !important;
     flex-direction: row !important;
     justify-content: space-around !important;
     align-items: center !important;
-    visibility: visible !important;
   }
 
   /* 모바일에서 하단 네비게이션 내부 요소들 */
@@ -383,6 +387,10 @@ const handleAdClick = (ad) => {
     margin-top: auto !important;
     background: rgba(10, 10, 15, 0.95) !important;
     backdrop-filter: blur(10px) !important;
+  }
+
+  /* v-if로 숨겨진 경우 완전히 제거 */
+  .desktop-layout .mobile-container .bottom-nav:not([style*="display: none"]) {
     display: flex !important;
     flex-direction: row !important;
     justify-content: space-around !important;
