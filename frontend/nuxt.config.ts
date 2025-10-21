@@ -165,8 +165,8 @@ export default defineNuxtConfig({
   // 웹폰트 설정 (단기 적용 - 폰트 최적화)
   fonts: {
     families: [
-      { 
-        name: 'Noto Sans KR', 
+      {
+        name: 'Noto Sans KR',
         provider: 'google',
         weights: ['300', '400', '500', '700'], // 필요한 폰트 웨이트만 로드
         subsets: ['korean'] // 한글 서브셋만 로드 (파일 크기 50% 감소)
@@ -176,8 +176,13 @@ export default defineNuxtConfig({
     defaults: {
       weights: ['400', '700'],
       styles: ['normal'],
-      subsets: ['korean']
-    }
+      subsets: ['korean'],
+      fallbacks: {
+        'sans-serif': ['system-ui', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Roboto', 'Noto Sans', 'sans-serif']
+      }
+    },
+    // 네트워크 에러 시 무시
+
   },
 
   // 런타임 환경변수 (서버/클라이언트 구분)
