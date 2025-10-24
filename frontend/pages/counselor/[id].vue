@@ -5,7 +5,7 @@
     <div class="main-content">
       <!-- 로딩 상태 -->
       <div v-if="pending" class="loading-container">
-        <div class="loading-spinner">로딩 중...</div>
+        <div class="loading-spinner"></div>
       </div>
 
       <!-- 에러 상태 -->
@@ -165,7 +165,7 @@
                 </div>
               </div>
               <div ref="reviewSentinel" />
-              <div v-if="isLoadingMoreReviews" class="loading-spinner" style="padding: 12px 0; text-align: center;">불러오는 중...</div>
+              <div v-if="isLoadingMoreReviews" class="loading-spinner" style="padding: 12px 0; text-align: center;"></div>
               <div v-else-if="!reviewHasMore && reviewItems.length > 0" style="padding: 8px 0; text-align: center; color: rgba(255,255,255,0.5); font-size: 12px;">더 이상 항목이 없습니다</div>
             </div>
           </div>
@@ -212,7 +212,7 @@
                 </div>
               </div>
               <div ref="inquirySentinel" />
-              <div v-if="isLoadingMoreInquiries" class="loading-spinner" style="padding: 12px 0; text-align: center;">불러오는 중...</div>
+              <div v-if="isLoadingMoreInquiries" class="loading-spinner" style="padding: 12px 0; text-align: center;"></div>
               <div v-else-if="!inquiryHasMore && inquiryItems.length > 0" style="padding: 8px 0; text-align: center; color: rgba(255,255,255,0.5); font-size: 12px;">더 이상 항목이 없습니다</div>
             </div>
           </div>

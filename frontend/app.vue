@@ -1,5 +1,8 @@
 <template>
   <NuxtLayout>
+    <!-- 페이지 전환 시 로딩 인디케이터 -->
+    <NuxtLoadingIndicator color="#6366f1" :height="3" />
+
     <NuxtRouteAnnouncer />
     <div style="display: flex; flex-direction: column;">
       <div style="flex: 1;">
