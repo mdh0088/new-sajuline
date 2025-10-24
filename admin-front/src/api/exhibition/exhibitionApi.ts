@@ -27,30 +27,32 @@ export async function getExhibitionList(data) {
 
 // 기획전 생성
 export async function createExhibition(data, formData) {
-    return http.post(createExhibitionURL, data, {
+    // FormData에 각 필드를 개별적으로 추가
+    Object.keys(data).forEach(key => {
+        if (data[key] !== null && data[key] !== undefined) {
+            formData.append(key, data[key]);
+        }
+    });
+
+    return http.post(createExhibitionURL, formData, {
         headers: {
             'Content-Type': 'multipart/form-data',
-        },
-        params: {
-            'dataType': 'formData'
-        },
-        env: {
-            FormData: formData
-        } as any
+        }
     });
 }
 // 기획전 수정
 export async function updateExhibition(data, formData) {
-    return http.patch(updateExhibitionURL, data, {
+    // FormData에 각 필드를 개별적으로 추가
+    Object.keys(data).forEach(key => {
+        if (data[key] !== null && data[key] !== undefined) {
+            formData.append(key, data[key]);
+        }
+    });
+
+    return http.patch(updateExhibitionURL, formData, {
         headers: {
             'Content-Type': 'multipart/form-data',
-        },
-        params: {
-            'dataType': 'formData'
-        },
-        env: {
-            FormData: formData
-        } as any
+        }
     });
 }
 
