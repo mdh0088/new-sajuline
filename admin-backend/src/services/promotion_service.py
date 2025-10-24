@@ -43,22 +43,28 @@ class PromotionService:
             content = await banner_image.read()
             banner_image_url = upload_public_image(subdirectory="banner", content=content, original_name=banner_image.filename)
 
-        created = await self.repo.create(
-            event_code=event_code,
-            event_name=payload.event_name,
-            event_type=payload.event_type,
-            description=payload.description,
-            terms=payload.terms,
-            reward_type=payload.reward_type,
-            reward_value=payload.reward_value,
-            max_participants=payload.max_participants,
-            current_participants=0,
-            is_active=payload.is_active,
-            valid_from=payload.valid_from,
-            valid_until=payload.valid_until,
-            metadata=payload.metadata,
-            banner_image_url=banner_image_url,
-        )
+        # ORM 매핑: metadata는 DB 컬럼명이지만 SQLAlchemy 속성명은 metadata_json
+        fields = {
+            "event_code": event_code,
+            "event_name": payload.event_name,
+            "event_type": payload.event_type,
+            "description": payload.description,
+            "terms": payload.terms,
+            "reward_type": payload.reward_type,
+            "reward_value": payload.reward_value,
+            "max_participants": payload.max_participants,
+            "current_participants": 0,
+            "is_active": payload.is_active,
+            "valid_from": payload.valid_from,
+            "valid_until": payload.valid_until,
+            "banner_image_url": banner_image_url,
+        }
+
+        # metadata는 metadata_json 속성명으로 전달
+        if payload.metadata is not None:
+            fields["metadata_json"] = payload.metadata
+
+        created = await self.repo.create(**fields)
         return PromotionItem.model_validate(created)
 
     async def update(self, payload: PromotionUpdateRequest, banner_image: Optional[UploadFile] = None) -> PromotionItem:

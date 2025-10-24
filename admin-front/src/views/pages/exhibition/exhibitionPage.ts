@@ -117,6 +117,19 @@ export const createExhibition= async (exhibitionInfo:Ref<ExhibitionInfo>, attach
         return null;
     };
 
+    // 필수 필드 검증
+    const validFrom = formatDateTime(exhibitionInfo.value.startDate);
+    const validUntil = formatDateTime(exhibitionInfo.value.endDate);
+
+    if (!exhibitionInfo.value.exhibitionNm) {
+        swal.swalAlert("기획전 명을 입력해주세요.", "warning");
+        return;
+    }
+    if (!validFrom || !validUntil) {
+        swal.swalAlert("시작일과 종료일을 입력해주세요.", "warning");
+        return;
+    }
+
     // 프론트엔드 형식을 백엔드 형식으로 변환
     const backendData = {
         event_name: exhibitionInfo.value.exhibitionNm,
@@ -127,12 +140,13 @@ export const createExhibition= async (exhibitionInfo:Ref<ExhibitionInfo>, attach
         reward_value: (exhibitionInfo.value as any).reward_value || 0,
         max_participants: (exhibitionInfo.value as any).max_participants || null,
         is_active: exhibitionInfo.value.showYn === 'Y',
-        valid_from: formatDateTime(exhibitionInfo.value.startDate),
-        valid_until: formatDateTime(exhibitionInfo.value.endDate),
+        valid_from: validFrom,
+        valid_until: validUntil,
         banner_image_url: exhibitionInfo.value.bannerImg || null,
-        metadata: (exhibitionInfo.value as any).metadata_json || null
+        metadata: (exhibitionInfo.value as any).metadata_json ? JSON.stringify((exhibitionInfo.value as any).metadata_json) : null
     };
 
+    console.log('Create exhibition backendData:', backendData);
     requests.push(exhibitionApi.createExhibition(backendData, formData));
     const result = await promiseAction.promiseSettled(requests);
     result.forEach(data => {
@@ -177,7 +191,7 @@ export const updateExhibition= async (exhibitionInfo:Ref<ExhibitionInfo>, attach
         valid_from: formatDateTime(exhibitionInfo.value.startDate),
         valid_until: formatDateTime(exhibitionInfo.value.endDate),
         banner_image_url: exhibitionInfo.value.bannerImg || null,
-        metadata: (exhibitionInfo.value as any).metadata_json || null
+        metadata: (exhibitionInfo.value as any).metadata_json ? JSON.stringify((exhibitionInfo.value as any).metadata_json) : null
     };
 
     console.log('Sending data to backend:', backendData);
