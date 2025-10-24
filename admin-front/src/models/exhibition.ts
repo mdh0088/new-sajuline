@@ -11,6 +11,16 @@ export class ExhibitionClass implements ExhibitionInfo{
     updateUser: string | null = null;
     updateDate: string | null = null;
     replayList: Array<ExhibitionReplyInfo> | [] = [];
+    // 백엔드 t_event 테이블 필드들
+    event_code?: string | null = null;
+    event_type?: string | null = 'POINT';
+    description?: string | null = null;
+    terms?: string | null = null;
+    reward_type?: string | null = 'POINT';
+    reward_value?: number | null = 0;
+    max_participants?: number | null = null;
+    current_participants?: number | null = 0;
+    metadata_json?: any = null;
 
     constructor(data?: Partial<ExhibitionInfo>) {
         if (data) {

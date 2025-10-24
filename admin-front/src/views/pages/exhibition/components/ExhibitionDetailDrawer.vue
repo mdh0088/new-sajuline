@@ -16,7 +16,7 @@
 
           <el-form-item label="노출여부">
             <div>
-              <CustomSwitch v-model:switchValue="exhibitionInfo.showYn"/>
+              <el-switch v-model="isActiveSwitch" />
             </div>
           </el-form-item>
 
@@ -37,6 +37,52 @@
           <el-form-item label="기획전 명">
             <el-input v-model="exhibitionInfo.exhibitionNm"></el-input>
           </el-form-item>
+
+          <el-form-item label="설명">
+            <el-input
+              v-model="exhibitionInfo.description"
+              type="textarea"
+              :autosize="{ minRows: 3, maxRows: 6 }"
+              placeholder="기획전 설명을 입력하세요"
+            ></el-input>
+          </el-form-item>
+
+          <el-form-item label="약관" v-if="exhibitionInfo.terms !== null && exhibitionInfo.terms !== undefined">
+            <el-input
+              v-model="exhibitionInfo.terms"
+              type="textarea"
+              :autosize="{ minRows: 3, maxRows: 6 }"
+              placeholder="약관 내용을 입력하세요"
+            ></el-input>
+          </el-form-item>
+
+          <el-form-item label="이벤트 타입">
+            <el-select v-model="exhibitionInfo.event_type" placeholder="이벤트 타입 선택">
+              <el-option label="회원가입" value="SIGNUP"></el-option>
+              <el-option label="로그인" value="LOGIN"></el-option>
+              <el-option label="상담" value="CONSULTATION"></el-option>
+              <el-option label="포인트" value="POINT"></el-option>
+              <el-option label="프로모션" value="PROMOTION"></el-option>
+              <el-option label="시즌" value="SEASONAL"></el-option>
+            </el-select>
+          </el-form-item>
+
+          <el-form-item label="보상 타입">
+            <el-select v-model="exhibitionInfo.reward_type" placeholder="보상 타입 선택">
+              <el-option label="포인트" value="POINT"></el-option>
+              <el-option label="마일리지" value="MILEAGE"></el-option>
+              <el-option label="쿠폰" value="COUPON"></el-option>
+            </el-select>
+          </el-form-item>
+
+          <el-form-item label="보상 값">
+            <el-input-number v-model="exhibitionInfo.reward_value" :min="0"></el-input-number>
+          </el-form-item>
+
+          <el-form-item label="최대 참여자수" v-if="exhibitionInfo.max_participants !== null && exhibitionInfo.max_participants !== undefined">
+            <el-input-number v-model="exhibitionInfo.max_participants" :min="1"></el-input-number>
+          </el-form-item>
+
           <el-form-item label="기획전 이미지">
             <el-upload
                 v-model:file-list="attachFile"
@@ -116,7 +162,7 @@
 </template>
 <script lang="ts" setup>
 import kor from 'element-plus/dist/locale/ko.mjs';
-import {ref, defineAsyncComponent } from 'vue'
+import {ref, defineAsyncComponent, computed } from 'vue'
 import {getExhibitionInfo, updateExhibition, createExhibition, deleteExhibitionReply } from "@/views/pages/exhibition/exhibitionPage"
 import {formatDate} from "@/commonUtils/dateUtils"
 import {ExhibitionClass} from "@/models/exhibition"
@@ -138,6 +184,14 @@ const exhibitionInfo = ref<ExhibitionInfo>(new ExhibitionClass());
 const isDrawerActive = defineModel<boolean>("isDrawerActive",{ default: false});
 const openType = defineModel<string>("openType",{ default: "update"});
 const isLoading = ref<boolean>(false)
+
+// showYn (Y/N) <-> is_active (boolean) 변환
+const isActiveSwitch = computed({
+  get: () => exhibitionInfo.value.showYn === 'Y',
+  set: (val: boolean) => {
+    exhibitionInfo.value.showYn = val ? 'Y' : 'N'
+  }
+})
 
 const confirmClick = async () => {
   const msg = '정말 저장하시겠습니까?.';

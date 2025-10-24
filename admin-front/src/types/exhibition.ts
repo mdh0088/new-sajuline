@@ -10,7 +10,17 @@ interface ExhibitionInfo {
     registDate: string|null;
     updateUser: string|null;
     updateDate: string|null;
-    replayList: Array<ExhibitionReplyInfo> | []
+    replayList: Array<ExhibitionReplyInfo> | [];
+    // 백엔드 t_event 테이블 필드들
+    event_code?: string|null;
+    event_type?: string|null;
+    description?: string|null;
+    terms?: string|null;
+    reward_type?: string|null;
+    reward_value?: number|null;
+    max_participants?: number|null;
+    current_participants?: number|null;
+    metadata_json?: any;
 }
 
 interface ExhibitionReplyInfo {
