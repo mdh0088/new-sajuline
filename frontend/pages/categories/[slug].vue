@@ -84,7 +84,7 @@
 
     <!-- 전화 상담 모달 (로그인 유저용) -->
     <PhoneConsultModal
-      v-if="isUser && selectedCounselor"
+      v-if="isUser && modalCounselorData"
       :counselor="modalCounselorData"
       :is-visible="showPhoneModal"
       :user-points="userPoints"
@@ -96,7 +96,7 @@
 
     <!-- 전화 상담 모달 (비로그인 유저용) -->
     <GuestPhoneConsultModal
-      v-if="!isUser && selectedCounselor"
+      v-if="!isUser && modalCounselorData"
       :counselor="modalCounselorData"
       :is-visible="showPhoneModal"
       @close="closePhoneModal"

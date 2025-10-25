@@ -243,7 +243,7 @@
 
     <!-- 전화 상담 모달 (로그인 유저용) -->
     <PhoneConsultModal
-      v-if="counselor && isUser"
+      v-if="modalCounselorData && isUser"
       :counselor="modalCounselorData"
       :is-visible="showPhoneModal"
       :user-points="userPoints"
@@ -255,7 +255,7 @@
 
     <!-- 전화 상담 모달 (비로그인 유저용) -->
     <GuestPhoneConsultModal
-      v-if="counselor && !isUser"
+      v-if="modalCounselorData && !isUser"
       :counselor="modalCounselorData"
       :is-visible="showPhoneModal"
       @close="closePhoneModal"
