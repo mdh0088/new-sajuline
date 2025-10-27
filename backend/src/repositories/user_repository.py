@@ -185,4 +185,25 @@ class UserRepository:
         result = await self.db.execute(stmt)
         await self.db.commit()
         return result.rowcount > 0
-    
+
+    @logger.catch(reraise=True)
+    async def update_mileage_point(self, user_id: str, new_mileage_point: int) -> bool:
+        """사용자 마일리지 포인트 업데이트"""
+        log = get_logger_with_request_id()
+        log.info("Updating user mileage point", user_id=user_id, new_mileage_point=new_mileage_point)
+
+        stmt = (
+            update(User)
+            .where(User.user_id == user_id)
+            .values(
+                mileage_point=new_mileage_point,
+                updated_at=datetime.utcnow()
+            )
+            .execution_options(synchronize_session="evaluate")
+        )
+        result = await self.db.execute(stmt)
+        updated = result.rowcount > 0
+
+        log.info("User mileage point update completed", user_id=user_id, updated=updated)
+        return updated
+

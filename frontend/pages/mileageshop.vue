@@ -27,7 +27,7 @@
       </div>
 
       <!-- 카테고리 필터 -->
-      <div class="mileage-category-filters">
+      <!-- <div class="mileage-category-filters">
         <div
           v-for="category in categories"
           :key="category"
@@ -36,29 +36,43 @@
         >
           {{ category }}
         </div>
+      </div> -->
+
+      <!-- 로딩 상태 -->
+      <div v-if="isProductsLoading || isUserLoading" class="mileage-loading">
+        <div class="mileage-spinner"></div>
+        <p>마일리지 상품을 불러오는 중...</p>
       </div>
 
       <!-- 상품 그리드 -->
-      <div class="mileage-products-grid">
+      <div v-else class="mileage-products-grid">
         <div
           v-for="product in products"
-          :key="product.id"
+          :key="product.mileage_id"
           class="mileage-product-card"
           @click="selectProduct(product)"
         >
           <div class="mileage-product-header">
-            <div class="mileage-product-icon">{{ product.icon }}</div>
+            <div class="mileage-product-icon">
+              <img
+                v-if="getProductImageUrl(product)"
+                :src="getProductImageUrl(product)"
+                :alt="product.m_product_name"
+                class="mileage-product-image"
+              />
+              <span v-else>💎</span>
+            </div>
             <div class="mileage-product-price">
-              <div class="mileage-price-amount">{{ product.price.toLocaleString() }}M</div>
+              <div class="mileage-price-amount">{{ product.m_product_value.toLocaleString() }}M</div>
               <div class="mileage-price-label">마일리지</div>
             </div>
           </div>
           <div class="mileage-product-info">
-            <div class="mileage-product-title">{{ product.title }}</div>
+            <div class="mileage-product-title">{{ product.m_product_name }}</div>
             <div class="mileage-product-description">{{ product.description }}</div>
             <div class="mileage-product-tags">
               <span
-                v-for="tag in product.tags"
+                v-for="tag in getProductTags(product)"
                 :key="tag"
                 class="mileage-product-tag"
               >
@@ -68,10 +82,10 @@
           </div>
           <button
             class="mileage-purchase-button"
-            :disabled="product.price > currentMileage"
+            :disabled="product.m_product_value > currentMileage || isPurchasing"
             @click.stop="openPurchaseModal(product)"
           >
-            {{ product.price > currentMileage ? '마일리지 부족' : '구매하기' }}
+            {{ product.m_product_value > currentMileage ? '마일리지 부족' : '구매하기' }}
           </button>
         </div>
       </div>
@@ -99,13 +113,21 @@
         <!-- 상품 정보 -->
         <div class="mileage-modal-product-info">
           <div class="mileage-modal-product-header">
-            <div class="mileage-modal-product-icon">{{ selectedProduct.icon }}</div>
+            <div class="mileage-modal-product-icon">
+              <img
+                v-if="getProductImageUrl(selectedProduct)"
+                :src="getProductImageUrl(selectedProduct)"
+                :alt="selectedProduct.m_product_name"
+                class="mileage-product-image"
+              />
+              <span v-else>💎</span>
+            </div>
             <div class="mileage-modal-product-details">
-              <div class="mileage-modal-product-title">{{ selectedProduct.title }}</div>
+              <div class="mileage-modal-product-title">{{ selectedProduct.m_product_name }}</div>
               <div class="mileage-modal-product-description">{{ selectedProduct.description }}</div>
             </div>
             <div class="mileage-modal-product-price">
-              <div class="mileage-modal-price-amount">{{ selectedProduct.price.toLocaleString() }}M</div>
+              <div class="mileage-modal-price-amount">{{ selectedProduct.m_product_value.toLocaleString() }}M</div>
               <div class="mileage-modal-price-label">상품 가격</div>
             </div>
           </div>
@@ -120,11 +142,15 @@
           </div>
           <div class="mileage-breakdown-item">
             <span class="mileage-breakdown-label">사용 마일리지</span>
-            <span class="mileage-breakdown-value">{{ selectedProduct.price.toLocaleString() }}M</span>
+            <span class="mileage-breakdown-value">{{ selectedProduct.m_product_value.toLocaleString() }}M</span>
           </div>
           <div class="mileage-breakdown-item">
             <span class="mileage-breakdown-label">구매 후 잔여 마일리지</span>
-            <span class="mileage-breakdown-value mileage-highlight">{{ (currentMileage - selectedProduct.price).toLocaleString() }}M</span>
+            <span class="mileage-breakdown-value mileage-highlight">{{ (currentMileage - selectedProduct.m_product_value).toLocaleString() }}M</span>
+          </div>
+          <div class="mileage-breakdown-item">
+            <span class="mileage-breakdown-label">충전될 포인트</span>
+            <span class="mileage-breakdown-value mileage-highlight">{{ selectedProduct.charge_point.toLocaleString() }}P</span>
           </div>
         </div>
 
@@ -159,7 +185,7 @@
 
         <!-- 마일리지 부족 경고 -->
         <div
-          v-show="selectedProduct.price > currentMileage"
+          v-show="selectedProduct.m_product_value > currentMileage"
           class="mileage-insufficient-notice"
         >
           <div class="mileage-notice-icon">⚠️</div>
@@ -168,13 +194,13 @@
 
         <!-- 액션 버튼들 -->
         <div class="mileage-modal-actions">
-          <button class="mileage-modal-cancel-btn" @click="closePurchaseModal">취소</button>
+          <button class="mileage-modal-cancel-btn" @click="closePurchaseModal" :disabled="isPurchasing">취소</button>
           <button
             class="mileage-modal-confirm-btn"
-            :disabled="selectedProduct.price > currentMileage"
+            :disabled="selectedProduct.m_product_value > currentMileage || isPurchasing"
             @click="confirmPurchase"
           >
-            {{ selectedProduct.price > currentMileage ? '마일리지 부족' : '구매하기' }}
+            {{ isPurchasing ? '처리 중...' : (selectedProduct.m_product_value > currentMileage ? '마일리지 부족' : '구매하기') }}
           </button>
         </div>
       </div>
@@ -190,7 +216,7 @@
         <div class="mileage-success-icon">✅</div>
         <div class="mileage-success-title">구매 완료!</div>
         <div class="mileage-success-message">
-          {{ selectedProduct?.title }}을(를)<br>
+          {{ selectedProduct?.m_product_name }}을(를)<br>
           성공적으로 구매했습니다.
         </div>
         <button class="mileage-success-button" @click="closeSuccessModal">확인</button>
@@ -201,80 +227,62 @@
 
 <script setup lang="ts">
 import { ref, computed } from 'vue'
-import AppBottomNavi from '~/components/common/AppBottomNavi.vue'
+import { useRouter } from 'vue-router'
+import type { MileageProduct } from '~/types/mileage'
+import { useMileageProductApi } from '~/composables/api/useMileageProduct'
+import { useUserQueries } from '~/composables/api/useUserQueries'
+import { useNotify } from '~/composables/utils/useNotify'
+import { useCdn } from '~/composables/utils/useCdn'
 
-interface Product {
-  id: number
-  icon: string
-  title: string
-  description: string
-  price: number
-  tags: string[]
-  category: string
+// API 및 유틸리티
+const { useMileageProducts, usePurchaseMileage } = useMileageProductApi()
+const { useUserMypage } = useUserQueries()
+const { notifySuccess, notifyError, notifyConfirm } = useNotify()
+const { cdnUrl } = useCdn()
+const router = useRouter()
+
+// 사용자 정보 조회 (로그인 체크)
+const { data: userData, isLoading: isUserLoading, error: userError } = useUserMypage()
+
+// 로그인 체크
+if (userError.value) {
+  notifyError('로그인이 필요합니다')
+  router.push('/auth/login')
 }
 
-const currentMileage = ref(450000)
-const activeCategory = ref('전체')
+// 마일리지 상품 목록 조회
+const { data: products, isLoading: isProductsLoading } = useMileageProducts()
+
+// 마일리지 구매 뮤테이션
+const { mutateAsync: purchaseProduct, isPending: isPurchasing } = usePurchaseMileage()
+
+// UI 상태
 const showModal = ref(false)
 const showSuccessModal = ref(false)
-const selectedProduct = ref<Product | null>(null)
+const selectedProduct = ref<MileageProduct | null>(null)
 const showGuide = ref(false)
 
-const categories = ref(['전체', '포인트'])
+// 현재 사용자 마일리지
+const currentMileage = computed(() => userData.value?.user_info?.mileage_point || 0)
 
-const products = ref<Product[]>([
-  {
-    id: 1,
-    icon: '💎',
-    title: '포인트 300,000P',
-    description: '마일리지 300,000M을 사용하여 포인트 300,000P를 충전할 수 있습니다.',
-    price: 300000,
-    tags: ['최대용량', '프리미엄'],
-    category: '포인트'
-  },
-  {
-    id: 2,
-    icon: '💰',
-    title: '포인트 100,000P',
-    description: '마일리지 100,000M을 사용하여 포인트 100,000P를 충전할 수 있습니다.',
-    price: 100000,
-    tags: ['대용량', '인기'],
-    category: '포인트'
-  },
-  {
-    id: 3,
-    icon: '🪙',
-    title: '포인트 50,000P',
-    description: '마일리지 50,000M을 사용하여 포인트 50,000P를 충전할 수 있습니다.',
-    price: 50000,
-    tags: ['중용량', '추천'],
-    category: '포인트'
-  },
-  {
-    id: 4,
-    icon: '💸',
-    title: '포인트 30,000P',
-    description: '마일리지 30,000M을 사용하여 포인트 30,000P를 충전할 수 있습니다.',
-    price: 30000,
-    tags: ['중간', '실속'],
-    category: '포인트'
-  },
-  {
-    id: 5,
-    icon: '🟡',
-    title: '포인트 10,000P',
-    description: '마일리지 10,000M을 사용하여 포인트 10,000P를 충전할 수 있습니다.',
-    price: 10000,
-    tags: ['소용량', '기본'],
-    category: '포인트'
-  }
-])
-
-const selectProduct = (product: Product) => {
-  console.log('상품 상세 보기:', product.title)
+// 상품 이미지 URL 생성
+const getProductImageUrl = (product: MileageProduct): string => {
+  if (!product.m_product_img) return ''
+  // S3 /mileage 경로에서 이미지 로드
+  return cdnUrl('mileage', product.m_product_img)
 }
 
-const openPurchaseModal = (product: Product) => {
+// 태그 배열 생성
+const getProductTags = (product: MileageProduct): string[] => {
+  if (!product.tags) return []
+  return product.tags.split(',').map(tag => tag.trim()).filter(tag => tag)
+}
+
+const selectProduct = (product: MileageProduct) => {
+  console.log('상품 상세 보기:', product.m_product_name)
+}
+
+const openPurchaseModal = (product: MileageProduct) => {
   selectedProduct.value = product
   showModal.value = true
   showSuccessModal.value = false
@@ -286,16 +294,32 @@ const closePurchaseModal = () => {
   selectedProduct.value = null
 }
 
-const confirmPurchase = () => {
-  if (!selectedProduct.value || selectedProduct.value.price > currentMileage.value) {
+const confirmPurchase = async () => {
+  if (!selectedProduct.value || selectedProduct.value.m_product_value > currentMileage.value) {
     return
   }
 
-  currentMileage.value -= selectedProduct.value.price
-  showSuccessModal.value = true
+  const confirmed = await notifyConfirm(
+    `${selectedProduct.value.m_product_name}을(를) 구매하시겠습니까?\n마일리지 ${selectedProduct.value.m_product_value.toLocaleString()}M이 차감되고 포인트 ${selectedProduct.value.charge_point.toLocaleString()}P가 충전됩니다.`
+  )
 
-  console.log('구매 완료:', selectedProduct.value.title, selectedProduct.value.price + 'M')
-  console.log('잔여 마일리지:', currentMileage.value + 'M')
+  if (!confirmed) {
+    return
+  }
+
+  try {
+    const result = await purchaseProduct({
+      mileage_id: selectedProduct.value.mileage_id
+    })
+
+    showSuccessModal.value = true
+    notifySuccess('마일리지 상품 구매가 완료되었습니다')
+
+    console.log('구매 완료:', result)
+  } catch (error: any) {
+    notifyError(error.message || '구매 처리 중 오류가 발생했습니다')
+    closePurchaseModal()
+  }
 }
 
 const closeSuccessModal = () => {
@@ -306,5 +330,67 @@ const closeSuccessModal = () => {
 </script>
 
 <style scoped>
-/* 컴포넌트별 스코프 스타일이 필요한 경우 여기에 추가 */
+/* 로딩 상태 */
+.mileage-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 4rem 1rem;
+  min-height: 300px;
+}
+
+.mileage-spinner {
+  width: 48px;
+  height: 48px;
+  border: 4px solid rgba(255, 255, 255, 0.1);
+  border-top-color: #60a5fa;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.mileage-loading p {
+  margin-top: 1rem;
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 0.875rem;
+}
+
+/* 상품 이미지 */
+.mileage-product-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 8px;
+}
+
+.mileage-product-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 64px;
+  height: 64px;
+  font-size: 2rem;
+}
+
+.mileage-modal-product-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 56px;
+  height: 56px;
+  font-size: 1.75rem;
+}
+
+.mileage-modal-product-icon .mileage-product-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 8px;
+}
 </style>
