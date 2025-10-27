@@ -25,6 +25,7 @@ from src.api.v1.notice_api import router as notice_router
 from src.api.v1.grade_api import router as grade_router
 from src.api.v1.event_api import router as event_router
 from src.api.v1.point_product_api import router as point_product_router
+from src.api.v1.mileage_api import router as mileage_router
 from src.api.v1.banner_api import router as banner_router
 from src.api.v1.payment_api import router as payment_router
 from src.api.v1.phone_verification_api import router as phone_verification_router
@@ -84,6 +85,10 @@ app = FastAPI(
         {
             "name": "counselor-applications",
             "description": "상담사 지원 - 상담사 신청 및 관리",
+        },
+        {
+            "name": "mileage-products",
+            "description": "마일리지 상품 - 마일리지로 포인트 구매",
         },
         {
             "name": "health",
@@ -221,6 +226,7 @@ app.include_router(notice_router, prefix="/api/v1")
 app.include_router(grade_router, prefix="/api/v1")
 app.include_router(event_router, prefix="/api/v1")
 app.include_router(point_product_router, prefix="/api/v1")
+app.include_router(mileage_router, prefix="/api/v1")
 app.include_router(payment_router, prefix="/api/v1")
 app.include_router(banner_router, prefix="/api/v1")
 app.include_router(phone_verification_router, prefix="/api/v1")
