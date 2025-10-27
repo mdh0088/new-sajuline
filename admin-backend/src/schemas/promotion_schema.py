@@ -22,8 +22,8 @@ class PromotionItem(BaseModel):
     is_active: bool
     valid_from: datetime
     valid_until: datetime
-    # ORM 속성명(metadata_json) ↔ 응답 필드(metadata) 매핑
-    metadata: Optional[Any] = Field(default=None, alias="metadata_json")
+    # ORM 속성명(metadata_json) -> API 응답 필드명(metadata_json)으로 그대로 출력
+    metadata_json: Optional[Any] = Field(default=None, serialization_alias="metadata_json")
     created_at: datetime
     updated_at: Optional[datetime] = None
 

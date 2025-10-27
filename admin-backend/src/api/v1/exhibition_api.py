@@ -64,7 +64,7 @@ async def create_exhibition(
     reward_type: str = Form(...),
     reward_value: int = Form(...),
     max_participants: Optional[int] = Form(default=None),
-    is_active: bool = Form(default=True),
+    is_active: str = Form(default="true"),  # FormData는 문자열로 전송됨
     valid_from: str = Form(...),
     valid_until: str = Form(...),
     metadata: Optional[str] = Form(default=None, description="JSON 문자열"),
@@ -74,45 +74,65 @@ async def create_exhibition(
 ):
     from datetime import datetime
     import json
+    import logging
 
-    def _parse_dt(s: str):
-        # ISO 8601 형식 (T 포함) 및 일반 형식 모두 지원
-        for fmt in (
-            "%Y-%m-%dT%H:%M:%S.%f",  # ISO with milliseconds
-            "%Y-%m-%dT%H:%M:%S",     # ISO without milliseconds
-            "%Y-%m-%d %H:%M:%S.%f",  # Space separated with milliseconds
-            "%Y-%m-%d %H:%M:%S",     # Space separated
-            "%Y-%m-%d"               # Date only
-        ):
+    logger = logging.getLogger(__name__)
+
+    try:
+        logger.info(f"Creating exhibition - event_name: {event_name}, event_type: {event_type}")
+        logger.info(f"is_active received: {is_active} (type: {type(is_active)})")
+        logger.info(f"metadata received: {metadata}")
+
+        def _parse_dt(s: str):
+            # ISO 8601 형식 (T 포함) 및 일반 형식 모두 지원
+            for fmt in (
+                "%Y-%m-%dT%H:%M:%S.%f",  # ISO with milliseconds
+                "%Y-%m-%dT%H:%M:%S",     # ISO without milliseconds
+                "%Y-%m-%d %H:%M:%S.%f",  # Space separated with milliseconds
+                "%Y-%m-%d %H:%M:%S",     # Space separated
+                "%Y-%m-%d"               # Date only
+            ):
+                try:
+                    return datetime.strptime(s, fmt)
+                except ValueError:
+                    continue
+            raise ValueError(f"날짜 형식이 올바르지 않습니다. 받은 값: {s}, 예: 2024-10-31 15:00:00 또는 2024-10-31T15:00:00")
+
+        def _parse_bool(s: str) -> bool:
+            """문자열을 boolean으로 변환"""
+            if isinstance(s, bool):
+                return s
+            return s.lower() in ('true', '1', 'yes', 'y')
+
+        metadata_obj = None
+        if metadata:
             try:
-                return datetime.strptime(s, fmt)
-            except ValueError:
-                continue
-        raise ValueError(f"날짜 형식이 올바르지 않습니다. 받은 값: {s}, 예: 2024-10-31 15:00:00 또는 2024-10-31T15:00:00")
+                metadata_obj = json.loads(metadata)
+                logger.info(f"Parsed metadata: {metadata_obj}")
+            except Exception as e:
+                logger.error(f"Failed to parse metadata: {e}")
+                metadata_obj = None
 
-    metadata_obj = None
-    if metadata:
-        try:
-            metadata_obj = json.loads(metadata)
-        except Exception:
-            metadata_obj = None
-
-    payload = PromotionCreateRequest(
-        event_name=event_name,
-        event_type=event_type,
-        description=description,
-        terms=terms,
-        reward_type=reward_type,
-        reward_value=reward_value,
-        max_participants=max_participants,
-        is_active=is_active,
-        valid_from=_parse_dt(valid_from),
-        valid_until=_parse_dt(valid_until),
-        metadata=metadata_obj,
-        banner_image_url=banner_image_url,
-    )
-    data = await service.create(payload, banner_image=banner_image)
-    return ok(data=data, message="기획전 등록 성공")
+        payload = PromotionCreateRequest(
+            event_name=event_name,
+            event_type=event_type,
+            description=description,
+            terms=terms,
+            reward_type=reward_type,
+            reward_value=reward_value,
+            max_participants=max_participants,
+            is_active=_parse_bool(is_active),
+            valid_from=_parse_dt(valid_from),
+            valid_until=_parse_dt(valid_until),
+            metadata=metadata_obj,
+            banner_image_url=banner_image_url,
+        )
+        logger.info(f"Created payload: {payload}")
+        data = await service.create(payload, banner_image=banner_image)
+        return ok(data=data, message="기획전 등록 성공")
+    except Exception as e:
+        logger.error(f"Error creating exhibition: {e}", exc_info=True)
+        raise
 
 
 @router.patch("/modify-exhibition", response_model=APIResponse[PromotionItem], summary="기획전 수정", description="multipart/form-data 지원")
@@ -125,7 +145,7 @@ async def update_exhibition(
     reward_type: Optional[str] = Form(default=None),
     reward_value: Optional[int] = Form(default=None),
     max_participants: Optional[int] = Form(default=None),
-    is_active: Optional[bool] = Form(default=None),
+    is_active: Optional[str] = Form(default=None),  # FormData는 문자열로 전송됨
     valid_from: Optional[str] = Form(default=None),
     valid_until: Optional[str] = Form(default=None),
     metadata: Optional[str] = Form(default=None, description="JSON 문자열"),
@@ -153,6 +173,14 @@ async def update_exhibition(
                 continue
         raise ValueError(f"날짜 형식이 올바르지 않습니다. 받은 값: {s}, 예: 2024-10-31 15:00:00 또는 2024-10-31T15:00:00")
 
+    def _parse_optional_bool(s: Optional[str]) -> Optional[bool]:
+        """문자열을 boolean으로 변환"""
+        if s is None:
+            return None
+        if isinstance(s, bool):
+            return s
+        return s.lower() in ('true', '1', 'yes', 'y')
+
     metadata_obj = None
     if metadata:
         try:
@@ -169,7 +197,7 @@ async def update_exhibition(
         reward_type=reward_type,
         reward_value=reward_value,
         max_participants=max_participants,
-        is_active=is_active,
+        is_active=_parse_optional_bool(is_active),
         valid_from=_parse_optional_dt(valid_from),
         valid_until=_parse_optional_dt(valid_until),
         metadata=metadata_obj,

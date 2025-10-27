@@ -80,7 +80,6 @@
       <!-- 로딩 상태 -->
       <div class="loading-state" v-if="isLoading">
         <div class="loading-spinner"></div>
-        <div class="empty-title">불러오는 중...</div>
       </div>
     </main>
 

@@ -1,7 +1,9 @@
 <template>
   <div>
     <slot name="header"></slot>
-    <div v-if="loading" class="empty-state text-center py-10 text-white/60">로딩중...</div>
+    <div v-if="loading" class="empty-state text-center py-10 text-white/60">
+      <div class="loading-spinner mx-auto"></div>
+    </div>
     <div v-else-if="error" class="empty-state text-center py-10 text-red-300">{{ error }}</div>
     <div v-else>
       <div v-if="items.length === 0" class="empty-state text-center py-10 text-white/40">

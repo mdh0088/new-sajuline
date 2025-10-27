@@ -440,6 +440,7 @@ class ConsultationReviewService:
                     is_best=r.is_best,
                     created_at=r.created_at,
                     counselor_replied_at=r.counselor_replied_at,
+                    starttm=(chatlog.starttm if chatlog else None),
                     realchattm=(chatlog.realchattm if chatlog else None),
                     counselor=(
                         None

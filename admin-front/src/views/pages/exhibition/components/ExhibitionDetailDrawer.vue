@@ -83,6 +83,48 @@
             <el-input-number v-model="exhibitionInfo.max_participants" :min="1"></el-input-number>
           </el-form-item>
 
+          <el-form-item label="표시 타입">
+            <el-select v-model="displayType" placeholder="이벤트 표시 타입 선택">
+              <el-option label="일반 텍스트" value="text"></el-option>
+              <el-option label="랜덤카드" value="random_card"></el-option>
+            </el-select>
+          </el-form-item>
+
+          <!-- 랜덤카드 설정 (display_type이 random_card일 때만 표시) -->
+          <template v-if="displayType === 'random_card'">
+            <el-divider>랜덤카드 설정</el-divider>
+
+            <el-form-item label="보상 포인트">
+              <el-input
+                v-model="randomCardRewards"
+                placeholder="예: 5,10,50,100,500,1000,5000,10000"
+              >
+                <template #prepend>쉼표로 구분</template>
+              </el-input>
+            </el-form-item>
+
+            <el-form-item label="확률 가중치">
+              <el-input
+                v-model="randomCardWeights"
+                placeholder="예: 30,25,20,15,7,2,0.9,0.1"
+              >
+                <template #prepend>쉼표로 구분</template>
+              </el-input>
+            </el-form-item>
+
+            <el-form-item label="최소 상담 시간 (분)">
+              <el-input-number v-model="minConsultationMinutes" :min="1"></el-input-number>
+            </el-form-item>
+
+            <el-form-item label="기회 유효기간 (일)">
+              <el-input-number v-model="chanceExpiryDays" :min="1"></el-input-number>
+            </el-form-item>
+
+            <el-form-item label="보상 유효기간 (일)">
+              <el-input-number v-model="rewardExpiryDays" :min="1"></el-input-number>
+            </el-form-item>
+          </template>
+
           <el-form-item label="기획전 이미지">
             <el-upload
                 v-model:file-list="attachFile"
@@ -193,6 +235,14 @@ const isActiveSwitch = computed({
   }
 })
 
+// 랜덤카드 설정 관련
+const displayType = ref<'text' | 'random_card'>('text')
+const randomCardRewards = ref('5,10,50,100,500,1000,5000,10000')
+const randomCardWeights = ref('30,25,20,15,7,2,0.9,0.1')
+const minConsultationMinutes = ref(15)
+const chanceExpiryDays = ref(30)
+const rewardExpiryDays = ref(90)
+
 const confirmClick = async () => {
   const msg = '정말 저장하시겠습니까?.';
   const swalResult = await swal.swalConfirm(msg, 'warning');
@@ -200,18 +250,32 @@ const confirmClick = async () => {
     exhibitionInfo.value.startDate = dateTimeValue.value[0];
     exhibitionInfo.value.endDate = dateTimeValue.value[1];
 
+    // metadata 구성
+    if (displayType.value === 'random_card') {
+      exhibitionInfo.value.metadata_json = {
+        display_type: 'random_card',
+        card_config: {
+          rewards: randomCardRewards.value.split(',').map(v => parseInt(v.trim())),
+          weights: randomCardWeights.value.split(',').map(v => parseFloat(v.trim())),
+          min_consultation_minutes: minConsultationMinutes.value,
+          chance_expiry_days: chanceExpiryDays.value,
+          reward_expiry_days: rewardExpiryDays.value
+        }
+      };
+    } else {
+      exhibitionInfo.value.metadata_json = null;
+    }
+
     isLoading.value = true;
     try {
       if (openType.value == "update") {
         await updateExhibition(exhibitionInfo, attachFile, props.doSearch as Function)
       } else {
-
         await createExhibition(exhibitionInfo, attachFile, props.doSearch as Function)
       }
     } finally {
       isLoading.value = false;
     }
-
   }
 }
 
@@ -240,8 +304,32 @@ const openDrawer = async () => {
     await getExhibitionInfo(exhibitionInfo, attachFile)
     dateTimeValue.value[0] = exhibitionInfo.value.startDate
     dateTimeValue.value[1] = exhibitionInfo.value.endDate
-  } else {
 
+    // metadata 파싱
+    if (exhibitionInfo.value.metadata_json) {
+      const metadata = exhibitionInfo.value.metadata_json;
+      if (metadata.display_type === 'random_card') {
+        displayType.value = 'random_card';
+        const config = metadata.card_config || {};
+        randomCardRewards.value = (config.rewards || []).join(',');
+        randomCardWeights.value = (config.weights || []).join(',');
+        minConsultationMinutes.value = config.min_consultation_minutes || 15;
+        chanceExpiryDays.value = config.chance_expiry_days || 30;
+        rewardExpiryDays.value = config.reward_expiry_days || 90;
+      } else {
+        displayType.value = 'text';
+      }
+    } else {
+      displayType.value = 'text';
+    }
+  } else {
+    // 새로 생성할 때 기본값 설정
+    displayType.value = 'text';
+    randomCardRewards.value = '5,10,50,100,500,1000,5000,10000';
+    randomCardWeights.value = '30,25,20,15,7,2,0.9,0.1';
+    minConsultationMinutes.value = 15;
+    chanceExpiryDays.value = 30;
+    rewardExpiryDays.value = 90;
   }
 }
 
