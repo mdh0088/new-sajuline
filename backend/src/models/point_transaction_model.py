@@ -34,6 +34,7 @@ class ReferenceType(str, Enum):
     EVENT = "EVENT"            # 이벤트
     MANUAL = "MANUAL"          # 수동 처리
     REVIEW = "REVIEW"          # 후기 작성
+    MILEAGE = "MILEAGE"        # 마일리지 적립
     MILEAGE_PRODUCT = "MILEAGE_PRODUCT"  # 마일리지 상품 구매
 
 

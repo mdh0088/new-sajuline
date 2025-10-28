@@ -8,7 +8,7 @@ from src.repositories.mileage_repository import MileageProductRepository
 from src.repositories.user_repository import UserRepository
 from src.repositories.point_transaction_repository import PointTransactionRepository
 from src.services.ars.tm60_users_service import Tm60UsersService
-from src.schemas.mileage_product_schema import MileageProductResponse
+from src.schemas.mileage_product_schema import MileageProductResponse, MileageHistoryResponse
 from src.models.point_transaction_model import TransactionType, CurrencyType, ReferenceType
 
 
@@ -130,3 +130,68 @@ class MileageProductService:
             "used_mileage": product.m_product_value,
             "new_mileage_point": new_mileage_point
         }
+
+    async def get_mileage_history(
+        self,
+        user_id: str,
+        transaction_type: TransactionType,
+        start_dt: str = None,
+        end_dt: str = None,
+        order_type: str = "latest",
+        page: int = 1,
+        limit: int = 20
+    ) -> tuple[list[MileageHistoryResponse], int]:
+        """
+        마일리지 내역 조회 (페이징, 날짜 필터, 정렬)
+        - 적립 내역 (EARN) 또는 사용 내역 (USE)
+        - transaction_type을 파라미터로 받아 필터링
+        - 날짜 범위 필터링 (start_dt ~ end_dt)
+        - 정렬: latest(최신순), highest(높은순), lowest(낮은순)
+
+        Args:
+            user_id: 사용자 ID
+            transaction_type: 거래 유형 (EARN/USE)
+            start_dt: 시작일 (yyyy-mm-dd)
+            end_dt: 종료일 (yyyy-mm-dd)
+            order_type: 정렬 방식 (latest/highest/lowest)
+            page: 페이지 번호
+            limit: 페이지당 항목 수
+
+        Returns:
+            (response_list, total_count) 튜플
+        """
+        log = get_logger_with_request_id()
+        log.info(
+            "Service: get mileage history",
+            user_id=user_id,
+            transaction_type=transaction_type.value,
+            start_dt=start_dt,
+            end_dt=end_dt,
+            order_type=order_type,
+            page=page,
+            limit=limit
+        )
+
+        # Repository에서 데이터 조회
+        items, total = await self.transaction_repo.get_mileage_history(
+            user_id=user_id,
+            transaction_type=transaction_type,
+            start_dt=start_dt,
+            end_dt=end_dt,
+            order_type=order_type,
+            page=page,
+            limit=limit
+        )
+
+        # DTO 변환
+        response_list = [MileageHistoryResponse.model_validate(item) for item in items]
+
+        log.info(
+            "Mileage history retrieved",
+            user_id=user_id,
+            transaction_type=transaction_type.value,
+            total=total,
+            count=len(response_list)
+        )
+
+        return response_list, total

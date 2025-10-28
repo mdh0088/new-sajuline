@@ -44,3 +44,19 @@ export interface MileagePurchaseResult {
   new_point_balance: number
   transaction_id: number
 }
+
+/**
+ * 마일리지 내역 항목
+ * Backend: MileageHistoryResponse
+ */
+export interface MileageHistoryItem {
+  transaction_id: number
+  transaction_type: 'EARN' | 'USE'
+  currency_type: string
+  amount: number
+  balance_after: number
+  reference_type: string | null
+  reference_id: string | null
+  description: string | null
+  created_at: string
+}
