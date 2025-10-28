@@ -867,6 +867,7 @@ CREATE TABLE `t_mileage_product` (
   `valid_from` datetime DEFAULT NULL COMMENT '상품 노출 시작일',
   `valid_until` datetime DEFAULT NULL COMMENT '상품 노출 종료일',
   `ord` int(11) NOT NULL COMMENT '노출 순번',
+  `tags` varchar(255) DEFAULT NULL,
   `description` text DEFAULT NULL COMMENT '상품설명',
   `is_active` tinyint(1) NOT NULL DEFAULT '0' COMMENT '사용유무',
   `created_at` datetime NOT NULL DEFAULT current_timestamp(),
