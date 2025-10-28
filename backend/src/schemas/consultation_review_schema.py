@@ -120,6 +120,7 @@ class UserReviewItem(BaseModel):
     is_best: bool
     created_at: datetime
     counselor_replied_at: datetime | None = None
+    starttm: str | None = None
     realchattm: int | None = None
     counselor: CounselorBriefInfo | None = None
 

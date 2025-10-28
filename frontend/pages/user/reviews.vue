@@ -53,24 +53,26 @@
             :key="item.session_id"
             class="review-card pending"
           >
-            <div class="review-header">
-              <div class="counselor-info">
-                <div class="flex-shrink-0">
+            <div class="review-top">
+              <div class="counselor-profile">
+                <div class="profile-image">
                   <img
                     v-if="getCounselorImage(item.counselor?.profile_image_url)"
                     :src="getCounselorImage(item.counselor?.profile_image_url)"
                     alt="프로필 이미지"
-                    class="w-12 h-12 rounded-full object-cover border border-white/10"
-                    width="48"
-                    height="48"
+                    width="40"
+                    height="40"
                     loading="lazy"
                   />
-                  <div v-else class="w-12 h-12 rounded-full bg-gradient-to-br from-yellow-400 to-amber-500 flex items-center justify-center text-2xl shadow-[0_4px_12px_rgba(255,215,0,0.3)] flex-shrink-0">🔮</div>
+                  <div v-else class="profile-placeholder">🔮</div>
                 </div>
-                <div class="counselor-details flex-1 min-w-0">
+                <div class="counselor-info-text">
                   <div class="counselor-name">{{ item.counselor?.nickname || '상담사' }}</div>
-                  <div class="consultation-date">{{ (item.starttm || '') }} 상담</div>
-                  <div class="consultation-time">{{ formatPendingMinutes(item.realchattm) }}분 상담</div>
+                  <div class="review-meta">
+                    <span>{{ formatDateTime(item.starttm || '') }} 상담</span>
+                    <span class="meta-divider">·</span>
+                    <span>{{ formatPendingMinutes(item.realchattm) }}분</span>
+                  </div>
                 </div>
               </div>
               <div class="review-status pending">작성 대기</div>
@@ -97,23 +99,26 @@
             :key="review.review_id"
             class="review-card"
           >
-            <div class="review-header">
-              <div class="counselor-info">
-                <div class="flex-shrink-0">
+            <div class="review-top">
+              <div class="counselor-profile">
+                <div class="profile-image">
                   <img
                     v-if="getCounselorImage(review.counselor?.profile_image_url)"
                     :src="getCounselorImage(review.counselor?.profile_image_url)"
                     alt="프로필 이미지"
-                    class="w-12 h-12 rounded-full object-cover border border-white/10"
-                    width="48"
-                    height="48"
+                    width="40"
+                    height="40"
                     loading="lazy"
                   />
-                  <div v-else class="w-12 h-12 rounded-full bg-gradient-to-br from-yellow-400 to-amber-500 flex items-center justify-center text-2xl shadow-[0_4px_12px_rgba(255,215,0,0.3)] flex-shrink-0">🔮</div>
+                  <div v-else class="profile-placeholder">🔮</div>
                 </div>
-                <div class="counselor-details flex-1 min-w-0">
+                <div class="counselor-info-text">
                   <div class="counselor-name">{{ review.counselor?.nickname || '상담사' }}</div>
-                  <div class="consultation-date">{{ new Date(review.created_at).toLocaleString() }}</div>
+                  <div class="review-meta">
+                    <span>{{ formatDateTime(review.starttm || review.created_at) }} 상담</span>
+                    <span v-if="review.realchattm" class="meta-divider">·</span>
+                    <span v-if="review.realchattm">{{ formatPendingMinutes(review.realchattm) }}분</span>
+                  </div>
                 </div>
               </div>
               <div class="review-status">작성 완료</div>
@@ -140,16 +145,11 @@
               <div class="reply-header">
                 <div class="reply-icon">💬</div>
                 <div class="reply-label">{{ review.counselor?.nickname || '상담사' }} 선생님의 답변</div>
-                <div class="reply-date">{{ new Date(review.counselor_replied_at || review.created_at).toLocaleString() }}</div>
+                <div class="reply-date">{{ formatDateTime(review.counselor_replied_at || review.created_at) }}</div>
               </div>
               <div class="reply-content">
                 {{ review.counselor_reply }}
               </div>
-            </div>
-
-            <div class="review-actions">
-              <button class="review-button edit-button" @click="openEditModal(review)">수정</button>
-              <!-- <button class="review-button delete-button" @click="deleteReview(review.review_id)">삭제</button> -->
             </div>
           </div>
           <div ref="infiniteSentinel" class="h-8"></div>
@@ -269,6 +269,17 @@ const submitting = ref(false)
 // 유틸리티 함수
 const formatDate = (date: Date) => {
   return `${date.getFullYear()}.${String(date.getMonth() + 1).padStart(2, '0')}.${String(date.getDate()).padStart(2, '0')}`
+}
+
+const formatDateTime = (dateStr: string) => {
+  if (!dateStr) return ''
+  const date = new Date(dateStr)
+  const year = date.getFullYear()
+  const month = String(date.getMonth() + 1).padStart(2, '0')
+  const day = String(date.getDate()).padStart(2, '0')
+  const hours = String(date.getHours()).padStart(2, '0')
+  const minutes = String(date.getMinutes()).padStart(2, '0')
+  return `${year}.${month}.${day} ${hours}:${minutes}`
 }
 
 const formatPendingMinutes = (sec?: number | null) => {

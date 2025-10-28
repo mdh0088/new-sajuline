@@ -57,14 +57,14 @@
                     <div>
                       <div class="text-xs text-white/60">상담시간</div>
                       <div class="text-lg font-extrabold">
-                        <span v-if="isFetchingMonthly">로딩중...</span>
+                        <span v-if="isFetchingMonthly">...</span>
                         <span v-else>{{ currentMonthHours }}</span>
                       </div>
                     </div>
                     <div>
                       <div class="text-xs text-white/60">상담 포인트</div>
                       <div class="text-lg font-extrabold text-yellow-400">
-                        <span v-if="isFetchingMonthly">로딩중...</span>
+                        <span v-if="isFetchingMonthly">...</span>
                         <span v-else>{{ currentMonthPoints }}P</span>
                       </div>
                     </div>

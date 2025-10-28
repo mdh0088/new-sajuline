@@ -28,11 +28,23 @@ export async function getExhibitionList(data) {
 // 기획전 생성
 export async function createExhibition(data, formData) {
     // FormData에 각 필드를 개별적으로 추가
+    console.log('Creating exhibition with data:', data);
     Object.keys(data).forEach(key => {
         if (data[key] !== null && data[key] !== undefined) {
-            formData.append(key, data[key]);
+            console.log(`Appending ${key}:`, data[key], typeof data[key]);
+            // Boolean 값은 문자열로 명시적 변환
+            let value = data[key];
+            if (typeof value === 'boolean') {
+                value = value.toString();
+            }
+            formData.append(key, value);
         }
     });
+
+    // FormData 내용 확인
+    for (let pair of formData.entries()) {
+        console.log(pair[0] + ': ' + pair[1]);
+    }
 
     return http.post(createExhibitionURL, formData, {
         headers: {
@@ -45,7 +57,12 @@ export async function updateExhibition(data, formData) {
     // FormData에 각 필드를 개별적으로 추가
     Object.keys(data).forEach(key => {
         if (data[key] !== null && data[key] !== undefined) {
-            formData.append(key, data[key]);
+            // Boolean 값은 문자열로 명시적 변환
+            let value = data[key];
+            if (typeof value === 'boolean') {
+                value = value.toString();
+            }
+            formData.append(key, value);
         }
     });
 

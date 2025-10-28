@@ -16,6 +16,16 @@ export interface EventListItem {
   valid_from: string
   valid_until: string
   created_at: string
+  event_metadata?: {
+    display_type?: string
+    card_config?: {
+      rewards: number[]
+      weights: number[]
+      min_consultation_minutes: number
+      chance_expiry_days: number
+      reward_expiry_days: number
+    }
+  } | null
 }
 
 export interface EventDetail extends EventListItem {

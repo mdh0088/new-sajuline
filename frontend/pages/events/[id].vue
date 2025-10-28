@@ -20,8 +20,14 @@
             </div>
           </div>
 
-          <!-- 상세 설명 -->
-          <div class="event-detail-body">{{ event.description }}</div>
+          <!-- 랜덤카드 이벤트인 경우 -->
+          <RandomCardGame
+            v-if="event.event_metadata?.display_type === 'random_card'"
+            :config="event.event_metadata?.card_config"
+          />
+
+          <!-- 일반 텍스트 이벤트 -->
+          <div v-else class="event-detail-body">{{ event.description }}</div>
 
           <!-- 참여 버튼과 네비게이션 -->
           <div class="event-detail-footer">
