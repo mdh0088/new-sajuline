@@ -83,11 +83,9 @@ class PointTransactionRepository:
     ) -> tuple[list[PointTransaction], int]:
         """
         마일리지 내역 조회 (페이징, 날짜 필터, 정렬)
-        - currency_type = POINT
-        - reference_type: transaction_type에 따라 결정
-          * USE: MILEAGE_PRODUCT (마일리지 상품 구매)
-          * EARN: MILEAGE (마일리지 적립)
-        - transaction_type = EARN or USE (파라미터로 받음)
+        - transaction_type에 따라 조회 조건 분기:
+          * USE: currency_type=POINT, reference_type=MILEAGE_PRODUCT (마일리지 상품 구매)
+          * EARN: currency_type=MILEAGE, reference_type=MILEAGE (마일리지 적립)
         - 날짜 범위 필터링 (start_dt ~ end_dt)
         - 정렬: latest(최신순), highest(높은순), lowest(낮은순)
 
@@ -105,18 +103,21 @@ class PointTransactionRepository:
         """
         log = get_logger_with_request_id()
 
-        # transaction_type에 따라 reference_type 결정
-        # USE: 마일리지 상품 구매 (MILEAGE_PRODUCT)
-        # EARN: 마일리지 적립 (MILEAGE)
-        reference_type_value = (
-            ReferenceType.MILEAGE_PRODUCT.value if transaction_type == TransactionType.USE
-            else ReferenceType.MILEAGE.value
-        )
+        # transaction_type에 따라 currency_type과 reference_type 결정
+        # USE: currency_type=POINT, reference_type=MILEAGE_PRODUCT (마일리지 상품 구매)
+        # EARN: currency_type=MILEAGE, reference_type=MILEAGE (마일리지 적립)
+        if transaction_type == TransactionType.USE:
+            currency_type_value = CurrencyType.POINT.value
+            reference_type_value = ReferenceType.MILEAGE_PRODUCT.value
+        else:  # EARN
+            currency_type_value = CurrencyType.MILEAGE.value
+            reference_type_value = ReferenceType.MILEAGE.value
 
         log.info(
             "Get mileage history",
             user_id=user_id,
             transaction_type=transaction_type.value,
+            currency_type=currency_type_value,
             reference_type=reference_type_value,
             start_dt=start_dt,
             end_dt=end_dt,
@@ -129,7 +130,7 @@ class PointTransactionRepository:
         base_query = (
             select(PointTransaction)
             .where(PointTransaction.user_id == user_id)
-            .where(PointTransaction.currency_type == CurrencyType.POINT.value)
+            .where(PointTransaction.currency_type == currency_type_value)
             .where(PointTransaction.reference_type == reference_type_value)
             .where(PointTransaction.transaction_type == transaction_type.value)
         )
