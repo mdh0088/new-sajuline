@@ -142,24 +142,105 @@
       </div>
     </div>
 
-    <!-- 회원탈퇴 확인 모달 -->
+    <!-- 1단계: 회원탈퇴 비밀번호 입력 및 유의사항 모달 -->
     <div v-if="showWithdrawalModal" class="modal-backdrop" @click="closeWithdrawalModal">
-      <div class="modal-content" @click.stop>
+      <div class="modal-content withdrawal-modal" @click.stop>
         <div class="modal-header">
           <h3 class="modal-title">회원탈퇴</h3>
           <button class="modal-close" @click="closeWithdrawalModal">✕</button>
         </div>
         <div class="modal-body">
-          <p class="withdrawal-warning">
-            정말로 탈퇴하시겠습니까?
-          </p>
-          <p class="withdrawal-notice">
-            탈퇴 시 모든 데이터가 삭제되며, 복구할 수 없습니다.
-          </p>
+          <p class="modal-subtitle">비밀번호와 유의사항을 확인해주세요.</p>
+
+          <!-- 비밀번호 입력 -->
+          <div class="form-group">
+            <label class="form-label">비밀번호 확인<span class="required">*</span></label>
+            <div class="password-input-wrapper">
+              <input
+                v-model="withdrawalPassword"
+                :type="showPassword ? 'text' : 'password'"
+                class="form-input"
+                placeholder="비밀번호를 입력하세요"
+              >
+              <button
+                type="button"
+                class="password-toggle-btn"
+                @click="showPassword = !showPassword"
+              >
+                {{ showPassword ? '👁️' : '👁️‍🗨️' }}
+              </button>
+            </div>
+          </div>
+
+          <!-- 유의사항 -->
+          <div class="withdrawal-warnings">
+            <h4 class="warnings-title">⚠️ 탈퇴 시 유의사항</h4>
+
+            <div class="warning-item">
+              <div class="warning-icon">🗑️</div>
+              <div class="warning-content">
+                <h5 class="warning-title">회원정보/서비스 이용기록 삭제</h5>
+                <p class="warning-text">
+                  회원등급, 포인트, 즐겨찾기 상담사, 마일리지 등의 데이터가 영구히 삭제되며 복구가 불가합니다.
+                </p>
+              </div>
+            </div>
+
+            <div class="warning-item">
+              <div class="warning-icon">🚫</div>
+              <div class="warning-content">
+                <h5 class="warning-title">회원 탈퇴 후 재가입</h5>
+                <p class="warning-text">
+                  탈퇴 시 1개월간 재가입이 불가합니다.
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <!-- 동의 체크박스 -->
+          <div class="agreement-check">
+            <label class="checkbox-label">
+              <input
+                v-model="agreedToTerms"
+                type="checkbox"
+                class="checkbox-input"
+              >
+              <span class="checkbox-text">위 유의사항을 모두 확인했으며 회원탈퇴에 동의합니다.</span>
+            </label>
+          </div>
         </div>
         <div class="modal-footer">
           <button class="modal-cancel-btn" @click="closeWithdrawalModal">취소</button>
-          <button class="modal-danger-btn">탈퇴</button>
+          <button
+            class="modal-danger-btn"
+            :disabled="!withdrawalPassword || !agreedToTerms"
+            @click="openFinalConfirmModal"
+          >
+            다음
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 2단계: 최종 확인 모달 -->
+    <div v-if="showFinalConfirmModal" class="modal-backdrop" @click="closeFinalConfirmModal">
+      <div class="modal-content final-confirm-modal" @click.stop>
+        <div class="modal-header">
+          <h3 class="modal-title">최종 확인</h3>
+          <button class="modal-close" @click="closeFinalConfirmModal">✕</button>
+        </div>
+        <div class="modal-body">
+          <div class="final-confirm-icon">⚠️</div>
+          <p class="final-confirm-text">
+            정말 탈퇴하시겠습니까?
+          </p>
+          <p class="final-confirm-subtext">
+            이 작업은 되돌릴 수 없습니다.
+          </p>
+        </div>
+        <div class="modal-footer">
+          <button class="modal-cancel-btn" @click="closeFinalConfirmModal">취소</button>
+          <button class="modal-danger-btn" @click="handleWithdrawal">탈퇴하기</button>
         </div>
       </div>
     </div>
@@ -169,14 +250,23 @@
 
 <script setup lang="ts">
 import { ref } from 'vue'
-import AppHeader from '~/components/common/AppHeader.vue'
-import AppBottomNavi from '~/components/common/AppBottomNavi.vue'
+import { useRouter } from 'vue-router'
+import { useAuth } from '~/composables/auth/useAuth'
 
-// 모달 상태 (UI만)
+const router = useRouter()
+const { logout } = useAuth()
+
+// 모달 상태
 const showPasswordModal = ref(false)
 const showWithdrawalModal = ref(false)
+const showFinalConfirmModal = ref(false)
 
-// 모달 열기/닫기 (UI만)
+// 회원탈퇴 관련 상태
+const withdrawalPassword = ref('')
+const agreedToTerms = ref(false)
+const showPassword = ref(false)
+
+// 비밀번호 변경 모달
 const openPasswordModal = () => {
   showPasswordModal.value = true
   document.body.style.overflow = 'hidden'
@@ -187,14 +277,68 @@ const closePasswordModal = () => {
   document.body.style.overflow = 'auto'
 }
 
+// 1단계: 회원탈퇴 모달 (비밀번호 입력 + 유의사항)
 const openWithdrawalModal = () => {
   showWithdrawalModal.value = true
   document.body.style.overflow = 'hidden'
+  // 초기화
+  withdrawalPassword.value = ''
+  agreedToTerms.value = false
+  showPassword.value = false
 }
 
 const closeWithdrawalModal = () => {
   showWithdrawalModal.value = false
   document.body.style.overflow = 'auto'
+  // 초기화
+  withdrawalPassword.value = ''
+  agreedToTerms.value = false
+  showPassword.value = false
+}
+
+// 2단계: 최종 확인 모달
+const openFinalConfirmModal = () => {
+  // 1단계 모달 닫기
+  showWithdrawalModal.value = false
+  // 2단계 모달 열기
+  showFinalConfirmModal.value = true
+}
+
+const closeFinalConfirmModal = () => {
+  showFinalConfirmModal.value = false
+  document.body.style.overflow = 'auto'
+  // 1단계로 돌아가기
+  showWithdrawalModal.value = true
+}
+
+// 회원탈퇴 실행
+const handleWithdrawal = async () => {
+  try {
+    // TODO: 실제 API 호출
+    // await withdrawalAPI(withdrawalPassword.value)
+
+    // 임시: 콘솔 로그
+    console.log('회원탈퇴 처리:', {
+      password: withdrawalPassword.value,
+      agreed: agreedToTerms.value
+    })
+
+    // 모달 닫기
+    showFinalConfirmModal.value = false
+    document.body.style.overflow = 'auto'
+
+    // 로그아웃 처리
+    await logout()
+
+    // 로그인 페이지로 이동
+    router.push('/login')
+
+    // 성공 알림 (선택사항)
+    alert('회원탈퇴가 완료되었습니다.')
+  } catch (error) {
+    console.error('회원탈퇴 실패:', error)
+    alert('회원탈퇴 처리 중 오류가 발생했습니다.')
+  }
 }
 </script>
 
