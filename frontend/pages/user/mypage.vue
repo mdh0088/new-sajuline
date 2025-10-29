@@ -321,9 +321,9 @@ const goEdit = () => router.push('/user/edit')
 /* profile-info-container 그리드 레이아웃 */
 .profile-info-container {
   display: grid !important;
-  grid-template-columns: 1fr 1fr !important;
-  grid-template-rows: auto auto !important;
-  gap: 16px !important;
+  grid-template-columns: 1fr !important;
+  grid-template-rows: auto auto auto !important;
+  gap: 12px !important;
   width: 100% !important;
   box-sizing: border-box !important;
 }
@@ -334,13 +334,37 @@ const goEdit = () => router.push('/user/edit')
 }
 
 .profile-section-item:nth-child(2) {
-  grid-column: 2 / 3 !important;
-  grid-row: 1 / 2 !important;
+  grid-column: 1 / 2 !important;
+  grid-row: 2 / 3 !important;
 }
 
 .profile-section-item:nth-child(3) {
-  grid-column: 1 / 3 !important;
-  grid-row: 2 / 3 !important;
+  grid-column: 1 / 2 !important;
+  grid-row: 3 / 4 !important;
+}
+
+/* 더 큰 화면에서는 2열 레이아웃 (500px 이상) */
+@media (min-width: 500px) {
+  .profile-info-container {
+    grid-template-columns: 1fr 1fr !important;
+    grid-template-rows: auto auto !important;
+    gap: 16px !important;
+  }
+
+  .profile-section-item:nth-child(1) {
+    grid-column: 1 / 2 !important;
+    grid-row: 1 / 2 !important;
+  }
+
+  .profile-section-item:nth-child(2) {
+    grid-column: 2 / 3 !important;
+    grid-row: 1 / 2 !important;
+  }
+
+  .profile-section-item:nth-child(3) {
+    grid-column: 1 / 3 !important;
+    grid-row: 2 / 3 !important;
+  }
 }
 </style>
 

@@ -6,9 +6,6 @@
       <section class="px-5 py-6">
         <!-- 헤더 섹션 -->
         <div class="edit-header">
-          <button class="back-button" @click="$router.back()">
-            <span class="back-icon">←</span>
-          </button>
           <h1 class="edit-title">회원정보 수정</h1>
         </div>
 
@@ -91,15 +88,19 @@
             </div>
           </form>
         </div>
+
+        <!-- 위험 영역 (계정 관리) -->
+        <div class="danger-zone">
+          <div class="danger-zone-header">
+            <h3 class="danger-zone-title">계정 관리</h3>
+            <p class="danger-zone-description">계정 삭제 시 모든 데이터가 영구적으로 삭제됩니다</p>
+          </div>
+          <button class="withdrawal-button" @click="openWithdrawalModal">
+            회원탈퇴
+          </button>
+        </div>
       </section>
     </main>
-
-    <!-- 회원탈퇴 버튼 (우측 하단 고정) -->
-    <div class="withdrawal-container">
-      <button class="withdrawal-button" @click="openWithdrawalModal">
-        회원탈퇴
-      </button>
-    </div>
 
     <!-- 비밀번호 변경 모달 -->
     <div v-if="showPasswordModal" class="modal-backdrop" @click="closePasswordModal">

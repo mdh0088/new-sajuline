@@ -2,35 +2,9 @@
 
 /* 헤더 섹션 */
 .edit-header {
-  display: flex;
-  align-items: center;
-  gap: 16px;
   margin-bottom: 32px;
   padding-bottom: 20px;
   border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-}
-
-.back-button {
-  width: 40px;
-  height: 40px;
-  background: rgba(255, 255, 255, 0.1);
-  border: none;
-  border-radius: 12px;
-  color: #ffffff;
-  font-size: 18px;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: all 0.3s ease;
-}
-
-.back-button:hover {
-  background: rgba(255, 255, 255, 0.15);
-}
-
-.back-icon {
-  display: block;
 }
 
 .edit-title {
@@ -46,7 +20,7 @@
   border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: 20px;
   padding: 24px;
-  margin-bottom: 100px; /* 회원탈퇴 버튼 공간 */
+  margin-bottom: 24px;
 }
 
 /* 폼 그룹 */
@@ -199,29 +173,49 @@
   box-shadow: none;
 }
 
-/* 회원탈퇴 버튼 (우측 하단 고정) */
-.withdrawal-container {
-  position: fixed;
-  bottom: 100px; /* 하단 네비게이션 위 */
-  right: 20px;
-  z-index: 50;
+/* 위험 영역 (계정 관리) */
+.danger-zone {
+  margin-top: 40px;
+  padding: 24px;
+  background: rgba(239, 68, 68, 0.03);
+  border: 1px solid rgba(239, 68, 68, 0.2);
+  border-radius: 16px;
+}
+
+.danger-zone-header {
+  margin-bottom: 16px;
+}
+
+.danger-zone-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: #ef4444;
+  margin: 0 0 8px 0;
+}
+
+.danger-zone-description {
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.6);
+  margin: 0;
+  line-height: 1.5;
 }
 
 .withdrawal-button {
-  padding: 10px 16px;
+  padding: 12px 20px;
   background: rgba(239, 68, 68, 0.1);
   border: 1px solid rgba(239, 68, 68, 0.3);
-  border-radius: 12px;
+  border-radius: 10px;
   color: #ef4444;
-  font-size: 13px;
+  font-size: 14px;
   font-weight: 500;
   cursor: pointer;
   transition: all 0.3s ease;
 }
 
 .withdrawal-button:hover {
-  background: rgba(239, 68, 68, 0.2);
+  background: rgba(239, 68, 68, 0.15);
   border-color: rgba(239, 68, 68, 0.5);
+  transform: translateY(-1px);
 }
 
 /* 모달 (마일리지샵 스타일과 동일) */
@@ -405,11 +399,6 @@
     text-align: center;
   }
 
-  .withdrawal-container {
-    right: 16px;
-    bottom: 90px;
-  }
-
   .modal-content {
     margin: 0;
     border-radius: 16px;
@@ -461,13 +450,21 @@
     padding: 14px;
   }
 
-  .withdrawal-container {
-    right: 12px;
-    bottom: 85px;
+  .danger-zone {
+    margin-top: 32px;
+    padding: 20px;
+  }
+
+  .danger-zone-title {
+    font-size: 15px;
+  }
+
+  .danger-zone-description {
+    font-size: 12px;
   }
 
   .withdrawal-button {
-    font-size: 12px;
-    padding: 8px 12px;
+    font-size: 13px;
+    padding: 10px 16px;
   }
 }

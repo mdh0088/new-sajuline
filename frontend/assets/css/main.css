@@ -1452,6 +1452,7 @@
      transition: all 0.3s ease;
      padding: 8px 12px;
      border-radius: 8px;
+     white-space: nowrap;
  }
  
  .footer-link:hover {
@@ -1472,9 +1473,11 @@
  .footer-disclaimer p {
      color: rgba(255, 255, 255, 0.7);
      font-size: 12px;
-     line-height: 1.6;
+     line-height: 1.7;
      margin-bottom: 12px;
-     text-align: justify;
+     text-align: left;
+     word-break: keep-all;
+     word-wrap: break-word;
  }
  
  .footer-disclaimer p:last-child {
@@ -1569,6 +1572,7 @@
  
      .footer-disclaimer p {
          font-size: 13px;
+         line-height: 1.7;
      }
  
      .company-info-grid {
@@ -1612,6 +1616,7 @@
  
      .footer-disclaimer p {
          font-size: 14px;
+         line-height: 1.7;
      }
  
      .company-info-grid {
@@ -1640,7 +1645,7 @@
      }
  
      .footer-links {
-         gap: 16px;
+         gap: 10px;
          margin-bottom: 24px;
      }
  
@@ -1656,6 +1661,7 @@
  
      .footer-disclaimer p {
          font-size: 11px;
+         line-height: 1.8;
      }
  
      .company-info-item {
