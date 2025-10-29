@@ -17,7 +17,7 @@
         <!-- 포인트 표시 -->
         <div v-if="isAuthenticated" class="coin-balance" @click="$router.push('/point')">
           <span>💰</span>
-          <span>{{ userPoints }}P</span>
+          <span>{{ formattedUserPoints }}P</span>
         </div>
 
         <!-- 로그인/로그아웃 버튼 -->
@@ -61,6 +61,11 @@ const { data: mypageData, refetch: refetchMypage } = useUserMypage({
 
 // 사용자 포인트
 const userPoints = computed(() => mypageData.value?.current_points ?? 0)
+
+// 포인트 천 단위 구분자 포맷팅
+const formattedUserPoints = computed(() => {
+  return userPoints.value.toLocaleString('ko-KR')
+})
 
 // 서브페이지 판단 로직
 const isSubPage = computed(() => {
