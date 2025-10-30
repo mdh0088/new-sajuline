@@ -127,8 +127,6 @@
                 v-for="review in reviewItems"
                 :key="review.review_id"
                 class="review-card"
-                :class="{ 'has-reply': review.has_reply, 'expanded': isReviewExpanded(review.review_id) }"
-                @click="review.has_reply && toggleReviewExpand(review.review_id)"
               >
                 <div class="review-header">
                   <div class="reviewer-info">
@@ -148,20 +146,6 @@
                 </div>
                 <div class="review-content">
                   {{ review.content }}
-                </div>
-                <div v-if="review.has_reply" class="reply-indicator">
-                  <span class="reply-icon">💬</span>
-                  <span>상담사 답변</span>
-                  <span class="expand-icon">{{ isReviewExpanded(review.review_id) ? '▲' : '▼' }}</span>
-                </div>
-                <div v-if="review.has_reply && isReviewExpanded(review.review_id)" class="counselor-reply">
-                  <div class="reply-header">
-                    <span class="reply-author">{{ counselor.nickname }} 선생님</span>
-                    <span class="reply-date">{{ formatDate(getReviewRepliedAt(review)) }}</span>
-                  </div>
-                  <div class="reply-content">
-                    {{ getReviewReply(review) || '답변이 등록되었습니다.' }}
-                  </div>
                 </div>
               </div>
               <div ref="reviewSentinel" />
@@ -184,24 +168,33 @@
                 v-for="inquiry in inquiryItems"
                 :key="inquiry.inquiry_id"
                 class="inquiry-card"
-                :class="{ 'has-reply': inquiry.has_reply, 'expanded': isInquiryExpanded(inquiry.inquiry_id) }"
-                @click="inquiry.has_reply && toggleInquiryExpand(inquiry.inquiry_id)"
+                :class="{ 'has-reply': inquiry.has_reply && canViewInquiry(inquiry), 'expanded': isInquiryExpanded(inquiry.inquiry_id), 'is-secret': !canViewInquiry(inquiry) }"
+                @click="inquiry.has_reply && canViewInquiry(inquiry) && toggleInquiryExpand(inquiry.inquiry_id)"
               >
                 <div class="inquiry-header">
                   <div class="inquirer-info">
                     <span class="inquirer-name">{{ maskName(inquiry.inquirer_id || '손님') }}</span>
                     <span class="inquiry-date">{{ formatDate(inquiry.created_at) }}</span>
                   </div>
+                  <div v-if="!canViewInquiry(inquiry)" class="secret-badge">🔒 비밀글</div>
                 </div>
                 <div class="inquiry-content">
-                  {{ inquiry.content || '' }}
+                  <template v-if="canViewInquiry(inquiry)">
+                    {{ inquiry.content || '' }}
+                  </template>
+                  <template v-else>
+                    <div class="secret-message">
+                      <span class="secret-icon">🔒</span>
+                      <span>비밀글입니다</span>
+                    </div>
+                  </template>
                 </div>
-                <div v-if="inquiry.has_reply" class="reply-indicator">
+                <div v-if="inquiry.has_reply && canViewInquiry(inquiry)" class="reply-indicator">
                   <span class="reply-icon">💬</span>
-                  <span>상담사 답변</span>
+                  <span class="reply-text">상담사 답변</span>
                   <span class="expand-icon">{{ isInquiryExpanded(inquiry.inquiry_id) ? '▲' : '▼' }}</span>
                 </div>
-                <div v-if="inquiry.has_reply && isInquiryExpanded(inquiry.inquiry_id)" class="counselor-reply">
+                <div v-if="inquiry.has_reply && canViewInquiry(inquiry) && isInquiryExpanded(inquiry.inquiry_id)" class="counselor-reply">
                   <div class="reply-header">
                     <span class="reply-author">{{ counselor.nickname }} 선생님</span>
                     <span class="reply-date">{{ formatDate(getInquiryAnsweredAt(inquiry)) }}</span>
@@ -471,7 +464,7 @@ const startChatConsult = () => {
 }
 
 const { useCheckBookmark, useAddBookmark, useRemoveBookmark } = useBookmarkQueries()
-const { isUser } = useAuth()
+const { isUser, currentUser } = useAuth()
 
 const { data: _bookmarkChecked, refetch: refetchBookmark } = useCheckBookmark(computed(() => counselor.value?.counselor_id || ''), { enabled: computed(() => false) })
 const addBookmarkMutation = useAddBookmark({
@@ -647,6 +640,13 @@ const isReviewExpanded = (reviewId: number) => {
 
 const isInquiryExpanded = (inquiryId: number) => {
   return expandedInquiries.value.has(inquiryId)
+}
+
+// 문의 내용 열람 권한 확인 (본인 작성만 볼 수 있음)
+const canViewInquiry = (inquiry: InquirySummary) => {
+  if (!isUser.value) return false
+  if (!currentUser.value?.user_id) return false
+  return inquiry.inquirer_id === currentUser.value.user_id
 }
 
 // 페이지 메타데이터
