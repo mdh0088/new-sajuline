@@ -106,16 +106,19 @@ onMounted(async () => {
     if (result.data) {
       setRole(result.data.role)
     }
-    // 마이페이지 데이터도 가져오기
-    await refetchMypage()
+    // 로그인 상태 재확인 후 마이페이지 데이터 가져오기
+    if (isAuthenticated.value) {
+      await refetchMypage()
+    }
   } catch (_e) {
     // 무시 (토큰 만료 등 전역 인터셉터에서 처리)
   }
 })
 
 // 로그인 상태 변경 감지하여 마이페이지 데이터 갱신
-watch(isAuthenticated, async (newValue) => {
-  if (newValue) {
+watch(isAuthenticated, async (newValue, oldValue) => {
+  // false → true 변경 시에만 실행 (로그인 순간)
+  if (newValue && !oldValue) {
     await refetchMypage()
   }
 })

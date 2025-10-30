@@ -20,7 +20,7 @@ class Settings(BaseSettings):
     # 보안 설정
     secret_key: str = Field(..., env="SECRET_KEY")
     access_token_expire_minutes: int = Field(..., env="ACCESS_TOKEN_EXPIRE_MINUTES")
-    refresh_token_expire_days: int = Field(..., env="REFRESH_TOKEN_EXPIRE_DAYS")
+    refresh_token_expire_days: int = Field(default=1, env="REFRESH_TOKEN_EXPIRE_DAYS")
     algorithm: str = Field(..., env="ALGORITHM")
     
     # CORS 설정
