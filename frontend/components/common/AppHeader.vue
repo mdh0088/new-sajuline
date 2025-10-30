@@ -9,9 +9,6 @@
       </div>
       <NuxtLink v-else to="/" class="logo">사주라인</NuxtLink>
 
-      <!-- 중앙: 페이지 제목 (서브페이지일 때만) -->
-      <div v-if="isSubPage" class="page-title-center">{{ pageTitle }}</div>
-
       <!-- 오른쪽 액션 영역 -->
       <div class="header-actions">
         <!-- 포인트 표시 -->
@@ -151,17 +148,6 @@ const handleLogout = async () => {
 
 <style scoped>
 @import '~/assets/css/main-page.css';
-
-.page-title-center {
-  position: absolute;
-  left: 50%;
-  top: 50%;
-  transform: translate(-50%, -50%);
-  font-size: 18px;
-  font-weight: 600;
-  color: white;
-  margin: 0;
-}
 
 /* 로그인/로그아웃 버튼 스타일 */
 .auth-button {
