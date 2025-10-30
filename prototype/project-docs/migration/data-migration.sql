@@ -69,7 +69,8 @@ SELECT
     REGIST_DATE,
     UPDATE_DATE,
     LAST_LOGIN
-FROM TBL_USER
+FROM TBL_USER WHERE
+    USER_STATUS != 3
 
 -- 1.2 포인트/마일리지 잔액 마이그레이션
 INSERT INTO t_user_point_balance (
