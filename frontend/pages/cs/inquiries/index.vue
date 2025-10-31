@@ -11,8 +11,9 @@
               type="text"
               class="inquiry-search-input"
               placeholder="제목 또는 내용으로 검색"
+              @keyup.enter="handleSearch"
             >
-            <button class="inquiry-search-button">
+            <button class="inquiry-search-button" @click="handleSearch">
               🔍
             </button>
           </div>
@@ -45,81 +46,44 @@
 
         <!-- 문의 목록 -->
         <div class="inquiry-list-container">
-          <div class="inquiry-list-items">
-            <!-- 문의 항목 1 -->
+          <!-- 로딩 중 -->
+          <div v-if="isLoading" class="inquiry-loading-skeleton">
+            <div class="skeleton-item"></div>
+            <div class="skeleton-item"></div>
+            <div class="skeleton-item"></div>
+          </div>
+
+          <!-- 문의 없음 -->
+          <div v-else-if="!inquiries || inquiries.length === 0" class="inquiry-empty-state">
+            <div class="inquiry-empty-icon">📝</div>
+            <p class="inquiry-empty-text">
+              {{ currentSearch ? '검색 결과가 없습니다' : '문의 내역이 없습니다' }}
+            </p>
+            <NuxtLink v-if="!currentSearch" to="/cs/write" class="inquiry-empty-button">
+              첫 문의하기
+            </NuxtLink>
+          </div>
+
+          <!-- 문의 목록 -->
+          <div v-else class="inquiry-list-items">
             <div
+              v-for="inquiry in inquiries"
+              :key="inquiry.inquiry_id"
               class="inquiry-list-item"
-              @click="openInquiryModal(inquiries[0])"
+              @click="openInquiryModal(inquiry)"
             >
               <div class="inquiry-list-item-header">
-                <div class="inquiry-list-category">결제문의</div>
-                <div class="inquiry-list-date">2024.03.15</div>
+                <div class="inquiry-list-category">{{ getInquiryTypeLabel(inquiry.inquiry_type) }}</div>
+                <div class="inquiry-list-date">{{ formatDate(inquiry.created_at) }}</div>
               </div>
-              <div class="inquiry-list-title-text">포인트 충전이 되지 않습니다</div>
+              <div class="inquiry-list-title-text">{{ inquiry.title || '제목 없음' }}</div>
               <div class="inquiry-list-content">
-                포인트 충전이 되지 않아 문의드립니다. 결제는 완료되었는데 포인트가 반영되지 않았습니다.
+                {{ inquiry.content }}
               </div>
               <div class="inquiry-list-footer">
-                <div class="inquiry-list-status completed">
-                  <span class="inquiry-list-status-icon">✓</span>
-                  <span>답변완료</span>
-                </div>
-                <div class="inquiry-list-arrow">›</div>
-              </div>
-            </div>
-
-            <!-- 문의 항목 2 -->
-            <div class="inquiry-list-item" @click="openInquiryModal(inquiries[1])">
-              <div class="inquiry-list-item-header">
-                <div class="inquiry-list-category">서비스문의</div>
-                <div class="inquiry-list-date">2024.03.14</div>
-              </div>
-              <div class="inquiry-list-title-text">AI 운세 서비스 오류</div>
-              <div class="inquiry-list-content">
-                AI 운세 서비스 이용 중 오류가 발생했습니다. 화면이 계속 로딩 중입니다.
-              </div>
-              <div class="inquiry-list-footer">
-                <div class="inquiry-list-status waiting">
-                  <span class="inquiry-list-status-icon">⏳</span>
-                  <span>답변대기</span>
-                </div>
-                <div class="inquiry-list-arrow">›</div>
-              </div>
-            </div>
-
-            <!-- 문의 항목 3 -->
-            <div class="inquiry-list-item" @click="openInquiryModal(inquiries[2])">
-              <div class="inquiry-list-item-header">
-                <div class="inquiry-list-category">계정문의</div>
-                <div class="inquiry-list-date">2024.03.13</div>
-              </div>
-              <div class="inquiry-list-title-text">비밀번호 재설정이 안됩니다</div>
-              <div class="inquiry-list-content">
-                비밀번호 찾기를 클릭해도 이메일이 오지 않습니다. 스팸함도 확인했는데 없습니다.
-              </div>
-              <div class="inquiry-list-footer">
-                <div class="inquiry-list-status completed">
-                  <span class="inquiry-list-status-icon">✓</span>
-                  <span>답변완료</span>
-                </div>
-                <div class="inquiry-list-arrow">›</div>
-              </div>
-            </div>
-
-            <!-- 문의 항목 4 -->
-            <div class="inquiry-list-item" @click="openInquiryModal(inquiries[3])">
-              <div class="inquiry-list-item-header">
-                <div class="inquiry-list-category">이벤트/혜택</div>
-                <div class="inquiry-list-date">2024.03.12</div>
-              </div>
-              <div class="inquiry-list-title-text">신규 회원 쿠폰이 지급되지 않았습니다</div>
-              <div class="inquiry-list-content">
-                회원가입을 완료했는데 첫 상담 무료 쿠폰이 지급되지 않았습니다. 언제 받을 수 있나요?
-              </div>
-              <div class="inquiry-list-footer">
-                <div class="inquiry-list-status completed">
-                  <span class="inquiry-list-status-icon">✓</span>
-                  <span>답변완료</span>
+                <div class="inquiry-list-status" :class="inquiry.has_reply ? 'completed' : 'waiting'">
+                  <span class="inquiry-list-status-icon">{{ inquiry.has_reply ? '✓' : '⏳' }}</span>
+                  <span>{{ inquiry.has_reply ? '답변완료' : '답변대기' }}</span>
                 </div>
                 <div class="inquiry-list-arrow">›</div>
               </div>
@@ -128,12 +92,30 @@
         </div>
 
         <!-- 페이지네이션 -->
-        <div class="inquiry-pagination">
-          <button class="inquiry-page-btn" disabled>‹</button>
-          <button class="inquiry-page-btn active">1</button>
-          <button class="inquiry-page-btn">2</button>
-          <button class="inquiry-page-btn">3</button>
-          <button class="inquiry-page-btn">›</button>
+        <div v-if="inquiries && inquiries.length > 0" class="inquiry-pagination">
+          <button
+            class="inquiry-page-btn"
+            :disabled="currentPage === 1"
+            @click="goToPage(currentPage - 1)"
+          >
+            ‹
+          </button>
+          <button
+            v-for="page in Math.min(totalPages, 5)"
+            :key="page"
+            class="inquiry-page-btn"
+            :class="{ active: currentPage === page }"
+            @click="goToPage(page)"
+          >
+            {{ page }}
+          </button>
+          <button
+            class="inquiry-page-btn"
+            :disabled="currentPage >= totalPages"
+            @click="goToPage(currentPage + 1)"
+          >
+            ›
+          </button>
         </div>
       </section>
     </main>
@@ -159,41 +141,39 @@
             <div v-if="selectedInquiry">
               <!-- 문의 정보 -->
               <div class="inquiry-detail-info">
-                <div class="inquiry-detail-category">{{ selectedInquiry.category }}</div>
-                <div class="inquiry-detail-status" :class="selectedInquiry.status">
-                  <span class="inquiry-detail-status-icon">{{ selectedInquiry.statusIcon }}</span>
-                  <span>{{ selectedInquiry.statusText }}</span>
+                <div class="inquiry-detail-category">{{ getInquiryTypeLabel(selectedInquiry.inquiry_type) }}</div>
+                <div class="inquiry-detail-status" :class="selectedInquiry.has_reply ? 'completed' : 'waiting'">
+                  <span class="inquiry-detail-status-icon">{{ selectedInquiry.has_reply ? '✓' : '⏳' }}</span>
+                  <span>{{ selectedInquiry.has_reply ? '답변완료' : '답변대기' }}</span>
                 </div>
               </div>
 
               <!-- 문의 제목 -->
               <h3 class="inquiry-detail-subject">
-                {{ selectedInquiry.title }}
+                {{ selectedInquiry.title || '제목 없음' }}
               </h3>
 
               <!-- 문의 메타 정보 -->
               <div class="inquiry-detail-meta">
-                <span>작성일: {{ selectedInquiry.date }}</span>
-                <span class="inquiry-detail-divider">|</span>
-                <span>조회수: {{ selectedInquiry.views }}</span>
+                <span>작성일: {{ formatDate(selectedInquiry.created_at) }}</span>
               </div>
 
               <!-- 문의 내용 -->
               <div class="inquiry-detail-content">
-                <p v-html="selectedInquiry.content" />
+                <p style="white-space: pre-wrap;">{{ selectedInquiry.content }}</p>
               </div>
 
               <!-- 답변 섹션 -->
-              <div v-if="selectedInquiry.reply" class="inquiry-reply-container">
+              <div v-if="selectedInquiry.reply_content" class="inquiry-reply-container">
                 <div class="inquiry-reply-header">
                   <div class="inquiry-reply-icon">💬</div>
                   <div class="inquiry-reply-title">고객센터 답변</div>
                 </div>
-                <div class="inquiry-reply-meta">
-                  <span>답변일: {{ selectedInquiry.reply.date }}</span>
+                <div v-if="selectedInquiry.answered_at" class="inquiry-reply-meta">
+                  <span>답변일: {{ formatDate(selectedInquiry.answered_at) }}</span>
                 </div>
                 <div class="inquiry-reply-content">
-                  <p v-html="selectedInquiry.reply.content" />
+                  <p style="white-space: pre-wrap;">{{ selectedInquiry.reply_content }}</p>
                 </div>
               </div>
 
@@ -215,132 +195,72 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
+import { useInquiryQueries } from '~/composables/api/useInquiryQueries'
+import { getInquiryTypeLabel, formatDate, type InquiryItem } from '~/types/inquiry'
 
 definePageMeta({
-  layout: 'default'
-  // TODO: 실제 구현 시 middleware: 'auth' 추가 (로그인 필수)
+  layout: 'default',
+  middleware: 'auth'
 })
-
-interface IInquiry {
-  id: number
-  category: string
-  title: string
-  content: string
-  date: string
-  views: number
-  status: 'completed' | 'waiting'
-  statusIcon: string
-  statusText: string
-  reply?: {
-    date: string
-    content: string
-  }
-}
 
 // 검색 및 필터 상태
 const searchQuery = ref('')
+const currentSearch = ref('')
 const filter = ref<'all' | 'waiting' | 'completed'>('all')
+const currentPage = ref(1)
+const limit = 10
+
+// 문의 API
+const { useInquiryList } = useInquiryQueries()
+
+// 문의 목록 조회
+const params = computed(() => ({
+  page: currentPage.value,
+  limit,
+  search: currentSearch.value || undefined
+}))
+
+const { data: inquiryData, isLoading } = useInquiryList(params)
+
+// 문의 목록 및 페이징 정보
+const inquiries = computed(() => {
+  const items = inquiryData.value?.items || []
+  if (filter.value === 'all') return items
+  return items.filter(item =>
+    filter.value === 'completed' ? item.has_reply : !item.has_reply
+  )
+})
+const totalCount = computed(() => inquiryData.value?.total || 0)
+const totalPages = computed(() => Math.ceil(totalCount.value / limit) || 1)
 
 // 모달 상태
 const isModalOpen = ref(false)
-const selectedInquiry = ref<IInquiry | null>(null)
+const selectedInquiry = ref<InquiryItem | null>(null)
 
-// 문의 데이터
-const inquiries: IInquiry[] = [
-  {
-    id: 1,
-    category: '결제문의',
-    title: '포인트 충전이 되지 않습니다',
-    content: `포인트 충전이 되지 않아 문의드립니다.<br>
-결제는 완료되었는데 포인트가 반영되지 않았습니다.<br><br>
+// 검색 핸들러
+const handleSearch = () => {
+  currentSearch.value = searchQuery.value.trim()
+  currentPage.value = 1
+}
 
-결제 정보:<br>
-- 결제 금액: 50,000원<br>
-- 결제 시간: 2024.03.15 14:20<br>
-- 결제 수단: 신용카드<br><br>
-
-빠른 처리 부탁드립니다.`,
-    date: '2024.03.15 14:32',
-    views: 1,
-    status: 'completed',
-    statusIcon: '✓',
-    statusText: '답변완료',
-    reply: {
-      date: '2024.03.15 15:10',
-      content: `안녕하세요, 사주라인 고객센터입니다.<br><br>
-
-문의하신 포인트 충전 건에 대해 확인해드렸습니다.<br>
-결제는 정상적으로 완료되었으나, 시스템 지연으로 인해 포인트 반영이 늦어진 것으로 확인되었습니다.<br><br>
-
-현재 50,000P가 정상적으로 충전되었음을 확인하였습니다.<br>
-불편을 드려 죄송합니다.<br><br>
-
-추가 문의사항이 있으시면 언제든 연락 주세요.<br>
-감사합니다.`
-    }
-  },
-  {
-    id: 2,
-    category: '서비스문의',
-    title: 'AI 운세 서비스 오류',
-    content: 'AI 운세 서비스 이용 중 오류가 발생했습니다. 화면이 계속 로딩 중입니다.',
-    date: '2024.03.14 16:20',
-    views: 2,
-    status: 'waiting',
-    statusIcon: '⏳',
-    statusText: '답변대기'
-  },
-  {
-    id: 3,
-    category: '계정문의',
-    title: '비밀번호 재설정이 안됩니다',
-    content: '비밀번호 찾기를 클릭해도 이메일이 오지 않습니다. 스팸함도 확인했는데 없습니다.',
-    date: '2024.03.13 10:15',
-    views: 3,
-    status: 'completed',
-    statusIcon: '✓',
-    statusText: '답변완료',
-    reply: {
-      date: '2024.03.13 11:30',
-      content: `안녕하세요, 사주라인 고객센터입니다.<br><br>
-
-비밀번호 재설정 이메일이 발송되지 않는 문제에 대해 확인해드렸습니다.<br>
-가입하신 이메일 주소가 정확한지 확인 부탁드립니다.<br><br>
-
-추가 문의사항이 있으시면 언제든 연락 주세요.<br>
-감사합니다.`
-    }
-  },
-  {
-    id: 4,
-    category: '이벤트/혜택',
-    title: '신규 회원 쿠폰이 지급되지 않았습니다',
-    content: '회원가입을 완료했는데 첫 상담 무료 쿠폰이 지급되지 않았습니다. 언제 받을 수 있나요?',
-    date: '2024.03.12 09:45',
-    views: 1,
-    status: 'completed',
-    statusIcon: '✓',
-    statusText: '답변완료',
-    reply: {
-      date: '2024.03.12 10:20',
-      content: `안녕하세요, 사주라인 고객센터입니다.<br><br>
-
-신규 회원 쿠폰은 회원가입 후 24시간 이내에 자동으로 지급됩니다.<br>
-현재 쿠폰함을 확인하시면 정상적으로 지급된 쿠폰을 확인하실 수 있습니다.<br><br>
-
-감사합니다.`
-    }
+// 페이지 이동
+const goToPage = (page: number) => {
+  if (page >= 1 && page <= totalPages.value) {
+    currentPage.value = page
+    window.scrollTo({ top: 0, behavior: 'smooth' })
   }
-]
+}
 
-const openInquiryModal = (inquiry: IInquiry | undefined) => {
+// 모달 열기
+const openInquiryModal = (inquiry: InquiryItem) => {
   if (!inquiry) return
   selectedInquiry.value = inquiry
   isModalOpen.value = true
   document.body.style.overflow = 'hidden'
 }
 
+// 모달 닫기
 const closeInquiryModal = () => {
   isModalOpen.value = false
   selectedInquiry.value = null
@@ -603,5 +523,71 @@ const closeInquiryModal = () => {
 /* 리스트 아이템 클릭 가능하게 */
 .inquiry-list-item {
   cursor: pointer;
+}
+
+/* 로딩 스켈레톤 */
+.inquiry-loading-skeleton {
+  padding: 20px 0;
+}
+
+.skeleton-item {
+  height: 120px;
+  background: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0.05) 25%,
+    rgba(255, 255, 255, 0.1) 50%,
+    rgba(255, 255, 255, 0.05) 75%
+  );
+  background-size: 200% 100%;
+  animation: skeleton-loading 1.5s infinite;
+  border-radius: 12px;
+  margin-bottom: 12px;
+}
+
+@keyframes skeleton-loading {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}
+
+/* 빈 상태 */
+.inquiry-empty-state {
+  text-align: center;
+  padding: 60px 20px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 16px;
+}
+
+.inquiry-empty-icon {
+  font-size: 48px;
+  margin-bottom: 16px;
+}
+
+.inquiry-empty-text {
+  font-size: 16px;
+  color: rgba(255, 255, 255, 0.7);
+  margin-bottom: 20px;
+}
+
+.inquiry-empty-button {
+  display: inline-flex;
+  align-items: center;
+  padding: 12px 24px;
+  background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
+  color: white;
+  border-radius: 12px;
+  font-size: 15px;
+  font-weight: 600;
+  text-decoration: none;
+  transition: all 0.3s;
+}
+
+.inquiry-empty-button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(139, 92, 246, 0.3);
 }
 </style>
