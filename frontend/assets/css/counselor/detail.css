@@ -301,8 +301,8 @@
 }
 
 .scrollable-content {
-  max-height: 400px;
-  overflow-y: auto;
+  max-height: none;
+  overflow-y: visible;
   padding-right: 4px;
 }
 
@@ -484,6 +484,10 @@
   font-size: 14px;
 }
 
+.reply-text {
+  color: #ffffff;
+}
+
 .expand-icon {
   margin-left: auto;
   transition: transform 0.3s ease;
@@ -525,7 +529,7 @@
 .reply-content {
   font-size: 14px;
   line-height: 1.6;
-  color: rgba(255, 255, 255, 0.85);
+  color: #ffffff;
 }
 
 /* 상담 문의 카드 */
@@ -598,6 +602,40 @@
   font-size: 14px;
   line-height: 1.6;
   color: rgba(255, 255, 255, 0.8);
+}
+
+/* 비밀글 관련 스타일 */
+.secret-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 10px;
+  background: rgba(147, 51, 234, 0.2);
+  border: 1px solid rgba(147, 51, 234, 0.3);
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #B794F6;
+  margin-bottom: 8px;
+}
+
+.secret-message {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 32px 20px;
+  background: rgba(147, 51, 234, 0.05);
+  border: 1px dashed rgba(147, 51, 234, 0.3);
+  border-radius: 12px;
+  font-size: 14px;
+  color: rgba(255, 255, 255, 0.6);
+  font-weight: 500;
+}
+
+.secret-icon {
+  font-size: 20px;
+  opacity: 0.7;
 }
 
 /* 가격 정보 */
@@ -811,7 +849,7 @@
   }
 
   .scrollable-content {
-    max-height: 300px;
+    max-height: none;
   }
 
   .tab-header-actions {

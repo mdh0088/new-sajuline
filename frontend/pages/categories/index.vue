@@ -16,6 +16,20 @@
 
     <!-- 메인 콘텐츠 -->
     <main class="main-content">
+      <!-- 상태 필터 칩 -->
+      <div class="filter-chips-container">
+        <div class="filter-chips-left">
+          <div
+            v-for="(filter, index) in statusFilters"
+            :key="filter"
+            :class="['chip', { active: activeStatusFilter === index }]"
+            @click="setActiveStatusFilter(index)"
+          >
+            {{ filter }}
+          </div>
+        </div>
+      </div>
+
       <!-- 검색 결과 정보 -->
       <div class="search-info">
         <span class="result-count">총 <strong>{{ totalCount }}명</strong>의 상담사</span>
@@ -131,6 +145,10 @@ const showPhoneModal = ref(false)
 const selectedCounselor = ref<any>(null)
 const userPoints = computed(() => storePoints.value)
 
+// 상태 필터
+const statusFilters = ref(['전체', '상담중', '부재중', '대기중'])
+const activeStatusFilter = ref(0)
+
 // 카테고리 목록
 const categories = [
   { value: 'all', label: '전체', icon: '🌟' },
@@ -171,6 +189,7 @@ const counselors = ref([
     avatar: '🌙',
     image: '/images/cs_1.png',
     isOnline: true,
+    status: '2', // 2: 상담중, 3: 부재중, 1: 대기중
     specialty: '타로 마스터',
     experience: '20년 경력',
     category: 'tarot',
@@ -187,6 +206,7 @@ const counselors = ref([
     avatar: '🔥',
     image: '/images/cs_2.png',
     isOnline: true,
+    status: '1', // 대기중
     specialty: '사주/신점 전문',
     experience: '30년 경력',
     category: 'saju',
@@ -203,6 +223,7 @@ const counselors = ref([
     avatar: '💫',
     image: '/images/cs_2.png',
     isOnline: false,
+    status: '3', // 부재중
     specialty: '신통력',
     experience: '15년 경력',
     category: 'money',
@@ -219,6 +240,7 @@ const counselors = ref([
     avatar: '💖',
     image: '/images/cs_1.png',
     isOnline: true,
+    status: '2', // 상담중
     specialty: '연애 전문',
     experience: '18년 경력',
     category: 'love',
@@ -235,6 +257,7 @@ const counselors = ref([
     avatar: '🌿',
     image: '/images/cs_2.png',
     isOnline: true,
+    status: '1', // 대기중
     specialty: '가족/건강',
     experience: '25년 경력',
     category: 'work',
@@ -251,6 +274,7 @@ const counselors = ref([
     avatar: '✨',
     image: '/images/cs_1.png',
     isOnline: true,
+    status: '1', // 대기중
     specialty: '신점 전문',
     experience: '22년 경력',
     category: 'divine',
@@ -267,6 +291,7 @@ const counselors = ref([
     avatar: '🔮',
     image: '/images/cs_2.png',
     isOnline: true,
+    status: '2', // 상담중
     specialty: '타로/사주',
     experience: '25년 경력',
     category: 'tarot',
@@ -283,6 +308,7 @@ const counselors = ref([
     avatar: '🌸',
     image: '/images/cs_1.png',
     isOnline: true,
+    status: '3', // 부재중
     specialty: '연애운 전문',
     experience: '12년 경력',
     category: 'love',
@@ -296,15 +322,30 @@ const counselors = ref([
 
 // 필터링된 상담사
 const filteredCounselors = computed(() => {
-  if (selectedCategory.value === 'all') {
-    return counselors.value
+  let result = counselors.value
+
+  // 카테고리 필터
+  if (selectedCategory.value !== 'all') {
+    result = result.filter(c => c.category === selectedCategory.value)
   }
-  return counselors.value.filter(c => c.category === selectedCategory.value)
+
+  // 상태 필터 (전체: 0, 상담중: 1, 부재중: 2, 대기중: 3)
+  const statusMap = [null, '2', '3', '1'] // 전체, 상담중, 부재중, 대기중
+  const selectedStatus = statusMap[activeStatusFilter.value]
+  if (selectedStatus) {
+    result = result.filter(c => c.status === selectedStatus)
+  }
+
+  return result
 })
 
 const totalCount = computed(() => filteredCounselors.value.length)
 
 // 메서드
+const setActiveStatusFilter = (index: number) => {
+  activeStatusFilter.value = index
+}
+
 const selectCategory = (category: string) => {
   selectedCategory.value = category
   // URL 업데이트 (전체인 경우 쿼리 파라미터 제거)
@@ -392,6 +433,46 @@ useHead({
 </script>
 
 <style scoped>
+/* 상태 필터 칩 */
+.filter-chips-container {
+  display: flex;
+  gap: 20px;
+  margin-bottom: 20px;
+  padding: 4px 0;
+}
+
+.filter-chips-left {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+}
+
+.filter-chips-left::-webkit-scrollbar {
+  display: none;
+}
+
+.chip {
+  flex: 0 0 auto;
+  padding: 10px 20px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 24px;
+  font-size: 14px;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.7);
+  white-space: nowrap;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.chip.active {
+  background: rgba(147, 51, 234, 0.2);
+  color: #B794F6;
+  border-color: rgba(147, 51, 234, 0.4);
+}
+
 /* 카테고리 탭 */
 .category-tabs {
   position: sticky;
