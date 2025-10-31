@@ -52,7 +52,7 @@ from src.schemas.auth_schema import LoginRequest, LoginResponse
 from src.common.response import APIResponse,APIResponseBuilder, ok, fail
 from src.repositories.inquiry_repository import InquiryRepository
 from src.services.inquiry_service import InquiryService
-from src.schemas.inquiry_schema import UserInquiryCreateRequest, InquiryResponse
+from src.schemas.inquiry_schema import UserInquiryCreateRequest, InquiryResponse, UserAdminInquiryCreateRequest
 from src.common.logging import logger, get_logger_with_request_id
 from src.common.utils.client_info import extract_client_info
 from src.exceptions.custom_exceptions import BaseAppException
@@ -210,10 +210,129 @@ def get_tm60_chatlog_repository():
 
 
 
+@router.get(
+    "/inquiries",
+    response_model=APIResponse,
+    summary="사용자 → 관리자 문의 목록 조회"
+)
+async def get_user_admin_inquiries_api(
+    page: int = Query(1, ge=1, description="페이지 번호"),
+    limit: int = Query(20, ge=1, le=100, description="페이지당 항목 수"),
+    current_user: TokenPayload = Depends(get_current_user),
+    inquiry_service: InquiryService = Depends(get_inquiry_service)
+) -> APIResponse:
+    """
+    사용자 → 관리자 문의 목록을 조회합니다.
+    inquirer_id=#{user_id} AND category='USER_TO_ADMIN'
+
+    - **page**: 페이지 번호 (기본값: 1)
+    - **limit**: 페이지당 항목 수 (기본값: 20, 최대: 100)
+    """
+    log = get_logger_with_request_id()
+    user_id = current_user.sub
+    log.info("API: Getting user admin inquiries",
+            user_id=user_id,
+            page=page,
+            limit=limit)
+
+    # 서비스 호출 (tuple 반환)
+    inquiries, page, limit, total = await inquiry_service.get_user_admin_inquiries(
+        user_id=user_id,
+        page=page,
+        limit=limit
+    )
+
+    log.info("API: User admin inquiries retrieved successfully",
+            user_id=user_id,
+            count=len(inquiries),
+            total=total,
+            page=page,
+            limit=limit)
+
+    # APIResponseBuilder.paginated 사용
+    return APIResponseBuilder.paginated(
+        data=inquiries,
+        page=page,
+        limit=limit,
+        total=total,
+        message="사용자 문의 목록 조회 성공"
+    )
+
+
 @router.post(
     "/inquiries",
     response_model=APIResponse[InquiryResponse],
-    summary="사용자 → 상담사 문의 등록"
+    summary="사용자 → 관리자 문의 등록",
+    status_code=status.HTTP_201_CREATED
+)
+async def create_user_admin_inquiry_api(
+    payload: UserAdminInquiryCreateRequest,
+    current_user: TokenPayload = Depends(get_current_user),
+    inquiry_service: InquiryService = Depends(get_inquiry_service)
+) -> APIResponse[InquiryResponse]:
+    """
+    로그인 사용자 기준으로 관리자에게 문의 등록
+
+    - **inquiry_type**: PAY(결제문의), ACCOUNT(계정문의), CS(상담문의), EVENT(이벤트문의), ETC(기타문의)
+    - **title**: 제목 (선택)
+    - **content**: 문의 내용 (필수)
+    """
+    log = get_logger_with_request_id()
+    user_id = current_user.sub
+    log.info("API: Creating user admin inquiry",
+            user_id=user_id,
+            inquiry_type=payload.inquiry_type)
+
+    result = await inquiry_service.create_user_admin_inquiry(
+        user_id=user_id,
+        payload=payload
+    )
+
+    log.info("API: User admin inquiry created successfully",
+            user_id=user_id,
+            inquiry_id=result.inquiry_id)
+
+    return ok(data=result, message="문의가 등록되었습니다.")
+
+
+@router.get(
+    "/inquiries/{inquiry_id}",
+    response_model=APIResponse[InquiryResponse],
+    summary="사용자 → 관리자 문의 상세 조회"
+)
+async def get_user_admin_inquiry_detail_api(
+    inquiry_id: int,
+    current_user: TokenPayload = Depends(get_current_user),
+    inquiry_service: InquiryService = Depends(get_inquiry_service)
+) -> APIResponse[InquiryResponse]:
+    """
+    사용자 → 관리자 문의 상세 조회
+
+    - **inquiry_id**: 문의 ID
+    """
+    log = get_logger_with_request_id()
+    user_id = current_user.sub
+    log.info("API: Getting user admin inquiry detail",
+            user_id=user_id,
+            inquiry_id=inquiry_id)
+
+    result = await inquiry_service.get_user_admin_inquiry_detail(
+        inquiry_id=inquiry_id,
+        user_id=user_id
+    )
+
+    log.info("API: User admin inquiry detail retrieved successfully",
+            user_id=user_id,
+            inquiry_id=inquiry_id)
+
+    return ok(data=result, message="문의 상세 조회 성공")
+
+
+@router.post(
+    "/inquiries/counselor",
+    response_model=APIResponse[InquiryResponse],
+    summary="사용자 → 상담사 문의 등록",
+    status_code=status.HTTP_201_CREATED
 )
 async def create_user_inquiry_api(
     payload: UserInquiryCreateRequest,

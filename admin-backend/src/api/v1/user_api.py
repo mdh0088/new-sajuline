@@ -10,8 +10,10 @@ from fastapi import APIRouter, Depends, Query
 
 from src.common.response import APIResponse, APIResponseBuilder, ok
 from src.schemas.user_schema import UserListParams, UserUpdateRequest, UserPointAdjustRequest
+from src.schemas.inquiry_schema import UserAdminInquiryCreateRequest
 from src.services.user_service import UserService
 from src.services.notification_service import NotificationService
+from src.services.inquiry_service import InquiryService
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import Session
 from src.core.database import get_db as get_db_maria, get_db_mssql
@@ -19,7 +21,9 @@ from src.repositories.user_repository import UserRepository
 from src.repositories.ars.tm60_users_repository import Tm60UsersRepository
 from src.repositories.notification_repository import NotificationRepository
 from src.repositories.point_transaction_repository import PointTransactionRepository
+from src.repositories.inquiry_repository import InquiryRepository
 from src.schemas.point_transaction_schema import PointTransactionItem
+from src.common.dependencies.auth import get_current_user, TokenPayload
 
 
 router = APIRouter(prefix="/users", tags=["users"])

@@ -11,13 +11,13 @@
               <label class="inquiry-form-label">
                 문의 유형<span class="required">*</span>
               </label>
-              <select v-model="formData.category" class="inquiry-form-select">
+              <select v-model="formData.inquiry_type" class="inquiry-form-select" required>
                 <option value="">문의 유형을 선택하세요</option>
-                <option value="결제/환불">결제/환불</option>
-                <option value="계정 문의">계정 문의</option>
-                <option value="상담 문의">상담 문의</option>
-                <option value="이벤트/혜택">이벤트/혜택</option>
-                <option value="기타">기타</option>
+                <option value="PAY">결제문의</option>
+                <option value="ACCOUNT">계정문의</option>
+                <option value="CS">상담문의</option>
+                <option value="EVENT">이벤트문의</option>
+                <option value="ETC">기타문의</option>
               </select>
             </div>
 
@@ -51,33 +51,14 @@
               <div class="inquiry-form-help">최대 1000자</div>
             </div>
 
-            <!-- 연락처 정보 -->
-            <div class="inquiry-form-group">
-              <label class="inquiry-form-label">답변 받을 연락처</label>
-              <input
-                v-model="formData.email"
-                type="email"
-                class="inquiry-form-input"
-                placeholder="이메일 주소 (선택사항)"
-              >
-              <div class="inquiry-form-help">답변을 이메일로도 받고 싶은 경우 입력하세요</div>
-            </div>
-
-            <!-- 개인정보 수집 동의 -->
-            <div class="inquiry-agreement-section">
-              <label class="inquiry-agreement-item">
-                <input v-model="formData.agreed" type="checkbox" class="inquiry-checkbox" required>
-                <span class="inquiry-agreement-text">
-                  개인정보 수집 및 이용에 동의합니다.
-                </span>
-              </label>
-              <div class="inquiry-form-help">문의 답변을 위해 개인정보가 수집됩니다.</div>
-            </div>
 
             <!-- 제출 버튼 -->
             <div class="inquiry-submit-container">
-              <button type="submit" class="inquiry-submit-button" :disabled="!isFormValid">
-                문의하기
+              <button type="submit" class="inquiry-submit-button" :disabled="!isFormValid || isSubmitting">
+                {{ isSubmitting ? '제출 중...' : '문의하기' }}
+              </button>
+              <button type="button" class="inquiry-cancel-button" @click="handleCancel">
+                취소
               </button>
             </div>
           </form>
@@ -88,51 +69,75 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed } from 'vue'
+import { useInquiryQueries } from '~/composables/api/useInquiryQueries'
+import { useNotify } from '~/composables/utils/useNotify'
+import type { InquiryType } from '~/types/inquiry'
 
 definePageMeta({
-  layout: 'default'
-  // TODO: 실제 구현 시 middleware: 'auth' 추가 (로그인 필수)
+  layout: 'default',
+  middleware: 'auth'
 })
 
-// 라우트에서 카테고리 가져오기
-const route = useRoute()
-const categoryFromQuery = route.query.category as string | undefined
+const router = useRouter()
+const { notifySuccess, notifyError } = useNotify()
+
+// 문의 API
+const { useCreateInquiry } = useInquiryQueries()
 
 // 폼 데이터
-const formData = ref({
-  category: '',
+const formData = ref<{
+  inquiry_type: InquiryType | ''
+  title: string
+  content: string
+}>({
+  inquiry_type: '',
   title: '',
-  content: '',
-  email: '',
-  agreed: false
+  content: ''
 })
 
-// 쿼리에서 카테고리가 있으면 자동 선택
-onMounted(() => {
-  if (categoryFromQuery) {
-    formData.value.category = decodeURIComponent(categoryFromQuery)
-  }
-})
+// 제출 중 상태
+const isSubmitting = ref(false)
 
 // 폼 유효성 검사
 const isFormValid = computed(() => {
   return (
-    formData.value.category !== '' &&
+    formData.value.inquiry_type !== '' &&
     formData.value.title.trim() !== '' &&
-    formData.value.content.trim() !== '' &&
-    formData.value.agreed
+    formData.value.content.trim() !== ''
   )
 })
 
-// 폼 제출
-const handleSubmit = () => {
-  if (!isFormValid.value) return
+// 문의 작성 mutation
+const { mutateAsync: createInquiry } = useCreateInquiry({
+  onSuccess: () => {
+    notifySuccess('문의가 등록되었습니다.')
+    router.push('/cs')
+  },
+  onError: (error) => {
+    notifyError(error.message || '문의 등록에 실패했습니다.')
+  }
+})
 
-  console.log('문의 제출:', formData.value)
-  // TODO: API 연동
-  alert('문의가 제출되었습니다.')
-  navigateTo('/cs')
+// 폼 제출
+const handleSubmit = async () => {
+  if (!isFormValid.value || isSubmitting.value) return
+
+  try {
+    isSubmitting.value = true
+    await createInquiry({
+      inquiry_type: formData.value.inquiry_type as InquiryType,
+      title: formData.value.title.trim(),
+      content: formData.value.content.trim()
+    })
+  } finally {
+    isSubmitting.value = false
+  }
+}
+
+// 취소
+const handleCancel = () => {
+  router.push('/cs')
 }
 </script>
 

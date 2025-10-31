@@ -59,7 +59,22 @@
       </section>
 
       <!-- 문의내역 섹션 - 로그인 상태에 따라 다르게 표시 -->
-      <section v-if="isLoggedIn" class="cs-inquiry-section">
+      <!-- 로딩 중일 때는 스켈레톤 표시 -->
+      <section v-if="isAuthChecking" class="cs-inquiry-section">
+        <div class="cs-inquiry-header">
+          <h2 class="cs-inquiry-title">
+            <span>📝</span>
+            <span>내 문의내역</span>
+          </h2>
+        </div>
+        <div class="cs-loading-skeleton">
+          <div class="skeleton-item"></div>
+          <div class="skeleton-item"></div>
+        </div>
+      </section>
+
+      <!-- 로그인 상태 -->
+      <section v-else-if="isAuthenticated" class="cs-inquiry-section">
         <div class="cs-inquiry-header">
           <h2 class="cs-inquiry-title">
             <span>📝</span>
@@ -77,30 +92,36 @@
           </div>
         </div>
         <div class="cs-inquiry-list">
-          <NuxtLink to="/cs/inquiries/1" class="cs-inquiry-item">
+          <!-- 로딩 중 -->
+          <div v-if="isLoadingInquiries" class="cs-loading-skeleton">
+            <div class="skeleton-item"></div>
+            <div class="skeleton-item"></div>
+          </div>
+
+          <!-- 문의 없음 -->
+          <div v-else-if="!latestInquiries || latestInquiries.length === 0" class="cs-no-inquiries">
+            <div class="cs-no-inquiries-icon">📝</div>
+            <p class="cs-no-inquiries-text">문의 내역이 없습니다</p>
+          </div>
+
+          <!-- 문의 목록 (최근 2개) -->
+          <NuxtLink
+            v-else
+            v-for="inquiry in latestInquiries"
+            :key="inquiry.inquiry_id"
+            :to="`/cs/inquiries/${inquiry.inquiry_id}`"
+            class="cs-inquiry-item"
+          >
             <div class="cs-inquiry-item-header">
-              <span class="cs-inquiry-category">결제문의</span>
-              <span class="cs-inquiry-date">2024.03.15</span>
+              <span class="cs-inquiry-category">{{ getInquiryTypeLabel(inquiry.inquiry_type) }}</span>
+              <span class="cs-inquiry-date">{{ formatDate(inquiry.created_at) }}</span>
             </div>
             <div class="cs-inquiry-content">
-              포인트 충전이 되지 않아 문의드립니다. 결제는 완료되었는데 포인트가 반영되지 않았습니다.
+              {{ inquiry.content }}
             </div>
-            <div class="cs-inquiry-status completed">
-              <span class="cs-status-icon">✓</span>
-              <span>답변완료</span>
-            </div>
-          </NuxtLink>
-          <NuxtLink to="/cs/inquiries/2" class="cs-inquiry-item">
-            <div class="cs-inquiry-item-header">
-              <span class="cs-inquiry-category">서비스문의</span>
-              <span class="cs-inquiry-date">2024.03.14</span>
-            </div>
-            <div class="cs-inquiry-content">
-              AI 운세 서비스 이용 중 오류가 발생했습니다. 화면이 계속 로딩 중입니다.
-            </div>
-            <div class="cs-inquiry-status waiting">
-              <span class="cs-status-icon">⏳</span>
-              <span>답변대기</span>
+            <div class="cs-inquiry-status" :class="inquiry.has_reply ? 'completed' : 'waiting'">
+              <span class="cs-status-icon">{{ inquiry.has_reply ? '✓' : '⏳' }}</span>
+              <span>{{ inquiry.has_reply ? '답변완료' : '답변대기' }}</span>
             </div>
           </NuxtLink>
         </div>
@@ -162,15 +183,36 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, onMounted, computed } from 'vue'
+import { useAuth } from '~/composables/auth/useAuth'
+import { useInquiryQueries } from '~/composables/api/useInquiryQueries'
+import { getInquiryTypeLabel, formatDate } from '~/types/inquiry'
 
 definePageMeta({
   layout: 'default'
 })
 
-// 임시 로그인 상태 (UI 테스트용 - 실제로는 인증 스토어와 연동 필요)
-// TODO: 실제 구현 시 useAuthStore()로 교체
-const isLoggedIn = ref(false) // false로 기본값 설정하여 비로그인 상태 테스트
+// 인증 상태 관리
+const { isAuthenticated, isAuthChecking, restoreSession } = useAuth()
+
+// 문의 API
+const { useInquiryList } = useInquiryQueries()
+
+// 문의 목록 조회 (최근 2개만)
+const { data: inquiryData, isLoading: isLoadingInquiries } = useInquiryList(
+  { page: 1, limit: 2 },
+  { enabled: isAuthenticated }
+)
+
+// 최근 2개 문의
+const latestInquiries = computed(() => inquiryData.value?.items || [])
+
+// 페이지 로드 시 세션 복원 확인
+onMounted(async () => {
+  if (isAuthChecking.value) {
+    await restoreSession()
+  }
+})
 
 // FAQ 관련 상태
 const activeFaq = ref(-1)
@@ -210,7 +252,7 @@ const toggleFaq = (index: number) => {
 
 // 카테고리 클릭 핸들러
 const handleCategoryClick = (category: string) => {
-  if (!isLoggedIn.value) {
+  if (!isAuthenticated.value) {
     navigateTo('/login')
     return
   }
@@ -219,7 +261,7 @@ const handleCategoryClick = (category: string) => {
 
 // 네비게이션 함수
 const goToInquiries = () => {
-  if (!isLoggedIn.value) {
+  if (!isAuthenticated.value) {
     navigateTo('/login')
     return
   }
@@ -227,7 +269,7 @@ const goToInquiries = () => {
 }
 
 const goToWrite = () => {
-  if (!isLoggedIn.value) {
+  if (!isAuthenticated.value) {
     navigateTo('/login')
     return
   }
@@ -237,6 +279,34 @@ const goToWrite = () => {
 
 <style>
 @import '~/assets/css/cs.css';
+
+/* 로딩 스켈레톤 스타일 */
+.cs-loading-skeleton {
+  padding: 20px;
+}
+
+.skeleton-item {
+  height: 100px;
+  background: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0.05) 25%,
+    rgba(255, 255, 255, 0.1) 50%,
+    rgba(255, 255, 255, 0.05) 75%
+  );
+  background-size: 200% 100%;
+  animation: skeleton-loading 1.5s infinite;
+  border-radius: 12px;
+  margin-bottom: 12px;
+}
+
+@keyframes skeleton-loading {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}
 
 /* 비로그인 상태 안내 스타일 */
 .cs-login-required {

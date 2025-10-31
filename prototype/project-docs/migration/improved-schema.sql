@@ -612,6 +612,7 @@ CREATE TABLE `t_inquiry` (
   `title` varchar(200) DEFAULT NULL COMMENT '제목',
   `content` text NOT NULL COMMENT '내용',
   `is_read` tinyint(1) DEFAULT 0 COMMENT '읽음 상태',
+  `inquiry_type` varchar(100) DEFAULT 'ETC' COMMENT 'PAY(결제문의), ACCOUNT(계정문의), CS(상담문의), EVENT(이벤트문의), ETC(기타문의)',
   `reply_content` text DEFAULT NULL COMMENT '관리자 답변',
   `answered_at` datetime DEFAULT NULL COMMENT '답변 시간',
   `created_at` datetime NOT NULL DEFAULT current_timestamp(),

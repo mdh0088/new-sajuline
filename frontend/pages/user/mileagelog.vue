@@ -144,6 +144,7 @@ import AppBottomNavi from '~/components/common/AppBottomNavi.vue'
 import PagedSection from '~/components/common/PagedSection.vue'
 import { computed, ref, onMounted } from 'vue'
 import { useMileageProductApi } from '~/composables/api/useMileageProduct'
+import { useNotify } from '~/composables/utils/useNotify'
 
 definePageMeta({
   middleware: [auth],
@@ -207,6 +208,7 @@ onMounted(() => {
 
 // Composable 사용
 const { useMileageHistory } = useMileageProductApi()
+const { notifyWarning } = useNotify()
 
 // 적립 내역 쿼리 파라미터
 const earnQueryParams = computed(() => ({
@@ -289,11 +291,32 @@ const onUpdatePage = (val: number) => {
 
 // 검색 버튼 클릭
 const searchTransactions = () => {
-  if (!startDate.value || !endDate.value) return
+  // 날짜 입력 확인
+  if (!startDate.value || !endDate.value) {
+    notifyWarning('시작일과 종료일을 모두 입력해주세요.')
+    return
+  }
+
+  // 날짜 유효성 검사: 시작일이 종료일보다 뒤에 있는지 확인
+  const start = new Date(startDate.value)
+  const end = new Date(endDate.value)
+
+  if (start > end) {
+    notifyWarning('시작일은 종료일보다 앞서야 합니다.')
+    return
+  }
+
   qStart.value = startDate.value
   qEnd.value = endDate.value
   earnPage.value = 1
   usagePage.value = 1
+
+  // Vue Query 명시적으로 재호출
+  if (activeTab.value === 'earn') {
+    earnQuery.refetch()
+  } else {
+    useQuery.refetch()
+  }
 }
 </script>
 

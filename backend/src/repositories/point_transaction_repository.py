@@ -111,7 +111,7 @@ class PointTransactionRepository:
             reference_type_value = ReferenceType.MILEAGE_PRODUCT.value
         else:  # EARN
             currency_type_value = CurrencyType.MILEAGE.value
-            reference_type_value = ReferenceType.MILEAGE.value
+            reference_type_value = ReferenceType.TRADE.value
 
         log.info(
             "Get mileage history",
