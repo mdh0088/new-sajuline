@@ -48,12 +48,13 @@ class AdminReplyCreate(BaseModel):
 class InquiryResponse(InquiryBase):
     """1:1 문의 응답 스키마"""
     inquiry_id: int = Field(..., description="문의 ID")
+    inquiry_type: Optional[str] = Field(None, description="문의 유형: PAY, ACCOUNT, CS, EVENT, ETC")
     is_read: bool = Field(..., description="읽음 상태")
     reply_content: Optional[str] = Field(None, description="관리자 답변")
     answered_at: Optional[datetime] = Field(None, description="답변 시간")
     created_at: datetime = Field(..., description="생성일시")
     updated_at: Optional[datetime] = Field(None, description="수정일시")
-    
+
     model_config = ConfigDict(from_attributes=True)
 
 
@@ -64,6 +65,7 @@ class InquirySummary(BaseModel):
     inquirer_id: Optional[str] = Field(None, description="문의자 ID")
     counselor_id: Optional[str] = Field(None, description="문의 상담사 ID")
     category: Optional[str] = Field(None, description="문의 카테고리")
+    inquiry_type: Optional[str] = Field(None, description="문의 유형: PAY, ACCOUNT, CS, EVENT, ETC")
     title: Optional[str] = Field(None, description="제목")
     content: Optional[str] = Field(None, description="내용")
     reply_content: Optional[str] = Field(None, description="관리자 답변")
@@ -71,7 +73,7 @@ class InquirySummary(BaseModel):
     is_read: bool = Field(..., description="읽음 상태")
     has_reply: bool = Field(False, description="답변 여부")
     created_at: datetime = Field(..., description="생성일시")
-    
+
     model_config = ConfigDict(from_attributes=True)
 
 
@@ -104,3 +106,17 @@ class InquiryStatistics(BaseModel):
     user_inquiries: int = Field(..., description="사용자 문의 수")
     counselor_inquiries: int = Field(..., description="상담사 문의 수")
     guest_inquiries: int = Field(..., description="비회원 문의 수")
+
+
+class UserAdminInquiryCreateRequest(BaseModel):
+    """사용자 → 관리자 문의 생성 요청 스키마
+
+    category는 'USER_TO_ADMIN'으로 자동 설정
+    inquirer_type은 'USER'로 자동 설정
+    inquirer_id는 로그인한 user_id로 자동 설정
+    """
+    inquiry_type: str = Field(..., description="문의 유형: PAY(결제문의), ACCOUNT(계정문의), CS(상담문의), EVENT(이벤트문의), ETC(기타문의)")
+    title: Optional[str] = Field(None, max_length=200, description="제목")
+    content: str = Field(..., min_length=1, description="문의 내용")
+
+    model_config = ConfigDict(from_attributes=True)

@@ -3,96 +3,107 @@
     <!-- 메인 콘텐츠 -->
     <main class="pt-[60px] pb-24">
       <section class="px-5 py-6">
-        <!-- 문의 상세 카드 -->
-        <div class="inquiry-detail-container">
-          <!-- 문의 정보 -->
-          <div class="inquiry-detail-info">
-            <div class="inquiry-detail-category">결제문의</div>
-            <div class="inquiry-detail-status completed">
-              <span class="inquiry-detail-status-icon">✓</span>
-              <span>답변완료</span>
+        <!-- 로딩 중 -->
+        <div v-if="isLoading" class="inquiry-loading-skeleton">
+          <div class="skeleton-box"></div>
+          <div class="skeleton-box"></div>
+          <div class="skeleton-box"></div>
+        </div>
+
+        <!-- 에러 상태 -->
+        <div v-else-if="isError" class="inquiry-error-state">
+          <div class="inquiry-error-icon">⚠️</div>
+          <p class="inquiry-error-text">문의를 불러올 수 없습니다</p>
+          <button @click="goBack" class="inquiry-error-button">
+            목록으로 돌아가기
+          </button>
+        </div>
+
+        <!-- 문의 상세 -->
+        <template v-else-if="inquiry">
+          <!-- 문의 상세 카드 -->
+          <div class="inquiry-detail-container">
+            <!-- 문의 정보 -->
+            <div class="inquiry-detail-info">
+              <div class="inquiry-detail-category">{{ getInquiryTypeLabel(inquiry.inquiry_type) }}</div>
+              <div class="inquiry-detail-status" :class="inquiry.has_reply ? 'completed' : 'waiting'">
+                <span class="inquiry-detail-status-icon">{{ inquiry.has_reply ? '✓' : '⏳' }}</span>
+                <span>{{ inquiry.has_reply ? '답변완료' : '답변대기' }}</span>
+              </div>
+            </div>
+
+            <!-- 문의 제목 -->
+            <h2 class="inquiry-detail-subject">
+              {{ inquiry.title || '제목 없음' }}
+            </h2>
+
+            <!-- 문의 메타 정보 -->
+            <div class="inquiry-detail-meta">
+              <span>작성일: {{ formatDate(inquiry.created_at) }}</span>
+            </div>
+
+            <!-- 문의 내용 -->
+            <div class="inquiry-detail-content">
+              <p style="white-space: pre-wrap;">{{ inquiry.content }}</p>
             </div>
           </div>
 
-          <!-- 문의 제목 -->
-          <h2 class="inquiry-detail-subject">
-            포인트 충전이 되지 않습니다
-          </h2>
-
-          <!-- 문의 메타 정보 -->
-          <div class="inquiry-detail-meta">
-            <span>작성일: 2024.03.15 14:32</span>
-            <span class="inquiry-detail-divider">|</span>
-            <span>조회수: 1</span>
+          <!-- 답변 섹션 -->
+          <div v-if="inquiry.reply_content" class="inquiry-reply-container">
+            <div class="inquiry-reply-header">
+              <div class="inquiry-reply-icon">💬</div>
+              <div class="inquiry-reply-title">고객센터 답변</div>
+            </div>
+            <div v-if="inquiry.answered_at" class="inquiry-reply-meta">
+              <span>답변일: {{ formatDate(inquiry.answered_at) }}</span>
+            </div>
+            <div class="inquiry-reply-content">
+              <p style="white-space: pre-wrap;">{{ inquiry.reply_content }}</p>
+            </div>
           </div>
 
-          <!-- 문의 내용 -->
-          <div class="inquiry-detail-content">
-            <p>
-              포인트 충전이 되지 않아 문의드립니다.<br>
-              결제는 완료되었는데 포인트가 반영되지 않았습니다.<br><br>
-
-              결제 정보:<br>
-              - 결제 금액: 50,000원<br>
-              - 결제 시간: 2024.03.15 14:20<br>
-              - 결제 수단: 신용카드<br><br>
-
-              빠른 처리 부탁드립니다.
-            </p>
+          <!-- 하단 버튼 -->
+          <div class="inquiry-detail-actions">
+            <button @click="goBack" class="inquiry-detail-action-btn secondary">
+              목록으로
+            </button>
+            <NuxtLink to="/cs/write" class="inquiry-detail-action-btn primary">
+              새 문의하기
+            </NuxtLink>
           </div>
-        </div>
-
-        <!-- 답변 섹션 -->
-        <div class="inquiry-reply-container">
-          <div class="inquiry-reply-header">
-            <div class="inquiry-reply-icon">💬</div>
-            <div class="inquiry-reply-title">고객센터 답변</div>
-          </div>
-          <div class="inquiry-reply-meta">
-            <span>답변일: 2024.03.15 15:10</span>
-          </div>
-          <div class="inquiry-reply-content">
-            <p>
-              안녕하세요, 사주라인 고객센터입니다.<br><br>
-
-              문의하신 포인트 충전 건에 대해 확인해드렸습니다.<br>
-              결제는 정상적으로 완료되었으나, 시스템 지연으로 인해 포인트 반영이 늦어진 것으로 확인되었습니다.<br><br>
-
-              현재 50,000P가 정상적으로 충전되었음을 확인하였습니다.<br>
-              불편을 드려 죄송합니다.<br><br>
-
-              추가 문의사항이 있으시면 언제든 연락 주세요.<br>
-              감사합니다.
-            </p>
-          </div>
-        </div>
-
-        <!-- 하단 버튼 -->
-        <div class="inquiry-detail-actions">
-          <NuxtLink to="/cs/inquiries" class="inquiry-detail-action-btn secondary">
-            목록으로
-          </NuxtLink>
-          <NuxtLink to="/cs/write" class="inquiry-detail-action-btn primary">
-            새 문의하기
-          </NuxtLink>
-        </div>
+        </template>
       </section>
     </main>
   </div>
 </template>
 
 <script setup lang="ts">
+import { computed } from 'vue'
+import { useRouter, useRoute } from 'vue-router'
+import { useInquiryQueries } from '~/composables/api/useInquiryQueries'
+import { getInquiryTypeLabel, formatDate } from '~/types/inquiry'
+
 definePageMeta({
-  layout: 'default'
-  // TODO: 실제 구현 시 middleware: 'auth' 추가 (로그인 필수)
+  layout: 'default',
+  middleware: 'auth'
 })
 
-// URL에서 ID 가져오기
+const router = useRouter()
 const route = useRoute()
-const inquiryId = route.params.id
 
-// TODO: 실제 API 연동 시 inquiryId로 데이터 조회
-console.log('문의 ID:', inquiryId)
+// URL에서 ID 가져오기
+const inquiryId = computed(() => Number(route.params.id))
+
+// 문의 API
+const { useInquiryDetail } = useInquiryQueries()
+
+// 문의 상세 조회
+const { data: inquiry, isLoading, isError } = useInquiryDetail(inquiryId)
+
+// 목록으로 돌아가기
+const goBack = () => {
+  router.push('/cs/inquiries')
+}
 </script>
 
 <style>
@@ -277,5 +288,72 @@ console.log('문의 ID:', inquiryId)
 .inquiry-detail-action-btn.primary:hover {
   transform: translateY(-2px);
   box-shadow: 0 8px 20px rgba(139, 92, 246, 0.3);
+}
+
+/* 로딩 스켈레톤 */
+.inquiry-loading-skeleton {
+  padding: 20px 0;
+}
+
+.skeleton-box {
+  height: 200px;
+  background: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0.05) 25%,
+    rgba(255, 255, 255, 0.1) 50%,
+    rgba(255, 255, 255, 0.05) 75%
+  );
+  background-size: 200% 100%;
+  animation: skeleton-loading 1.5s infinite;
+  border-radius: 16px;
+  margin-bottom: 20px;
+}
+
+@keyframes skeleton-loading {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}
+
+/* 에러 상태 */
+.inquiry-error-state {
+  text-align: center;
+  padding: 80px 20px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 16px;
+}
+
+.inquiry-error-icon {
+  font-size: 48px;
+  margin-bottom: 16px;
+}
+
+.inquiry-error-text {
+  font-size: 16px;
+  color: rgba(255, 255, 255, 0.7);
+  margin-bottom: 24px;
+}
+
+.inquiry-error-button {
+  display: inline-flex;
+  align-items: center;
+  padding: 12px 24px;
+  background: rgba(255, 255, 255, 0.1);
+  color: white;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 12px;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+
+.inquiry-error-button:hover {
+  background: rgba(255, 255, 255, 0.15);
+  transform: translateY(-2px);
 }
 </style>

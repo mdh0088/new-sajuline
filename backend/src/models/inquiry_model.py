@@ -64,6 +64,12 @@ class Inquiry(Base):
         nullable=False,
         comment="내용"
     )
+    inquiry_type: Mapped[Optional[str]] = mapped_column(
+        String(100),
+        nullable=True,
+        default='ETC',
+        comment="PAY(결제문의), ACCOUNT(계정문의), CS(상담문의), EVENT(이벤트문의), ETC(기타문의)"
+    )
     
     # 처리 상태
     is_read: Mapped[bool] = mapped_column(
