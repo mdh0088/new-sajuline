@@ -17,7 +17,8 @@ from src.common.utils.kcp_utils import (
     get_kcp_site_cd,
     get_kcp_web_siteid,
     xor_encrypt,
-    xor_decrypt
+    xor_decrypt,
+    normalize_phone_number
 )
 from src.common.logging import get_logger_with_request_id
 from src.exceptions.custom_exceptions import ValidationError
@@ -171,7 +172,8 @@ class PhoneVerificationService:
             raise ValidationError("인증 데이터 복호화 실패")
 
         # 5. 복호화된 데이터 파싱
-        phone = decrypted_data.get('phone_no', '')
+        phone_raw = decrypted_data.get('phone_no', '')
+        phone = normalize_phone_number(phone_raw)  # 하이픈 제거하여 정규화
         name = decrypted_data.get('name', '')
         birth_date = decrypted_data.get('birthday', '')
         gender = decrypted_data.get('sex_code', '')
@@ -196,15 +198,25 @@ class PhoneVerificationService:
 
         await self._save_session(ordr_idxx, session_data, ttl=1800)  # 30분 연장
 
+        # 8. step2 입력 번호와 KCP 인증 번호 비교
+        original_phone_raw = session_data.get('phone_number', '')
+        original_phone = normalize_phone_number(original_phone_raw)  # 하이픈 제거하여 정규화
+        is_phone_matched = phone == original_phone
+
         log.info("Phone verification completed",
                 session_id=ordr_idxx,
                 phone=phone[:3] + "****" + phone[-4:],
-                ci=ci[:8] + "...")
+                original_phone=original_phone[:3] + "****" + original_phone[-4:],
+                phone_raw=phone_raw,
+                original_phone_raw=original_phone_raw,
+                ci=ci[:8] + "...",
+                is_phone_matched=is_phone_matched)
 
         return {
             "success": True,
             "phone": phone,
             "phone_chk": phone_chk,
+            "is_phone_matched": is_phone_matched,
             "ci": ci,
             "di": di,
             "name": name,

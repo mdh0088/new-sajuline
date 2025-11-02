@@ -55,11 +55,12 @@ services:
     volumes:
       - ../backend/src:/app/src
       - ../backend/logs:/app/logs
-    depends_on:
-      #  mariadb:
-      #    condition: service_healthy
-       redis:
-         condition: service_healthy
+      - ../backend/kcp_binaries:/app/kcp_binaries
+    # depends_on:
+    #   mariadb:
+    #     condition: service_healthy
+    #   redis:
+    #     condition: service_healthy
     networks:
       - sajuline-network
     restart: unless-stopped
@@ -70,33 +71,33 @@ services:
       retries: 3
       start_period: 40s
 
-  # # Redis 캐시 서버
-  redis:
-    image: redis:7.2-alpine
-    container_name: sajuline-redis
-    ports:
-      - "6379:6379"
-    volumes:
-      - redis_data:/data
-      - ./redis.conf:/usr/local/etc/redis/redis.conf:ro
-    command: >
-      redis-server 
-      --appendonly yes 
-      --appendfsync everysec
-      --maxmemory 256mb
-      --maxmemory-policy allkeys-lru
-      --save 900 1
-      --save 300 10
-      --save 60 10000
-    networks:
-      - sajuline-network
-    restart: unless-stopped
-    healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-      start_period: 10s
+  # # # Redis 캐시 서버
+  # redis:
+  #   image: redis:7.2-alpine
+  #   container_name: sajuline-redis
+  #   ports:
+  #     - "6379:6379"
+  #   volumes:
+  #     - redis_data:/data
+  #     - ./redis.conf:/usr/local/etc/redis/redis.conf:ro
+  #   command: >
+  #     redis-server 
+  #     --appendonly yes 
+  #     --appendfsync everysec
+  #     --maxmemory 256mb
+  #     --maxmemory-policy allkeys-lru
+  #     --save 900 1
+  #     --save 300 10
+  #     --save 60 10000
+  #   networks:
+  #     - sajuline-network
+  #   restart: unless-stopped
+  #   healthcheck:
+  #     test: ["CMD", "redis-cli", "ping"]
+  #     interval: 10s
+  #     timeout: 5s
+  #     retries: 5
+  #     start_period: 10s
 
   # # MariaDB 데이터베이스
   # mariadb:

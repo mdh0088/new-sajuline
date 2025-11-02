@@ -114,6 +114,7 @@ import { useUserQueries } from '~/composables/api/useUserQueries'
 
 // defineModel로 간단하게 처리
 const signupFormData = defineModel<SignupFormData>('signupFormData', { required: true })
+const isStepValid = defineModel<boolean>('isStepValid', { default: false })
 
 // Step1 자체 검증 로직
 const { validateEmail, validateUserId, validatePassword } = useValidation()
@@ -139,10 +140,15 @@ const validator = computed(() => ({
   emailValidator,
   passwordValidator,
   isValid: userIdValidator.value.result.value.isValid &&
-           emailValidator.value.result.value.isValid && 
-           passwordValidator.value.passwordResult.value.isValid && 
+           emailValidator.value.result.value.isValid &&
+           passwordValidator.value.passwordResult.value.isValid &&
            passwordValidator.value.confirmResult.value.isValid
 }))
+
+// 검증 상태를 부모로 전달
+watch(() => validator.value.isValid, (valid) => {
+  isStepValid.value = valid
+}, { immediate: true })
 </script>
 
 <style>

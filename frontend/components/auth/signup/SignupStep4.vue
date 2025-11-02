@@ -70,6 +70,7 @@ import type { SignupFormData } from '~/types/auth/signup'
 
 // defineModel로 간단하게 처리
 const signupFormData = defineModel<SignupFormData>('signupFormData', { required: true })
+const isStepValid = defineModel<boolean>('isStepValid', { default: false })
 
 // 이벤트 emit 정의
 interface Emits {
@@ -86,14 +87,14 @@ const allTermsAgreed = computed(() => {
 const requiredTermsValidator = computed(() => {
   const hasServiceAgree = signupFormData.value.agreeService
   const hasPrivacyAgree = signupFormData.value.agreePrivacy
-  
+
   if (!hasServiceAgree || !hasPrivacyAgree) {
     return {
       isValid: false,
       message: '필수 약관에 동의해주세요.'
     }
   }
-  
+
   return {
     isValid: true,
     message: '필수 약관 동의가 완료되었습니다.'
@@ -105,6 +106,11 @@ const validator = computed(() => ({
   requiredTermsValidator,
   isValid: requiredTermsValidator.value.isValid
 }))
+
+// 검증 상태를 부모로 전달
+watch(() => validator.value.isValid, (valid) => {
+  isStepValid.value = valid
+}, { immediate: true })
 
 const toggleAllTerms = () => {
   const newValue = !allTermsAgreed.value
