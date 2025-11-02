@@ -23,24 +23,28 @@
         <SignupStep1
           v-if="currentStep === 1"
           v-model:signupFormData="signupFormData"
+          v-model:isStepValid="step1Valid"
         />
 
         <!-- Step 2: 기본 정보 -->
         <SignupStep2
           v-if="currentStep === 2"
           v-model:signupFormData="signupFormData"
+          v-model:isStepValid="step2Valid"
         />
 
         <!-- Step 3: 생년월일시 -->
         <SignupStep3
           v-if="currentStep === 3"
           v-model:signupFormData="signupFormData"
+          v-model:isStepValid="step3Valid"
         />
 
         <!-- Step 4: 약관 동의 -->
         <SignupStep4
           v-if="currentStep === 4"
           v-model:signupFormData="signupFormData"
+          v-model:isStepValid="step4Valid"
           @open-terms="openTermsModal"
         />
 
@@ -91,6 +95,7 @@
 
 <script setup lang="ts">
 import { useToast } from '~/composables/ui/useToast'
+import { useNotify } from '~/composables/utils/useNotify'
 import { useUserQueries } from '~/composables/api/useUserQueries'
 import { JoinType, Gender } from '~/types/user/models'
 import type { UserCreateRequest } from '~/types/user/models'
@@ -103,7 +108,9 @@ definePageMeta({
 })
 
 const router = useRouter()
+const route = useRoute()
 const toast = useToast()
+const { notifyConfirm } = useNotify()
 
 // Vue Query 훅을 setup 컨텍스트에서 초기화
 const { useSignupUser } = useUserQueries()
@@ -134,10 +141,97 @@ const signupFormData = reactive<SignupFormData>({
   agreePrivacy: false
 })
 
+// 각 Step별 검증 상태
+const step1Valid = ref(false)
+const step2Valid = ref(false)
+const step3Valid = ref(false)
+const step4Valid = ref(false)
 
-// 각 Step에서 자체 검증하므로 단순화
+// localStorage에 폼 데이터 저장 (KCP redirect 후 복원용)
+const STORAGE_KEY = 'signup_form_data'
+const STEP_KEY = 'signup_current_step'
+
+watch(signupFormData, (newData) => {
+  if (process.client) {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(newData))
+  }
+}, { deep: true })
+
+watch(currentStep, (step) => {
+  if (process.client) {
+    localStorage.setItem(STEP_KEY, step.toString())
+  }
+})
+
+// 페이지 로드 시 복구
+onMounted(async () => {
+  // 클라이언트 체크
+  if (!process.client) return
+
+  // KCP 인증 완료 후 redirect인지 확인 (URL query parameter)
+  const fromKcp = route.query.from_kcp
+
+  if (fromKcp === 'true') {
+    // 1. localStorage에서 기존 폼 데이터 복원 (Step1 데이터)
+    const stored = localStorage.getItem(STORAGE_KEY)
+    if (stored) {
+      try {
+        const data = JSON.parse(stored)
+        Object.assign(signupFormData, data)
+      } catch (e) {
+        console.error('Failed to restore form data:', e)
+      }
+    }
+
+    // 2. Query parameter에서 KCP 인증 결과 세팅
+    const phone = route.query.phone as string
+    const phoneChk = route.query.phone_chk === 'true'
+    const verifiedPhone = route.query.verified_phone as string
+
+    if (phone) {
+      signupFormData.phone = phone
+      signupFormData.phone_chk = phoneChk
+      signupFormData.verified_phone = verifiedPhone
+
+      if (phoneChk) {
+        toast.success('휴대폰 인증이 완료되었습니다')
+        console.log('[Signup] KCP verification completed', {
+          phone,
+          phone_chk: phoneChk,
+          verified_phone: verifiedPhone
+        })
+      } else {
+        toast.error('입력한 번호와 인증한 번호가 다릅니다')
+      }
+    }
+
+    // 3. Step2로 이동 (KCP 인증 완료 상태)
+    currentStep.value = 2
+
+    // 4. URL clean up (query parameter 제거 - 새로고침 시 재실행 방지)
+    await router.replace({ path: '/signup' })
+
+    console.log('[Signup] KCP redirect - auto restored to step2')
+  }
+
+  // 일반 접근 (새로고침, 직접 접근): 아무것도 안함
+})
+
+// 회원가입 완료 시 localStorage 삭제
+const clearStorage = () => {
+  localStorage.removeItem(STORAGE_KEY)
+  localStorage.removeItem(STEP_KEY)
+}
+
+// 현재 Step의 검증 상태
 const isCurrentStepValid = computed(() => {
-  return true // Step 컴포넌트에서 개별 검증
+  switch (currentStep.value) {
+    case 1: return step1Valid.value
+    case 2: return step2Valid.value
+    case 3: return step3Valid.value
+    case 4: return step4Valid.value
+    default: return false
+  }
 })
 
 // 메서드
@@ -182,7 +276,10 @@ const completeSignup = async () => {
   try {
     // 회원가입 실행
     await signupUserMutation.mutateAsync(userData)
-    
+
+    // 회원가입 완료 - localStorage 삭제
+    clearStorage()
+
     toast.success('회원가입이 완료되었습니다.')
     currentStep.value = 5
   } catch (error: any) {

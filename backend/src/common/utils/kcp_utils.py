@@ -334,3 +334,27 @@ def xor_decrypt(encrypted_hex: str, key: str = "verification_flag") -> str:
         return ''.join(result)
     except Exception:
         return ""
+
+
+def normalize_phone_number(phone: str) -> str:
+    """전화번호 정규화 (하이픈, 공백 제거)
+
+    KCP는 전화번호를 "010-1234-5678" 형식으로 반환할 수 있으나,
+    프론트엔드는 "01012345678" 형식으로 전송합니다.
+    정확한 비교를 위해 하이픈과 공백을 제거합니다.
+
+    Args:
+        phone: 전화번호 (010-1234-5678 또는 01012345678)
+
+    Returns:
+        str: 정규화된 전화번호 (01012345678)
+
+    Examples:
+        >>> normalize_phone_number("010-1234-5678")
+        "01012345678"
+        >>> normalize_phone_number("010 1234 5678")
+        "01012345678"
+        >>> normalize_phone_number("01012345678")
+        "01012345678"
+    """
+    return phone.replace('-', '').replace(' ', '').strip()

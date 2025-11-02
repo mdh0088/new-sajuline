@@ -53,6 +53,7 @@ import { useValidation } from '~/composables/validation/useValidation'
 
 // defineModel로 간단하게 처리
 const signupFormData = defineModel<SignupFormData>('signupFormData', { required: true })
+const isStepValid = defineModel<boolean>('isStepValid', { default: false })
 
 // Step3 자체 검증 로직
 const { validateBirthDate } = useValidation()
@@ -66,12 +67,12 @@ const updateBirthDate = () => {
   if (birthDate.value) {
     // 날짜만 있는 경우: YYYY-MM-DD 00:00
     let dateTimeString = `${birthDate.value} 00:00`
-    
+
     // 시간도 있는 경우: YYYY-MM-DD HH:MM
     if (birthTime.value) {
       dateTimeString = `${birthDate.value} ${birthTime.value}`
     }
-    
+
     signupFormData.value.birth_date = dateTimeString
   } else {
     signupFormData.value.birth_date = ''
@@ -114,7 +115,7 @@ const disabledDate = (time: Date) => {
 // 생년월일 유효성 검증
 const birthValidator = computed(() => {
   const birthDateValue = signupFormData.value.birth_date
-  
+
   // 필수 필드 체크
   if (!birthDateValue || !birthDate.value) {
     return {
@@ -122,7 +123,7 @@ const birthValidator = computed(() => {
       message: '생년월일을 선택해주세요.'
     }
   }
-  
+
   // 날짜 유효성 검증 (날짜 부분만 검증)
   return validateBirthDate(birthDate.value)
 })
@@ -132,6 +133,11 @@ const validator = computed(() => ({
   birthValidator,
   isValid: birthValidator.value.isValid
 }))
+
+// 검증 상태를 부모로 전달
+watch(() => validator.value.isValid, (valid) => {
+  isStepValid.value = valid
+}, { immediate: true })
 </script>
 
 <style>

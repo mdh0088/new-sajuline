@@ -29,6 +29,7 @@ export interface PhoneVerificationResult {
   success: boolean
   phone?: string
   phone_chk?: string
+  is_phone_matched?: boolean
   ci?: string
   di?: string
   name?: string

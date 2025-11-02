@@ -32,6 +32,7 @@
     <PhoneVerification
       v-model="signupFormData.phone"
       v-model:phoneChk="signupFormData.phone_chk"
+      v-model:verifiedPhone="signupFormData.verified_phone"
       :name="signupFormData.name"
       :birthDate="signupFormData.birth_date"
       :gender="convertGenderForKCP(signupFormData.gender)"
@@ -72,6 +73,7 @@ import PhoneVerification from '~/components/auth/PhoneVerification.vue'
 
 // defineModel로 간단하게 처리
 const signupFormData = defineModel<SignupFormData>('signupFormData', { required: true })
+const isStepValid = defineModel<boolean>('isStepValid', { default: false })
 
 // Step2 자체 검증 로직
 const { validateNickname } = useValidation()
@@ -90,6 +92,11 @@ const validator = computed(() => ({
   nicknameValidator,
   isValid: nicknameValidator.value.result.value.isValid && !!signupFormData.value.phone_chk
 }))
+
+// 검증 상태를 부모로 전달
+watch(() => validator.value.isValid, (valid) => {
+  isStepValid.value = valid
+}, { immediate: true })
 
 // Gender enum을 KCP 형식으로 변환
 const convertGenderForKCP = (gender: Gender): 'M' | 'F' => {

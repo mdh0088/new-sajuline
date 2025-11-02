@@ -82,12 +82,13 @@ async def _kcp_callback_handler(
             res_msg=res_msg
         )
 
-        # 성공 응답 HTML (Prototype 패턴)
+        # 성공 응답 HTML (Popup + Fallback 패턴)
         html_response = f"""
         <!DOCTYPE html>
         <html>
         <head>
             <meta charset="utf-8">
+            <title>본인인증 완료</title>
             <script>
                 window.onload = function() {{
                     const messageData = {{
@@ -95,25 +96,64 @@ async def _kcp_callback_handler(
                         success: true,
                         phone: '{result.get("phone", "")}',
                         phone_chk: '{result.get("phone_chk", "")}',
+                        is_phone_matched: {str(result.get("is_phone_matched", False)).lower()},
                         ci: '{result.get("ci", "")}',
                         di: '{result.get("di", "")}',
                         name: '{result.get("name", "")}',
                         birth_date: '{result.get("birth_date", "")}',
                         gender: '{result.get("gender", "")}'
                     }};
+
+                    let sent = false;
+
+                    // 1. Try posting to parent window (iframe case)
                     try {{
                         if (window.parent && window.parent !== window) {{
+                            console.log('[KCP] Sending postMessage to parent');
                             window.parent.postMessage(messageData, '*');
+                            sent = true;
                         }}
-                        if (window.opener) {{
+                    }} catch(e) {{
+                        console.error('[KCP] Failed to send to parent:', e);
+                    }}
+
+                    // 2. Try posting to opener window (popup case)
+                    try {{
+                        if (window.opener && !window.opener.closed) {{
+                            console.log('[KCP] Sending postMessage to opener');
                             window.opener.postMessage(messageData, '*');
+                            sent = true;
                         }}
-                    }} catch(e) {{}}
-                    setTimeout(function() {{ window.close(); }}, 200);
+                    }} catch(e) {{
+                        console.error('[KCP] Failed to send to opener:', e);
+                    }}
+
+                    // 3. Fallback: Redirect to signup (full page redirect case)
+                    if (!sent) {{
+                        console.log('[KCP] Fallback: Redirecting to signup page');
+
+                        // KCP 결과를 URL query parameter로 전달
+                        const params = new URLSearchParams({{
+                            from_kcp: 'true',
+                            phone: '{result.get("phone", "")}',
+                            phone_chk: '{str(result.get("is_phone_matched", False)).lower()}',
+                            verified_phone: '{result.get("phone", "")}'
+                        }});
+
+                        // Redirect to signup page with KCP result
+                        window.location.href = `http://localhost:3000/signup?${{params.toString()}}`;
+                    }} else {{
+                        // Success - close popup after delay
+                        setTimeout(function() {{
+                            try {{ window.close(); }} catch(e) {{}}
+                        }}, 200);
+                    }}
                 }}
             </script>
         </head>
-        <body style="display:none;"></body>
+        <body style="display:none;">
+            <p style="text-align:center; margin-top:20px;">인증이 완료되었습니다. 잠시만 기다려주세요...</p>
+        </body>
         </html>
         """
 

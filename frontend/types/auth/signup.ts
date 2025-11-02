@@ -17,6 +17,7 @@ export interface SignupFormData {
   nickname: string
   phone: string
   phone_chk: boolean  // 휴대폰 인증 완료 여부 (true: 인증 완료, false: 미인증)
+  verified_phone?: string  // KCP에서 실제 인증한 번호 (디버깅용)
   gender: Gender
   birth_date: string  // YYYY-MM-DD HH:MM 형식 (예: "1993-06-19 14:30")
   join_type: JoinType

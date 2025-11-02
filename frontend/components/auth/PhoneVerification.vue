@@ -77,18 +77,21 @@ import {
 interface Props {
   modelValue?: string // v-model: phone
   phoneChk?: boolean // v-model:phoneChk (휴대폰 인증 완료 여부)
+  verifiedPhone?: string // v-model:verifiedPhone (KCP 인증한 번호)
   useModal?: boolean // true: 모달 사용, false: 팝업 사용 (기본값)
 }
 
 const props = withDefaults(defineProps<Props>(), {
   modelValue: '',
   phoneChk: false,
+  verifiedPhone: '',
   useModal: false
 })
 
 const emit = defineEmits<{
   'update:modelValue': [value: string]
   'update:phoneChk': [value: boolean]
+  'update:verifiedPhone': [value: string]  // KCP 인증 번호 emit
   'verified': [result: PhoneVerificationResult]
 }>()
 
@@ -99,6 +102,7 @@ const { usePhoneAvailability } = useUserQueries()
 
 // State
 const phoneNumber = ref(props.modelValue)
+const verifiedPhoneNumber = ref('') // 인증 완료된 전화번호 저장
 const errorMessage = ref('')
 const isVerifying = ref(false)
 const isVerified = ref(false)
@@ -132,9 +136,16 @@ watch(() => props.modelValue, (newVal) => {
   phoneNumber.value = newVal
 })
 
-// Watch phoneNumber 변경
-watch(phoneNumber, (newVal) => {
+// Watch phoneNumber 변경 - 전화번호 변경 시 인증 상태 초기화
+watch(phoneNumber, (newVal, oldVal) => {
   emit('update:modelValue', newVal)
+
+  // 인증 완료 상태에서 전화번호가 변경되면 인증 초기화
+  if (isVerified.value && verifiedPhoneNumber.value && newVal !== verifiedPhoneNumber.value) {
+    isVerified.value = false
+    emit('update:phoneChk', false)
+    errorMessage.value = '전화번호가 변경되었습니다. 다시 인증해주세요.'
+  }
 })
 
 // Mutation
@@ -223,7 +234,7 @@ const startVerification = async () => {
   isVerifying.value = true
   errorMessage.value = ''
 
-  // KCP 인증창에서 사용자가 직접 입력하므로 최소한의 정보만 전달
+  // step2에서 입력한 번호로 세션 생성
   await verificationMutation.mutateAsync({
     phone_number: phoneNumber.value
   })
@@ -237,21 +248,26 @@ const handleVerificationComplete = (result: PhoneVerificationResult) => {
   closeVerificationModal()
 
   if (result.success) {
-    // 보안 검증: 인증된 전화번호와 입력된 전화번호 일치 확인
+    // Backend에서 전화번호 일치 여부 확인
+    const isPhoneMatched = result.is_phone_matched !== undefined ? result.is_phone_matched : true
     const verifiedPhone = result.phone || ''
     const inputPhone = phoneNumber.value
 
-    if (verifiedPhone !== inputPhone) {
-      errorMessage.value = `인증된 번호(${verifiedPhone})와 입력한 번호(${inputPhone})가 다릅니다. 올바른 번호로 다시 인증해주세요.`
+    // KCP 인증 번호를 항상 emit (디버깅용)
+    emit('update:verifiedPhone', verifiedPhone)
+
+    // AND 조건: KCP 인증 성공 AND 전화번호 일치
+    if (!isPhoneMatched) {
+      errorMessage.value = `입력한 번호(${inputPhone})와 인증한 번호(${verifiedPhone})가 다릅니다. 동일한 번호로 다시 인증해주세요.`
       toast.error(errorMessage.value)
       isVerified.value = false
-      phoneNumber.value = '' // 입력값 초기화
       emit('update:phoneChk', false) // 인증 실패 - boolean false 전달
       return
     }
 
-    // 인증 성공 - 입력 번호와 인증 번호 일치 확인됨
+    // 인증 성공 - KCP 인증 통과 AND 전화번호 일치 확인됨
     isVerified.value = true
+    verifiedPhoneNumber.value = verifiedPhone // 인증된 전화번호 저장
     phoneNumber.value = verifiedPhone
     emit('update:modelValue', phoneNumber.value)
     emit('update:phoneChk', true) // 인증 성공 - boolean true 전달
