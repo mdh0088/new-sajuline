@@ -122,6 +122,27 @@ class PointHistoryResponse(BaseModel):
     items_charge: Optional[List[PointChargeHistoryItem]] = Field(None, description="충전 내역 목록")
     items_use: Optional[List[PointUseHistoryItem]] = Field(None, description="사용 내역 목록")
 
+
+class FindIdRequest(BaseModel):
+    """ID 찾기 요청"""
+    phone: str = Field(
+        ...,
+        min_length=10,
+        max_length=15,
+        description="본인인증된 전화번호"
+    )
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class FindIdResponse(BaseModel):
+    """ID 찾기 응답"""
+    user_id: str = Field(..., description="사용자 ID")
+    created_at: datetime = Field(..., description="가입일시")
+
+    model_config = ConfigDict(from_attributes=True)
+
+
 # TODO: 추후 필요시 참고용 스키마들
 # class UserLogin(BaseModel):
 #     """로그인 요청 스키마"""  

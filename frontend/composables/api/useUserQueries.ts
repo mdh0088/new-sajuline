@@ -269,12 +269,27 @@ const userApi = {
   async checkNicknameAvailability(nickname: string): Promise<boolean> {
     const { $api } = useNuxtApp()
     const response = await $api<AvailabilityCheckResponse>(`/api/v1/users/check-availability/nickname?value=${encodeURIComponent(nickname)}`)
-    
+
     if (!response.success) {
       throw new Error(response.error?.message || '닉네임 중복 검사에 실패했습니다.')
     }
-    
+
     return response.data ?? false
+  },
+
+  // 사용자 ID 찾기 (휴대폰 본인인증)
+  async findUserId(phone: string): Promise<{ user_id: string; created_at: string }> {
+    const { $api } = useNuxtApp()
+    const response = await $api<APIResponse<{ user_id: string; created_at: string }>>('/api/v1/users/find-id', {
+      method: 'POST',
+      body: { phone }
+    })
+
+    if (!response.success || !response.data) {
+      throw new Error(response.error?.message || 'ID 찾기에 실패했습니다.')
+    }
+
+    return response.data
   },
 
   // 사용자 정보 수정
@@ -614,10 +629,20 @@ export const useUserQueries = () => {
 
   // 사용자 인증 뮤테이션
   const useAuthenticateUser = (
-    options?: UseMutationOptions<UserResponse, APIError, LoginRequest>  
+    options?: UseMutationOptions<UserResponse, APIError, LoginRequest>
   ) => {
     return useMutation({
       mutationFn: userApi.authenticateUser,
+      ...options
+    })
+  }
+
+  // 사용자 ID 찾기 뮤테이션 (휴대폰 본인인증)
+  const useFindUserId = (
+    options?: UseMutationOptions<{ user_id: string; created_at: string }, APIError, string>
+  ) => {
+    return useMutation({
+      mutationFn: userApi.findUserId,
       ...options
     })
   }
@@ -655,6 +680,7 @@ export const useUserQueries = () => {
     useLogin,
     useLogout,
     useAuthenticateUser,
+    useFindUserId,
     useCreateUserReview,
     useUpdateUserReview,
     useDeleteUserReview

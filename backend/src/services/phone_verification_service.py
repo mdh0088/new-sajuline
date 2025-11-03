@@ -109,6 +109,75 @@ class PhoneVerificationService:
             "site_cd": site_cd
         }
 
+    async def initiate_verification_for_find_id(
+        self,
+        return_url: str
+    ) -> Dict[str, str]:
+        """ID 찾기용 본인인증 프로세스 시작 (전화번호 미입력)
+
+        Args:
+            return_url: 인증 완료 후 리다이렉트할 URL (모바일 fallback용)
+
+        Returns:
+            Dict[str, str]: gateway_url, session_id 포함
+        """
+        log = get_logger_with_request_id()
+
+        # 세션 ID 생성 (KCP ordr_idxx)
+        session_id = f"FINDID_{uuid.uuid4().hex[:18]}"
+
+        # Redis에 세션 정보 저장 (15분 TTL)
+        session_data = {
+            "phone_number": "01000000000",  # 더미 값
+            "status": "initiated",
+            "purpose": "find_id",  # ID 찾기 용도 표시
+            "return_url": return_url,
+            "created_at": datetime.utcnow().isoformat()
+        }
+
+        await self._save_session(session_id, session_data, ttl=900)
+
+        # KCP 게이트웨이 파라미터 생성
+        site_cd = get_kcp_site_cd()
+        web_siteid = get_kcp_web_siteid()
+        callback_url = get_kcp_callback_url()
+
+        # 인증 데이터 해시 생성
+        cert_data = f"{site_cd}{session_id}{web_siteid}000000"
+        hash_data = make_hash_data(cert_data)
+
+        # KCP 게이트웨이 URL
+        gateway_url = get_kcp_gateway_url()
+
+        # KCP Form 데이터
+        form_data = {
+            "site_cd": site_cd,
+            "ordr_idxx": session_id,
+            "Ret_URL": callback_url,
+            "req_tx": "cert",
+            "cert_method": "01",
+            "web_siteid": web_siteid,
+            "web_siteid_hashYN": "Y",
+            "cert_able_yn": "Y",
+            "up_hash": hash_data,
+            "cert_otp_use": "Y",
+            "cert_enc_use_ext": "Y",
+            "param_opt_1": "",
+            "param_opt_2": "",
+            "param_opt_3": ""
+        }
+
+        log.info("Phone verification for find-id initiated",
+                session_id=session_id,
+                return_url=return_url)
+
+        return {
+            "gateway_url": gateway_url,
+            "form_data": form_data,
+            "session_id": session_id,
+            "site_cd": site_cd
+        }
+
     async def process_callback(
         self,
         site_cd: str,
@@ -221,7 +290,8 @@ class PhoneVerificationService:
             "di": di,
             "name": name,
             "birth_date": birth_date,
-            "gender": gender
+            "gender": gender,
+            "return_url": session_data.get("return_url", "/signup")  # 세션의 return_url 반환
         }
 
     async def verify_phone_chk(self, phone: str, phone_chk: str) -> bool:
