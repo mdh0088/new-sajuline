@@ -30,9 +30,11 @@
           <button
             type="button"
             class="w-full py-4 bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800 text-white font-bold rounded-xl transition-all transform hover:scale-[1.02] active:scale-98 shadow-lg shadow-purple-500/25"
-            @click="handlePhoneVerification"
+            :disabled="isVerifying"
+            @click="startVerification"
           >
-            휴대폰 본인인증 하기
+            <span v-if="!isVerifying">휴대폰 본인인증 하기</span>
+            <span v-else>인증 진행 중...</span>
           </button>
         </div>
 
@@ -47,6 +49,16 @@
             <p class="text-white/60 text-sm">
               가입일: {{ foundUserDate }}
             </p>
+          </div>
+        </div>
+
+        <!-- 에러 메시지 표시 -->
+        <div v-if="errorMessage" class="mb-8 p-4 bg-red-500/10 border border-red-500/30 rounded-xl">
+          <div class="flex items-center gap-2 text-red-400">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+            </svg>
+            <p class="text-sm">{{ errorMessage }}</p>
           </div>
         </div>
 
@@ -81,6 +93,11 @@
 </template>
 
 <script setup lang="ts">
+import { ref } from 'vue'
+import { usePhoneVerification, type PhoneVerificationResult } from '~/composables/api/usePhoneVerification'
+import { useUserQueries } from '~/composables/api/useUserQueries'
+import { useToast } from '~/composables/ui/useToast'
+
 // 인증 도메인 CSS 로드
 import '~/assets/css/common/auth-common.css'
 
@@ -98,14 +115,118 @@ useHead({
   ],
 })
 
+// Composables
+const toast = useToast()
+const { setupPostMessageListener, openVerificationWindow } = usePhoneVerification()
+const { useFindUserId } = useUserQueries()
+const route = useRoute()
+
 // 상태 관리
 const foundUserId = ref('')
 const foundUserDate = ref('')
+const errorMessage = ref('')
+const isVerifying = ref(false)
 
-// 본인인증 처리 (추후 구현 예정)
-const handlePhoneVerification = () => {
-  console.log('본인인증 시작')
-  // TODO: KCP 본인인증 연동
-  // 성공 시 foundUserId와 foundUserDate 설정
+// 팝업 및 리스너 관리
+let closePopup: (() => void) | null = null
+let cleanupListener: (() => void) | null = null
+
+// ID 찾기 mutation hook
+const { mutate: findUserId } = useFindUserId({
+  onSuccess: (data) => {
+    foundUserId.value = data.user_id
+    foundUserDate.value = new Date(data.created_at).toLocaleDateString('ko-KR', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric'
+    })
+    isVerifying.value = false
+    toast.success('아이디를 찾았습니다')
+  },
+  onError: (error: any) => {
+    console.error('Find ID error:', error)
+    errorMessage.value = error.message || '아이디 찾기 중 오류가 발생했습니다. 다시 시도해주세요.'
+    isVerifying.value = false
+    toast.error(errorMessage.value)
+  }
+})
+
+// 모바일 리다이렉트 처리 (query parameter에서 전화번호 받기)
+onMounted(() => {
+  const fromKcp = route.query.from_kcp
+  const phone = route.query.phone as string
+
+  if (fromKcp === 'true' && phone) {
+    // 모바일에서 본인인증 완료 후 리다이렉트된 경우
+    console.log('[Find-ID] KCP redirect received', phone)
+    findUserId(phone)
+  }
+})
+
+// 본인인증 시작
+const startVerification = async () => {
+  isVerifying.value = true
+  errorMessage.value = ''
+  foundUserId.value = ''
+  foundUserDate.value = ''
+
+  // ID 찾기 전용 API 호출
+  try {
+    const { $api } = useNuxtApp()
+    const response = await $api<any>('/api/v1/phone-verification/initiate-for-find-id', {
+      method: 'POST',
+      body: {
+        return_url: '/user/find-id'
+      }
+    })
+
+    if (response.success && response.data) {
+      // postMessage 리스너 설정
+      cleanupListener = setupPostMessageListener(handleVerificationComplete)
+
+      // 인증창 열기 (팝업 방식)
+      const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)
+      closePopup = openVerificationWindow(response.data.gateway_url, response.data.form_data, isMobile)
+    }
+  } catch (error: any) {
+    isVerifying.value = false
+    errorMessage.value = error?.message || '인증 시작에 실패했습니다'
+    toast.error(errorMessage.value)
+  }
 }
+
+// 본인인증 완료 핸들러
+const handleVerificationComplete = (result: PhoneVerificationResult) => {
+  console.log('[KCP] handleVerificationComplete called', result)
+
+  // 팝업 닫기
+  if (closePopup) {
+    closePopup()
+    closePopup = null
+  }
+
+  if (result.success && result.phone) {
+    // 인증된 전화번호로 ID 찾기 API 호출
+    findUserId(result.phone)
+  } else {
+    isVerifying.value = false
+    errorMessage.value = result.error || '인증에 실패했습니다'
+    toast.error(errorMessage.value)
+  }
+}
+
+// Cleanup
+onUnmounted(() => {
+  if (cleanupListener) {
+    cleanupListener()
+  }
+  if (closePopup) {
+    closePopup()
+  }
+  // Form 정리
+  const popupForm = document.getElementById('kcp_cert_form')
+  if (popupForm) {
+    popupForm.remove()
+  }
+})
 </script>

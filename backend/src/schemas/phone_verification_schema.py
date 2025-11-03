@@ -13,6 +13,12 @@ class PhoneVerificationInitiateRequest(BaseModel):
     phone_number: str = Field(..., description="휴대폰 번호 (하이픈 없이)", pattern=r'^010\d{8}$')
 
 
+class PhoneVerificationForFindIdRequest(BaseModel):
+    """ID 찾기용 본인인증 시작 요청"""
+
+    return_url: str = Field(..., description="인증 완료 후 리다이렉트할 URL")
+
+
 class PhoneVerificationInitiateResponse(BaseModel):
     """본인인증 시작 응답"""
 

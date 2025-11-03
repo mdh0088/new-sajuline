@@ -66,14 +66,27 @@ class UserRepository:
         """이메일로 조회"""
         log = get_logger_with_request_id()
         log.info("Looking up user by email", email=email)
-        
+
         stmt = select(User).where(User.email == email)
         result = await self.db.execute(stmt)
         user = result.scalar_one_or_none()
-        
+
         log.info("User lookup by email completed", email=email, found=user is not None)
         return user
-    
+
+    @logger.catch(reraise=True)
+    async def get_by_phone(self, phone: str) -> Optional[User]:
+        """전화번호로 사용자 조회"""
+        log = get_logger_with_request_id()
+        log.info("Looking up user by phone", phone=phone)
+
+        stmt = select(User).where(User.phone == phone)
+        result = await self.db.execute(stmt)
+        user = result.scalar_one_or_none()
+
+        log.info("User lookup by phone completed", phone=phone, found=user is not None)
+        return user
+
 # TODO: 사용자 목록 조회 - 추후 참고용
     # @logger.catch(reraise=True)
     # async def get_list(

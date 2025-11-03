@@ -12,7 +12,8 @@ from src.services.phone_verification_service import (
 from src.schemas.phone_verification_schema import (
     PhoneVerificationInitiateRequest,
     PhoneVerificationInitiateResponse,
-    PhoneVerificationStatusResponse
+    PhoneVerificationStatusResponse,
+    PhoneVerificationForFindIdRequest
 )
 from src.common.response.wrapper import ok, APIResponse
 from src.common.logging import get_logger_with_request_id
@@ -46,6 +47,30 @@ async def initiate_verification(
 
     result = await phone_service.initiate_verification(
         phone_number=request.phone_number
+    )
+
+    return ok(
+        data=PhoneVerificationInitiateResponse(**result),
+        message="본인인증이 시작되었습니다"
+    )
+
+
+@router.post(
+    "/initiate-for-find-id",
+    response_model=APIResponse[PhoneVerificationInitiateResponse],
+    summary="ID 찾기용 본인인증 시작",
+    description="ID 찾기를 위한 본인인증 프로세스를 시작합니다 (전화번호 미입력)"
+)
+async def initiate_verification_for_find_id(
+    request: PhoneVerificationForFindIdRequest,
+    phone_service: PhoneVerificationService = Depends(get_phone_verification_service)
+):
+    """ID 찾기용 본인인증 시작"""
+    log = get_logger_with_request_id()
+    log.info("Phone verification for find-id request", return_url=request.return_url)
+
+    result = await phone_service.initiate_verification_for_find_id(
+        return_url=request.return_url
     )
 
     return ok(
@@ -141,7 +166,7 @@ async def _kcp_callback_handler(
                         }});
 
                         // Redirect to signup page with KCP result
-                        window.location.href = `http://localhost:3000/signup?${{params.toString()}}`;
+                        window.location.href = `http://localhost:3000{result.get("return_url", "/signup")}?${{params.toString()}}`;
                     }} else {{
                         // Success - close popup after delay
                         setTimeout(function() {{

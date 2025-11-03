@@ -16,6 +16,7 @@ from src.schemas.user_schema import (
     PointHistoryResponse,
     PointChargeHistoryItem,
     PointUseHistoryItem,
+    FindIdResponse,
 )
 from src.repositories.user_repository import UserRepository
 from src.repositories.counselor_repository import CounselorRepository
@@ -478,17 +479,45 @@ class UserService:
         """
         log = get_logger_with_request_id()
         log.info("Checking nickname availability across user and counselor tables", nickname=nickname)
-        
+
         # t_user와 t_counselor 양쪽 테이블에서 닉네임 존재 여부 확인
         user_exists = await self.user_repo.exists_by_nickname(nickname)
         counselor_exists = await self.counselor_repo.exists_by_nickname(nickname)
-        
+
         exists = user_exists or counselor_exists
         available = not exists
-        
-        log.info("Nickname availability check completed", 
-                nickname=nickname, 
-                user_exists=user_exists, 
-                counselor_exists=counselor_exists, 
+
+        log.info("Nickname availability check completed",
+                nickname=nickname,
+                user_exists=user_exists,
+                counselor_exists=counselor_exists,
                 available=available)
         return available
+
+    async def find_user_id(self, phone: str) -> FindIdResponse:
+        """
+        전화번호로 사용자 ID 찾기
+
+        Args:
+            phone: 본인인증된 전화번호
+
+        Returns:
+            FindIdResponse: 사용자 ID와 가입일시
+
+        Raises:
+            NotFoundError: 사용자를 찾을 수 없음
+        """
+        log = get_logger_with_request_id()
+        log.info("Finding user by phone", phone=phone)
+
+        user = await self.user_repo.get_by_phone(phone)
+
+        if not user:
+            log.warning("User not found for phone", phone=phone)
+            raise NotFoundError("해당 전화번호로 가입된 사용자를 찾을 수 없습니다.")
+
+        log.info("User found", user_id=user.user_id)
+        return FindIdResponse(
+            user_id=user.user_id,
+            created_at=user.created_at
+        )

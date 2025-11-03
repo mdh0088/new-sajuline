@@ -43,7 +43,8 @@ from src.schemas.consultation_review_schema import (
     ConsultationReviewResponse,
 )
 from src.schemas.user_schema import (
-    UserResponse, UserSignup, UserMypageResponse, SearchType, OrderType
+    UserResponse, UserSignup, UserMypageResponse, SearchType, OrderType,
+    FindIdRequest, FindIdResponse
 )
 from src.common.utils.auth_utils import verify_user_role
 from src.schemas.user_bookmark_schema import UserBookmarkResponse
@@ -730,6 +731,30 @@ async def check_nickname_availability(
     available = await user_service.check_nickname_availability(value)
     message = "사용 가능한 닉네임입니다." if available else "이미 사용 중인 닉네임입니다."
     return ok(data=available, message=message)
+
+
+@router.post(
+    "/find-id",
+    response_model=APIResponse[FindIdResponse],
+    summary="사용자 ID 찾기",
+    description="핸드폰 본인인증을 통해 등록된 사용자 ID를 찾습니다.",
+    responses={
+        200: {"description": "ID 찾기 성공"},
+        404: {"description": "사용자를 찾을 수 없음"}
+    }
+)
+async def find_user_id(
+    find_id_data: FindIdRequest,
+    user_service: UserService = Depends(get_user_service)
+) -> APIResponse[FindIdResponse]:
+    """핸드폰 본인인증 기반 ID 찾기"""
+    log = get_logger_with_request_id()
+    log.info("Find ID attempt", phone=find_id_data.phone)
+
+    result = await user_service.find_user_id(find_id_data.phone)
+
+    log.info("Find ID successful", user_id=result.user_id)
+    return ok(data=result, message="아이디를 찾았습니다.")
 
 
 @router.get(
