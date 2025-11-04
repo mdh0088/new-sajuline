@@ -1428,11 +1428,54 @@
  .app-footer {
      background: #020617;
      border-top: 1px solid rgba(255, 255, 255, 0.1);
-     padding: 40px 20px 20px;
+     padding: 16px 20px;
      margin-top: auto;
      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Apple SD Gothic Neo', 'Noto Sans KR', sans-serif;
  }
- 
+
+ /* 푸터 토글 헤더 */
+ .footer-toggle-header {
+     display: flex;
+     justify-content: space-between;
+     align-items: center;
+     cursor: pointer;
+     padding: 0;
+     transition: all 0.3s ease;
+ }
+
+ .footer-toggle-header:hover {
+     opacity: 0.8;
+ }
+
+ .footer-company-name {
+     font-size: 14px;
+     font-weight: 600;
+     color: rgba(255, 255, 255, 0.9);
+ }
+
+ .footer-toggle-button {
+     display: flex;
+     align-items: center;
+     gap: 8px;
+     font-size: 13px;
+     color: rgba(255, 255, 255, 0.7);
+ }
+
+ .toggle-icon {
+     display: inline-block;
+     transition: transform 0.3s ease;
+     font-size: 12px;
+ }
+
+ .toggle-icon.expanded {
+     transform: rotate(180deg);
+ }
+
+ /* 펼쳐지는 콘텐츠 */
+ .footer-expandable-content {
+     padding-top: 20px;
+ }
+
  /* 푸터 링크 섹션 */
  .footer-links {
      display: flex;
@@ -1552,7 +1595,7 @@
  /* 태블릿 (768px 이상) */
  @media (min-width: 768px) {
      .app-footer {
-         padding: 24px 20px;
+         padding: 16px 20px;
      }
  
      .footer-links {
@@ -1601,7 +1644,7 @@
  /* 데스크탑 (1024px 이상) */
  @media (min-width: 1024px) {
      .app-footer {
-         padding: 24px 20px;
+         padding: 16px 20px;
      }
  
      .footer-links {
@@ -1629,7 +1672,7 @@
  /* 대형 화면 (1440px 이상) */
  @media (min-width: 1440px) {
      .app-footer {
-         padding: 24px 20px;
+         padding: 16px 20px;
      }
  
      .company-info-grid {
@@ -1641,9 +1684,9 @@
  /* 작은 화면 (480px 이하) */
  @media (max-width: 480px) {
      .app-footer {
-         padding: 32px 16px 16px;
+         padding: 16px;
      }
- 
+
      .footer-links {
          gap: 10px;
          margin-bottom: 24px;

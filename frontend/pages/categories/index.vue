@@ -44,6 +44,15 @@
         />
       </div>
 
+      <!-- 무한 스크롤 센티넬 -->
+      <div ref="sentinelRef" style="height: 1px; width: 100%;"></div>
+
+      <!-- 로딩 표시 -->
+      <div v-if="isLoading && counselors.length > 0" class="loading-more">
+        <div class="loading-spinner-small"></div>
+        <span>더 많은 상담사를 불러오는 중...</span>
+      </div>
+
       <!-- 빈 상태 -->
       <div class="empty-state" v-if="counselors.length === 0 && !isLoading">
         <div class="empty-icon">😔</div>
@@ -51,8 +60,8 @@
         <div class="empty-desc">다른 카테고리를 선택해보세요</div>
       </div>
 
-      <!-- 로딩 상태 -->
-      <div class="loading-state" v-if="isLoading">
+      <!-- 초기 로딩 상태 -->
+      <div class="loading-state" v-if="isLoading && counselors.length === 0">
         <div class="loading-spinner"></div>
         <div class="empty-title">검색 중...</div>
       </div>
@@ -109,6 +118,9 @@ const searchParams = ref<CounselorSearchParams>({
 })
 const totalPages = ref(1)
 const totalCount = ref(0)
+
+// 무한 스크롤 센티넬 ref
+const sentinelRef = ref<HTMLElement | null>(null)
 
 // 카테고리 선택
 const selectCategory = (category: string) => {
@@ -212,22 +224,21 @@ onMounted(async () => {
   await resetAndFetch()
 
   // 무한 스크롤 IntersectionObserver 설정
-  const sentinel = document.createElement('div')
-  sentinel.style.height = '1px'
-  sentinel.setAttribute('data-sentinel', 'counselor-categories')
-  document.body.appendChild(sentinel)
+  if (sentinelRef.value) {
+    const io = new IntersectionObserver(async (entries) => {
+      const entry = entries[0]
+      if (!entry || !entry.isIntersecting) return
+      if (isLoading.value) return
+      if ((searchParams.value.page || 1) >= totalPages.value) return
 
-  const io = new IntersectionObserver(async (entries) => {
-    const entry = entries[0]
-    if (!entry || !entry.isIntersecting) return
-    if (isLoading.value) return
-    if ((searchParams.value.page || 1) >= totalPages.value) return
+      searchParams.value.page = (searchParams.value.page || 1) + 1
+      await fetchNext()
+    }, {
+      rootMargin: '100px' // 100px 전에 미리 로드
+    })
 
-    searchParams.value.page = (searchParams.value.page || 1) + 1
-    await fetchNext()
-  })
-
-  io.observe(sentinel)
+    io.observe(sentinelRef.value)
+  }
 })
 
 // URL 쿼리 파라미터 변경 감지
