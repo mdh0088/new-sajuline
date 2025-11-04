@@ -19,6 +19,13 @@ class PhoneVerificationForFindIdRequest(BaseModel):
     return_url: str = Field(..., description="인증 완료 후 리다이렉트할 URL")
 
 
+class PhoneVerificationForFindPasswordRequest(BaseModel):
+    """비밀번호 찾기용 본인인증 시작 요청"""
+
+    user_id: str = Field(..., description="사용자 ID")
+    return_url: str = Field(..., description="인증 완료 후 리다이렉트할 URL")
+
+
 class PhoneVerificationInitiateResponse(BaseModel):
     """본인인증 시작 응답"""
 

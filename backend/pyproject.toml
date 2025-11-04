@@ -67,6 +67,7 @@ dependencies = [
     "phonenumbers==8.13.33",
     "pytz==2024.1",
     "user-agents==2.2.0",  # User-Agent 파싱
+    "aiosmtplib==3.0.1",  # 비동기 SMTP (Gmail)
     
     # 파일 처리
     "python-magic==0.4.27",

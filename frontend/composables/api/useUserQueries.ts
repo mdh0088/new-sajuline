@@ -292,6 +292,21 @@ const userApi = {
     return response.data
   },
 
+  // 비밀번호 찾기 (임시 비밀번호 발급)
+  async findPassword(params: { user_id: string; phone: string }): Promise<{ user_id: string; email: string; message: string }> {
+    const { $api } = useNuxtApp()
+    const response = await $api<APIResponse<{ user_id: string; email: string; message: string }>>('/api/v1/users/find-password', {
+      method: 'POST',
+      body: params
+    })
+
+    if (!response.success || !response.data) {
+      throw new Error(response.error?.message || '비밀번호 찾기에 실패했습니다.')
+    }
+
+    return response.data
+  },
+
   // 사용자 정보 수정
   async updateUser(userId: string, userData: UserUpdateRequest): Promise<UserResponse> {
     const { $api } = useNuxtApp()
@@ -647,6 +662,16 @@ export const useUserQueries = () => {
     })
   }
 
+  // 비밀번호 찾기 뮤테이션 (임시 비밀번호 발급)
+  const useFindPassword = (
+    options?: UseMutationOptions<{ user_id: string; email: string; message: string }, APIError, { user_id: string; phone: string }>
+  ) => {
+    return useMutation({
+      mutationFn: userApi.findPassword,
+      ...options
+    })
+  }
+
   // 토큰 갱신 뮤테이션
   // (이전 위치에서 이동됨) refreshToken은 useAuthQueries로 분리됨
 
@@ -681,6 +706,7 @@ export const useUserQueries = () => {
     useLogout,
     useAuthenticateUser,
     useFindUserId,
+    useFindPassword,
     useCreateUserReview,
     useUpdateUserReview,
     useDeleteUserReview

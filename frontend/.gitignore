@@ -18,6 +18,10 @@ logs
 .fleet
 .idea
 
+# Compiled TypeScript files (Nuxt auto-compiles .ts files)
+plugins/**/*.js
+!plugins/**/*.config.js
+
 # Local env files
 .env
 .env.*
