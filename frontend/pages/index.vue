@@ -70,6 +70,15 @@
             :counselor="c"
           />
         </div>
+
+        <!-- 무한 스크롤 센티넬 -->
+        <div ref="sentinelRef" style="height: 1px; width: 100%;"></div>
+
+        <!-- 로딩 표시 -->
+        <div v-if="isLoading" class="loading-more">
+          <div class="loading-spinner-small"></div>
+          <span>더 많은 상담사를 불러오는 중...</span>
+        </div>
       </section>
     </main>
 
@@ -117,12 +126,9 @@ const userPoints = ref(1200)
 
 // 카테고리 목록
 const categories = ref([
-  { name: '타로', path: '/categories?category=tarot', icon: '🔮' },
-  { name: '사주', path: '/categories?category=saju', icon: '📜' },
-  { name: '신점', path: '/categories?category=divine', icon: '✨' },
-  { name: '연애운', path: '/categories?category=love', icon: '💕' },
-  { name: '재물운', path: '/categories?category=money', icon: '💰' },
-  { name: '직장운', path: '/categories?category=work', icon: '💼' }
+  { name: '타로', path: '/categories?category=TARO', icon: '🔮' },
+  { name: '사주', path: '/categories?category=SAJU', icon: '📜' },
+  { name: '신점', path: '/categories?category=FORTUNE', icon: '✨' }
 ])
 
 // 필터 목록 - 상태 필터와 카테고리 필터 분리
@@ -324,21 +330,28 @@ async function fetchNext() {
   }
 }
 
+// 무한 스크롤 센티넬 ref
+const sentinelRef = ref<HTMLElement | null>(null)
+
 onMounted(async () => {
   await resetAndFetch()
-  const sentinel = document.createElement('div')
-  sentinel.style.height = '1px'
-  sentinel.setAttribute('data-sentinel', 'counselor')
-  document.body.appendChild(sentinel)
-  const io = new IntersectionObserver(async (entries) => {
-    const entry = entries[0]
-    if (!entry || !entry.isIntersecting) return
-    if (isLoading.value) return
-    if ((params.value.page || 1) >= totalPages.value) return
-    params.value.page = (params.value.page || 1) + 1
-    await fetchNext()
-  })
-  io.observe(sentinel)
+
+  // IntersectionObserver 설정
+  if (sentinelRef.value) {
+    const io = new IntersectionObserver(async (entries) => {
+      const entry = entries[0]
+      if (!entry || !entry.isIntersecting) return
+      if (isLoading.value) return
+      if ((params.value.page || 1) >= totalPages.value) return
+
+      params.value.page = (params.value.page || 1) + 1
+      await fetchNext()
+    }, {
+      rootMargin: '100px' // 100px 전에 미리 로드
+    })
+
+    io.observe(sentinelRef.value)
+  }
 })
 </script>
 
