@@ -44,7 +44,7 @@ from src.schemas.consultation_review_schema import (
 )
 from src.schemas.user_schema import (
     UserResponse, UserSignup, UserMypageResponse, SearchType, OrderType,
-    FindIdRequest, FindIdResponse
+    FindIdRequest, FindIdResponse, FindPasswordRequest, FindPasswordResponse
 )
 from src.common.utils.auth_utils import verify_user_role
 from src.schemas.user_bookmark_schema import UserBookmarkResponse
@@ -755,6 +755,31 @@ async def find_user_id(
 
     log.info("Find ID successful", user_id=result.user_id)
     return ok(data=result, message="아이디를 찾았습니다.")
+
+
+@router.post(
+    "/find-password",
+    response_model=APIResponse[FindPasswordResponse],
+    summary="비밀번호 찾기 (임시 비밀번호 발급)",
+    description="사용자 ID와 핸드폰 본인인증을 통해 임시 비밀번호를 이메일로 전송합니다. (일반 회원가입 회원만 가능)",
+    responses={
+        200: {"description": "임시 비밀번호 발급 및 이메일 전송 성공"},
+        404: {"description": "사용자를 찾을 수 없음 (정보 불일치 또는 SNS 가입 회원)"},
+        400: {"description": "이메일 전송 실패"}
+    }
+)
+async def find_password(
+    find_password_data: FindPasswordRequest,
+    user_service: UserService = Depends(get_user_service)
+) -> APIResponse[FindPasswordResponse]:
+    """비밀번호 찾기 - 임시 비밀번호 발급 및 이메일 전송"""
+    log = get_logger_with_request_id()
+    log.info("Find password attempt", user_id=find_password_data.user_id, phone=find_password_data.phone)
+
+    result = await user_service.find_password(find_password_data)
+
+    log.info("Find password successful", user_id=result.user_id, email=result.email)
+    return ok(data=result, message=result.message)
 
 
 @router.get(

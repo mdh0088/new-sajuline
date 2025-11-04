@@ -4,6 +4,8 @@
 """
 from typing import Optional, List, Tuple
 from datetime import datetime
+import secrets
+import string
 
 from sqlalchemy.ext.asyncio import AsyncSession
 from src.exceptions.custom_exceptions import NotFoundError, DuplicateError, AuthenticationError, ValidationError
@@ -17,7 +19,10 @@ from src.schemas.user_schema import (
     PointChargeHistoryItem,
     PointUseHistoryItem,
     FindIdResponse,
+    FindPasswordRequest,
+    FindPasswordResponse,
 )
+from src.common.utils.email_service import email_service
 from src.repositories.user_repository import UserRepository
 from src.repositories.counselor_repository import CounselorRepository
 from src.repositories.payment_repository import PaymentRepository
@@ -520,4 +525,97 @@ class UserService:
         return FindIdResponse(
             user_id=user.user_id,
             created_at=user.created_at
+        )
+
+    def _generate_temporary_password(self, length: int = 12) -> str:
+        """
+        임시 비밀번호 생성 (영문 대소문자 + 숫자)
+
+        Args:
+            length: 비밀번호 길이 (기본 12자)
+
+        Returns:
+            str: 생성된 임시 비밀번호
+        """
+        characters = string.ascii_letters + string.digits
+        return ''.join(secrets.choice(characters) for _ in range(length))
+
+    async def find_password(self, request: FindPasswordRequest) -> FindPasswordResponse:
+        """
+        비밀번호 찾기 (임시 비밀번호 발급 및 이메일 전송)
+
+        Args:
+            request: 비밀번호 찾기 요청 (user_id, phone)
+
+        Returns:
+            FindPasswordResponse: 처리 결과
+
+        Raises:
+            NotFoundError: 사용자를 찾을 수 없음 (user_id + phone 불일치 또는 SNS 가입자)
+            ValidationError: 이메일 전송 실패
+        """
+        log = get_logger_with_request_id()
+        log.info("Finding password", user_id=request.user_id, phone=request.phone)
+
+        # 1. 사용자 조회 (user_id + phone + join_type='COMMON' 조건)
+        user = await self.user_repo.get_by_user_id_and_phone_for_password_reset(
+            request.user_id,
+            request.phone
+        )
+
+        if not user:
+            log.warning("User not found for password reset",
+                       user_id=request.user_id,
+                       phone=request.phone)
+            raise NotFoundError(
+                "입력하신 정보와 일치하는 사용자를 찾을 수 없습니다. "
+                "아이디와 전화번호를 확인해주세요. "
+                "(SNS 가입 회원은 비밀번호 찾기를 사용할 수 없습니다.)"
+            )
+
+        # 2. 임시 비밀번호 생성
+        temporary_password = self._generate_temporary_password()
+        log.info("Temporary password generated", user_id=user.user_id)
+
+        # 3. 임시 비밀번호 해싱 (bcrypt)
+        password_hash = self.auth_service.hash_password(temporary_password)
+        log.info("Temporary password hashed", user_id=user.user_id)
+
+        # 4. DB에 해시된 비밀번호 업데이트
+        update_success = await self.user_repo.update_password(user.user_id, password_hash)
+
+        if not update_success:
+            log.error("Failed to update password in DB", user_id=user.user_id)
+            raise ValidationError("비밀번호 업데이트에 실패했습니다. 다시 시도해주세요.")
+
+        await self.user_repo.db.commit()
+        log.info("Password updated in DB", user_id=user.user_id)
+
+        # 5. 이메일로 평문 임시 비밀번호 전송
+        try:
+            await email_service.send_temporary_password(
+                recipient_email=user.email,
+                user_id=user.user_id,
+                temporary_password=temporary_password
+            )
+            log.info("Temporary password email sent", user_id=user.user_id, email=user.email)
+        except Exception as e:
+            log.error("Failed to send temporary password email",
+                     user_id=user.user_id,
+                     email=user.email,
+                     error=str(e))
+            # 이메일 전송 실패해도 비밀번호는 이미 변경됨
+            raise ValidationError(
+                "임시 비밀번호가 발급되었으나 이메일 전송에 실패했습니다. "
+                "잠시 후 다시 시도해주세요."
+            )
+
+        # 6. 이메일 마스킹 처리하여 응답
+        masked_email = email_service.mask_email(user.email)
+
+        log.info("Password reset completed successfully", user_id=user.user_id)
+        return FindPasswordResponse(
+            user_id=user.user_id,
+            email=masked_email,
+            message=f"임시 비밀번호가 {masked_email}로 전송되었습니다. 로그인 후 비밀번호를 변경해주세요."
         )

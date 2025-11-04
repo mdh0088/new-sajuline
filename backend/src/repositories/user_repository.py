@@ -87,6 +87,28 @@ class UserRepository:
         log.info("User lookup by phone completed", phone=phone, found=user is not None)
         return user
 
+    @logger.catch(reraise=True)
+    async def get_by_user_id_and_phone_for_password_reset(self, user_id: str, phone: str) -> Optional[User]:
+        """
+        비밀번호 찾기용 사용자 조회
+        user_id, phone이 일치하고 join_type이 'COMMON'인 사용자만 조회
+        """
+        log = get_logger_with_request_id()
+        log.info("Looking up COMMON user for password reset", user_id=user_id, phone=phone)
+
+        stmt = select(User).where(
+            and_(
+                User.user_id == user_id,
+                User.phone == phone,
+                User.join_type == JoinType.COMMON
+            )
+        )
+        result = await self.db.execute(stmt)
+        user = result.scalar_one_or_none()
+
+        log.info("Password reset user lookup completed", user_id=user_id, found=user is not None)
+        return user
+
 # TODO: 사용자 목록 조회 - 추후 참고용
     # @logger.catch(reraise=True)
     # async def get_list(
@@ -189,6 +211,27 @@ class UserRepository:
             .execution_options(synchronize_session="evaluate")
         )
         result = await self.db.execute(stmt)
+        return result.rowcount > 0
+
+    @logger.catch(reraise=True)
+    async def update_password(self, user_id: str, password_hash: str) -> bool:
+        """비밀번호 업데이트 (비밀번호 찾기/변경)"""
+        log = get_logger_with_request_id()
+        log.info("Updating user password", user_id=user_id)
+
+        stmt = (
+            update(User)
+            .where(User.user_id == user_id)
+            .values(
+                password_hash=password_hash,
+                password_changed_at=datetime.utcnow(),
+                updated_at=datetime.utcnow()
+            )
+            .execution_options(synchronize_session="evaluate")
+        )
+        result = await self.db.execute(stmt)
+
+        log.info("User password updated", user_id=user_id, success=result.rowcount > 0)
         return result.rowcount > 0
     
     @logger.catch(reraise=True)

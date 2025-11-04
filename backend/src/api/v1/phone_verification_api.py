@@ -13,7 +13,8 @@ from src.schemas.phone_verification_schema import (
     PhoneVerificationInitiateRequest,
     PhoneVerificationInitiateResponse,
     PhoneVerificationStatusResponse,
-    PhoneVerificationForFindIdRequest
+    PhoneVerificationForFindIdRequest,
+    PhoneVerificationForFindPasswordRequest
 )
 from src.common.response.wrapper import ok, APIResponse
 from src.common.logging import get_logger_with_request_id
@@ -70,6 +71,33 @@ async def initiate_verification_for_find_id(
     log.info("Phone verification for find-id request", return_url=request.return_url)
 
     result = await phone_service.initiate_verification_for_find_id(
+        return_url=request.return_url
+    )
+
+    return ok(
+        data=PhoneVerificationInitiateResponse(**result),
+        message="본인인증이 시작되었습니다"
+    )
+
+
+@router.post(
+    "/initiate-for-find-password",
+    response_model=APIResponse[PhoneVerificationInitiateResponse],
+    summary="비밀번호 찾기용 본인인증 시작",
+    description="비밀번호 찾기를 위한 본인인증 프로세스를 시작합니다 (user_id 포함)"
+)
+async def initiate_verification_for_find_password(
+    request: PhoneVerificationForFindPasswordRequest,
+    phone_service: PhoneVerificationService = Depends(get_phone_verification_service)
+):
+    """비밀번호 찾기용 본인인증 시작"""
+    log = get_logger_with_request_id()
+    log.info("Phone verification for find-password request",
+             user_id=request.user_id,
+             return_url=request.return_url)
+
+    result = await phone_service.initiate_verification_for_find_password(
+        user_id=request.user_id,
         return_url=request.return_url
     )
 
@@ -155,7 +183,7 @@ async def _kcp_callback_handler(
 
                     // 3. Fallback: Redirect to signup (full page redirect case)
                     if (!sent) {{
-                        console.log('[KCP] Fallback: Redirecting to signup page');
+                        console.log('[KCP] Fallback: Redirecting to page');
 
                         // KCP 결과를 URL query parameter로 전달
                         const params = new URLSearchParams({{
@@ -165,7 +193,13 @@ async def _kcp_callback_handler(
                             verified_phone: '{result.get("phone", "")}'
                         }});
 
-                        // Redirect to signup page with KCP result
+                        // 비밀번호 찾기용 user_id 추가 (있는 경우에만)
+                        const userId = '{result.get("user_id", "")}';
+                        if (userId) {{
+                            params.append('user_id', userId);
+                        }}
+
+                        // Redirect to page with KCP result
                         window.location.href = `http://localhost:3000{result.get("return_url", "/signup")}?${{params.toString()}}`;
                     }} else {{
                         // Success - close popup after delay

@@ -129,6 +129,10 @@ class Settings(BaseSettings):
     payment_cancel_url: Optional[str] = Field(None, env="PAYMENT_CANCEL_URL")
     payment_callback_url: Optional[str] = Field(None, env="PAYMENT_CALLBACK_URL")
     payment_virtual_callback_url: Optional[str] = Field(None, env="PAYMENT_VIRTUAL_CALLBACK_URL")
+
+    # google email 설정
+    google_email_id: Optional[str] = Field(None, env="GOOGLE_EMAIL_ID")
+    google_email_password: Optional[str] = Field(None, env="GOOGLE_EMAIL_PASSWORD")
     
     class Config:
         # 환경에 따라 자동으로 env 파일 선택

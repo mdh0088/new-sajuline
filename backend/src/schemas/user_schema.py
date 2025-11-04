@@ -143,6 +143,33 @@ class FindIdResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
 
+class FindPasswordRequest(BaseModel):
+    """비밀번호 찾기 요청"""
+    user_id: str = Field(
+        ...,
+        min_length=4,
+        max_length=20,
+        description="사용자 ID"
+    )
+    phone: str = Field(
+        ...,
+        min_length=10,
+        max_length=15,
+        description="본인인증된 전화번호"
+    )
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class FindPasswordResponse(BaseModel):
+    """비밀번호 찾기 응답"""
+    user_id: str = Field(..., description="사용자 ID")
+    email: str = Field(..., description="임시 비밀번호가 전송된 이메일 (마스킹)")
+    message: str = Field(..., description="안내 메시지")
+
+    model_config = ConfigDict(from_attributes=True)
+
+
 # TODO: 추후 필요시 참고용 스키마들
 # class UserLogin(BaseModel):
 #     """로그인 요청 스키마"""  
