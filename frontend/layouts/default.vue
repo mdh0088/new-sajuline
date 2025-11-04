@@ -411,7 +411,7 @@ const handleAdClick = (ad) => {
     overflow-y: auto !important;
     overflow-x: hidden !important;
     margin-top: 0 !important;
-    padding-bottom: 120px !important;
+    padding-bottom: 20px !important;
     background-color: #0a0a0f !important;
     min-height: calc(100vh - 180px) !important;
     max-height: calc(100vh - 180px) !important;
@@ -784,7 +784,7 @@ const handleAdClick = (ad) => {
     height: 100vh !important;
     overflow-y: auto !important;
     overflow-x: hidden !important;
-    padding-bottom: 120px !important; /* 더 넉넉하게 120px */
+    padding-bottom: 20px !important;
     box-sizing: border-box !important;
   }
 
