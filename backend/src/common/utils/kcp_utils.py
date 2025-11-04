@@ -86,6 +86,13 @@ def make_hash_data(data: str) -> str:
     try:
         ct_cli_path = get_kcp_binary_path()
 
+        # 디버깅: 바이너리 경로 및 상태 로깅
+        log.info("KCP binary path resolved",
+                binary_path=ct_cli_path,
+                exists=os.path.exists(ct_cli_path),
+                is_file=os.path.isfile(ct_cli_path),
+                executable=os.access(ct_cli_path, os.X_OK) if os.path.exists(ct_cli_path) else False)
+
         # KCP 바이너리 호출
         cmd = [
             ct_cli_path,
@@ -109,9 +116,19 @@ def make_hash_data(data: str) -> str:
         else:
             log.warning("KCP binary failed, using Python fallback",
                        returncode=result.returncode,
-                       stderr=result.stderr)
+                       stdout=result.stdout,
+                       stderr=result.stderr,
+                       cmd=" ".join(cmd))
+    except FileNotFoundError as e:
+        log.error("KCP binary not found",
+                 error=str(e),
+                 kcp_base_dir=settings.kcp_base_dir,
+                 exc_info=True)
     except Exception as e:
-        log.warning("Failed to call KCP binary, using Python fallback", error=str(e))
+        log.error("Failed to call KCP binary, using Python fallback",
+                 error=str(e),
+                 error_type=type(e).__name__,
+                 exc_info=True)
 
     # Python 폴백: SHA256 해시
     combined = f"{enc_key}{data}"
