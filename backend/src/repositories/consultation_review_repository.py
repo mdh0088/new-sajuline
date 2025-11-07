@@ -175,13 +175,51 @@ class ConsultationReviewRepository:
         stmt = select(func.count(ConsultationReview.review_id)).where(
             ConsultationReview.counselor_id == counselor_id
         )
-        
+
         if is_visible is not None:
             stmt = stmt.where(ConsultationReview.is_visible == is_visible)
-        
+
         result = await self.db.execute(stmt)
         return result.scalar() or 0
-    
+
+    @logger.catch(reraise=True)
+    async def get_all_reviews(
+        self,
+        is_visible: Optional[bool] = True,
+        skip: int = 0,
+        limit: int = 100
+    ) -> List[ConsultationReview]:
+        """전체 후기 목록 조회 (공개 페이지용)"""
+        log = get_logger_with_request_id()
+        log.info("Getting all reviews", is_visible=is_visible, skip=skip, limit=limit)
+
+        stmt = select(ConsultationReview)
+
+        if is_visible is not None:
+            stmt = stmt.where(ConsultationReview.is_visible == is_visible)
+
+        stmt = stmt.offset(skip).limit(limit).order_by(ConsultationReview.created_at.desc())
+
+        result = await self.db.execute(stmt)
+        reviews = list(result.scalars().all())
+
+        log.info("All reviews lookup completed", count=len(reviews))
+        return reviews
+
+    @logger.catch(reraise=True)
+    async def get_all_reviews_count(
+        self,
+        is_visible: Optional[bool] = True
+    ) -> int:
+        """전체 후기 총 개수"""
+        stmt = select(func.count(ConsultationReview.review_id))
+
+        if is_visible is not None:
+            stmt = stmt.where(ConsultationReview.is_visible == is_visible)
+
+        result = await self.db.execute(stmt)
+        return result.scalar() or 0
+
     @logger.catch(reraise=True)
     async def update(self, review_id: int, update_data: ConsultationReviewUpdate) -> bool:
         """후기 수정"""

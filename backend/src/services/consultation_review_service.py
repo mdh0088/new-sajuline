@@ -631,3 +631,65 @@ class ConsultationReviewService:
         except Exception as e:
             await self.review_repo.db.rollback()
             raise ValidationError(f"후기 삭제 실패: {str(e)}")
+
+    async def get_all_public_reviews(
+        self,
+        *,
+        page: int,
+        limit: int,
+        chatlog_repo: Tm60ChatlogRepository,
+        counselor_repo: CounselorRepository,
+    ) -> Tuple[UserReviewList, int]:
+        """전체 공개 후기 목록 조회 (상담사/실상담시간 포함)"""
+        log = get_logger_with_request_id()
+        log.info("Getting all public reviews", page=page, limit=limit)
+
+        if page < 1:
+            page = 1
+        if limit < 1 or limit > 100:
+            limit = 20
+        skip = (page - 1) * limit
+
+        reviews = await self.review_repo.get_all_reviews(is_visible=True, skip=skip, limit=limit)
+        total = await self.review_repo.get_all_reviews_count(is_visible=True)
+
+        # tm60_chatlog fetch by session ids
+        session_ids = [r.session_id for r in reviews if r.session_id]
+        chatlogs = await chatlog_repo.get_by_idx_list(session_ids)
+        idx_to_log = {c.idx: c for c in chatlogs}
+
+        # counselor map by counselor_id
+        items: List[UserReviewItem] = []
+        for r in reviews:
+            counselor = await counselor_repo.get_by_id(r.counselor_id)
+            chatlog = idx_to_log.get(r.session_id)
+            try:
+                tags = json.loads(r.review_tags) if getattr(r, "review_tags", None) else None
+            except Exception:
+                tags = None
+
+            items.append(
+                UserReviewItem(
+                    review_id=r.review_id,
+                    session_id=r.session_id,
+                    rating=r.rating,
+                    content=r.content,
+                    counselor_reply=r.counselor_reply,
+                    review_tags=tags,
+                    is_best=r.is_best,
+                    created_at=r.created_at,
+                    counselor_replied_at=r.counselor_replied_at,
+                    starttm=(chatlog.starttm if chatlog else None),
+                    realchattm=(chatlog.realchattm if chatlog else None),
+                    counselor=(
+                        None
+                        if not counselor
+                        else CounselorBriefInfo(
+                            nickname=counselor.nickname,
+                            profile_image_url=counselor.profile_image_url,
+                        )
+                    ),
+                )
+            )
+
+        return UserReviewList(items=items, total=total, page=page, limit=limit), total
