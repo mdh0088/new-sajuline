@@ -1123,3 +1123,36 @@ async def remove_bookmark(
     verify_user_role(current_user)
     removed = await bookmark_service.remove_bookmark(current_user.sub, counselor_id)
     return ok(data=removed, message="즐겨찾기 삭제 성공")
+
+
+# ===========================
+# Public APIs (인증 불필요)
+# ===========================
+
+@router.get(
+    "/public/reviews",
+    response_model=APIResponse,
+    summary="전체 후기 조회 (공개)",
+    description="모든 공개 후기를 조회합니다. 인증 불필요.",
+)
+async def get_all_public_reviews_api(
+    page: int = Query(1, ge=1, description="페이지 번호"),
+    limit: int = Query(20, ge=1, le=100, description="페이지당 항목 수"),
+    review_service: ConsultationReviewService = Depends(get_consultation_review_service),
+    chatlog_repo: Tm60ChatlogRepository = Depends(get_tm60_chatlog_repository),
+    counselor_repo: CounselorRepository = Depends(get_counselor_repository),
+) -> APIResponse:
+    """전체 공개 후기 목록 조회"""
+    data, total = await review_service.get_all_public_reviews(
+        page=page,
+        limit=limit,
+        chatlog_repo=chatlog_repo,
+        counselor_repo=counselor_repo,
+    )
+    return APIResponseBuilder.paginated(
+        data=data.items,
+        page=page,
+        limit=limit,
+        total=total,
+        message="전체 후기 조회 성공"
+    )

@@ -189,6 +189,13 @@
           </div> -->
 
           <div>
+            <h4 class="text-sm text-white/60 mb-2 px-1">이벤트</h4>
+            <div class="rounded-2xl overflow-hidden border border-white/10">
+              <NuxtLink to="/events" class="menu-item"><div class="menu-left"><div class="menu-icon">🎁</div><div><div class="menu-title">진행중인 이벤트</div><div class="menu-desc">다양한 혜택을 확인하세요</div></div></div><div class="menu-right">›</div></NuxtLink>
+            </div>
+          </div>
+
+          <div>
             <h4 class="text-sm text-white/60 mb-2 px-1">기타</h4>
             <div class="rounded-2xl overflow-hidden border border-white/10">
               <div class="menu-item" @click="goNotice"><div class="menu-left"><div class="menu-icon">📢</div><div><div class="menu-title">공지사항</div><div class="menu-desc">서비스 소식 확인</div></div></div><div class="menu-right">NEW</div></div>

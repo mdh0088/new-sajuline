@@ -477,8 +477,10 @@
   z-index: 1100;
   width: 90%;
   max-width: 400px;
-  max-height: 500px;
-  overflow: hidden;
+  max-height: 80vh;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
 }
 
 .filter-modal.active {
@@ -488,7 +490,7 @@
 }
 
 .modal-header {
-  padding: 24px 24px 0;
+  padding: 24px 24px 16px;
   text-align: center;
   position: relative;
 }
@@ -512,6 +514,8 @@
   right: 16px;
   width: 32px;
   height: 32px;
+  min-width: 32px;
+  min-height: 32px;
   border: none;
   background: rgba(255, 255, 255, 0.1);
   color: #fff;
@@ -519,6 +523,12 @@
   border-radius: 50%;
   cursor: pointer;
   transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+  flex-shrink: 0;
+  padding: 0;
 }
 
 .close-button:hover {
@@ -526,7 +536,7 @@
 }
 
 .modal-content {
-  padding: 0 24px 24px;
+  padding: 8px 24px 32px;
 }
 
 .radio-group {

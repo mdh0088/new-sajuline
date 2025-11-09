@@ -194,6 +194,19 @@ const userApi = {
     return response
   },
 
+  // 전체 공개 후기 조회 (인증 불필요)
+  async getAllPublicReviews(params: { page?: number; limit?: number }) {
+    const { $api } = useNuxtApp()
+    const query = new URLSearchParams()
+    if (params.page) query.set('page', String(params.page))
+    if (params.limit) query.set('limit', String(params.limit))
+    const response = await $api<APIResponse<any[]>>(`/api/v1/users/public/reviews?${query.toString()}`)
+    if (!response.success) {
+      throw new Error(response.error?.message || '전체 후기 조회에 실패했습니다.')
+    }
+    return response
+  },
+
   // 사용자 후기 생성
   async createUserReview(body: { session_id: number; rating: number; content?: string; review_tags?: string[] }) {
     const { $api } = useNuxtApp()
@@ -687,6 +700,7 @@ export const useUserQueries = () => {
     // Direct fetch helpers (for imperative flows like infinite scroll)
     fetchUserReviewSummary: userApi.getUserReviewSummary,
     fetchUserReviews: userApi.getUserReviews,
+    fetchAllPublicReviews: userApi.getAllPublicReviews,
     // Direct mutation helpers (simple imperative calls)
     createUserReview: userApi.createUserReview,
     updateUserReview: userApi.updateUserReview,

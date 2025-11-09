@@ -15,9 +15,9 @@
       <span class="nav-label">검색</span>
     </NuxtLink>
 
-    <NuxtLink to="/events" :class="['nav-item', { active: $route.path === '/events' }]">
-      <span class="nav-icon">🎁</span>
-      <span class="nav-label">이벤트</span>
+    <NuxtLink to="/point" :class="['nav-item', { active: $route.path === '/point' }]">
+      <span class="nav-icon">💰</span>
+      <span class="nav-label">충전</span>
     </NuxtLink>
 
     <NuxtLink :to="mypagePath" :class="['nav-item', { active: $route.path.includes('/mypage') }]">

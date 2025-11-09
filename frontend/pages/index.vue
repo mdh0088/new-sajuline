@@ -128,7 +128,8 @@ const userPoints = ref(1200)
 const categories = ref([
   { name: '타로', path: '/categories?category=TARO', icon: '🔮' },
   { name: '사주', path: '/categories?category=SAJU', icon: '📜' },
-  { name: '신점', path: '/categories?category=FORTUNE', icon: '✨' }
+  { name: '신점', path: '/categories?category=FORTUNE', icon: '✨' },
+  { name: '전체 후기', path: '/reviews', icon: '📝' }
 ])
 
 // 필터 목록 - 상태 필터와 카테고리 필터 분리
