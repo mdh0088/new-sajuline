@@ -231,6 +231,29 @@ class InquiryService:
         response = InquiryResponse.model_validate(inquiry)
         return response
 
+    async def create_counselor_admin_inquiry(
+        self,
+        *,
+        counselor_id: str,
+        payload
+    ) -> InquiryResponse:
+        """상담사 → 관리자 1:1 문의 생성"""
+        log = get_logger_with_request_id()
+        log.info("Creating counselor admin inquiry (service)", counselor_id=counselor_id, inquiry_type=payload.inquiry_type)
+
+        if not payload.content:
+            raise ValidationError("content는 필수입니다.")
+
+        inquiry = await self.inquiry_repo.create_counselor_admin_inquiry(
+            counselor_id=counselor_id,
+            inquiry_type=payload.inquiry_type,
+            content=payload.content,
+            title=payload.title
+        )
+
+        response = InquiryResponse.model_validate(inquiry)
+        return response
+
     async def get_user_admin_inquiry_detail(
         self,
         inquiry_id: int,

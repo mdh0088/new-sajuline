@@ -127,3 +127,17 @@ class CounselorReplyRequest(BaseModel):
     reply_content: str = Field(..., min_length=1, description="답변 내용")
 
     model_config = ConfigDict(from_attributes=True)
+
+
+class CounselorAdminInquiryCreateRequest(BaseModel):
+    """상담사 → 관리자 문의 생성 요청 스키마
+
+    category는 'CS_TO_ADMIN'으로 자동 설정
+    inquirer_type은 'COUNSELOR'로 자동 설정
+    inquirer_id는 로그인한 counselor_id로 자동 설정
+    """
+    inquiry_type: str = Field(..., description="문의 유형: PAY(결제문의), ACCOUNT(계정문의), CS(상담문의), EVENT(이벤트문의), ETC(기타문의)")
+    title: Optional[str] = Field(None, max_length=200, description="제목")
+    content: str = Field(..., min_length=1, description="문의 내용")
+
+    model_config = ConfigDict(from_attributes=True)

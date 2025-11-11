@@ -273,6 +273,66 @@
 
             <!-- 관리자문의 (상담사→관리자) -->
             <template v-else>
+              <!-- 문의하기 버튼 -->
+              <div class="mb-4">
+                <button
+                  class="w-full py-3 px-4 bg-gradient-to-r from-purple-600 to-purple-700 rounded-xl font-semibold hover:from-purple-700 hover:to-purple-800 transition-all"
+                  @click="showAdminInquiryForm = !showAdminInquiryForm"
+                >
+                  {{ showAdminInquiryForm ? '문의 취소' : '관리자에게 문의하기' }}
+                </button>
+              </div>
+
+              <!-- 문의 작성 폼 -->
+              <div v-if="showAdminInquiryForm" class="mb-4 p-4 rounded-xl bg-white/5 border border-white/10">
+                <div class="space-y-3">
+                  <div>
+                    <label class="block text-sm font-medium mb-1">문의 유형</label>
+                    <select v-model="adminInquiryForm.inquiry_type" class="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white">
+                      <option value="PAY">결제문의</option>
+                      <option value="ACCOUNT">계정문의</option>
+                      <option value="CS">상담문의</option>
+                      <option value="EVENT">이벤트문의</option>
+                      <option value="ETC">기타문의</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label class="block text-sm font-medium mb-1">제목 (선택)</label>
+                    <input
+                      v-model="adminInquiryForm.title"
+                      type="text"
+                      class="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white"
+                      placeholder="제목을 입력해주세요"
+                    />
+                  </div>
+                  <div>
+                    <label class="block text-sm font-medium mb-1">문의 내용</label>
+                    <textarea
+                      v-model="adminInquiryForm.content"
+                      rows="4"
+                      class="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white"
+                      placeholder="문의 내용을 입력해주세요"
+                    ></textarea>
+                  </div>
+                  <div class="flex gap-2">
+                    <button
+                      class="flex-1 py-2 bg-purple-600 rounded-lg font-medium hover:bg-purple-700 transition-colors"
+                      @click="submitAdminInquiry"
+                      :disabled="!adminInquiryForm.content || isSubmittingAdminInquiry"
+                    >
+                      {{ isSubmittingAdminInquiry ? '등록 중...' : '문의 등록' }}
+                    </button>
+                    <button
+                      class="px-6 py-2 bg-white/10 rounded-lg font-medium hover:bg-white/20 transition-colors"
+                      @click="cancelAdminInquiryForm"
+                    >
+                      취소
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              <!-- 문의 목록 -->
               <PagedSection
                 :items="adminInquiries"
                 :page="adminInquiryPage"
@@ -295,7 +355,17 @@
                       </div>
                     </div>
                     <div class="inquiry-content">
-                      {{ a.content || (a.title || a.category || '제목 없음') }}
+                      <div class="inquiry-text">
+                        <div v-if="a.title" class="font-semibold mb-1">[{{ a.inquiry_type }}] {{ a.title }}</div>
+                        {{ a.content || '내용 없음' }}
+                      </div>
+                      <!-- 답변 내용 표시 -->
+                      <div v-if="a.has_reply && a.reply_content" class="reply-section">
+                        <div class="reply-divider"></div>
+                        <div class="reply-author">관리자 답변</div>
+                        <div class="reply-text">{{ a.reply_content }}</div>
+                        <div v-if="a.answered_at" class="reply-date">답변일: {{ formatDate(a.answered_at) }}</div>
+                      </div>
                     </div>
                   </div>
                 </template>
@@ -321,6 +391,7 @@ import AppHeader from '~/components/common/AppHeader.vue'
 import AppBottomNavi from '~/components/common/AppBottomNavi.vue'
 import PagedSection from '~/components/common/PagedSection.vue'
 import { computed, ref, watchEffect } from 'vue'
+import { useQueryClient } from '@tanstack/vue-query'
 import { useCounselorQueries } from '~/composables/api/useCounselorQueries'
 import { useAuth } from '~/composables/auth/useAuth'
 import { useNotify } from '~/composables/utils/useNotify'
@@ -629,6 +700,50 @@ const formatDate = (iso: string) => {
   const m = String(d.getMonth()+1).padStart(2,'0')
   const day = String(d.getDate()).padStart(2,'0')
   return `${y}.${m}.${day}`
+}
+
+// 관리자 문의 작성 폼
+const showAdminInquiryForm = ref(false)
+const adminInquiryForm = ref({
+  inquiry_type: 'ETC',
+  title: '',
+  content: ''
+})
+const isSubmittingAdminInquiry = ref(false)
+
+const { createCounselorAdminInquiry } = useCounselorQueries()
+const queryClient = useQueryClient()
+
+const submitAdminInquiry = async () => {
+  if (!adminInquiryForm.value.content) {
+    notifyError('문의 내용을 입력해주세요.')
+    return
+  }
+
+  isSubmittingAdminInquiry.value = true
+  try {
+    await createCounselorAdminInquiry({
+      inquiry_type: adminInquiryForm.value.inquiry_type,
+      title: adminInquiryForm.value.title || undefined,
+      content: adminInquiryForm.value.content
+    })
+    notifySuccess('문의가 등록되었습니다.')
+    // 폼 초기화 및 닫기
+    adminInquiryForm.value = { inquiry_type: 'ETC', title: '', content: '' }
+    showAdminInquiryForm.value = false
+    // 목록 새로고침
+    await queryClient.invalidateQueries({ queryKey: ['counselor', 'adminInquiries'] })
+    await queryClient.invalidateQueries({ queryKey: ['counselor', 'adminInquiriesCount'] })
+  } catch (e: any) {
+    notifyError(e?.message || '문의 등록에 실패했습니다.')
+  } finally {
+    isSubmittingAdminInquiry.value = false
+  }
+}
+
+const cancelAdminInquiryForm = () => {
+  adminInquiryForm.value = { inquiry_type: 'ETC', title: '', content: '' }
+  showAdminInquiryForm.value = false
 }
 </script>
 

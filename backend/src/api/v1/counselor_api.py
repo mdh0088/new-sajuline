@@ -546,6 +546,42 @@ async def get_counselor_admin_inquiries_count(
     return ok(data={"count": total}, message="관리자 문의 개수 조회 성공")
 
 
+@router.post("/inquiries/admin", response_model=APIResponse, summary="관리자 문의 작성")
+async def create_counselor_admin_inquiry(
+    payload: dict,
+    current_user: TokenPayload = Depends(get_current_user),
+    inquiry_service: InquiryService = Depends(get_inquiry_service)
+) -> APIResponse:
+    """
+    상담사가 관리자에게 문의를 작성합니다.
+    - inquirer_type = COUNSELOR
+    - inquirer_id = counselor_id
+    - category = 'CS_TO_ADMIN'
+    """
+    # 권한 확인: 상담사만 접근
+    verify_counselor_role(current_user)
+    counselor_id = current_user.sub
+
+    log = get_logger_with_request_id()
+    log.info("API: Creating counselor admin inquiry", counselor_id=counselor_id)
+
+    # 스키마 검증
+    from src.schemas.inquiry_schema import CounselorAdminInquiryCreateRequest
+    inquiry_request = CounselorAdminInquiryCreateRequest(**payload)
+
+    # 서비스 호출
+    response = await inquiry_service.create_counselor_admin_inquiry(
+        counselor_id=counselor_id,
+        payload=inquiry_request
+    )
+
+    log.info("API: Counselor admin inquiry created successfully",
+            counselor_id=counselor_id,
+            inquiry_id=response.inquiry_id)
+
+    return ok(data=response, message="관리자 문의가 등록되었습니다")
+
+
 @router.get(
     "/mypage",
     response_model=APIResponse[CounselorResponse],

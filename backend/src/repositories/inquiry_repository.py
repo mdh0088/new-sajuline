@@ -260,6 +260,44 @@ class InquiryRepository:
         return inquiry
 
     @logger.catch(reraise=True)
+    async def create_counselor_admin_inquiry(
+        self,
+        *,
+        counselor_id: str,
+        inquiry_type: str,
+        content: str,
+        title: Optional[str] = None
+    ) -> Inquiry:
+        """
+        상담사 → 관리자 1:1 문의 생성
+        - inquirer_type = COUNSELOR
+        - inquirer_id = counselor_id
+        - category = 'CS_TO_ADMIN'
+        - inquiry_type = PAY, ACCOUNT, CS, EVENT, ETC
+        """
+        log = get_logger_with_request_id()
+        log.info("Creating counselor admin inquiry", counselor_id=counselor_id, inquiry_type=inquiry_type)
+
+        inquiry = Inquiry(
+            inquirer_type=InquirerType.COUNSELOR.value,
+            inquirer_id=counselor_id,
+            counselor_id=None,  # 상담사가 관리자에게 문의하므로 counselor_id는 없음
+            category='CS_TO_ADMIN',
+            title=title,
+            content=content,
+            inquiry_type=inquiry_type,
+            is_read=False,
+            created_at=datetime.utcnow()
+        )
+
+        self.db.add(inquiry)
+        await self.db.flush()
+        await self.db.refresh(inquiry)
+
+        log.info("Counselor admin inquiry created", inquiry_id=inquiry.inquiry_id)
+        return inquiry
+
+    @logger.catch(reraise=True)
     async def get_user_admin_inquiry_detail(
         self,
         inquiry_id: int,

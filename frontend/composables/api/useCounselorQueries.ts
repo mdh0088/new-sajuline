@@ -326,6 +326,19 @@ const counselorApi = {
       throw new Error(response.error?.message || '답변 등록에 실패했습니다.')
     }
     return response.data
+  },
+
+  // 관리자 문의 작성
+  async createCounselorAdminInquiry(payload: { inquiry_type: string; title?: string; content: string }): Promise<any> {
+    const { $api } = useNuxtApp()
+    const response = await $api<APIResponse<any>>('/api/v1/counselors/inquiries/admin', {
+      method: 'POST',
+      body: payload
+    })
+    if (!response.success || !response.data) {
+      throw new Error(response.error?.message || '관리자 문의 등록에 실패했습니다.')
+    }
+    return response.data
   }
 }
 
@@ -569,6 +582,7 @@ export const useCounselorQueries = () => {
     getPublicCounselorReviews: counselorApi.getPublicCounselorReviews,
     getPublicCounselorUserInquiries: counselorApi.getPublicCounselorUserInquiries,
     createUserInquiry: counselorApi.createUserInquiry,
-    replyToUserInquiry: counselorApi.replyToUserInquiry
+    replyToUserInquiry: counselorApi.replyToUserInquiry,
+    createCounselorAdminInquiry: counselorApi.createCounselorAdminInquiry
   }
 }
