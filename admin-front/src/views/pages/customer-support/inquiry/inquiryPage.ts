@@ -37,7 +37,7 @@ export const getCounselorInquiryList = async (searchOptions: any, tableOptions: 
 
     if (response.data.success) {
       tableOptions.value.items = response.data.data;
-      tableOptions.value.totalCnt = response.data.data.total;
+      tableOptions.value.totalCnt = response.data.meta?.pagination?.total || 0;
     }
   } catch (error: any) {
     console.error('상담사 문의 목록 조회 실패:', error);
@@ -119,7 +119,7 @@ export const getUserInquiryList = async (searchOptions: any, tableOptions: any) 
 
     if (response.data.success) {
       tableOptions.value.items = response.data.data;
-      tableOptions.value.totalCnt = response.data.data.total;
+      tableOptions.value.totalCnt = response.data.meta?.pagination?.total || 0;
     }
   } catch (error: any) {
     console.error('사용자 문의 목록 조회 실패:', error);
@@ -202,7 +202,7 @@ export const getUserToCsList = async (searchOptions: any, tableOptions: any) => 
 
     if (response.data.success) {
       tableOptions.value.items = response.data.data;
-      tableOptions.value.totalCnt = response.data.data.total;
+      tableOptions.value.totalCnt = response.data.meta?.pagination?.total || 0;
     }
   } catch (error: any) {
     console.error('사용자→상담사 문의 목록 조회 실패:', error);

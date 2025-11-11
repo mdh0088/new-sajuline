@@ -26,7 +26,6 @@ from src.schemas.point_transaction_schema import PointTransactionItem
 # from src.services.security import get_current_user  # TODO: 인증 필요 시 활성화
 # from src.schemas.auth_schema import TokenPayload  # TODO: 인증 필요 시 활성화
 
-
 router = APIRouter(prefix="/users", tags=["users"])
 
 
