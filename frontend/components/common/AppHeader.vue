@@ -110,8 +110,10 @@ onMounted(async () => {
     if (isAuthenticated.value) {
       await refetchMypage()
     }
-  } catch (_e) {
-    // 무시 (토큰 만료 등 전역 인터셉터에서 처리)
+  } catch (error) {
+    // API 호출 실패 시 명시적 로그아웃 (토큰 만료 등)
+    console.error('❌ 인증 확인 실패 - 로그아웃 처리:', error)
+    await logout()
   }
 })
 

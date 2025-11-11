@@ -4,6 +4,7 @@
 """
 from typing import Tuple, Optional, List
 from datetime import datetime
+import random
 
 from src.exceptions.custom_exceptions import NotFoundError, DuplicateError, AuthenticationError, ValidationError
 from src.common.logging import logger, get_logger_with_request_id
@@ -26,31 +27,44 @@ class CounselorService:
         self.tm60_member_service = tm60_member_service
         self.review_repo = review_repo
     
-    async def authenticate_counselor(self, counselor_id: str, password: str) -> CounselorResponse:
+    async def authenticate_counselor(self, nickname: str, password: str) -> CounselorResponse:
         """
         상담사 인증 비즈니스 로직
-        - 상담사 ID로 조회 (이메일 기반)
+        - 상담사 닉네임으로 조회
         - 비밀번호 검증
         - 계정 활성화 및 승인 상태 확인
         """
-        # 상담사 조회
-        counselor = await self.counselor_repo.get_by_id(counselor_id)
-        
+        log = get_logger_with_request_id()
+
+        # 상담사 조회 (닉네임으로만 조회)
+        counselor = await self.counselor_repo.get_by_nickname(nickname)
+
         if not counselor:
+            log.warning("Counselor not found", nickname=nickname)
             raise AuthenticationError("아이디 또는 비밀번호가 올바르지 않습니다")
-        
-        # 탈퇴 여부 확인
-        if counselor.is_out == "Y":
+
+        log.info("Counselor found", counselor_id=counselor.counselor_id, is_out=counselor.is_out, approved_at=counselor.approved_at)
+
+        # 탈퇴 여부 확인 (Boolean 타입)
+        if counselor.is_out:
+            log.warning("Counselor is out", counselor_id=counselor.counselor_id)
             raise AuthenticationError("탈퇴한 상담사 계정입니다")
-        
+
         # 승인 상태 확인 (approved_at이 있으면 승인됨)
         if counselor.approved_at is None:
+            log.warning("Counselor not approved", counselor_id=counselor.counselor_id)
             raise AuthenticationError("승인되지 않은 상담사 계정입니다")
-        
+
         # 비밀번호 검증
-        if not counselor.password_hash or not self.auth_service.verify_password(password, counselor.password_hash):
+        if not counselor.password_hash:
+            log.warning("Counselor has no password hash", counselor_id=counselor.counselor_id)
             raise AuthenticationError("아이디 또는 비밀번호가 올바르지 않습니다")
-        
+
+        if not self.auth_service.verify_password(password, counselor.password_hash):
+            log.warning("Password verification failed", counselor_id=counselor.counselor_id)
+            raise AuthenticationError("아이디 또는 비밀번호가 올바르지 않습니다")
+
+        log.info("Counselor authenticated successfully", counselor_id=counselor.counselor_id)
         return CounselorResponse.model_validate(counselor)
 
     async def search_public(
@@ -88,6 +102,9 @@ class CounselorService:
         filtered_codes = [c for c in all_codes if (c in state_map)] if cs_status is not None else all_codes
         if not filtered_codes:
             return [], 0
+
+        # 랜덤 셔플: 매 호출마다 다른 순서로 노출 (필터 내에서만 랜덤)
+        random.shuffle(filtered_codes)
 
         total = len(filtered_codes)
         start = max(0, (page - 1) * limit)
@@ -132,34 +149,34 @@ class CounselorService:
             })
         return items, total
     
-    async def login(self, counselor_id: str, password: str) -> Tuple[str, CounselorResponse]:
+    async def login(self, nickname: str, password: str) -> Tuple[str, CounselorResponse]:
         """
         상담사 로그인 비즈니스 로직
-        - 상담사 인증
+        - 상담사 인증 (닉네임)
         - JWT 토큰 생성
         - 마지막 로그인 시간 업데이트
         """
         log = get_logger_with_request_id()
-        log.info("Counselor login attempt", counselor_id=counselor_id)
-        
+        log.info("Counselor login attempt", nickname=nickname)
+
         # 상담사 인증
         try:
-            counselor_response = await self.authenticate_counselor(counselor_id, password)
+            counselor_response = await self.authenticate_counselor(nickname, password)
         except AuthenticationError as auth_error:
-            log.warning("Counselor authentication failed", counselor_id=counselor_id, reason=str(auth_error))
+            log.warning("Counselor authentication failed", nickname=nickname, reason=str(auth_error))
             raise  # 원래 예외 다시 발생
-        
+
         # JWT 토큰 생성
         access_token = self.auth_service.create_access_token(
             user_id=counselor_response.counselor_id,
             email=counselor_response.counselor_id,  # counselor_id는 이메일 기반
             role="counselor"
         )
-        
+
         # 마지막 로그인 시간 업데이트
         await self.counselor_repo.update_last_login(counselor_response.counselor_id)
-        
-        log.info("Counselor login successful", counselor_id=counselor_response.counselor_id)
+
+        log.info("Counselor login successful", counselor_id=counselor_response.counselor_id, nickname=counselor_response.nickname)
         return access_token, counselor_response
 
     async def get_mypage_info(self, counselor_id: str) -> CounselorResponse:

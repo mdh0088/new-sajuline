@@ -105,7 +105,7 @@ def get_counselor_service(
     "/login",
     response_model=APIResponse[LoginResponse],
     summary="상담사 로그인",
-    description="상담사 ID와 비밀번호로 로그인하고 JWT 토큰을 HttpOnly 쿠키에 설정",
+    description="상담사 닉네임과 비밀번호로 로그인하고 JWT 토큰을 HttpOnly 쿠키에 설정",
     responses={
         200: {"description": "로그인 성공"},
         401: {"description": "인증 실패"},
@@ -122,16 +122,16 @@ async def login(
     auth_service: AuthService = Depends(get_auth_service),
     activity_log_service: UserActivityLogService = Depends(get_user_activity_log_service)
 ):
-    """상담사 로그인"""
+    """상담사 로그인 (닉네임 사용)"""
     log = get_logger_with_request_id()
-    log.info("Counselor login attempt", counselor_id=login_request.user_id)
-    
+    log.info("Counselor login attempt", nickname=login_request.user_id)
+
     # 클라이언트 정보 추출
     ip_address, user_agent, device_type = extract_client_info(request)
-    
+
     # 로그인 처리 (예외는 전역 핸들러에서 처리)
     access_token, counselor_response = await counselor_service.login(
-        counselor_id=login_request.user_id,
+        nickname=login_request.user_id,
         password=login_request.password
     )
     

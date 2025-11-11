@@ -123,8 +123,13 @@ const goBack = () => {
 // 로그인 성공 처리 (redirect 쿼리 지원)
 const route = useRoute()
 const handleLoginSuccess = () => {
+  console.log('🎉 [login.vue] handleLoginSuccess called - LOGIN SUCCESS!')
   const redirect = (route.query.redirect as string) || '/'
-  navigateTo(redirect)
+  console.log('🎉 [login.vue] Would redirect to:', redirect)
+
+  // 디버깅을 위해 임시로 리디렉트 비활성화
+  // navigateTo(redirect)
+  console.log('✅ [login.vue] Redirect disabled for debugging - check console logs above')
 }
 
 // 비밀번호 찾기

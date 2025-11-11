@@ -99,24 +99,42 @@ export const useAuth = () => {
    * 세션 저장 성공 핸들러
    */
   const handleLoginSuccessWithRole = (data: LoginData, sessionRole: 'user' | 'counselor') => {
-    const now = Date.now()
-    const session: UserSession = {
-      user_id: data.user_id,
-      email: data.email,
-      nickname: data.nickname,
-      isAuthenticated: true,
-      loginAt: new Date().toISOString(),
-      access_token_expires_at: now + (data.access_token_expires_in * 1000),
-      refresh_token_expires_at: now + (data.refresh_token_expires_in * 1000),
-      role: sessionRole
-    }
-    
-    saveSession(session)
-    
-    // 성공 메시지 (옵션)
-    if (process.client) {
-      // 유틸리티 함수로 간편하게 환영 알림 표시
-      notifySuccess(`🎉 ${data.nickname}님, 환영합니다!`)
+    try {
+      console.log('🔍 [handleLoginSuccessWithRole] Called with:', { data, sessionRole })
+
+      const now = Date.now()
+      const session: UserSession = {
+        user_id: data.user_id,
+        email: data.email,
+        nickname: data.nickname,
+        isAuthenticated: true,
+        loginAt: new Date().toISOString(),
+        access_token_expires_at: now + (data.access_token_expires_in * 1000),
+        refresh_token_expires_at: now + (data.refresh_token_expires_in * 1000),
+        role: sessionRole
+      }
+
+      console.log('🔍 [handleLoginSuccessWithRole] Session created:', session)
+
+      saveSession(session)
+
+      console.log('✅ [handleLoginSuccessWithRole] Session saved successfully')
+
+      // 성공 메시지 (옵션)
+      if (process.client) {
+        try {
+          // 유틸리티 함수로 간편하게 환영 알림 표시
+          notifySuccess(`🎉 ${data.nickname}님, 환영합니다!`)
+          console.log('✅ [handleLoginSuccessWithRole] Notification sent')
+        } catch (notifyError) {
+          console.error('⚠️ [handleLoginSuccessWithRole] Notification failed (non-critical):', notifyError)
+        }
+      }
+
+      console.log('✅ [handleLoginSuccessWithRole] Completed successfully')
+    } catch (error) {
+      console.error('❌ [handleLoginSuccessWithRole] Critical error:', error)
+      throw error
     }
   }
 
@@ -140,8 +158,14 @@ export const useAuth = () => {
    * 상담사 로그인 뮤테이션
    */
   const counselorLoginMutation = useCounselorLogin({
-    onSuccess: (data) => handleLoginSuccessWithRole(data, 'counselor'),
-    onError: handleLoginError
+    onSuccess: (data) => {
+      console.log('✅ [counselorLoginMutation.onSuccess] Counselor login mutation succeeded:', data)
+      handleLoginSuccessWithRole(data, 'counselor')
+    },
+    onError: (error) => {
+      console.error('❌ [counselorLoginMutation.onError] Counselor login mutation failed:', error)
+      handleLoginError(error)
+    }
   })
   
   /**
@@ -199,23 +223,40 @@ export const useAuth = () => {
   })
   
   /**
-   * 로그인 실행 (이메일 형식에 따른 API 분기)
+   * 로그인 실행
+   * - 이메일 형식(@포함)이면: 사용자 API 호출 (email 필드로 조회)
+   * - 이메일 형식이 아니면: 사용자 API 먼저 시도 (user_id로 조회), 실패하면 상담사 API 시도 (nickname으로 조회)
    */
   const login = async (credentials: LoginRequest) => {
+    console.log('🔍 [useAuth.login] Starting login with:', { user_id: credentials.user_id, isEmail: isEmailFormat(credentials.user_id) })
+
     try {
-      // 이메일 형식 체크하여 적절한 API 호출
       if (isEmailFormat(credentials.user_id)) {
-        // 이메일 형식이면 상담사 로그인 API 사용
-        await counselorLoginMutation.mutateAsync(credentials)
-      } else {
-        // 이메일 형식이 아니면 사용자 로그인 API 사용
+        // 이메일 형식이면 사용자 로그인 API 사용 (email 필드로 조회)
+        console.log('🔍 [useAuth.login] Email format detected, calling user API')
         await userLoginMutation.mutateAsync(credentials)
+      } else {
+        // 이메일 형식이 아니면 사용자 먼저 시도
+        console.log('🔍 [useAuth.login] Non-email format, trying user API first')
+        try {
+          await userLoginMutation.mutateAsync(credentials)
+          console.log('✅ [useAuth.login] User login succeeded')
+        } catch (userError) {
+          // 사용자 로그인 실패하면 상담사 로그인 시도 (nickname으로 조회)
+          console.log('⚠️ [useAuth.login] User login failed, trying counselor API')
+          console.error('🔍 [useAuth.login] User error details:', userError)
+
+          await counselorLoginMutation.mutateAsync(credentials)
+          console.log('✅ [useAuth.login] Counselor login succeeded')
+        }
       }
+      console.log('✅ [useAuth.login] Login successful, returning success')
       return { success: true }
     } catch (error) {
-      return { 
-        success: false, 
-        error: error instanceof Error ? error.message : '로그인에 실패했습니다.' 
+      console.error('❌ [useAuth.login] Final login error:', error)
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : '로그인에 실패했습니다.'
       }
     }
   }
