@@ -36,6 +36,14 @@ const routes: Array<RouteRecordRaw> = [
         }
       },
       {
+        path: 'recruitment',
+        name: '채용관리',
+        component: () => import("@/views/pages/recruitment/RecruitmentPage.vue"),
+        meta: {
+          title: 'Default | Coin - Premium Admin Template',
+        },
+      },
+      {
         path: 'user/users',
         name: '회원',
         component: () => import("@/views/pages/user/UserPage.vue"),

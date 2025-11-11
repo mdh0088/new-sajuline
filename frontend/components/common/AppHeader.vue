@@ -38,7 +38,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, ref, watch } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import { useAuth } from '~/composables/auth/useAuth'
 import { useAuthQueries } from '~/composables/api/useAuthQueries'
 import { useUserQueries } from '~/composables/api/useUserQueries'
@@ -52,8 +52,9 @@ const route = useRoute()
 const router = useRouter()
 
 // 마이페이지 데이터 조회 (포인트 포함)
+// ✅ enabled 옵션에 getter 함수 사용 → Vue 반응성 유지
 const { data: mypageData, refetch: refetchMypage } = useUserMypage({
-  enabled: isAuthenticated
+  enabled: () => isAuthenticated.value
 })
 
 // 사용자 포인트
@@ -106,22 +107,11 @@ onMounted(async () => {
     if (result.data) {
       setRole(result.data.role)
     }
-    // 로그인 상태 재확인 후 마이페이지 데이터 가져오기
-    if (isAuthenticated.value) {
-      await refetchMypage()
-    }
+    // ✅ refetchMypage() 제거: enabled: () => isAuthenticated.value가 자동 처리
   } catch (error) {
     // API 호출 실패 시 명시적 로그아웃 (토큰 만료 등)
     console.error('❌ 인증 확인 실패 - 로그아웃 처리:', error)
     await logout()
-  }
-})
-
-// 로그인 상태 변경 감지하여 마이페이지 데이터 갱신
-watch(isAuthenticated, async (newValue, oldValue) => {
-  // false → true 변경 시에만 실행 (로그인 순간)
-  if (newValue && !oldValue) {
-    await refetchMypage()
   }
 })
 

@@ -102,8 +102,10 @@
 </template>
 
 <script setup lang="ts">
+import { onMounted } from 'vue'
 // 인증 도메인 CSS 로드
 import '~/assets/css/common/auth-common.css'
+import { useAuth } from '~/composables/auth/useAuth'
 
 // SEO 및 메타 데이터 설정
 useHead({
@@ -120,16 +122,58 @@ const goBack = () => {
   navigateTo('/')
 }
 
-// 로그인 성공 처리 (redirect 쿼리 지원)
+// 로그인 성공 처리 (역할 기반 라우팅)
 const route = useRoute()
+const { isAuthenticated, role } = useAuth()
+
+// 이미 로그인된 사용자가 접근하면 자동 리다이렉트
+onMounted(() => {
+  if (isAuthenticated.value) {
+    console.log('🔐 [login.vue] Already logged in, redirecting...')
+
+    // redirect 쿼리가 있으면 우선 사용
+    const redirectQuery = route.query.redirect as string
+    if (redirectQuery) {
+      console.log('🎯 [login.vue] Redirecting to query redirect:', redirectQuery)
+      navigateTo(redirectQuery)
+      return
+    }
+
+    // 역할에 따라 자동 라우팅
+    const currentRole = role.value
+    if (currentRole === 'counselor') {
+      console.log('👨‍💼 [login.vue] Redirecting logged-in counselor to mypage')
+      navigateTo('/counselor/mypage')
+    } else {
+      console.log('👤 [login.vue] Redirecting logged-in user to mypage')
+      navigateTo('/user/mypage')
+    }
+  }
+})
+
 const handleLoginSuccess = () => {
   console.log('🎉 [login.vue] handleLoginSuccess called - LOGIN SUCCESS!')
-  const redirect = (route.query.redirect as string) || '/'
-  console.log('🎉 [login.vue] Would redirect to:', redirect)
 
-  // 디버깅을 위해 임시로 리디렉트 비활성화
-  // navigateTo(redirect)
-  console.log('✅ [login.vue] Redirect disabled for debugging - check console logs above')
+  // redirect 쿼리가 있으면 우선 사용
+  const redirectQuery = route.query.redirect as string
+
+  if (redirectQuery) {
+    console.log('🎯 [login.vue] Redirecting to query redirect:', redirectQuery)
+    navigateTo(redirectQuery)
+    return
+  }
+
+  // redirect 쿼리가 없으면 역할(role)에 따라 자동 라우팅
+  const currentRole = role.value
+  console.log('🔍 [login.vue] Current role:', currentRole)
+
+  if (currentRole === 'counselor') {
+    console.log('👨‍💼 [login.vue] Redirecting to counselor mypage')
+    navigateTo('/counselor/mypage')
+  } else {
+    console.log('👤 [login.vue] Redirecting to user mypage')
+    navigateTo('/user/mypage')
+  }
 }
 
 // 비밀번호 찾기

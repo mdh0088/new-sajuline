@@ -29,13 +29,18 @@ from src.repositories.point_product_repository import PointProductRepository
 from src.repositories.payment_repository import PaymentRepository
 from src.repositories.user_repository import UserRepository
 from src.repositories.counselor_repository import CounselorRepository
+from src.repositories.grade_repository import GradeRepository
+from src.repositories.point_transaction_repository import PointTransactionRepository
 from src.repositories.ars.tm60_users_repository import Tm60UsersRepository
 from src.services.payment_service import PaymentService
 from src.services.point_product_service import PointProductService
 from src.services.user_service import UserService
 from src.services.auth_service import AuthService
 from src.services.ars.tm60_users_service import Tm60UsersService
+from src.services.point_transaction_service import PointTransactionService
 from src.schemas.payment_schema import PaymentCreate
+from src.models.point_transaction_model import TransactionType, CurrencyType, ReferenceType
+from decimal import Decimal
 from src.schemas.payletter_schema import (
     PaymentRequestPayload,
     PayletterRequestResponse,
@@ -74,6 +79,27 @@ def get_tm60_users_service():
     for mssql_session in get_db_mssql():
         repo = Tm60UsersRepository(mssql_session)
         return Tm60UsersService(repo)
+
+
+def get_grade_repository(db: AsyncSession = Depends(get_db_maria)) -> GradeRepository:
+    return GradeRepository(db)
+
+
+def get_point_transaction_repository(db: AsyncSession = Depends(get_db_maria)) -> PointTransactionRepository:
+    return PointTransactionRepository(db)
+
+
+def get_user_repository(db: AsyncSession = Depends(get_db_maria)) -> UserRepository:
+    return UserRepository(db)
+
+
+def get_point_transaction_service(
+    point_transaction_repo: PointTransactionRepository = Depends(get_point_transaction_repository),
+    user_repo: UserRepository = Depends(get_user_repository),
+    grade_repo: GradeRepository = Depends(get_grade_repository)
+) -> PointTransactionService:
+    return PointTransactionService(point_transaction_repo, user_repo, grade_repo)
+
 
 KST = timezone(timedelta(hours=9))
 
@@ -181,6 +207,7 @@ async def payment_callback(
     request: Request,
     payment_service: PaymentService = Depends(get_payment_service),
     tm60_users_service: Tm60UsersService = Depends(get_tm60_users_service),
+    point_transaction_service: PointTransactionService = Depends(get_point_transaction_service),
 ):
     """
     Payletter Callback URL (Server-to-Server)
@@ -286,6 +313,25 @@ async def payment_callback(
         except Exception as e:
             log.error("Failed to increase user points", user_id=body.user_id, point_amount=point_amount, error=str(e))
             return {"code": 9999, "message": f"포인트 충전 실패: {str(e)}"}
+
+        # 마일리지 적립
+        try:
+            mileage_result = await point_transaction_service.earn_mileage_from_payment(
+                user_id=body.user_id,
+                point_amount=point_amount,
+                order_no=order_no
+            )
+            if mileage_result:
+                log.info("Mileage earned successfully",
+                        user_id=body.user_id,
+                        earned_mileage=mileage_result["earned_mileage"],
+                        balance_after=mileage_result["balance_after"],
+                        earn_rate=mileage_result["earn_rate"])
+            else:
+                log.info("Mileage earning skipped", user_id=body.user_id, reason="earn_rate is 0 or user/grade not found")
+        except Exception as e:
+            # 마일리지 적립 실패해도 결제는 성공으로 처리 (포인트는 이미 충전됨)
+            log.error("Mileage earning failed", user_id=body.user_id, error=str(e))
 
     # 성공 응답
     return {"code": 0, "message": "success"}
