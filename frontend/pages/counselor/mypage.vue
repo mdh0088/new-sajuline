@@ -151,15 +151,18 @@
                 @update:page="val => noticePage = val"
               >
                 <template #default="{ items }">
-                  <div v-for="n in items" :key="n.notice_id" class="list-item">
+                  <div v-for="n in items" :key="n.notice_id" class="notice-item" @click="toggleNotice(n.notice_id)">
                     <div class="list-item-header">
                       <div class="list-item-title flex items-center gap-2">
                         <span v-if="n.is_important" class="px-2 py-0.5 text-[10px] rounded bg-red-500/20 text-red-200 border border-red-400/30">중요</span>
                         {{ n.title }}
                       </div>
-                      <div class="list-item-date">{{ formatDate(n.created_at) }}</div>
+                      <div class="flex items-center gap-2">
+                        <div class="list-item-date">{{ formatDate(n.created_at) }}</div>
+                        <span class="toggle-icon">{{ expandedNotices.has(n.notice_id) ? '▲' : '▼' }}</span>
+                      </div>
                     </div>
-                    <div class="list-item-content" v-html="n.content"></div>
+                    <div class="notice-content" :class="{ 'expanded': expandedNotices.has(n.notice_id) }" v-html="n.content"></div>
                   </div>
                 </template>
               </PagedSection>
@@ -509,6 +512,16 @@ const noticeTotalPages = computed(() => noticeData.value?.total_pages ?? 1)
 const isLoadingNotices = computed(() => isNoticeFetching.value)
 const noticeError = computed(() => (noticeQueryError.value as any)?.message || '')
 
+// 공지사항 토글 상태
+const expandedNotices = ref(new Set<number>())
+const toggleNotice = (noticeId: number) => {
+  if (expandedNotices.value.has(noticeId)) {
+    expandedNotices.value.delete(noticeId)
+  } else {
+    expandedNotices.value.add(noticeId)
+  }
+}
+
 const reviewPage = ref(1)
 const reviewLimit = ref(10)
 const { data: reviewData, isFetching: isReviewFetching, error: reviewQueryError } = useCounselorReviews(
@@ -625,6 +638,45 @@ const formatDate = (iso: string) => {
 .list-item-title{font-size:15px;font-weight:600}
 .list-item-date{font-size:12px;color:rgba(255,255,255,.5)}
 .list-item-content{font-size:14px;color:rgba(255,255,255,.7);line-height:1.5;display:-webkit-box;line-clamp:2;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+
+/* 공지사항 토글 스타일 */
+.notice-item {
+  padding: 16px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  margin-bottom: 12px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.notice-item:hover {
+  background: rgba(255, 255, 255, 0.05);
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+.notice-content {
+  font-size: 14px;
+  color: rgba(255, 255, 255, 0.7);
+  line-height: 1.5;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  transition: all 0.3s ease;
+}
+
+.notice-content.expanded {
+  display: block;
+  -webkit-line-clamp: unset;
+  overflow: visible;
+}
+
+.toggle-icon {
+  font-size: 10px;
+  color: rgba(255, 255, 255, 0.5);
+  transition: transform 0.2s ease;
+}
 
 .review-card {
   padding: 20px;
