@@ -1,0 +1,1 @@
+import{b as a}from"./http-BP6i3j7U.js";const e=a.create({});e.defaults.headers.common["Access-Control-Allow-Origin"]="*";e.defaults.timeout=3e4;e.defaults.headers.post["Content-Type"]="application/json";e.defaults.headers.get["Cache-Control"]="no-cache";e.defaults.headers.get.Pragma="no-cache";export{e as i};

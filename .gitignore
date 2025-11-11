@@ -62,7 +62,7 @@ yarn-error.log*
 .pnpm-debug.log*
 
 # 빌드 출력
-dist/
+#dist/
 build/
 *.egg-info/
 
