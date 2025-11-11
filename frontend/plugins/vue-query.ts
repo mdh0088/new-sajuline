@@ -2,15 +2,46 @@
  * Vue Query (TanStack Query) SSR 호환 플러그인
  * - 서버사이드 렌더링과 클라이언트 하이드레이션 완벽 지원
  * - 상태 동기화 및 캐싱 최적화
+ * - 전역 401 에러 핸들러 (자동 로그아웃)
  */
 import type { DehydratedState } from '@tanstack/vue-query'
-import { VueQueryPlugin, QueryClient, hydrate, dehydrate } from '@tanstack/vue-query'
+import { VueQueryPlugin, QueryClient, QueryCache, MutationCache, hydrate, dehydrate } from '@tanstack/vue-query'
 
 export default defineNuxtPlugin((nuxtApp) => {
   // 서버와 클라이언트 간 Vue Query 상태 공유
   const vueQueryState = useState<DehydratedState | null>('vue-query')
-  
+
+  // 전역 401 에러 핸들러 함수
+  const handle401Error = (error: any) => {
+    if (error?.statusCode === 401 && process.client) {
+      // 로그인 API 호출인 경우 전역 핸들러 스킵 (401은 정상 응답)
+      const isLoginRequest = error?.data?.url?.includes('/login') ||
+                            error?.url?.includes('/login') ||
+                            window.location.pathname === '/login'
+
+      if (isLoginRequest) {
+        console.log('🔍 [vue-query] 401 on login request - skipping global handler')
+        return
+      }
+
+      console.error('❌ Vue Query 전역 에러: 401 인증 실패 - 로그아웃 처리')
+
+      // localStorage 세션 삭제
+      localStorage.removeItem('user_session')
+
+      // 로그인 페이지로 리다이렉트
+      const currentPath = window.location.pathname
+      window.location.href = `/login?redirect=${encodeURIComponent(currentPath)}`
+    }
+  }
+
   const queryClient = new QueryClient({
+    queryCache: new QueryCache({
+      onError: (error) => handle401Error(error)
+    }),
+    mutationCache: new MutationCache({
+      onError: (error) => handle401Error(error)
+    }),
     defaultOptions: {
       queries: {
         staleTime: 5 * 60 * 1000,        // 5분 - 사주라인 사용자 정보는 자주 변하지 않음

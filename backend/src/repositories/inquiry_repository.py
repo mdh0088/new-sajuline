@@ -109,6 +109,36 @@ class InquiryRepository:
         return inquiries, total
 
     @logger.catch(reraise=True)
+    async def get_count_counselor_user_inquiries(self, counselor_id: str) -> int:
+        """
+        상담문의 개수만 조회 (최적화)
+        - inquirer_type = 'USER' AND counselor_id = #{counselor_id}
+        """
+        count_stmt = select(func.count(Inquiry.inquiry_id)).where(
+            and_(
+                Inquiry.inquirer_type == InquirerType.USER,
+                Inquiry.counselor_id == counselor_id
+            )
+        )
+        count_result = await self.db.execute(count_stmt)
+        return count_result.scalar() or 0
+
+    @logger.catch(reraise=True)
+    async def get_count_counselor_admin_inquiries(self, counselor_id: str) -> int:
+        """
+        관리자 문의 개수만 조회 (최적화)
+        - inquirer_type = 'COUNSELOR' AND inquirer_id = #{counselor_id}
+        """
+        count_stmt = select(func.count(Inquiry.inquiry_id)).where(
+            and_(
+                Inquiry.inquirer_type == InquirerType.COUNSELOR,
+                Inquiry.inquirer_id == counselor_id
+            )
+        )
+        count_result = await self.db.execute(count_stmt)
+        return count_result.scalar() or 0
+
+    @logger.catch(reraise=True)
     async def create_user_inquiry(
         self,
         *,
@@ -230,6 +260,44 @@ class InquiryRepository:
         return inquiry
 
     @logger.catch(reraise=True)
+    async def create_counselor_admin_inquiry(
+        self,
+        *,
+        counselor_id: str,
+        inquiry_type: str,
+        content: str,
+        title: Optional[str] = None
+    ) -> Inquiry:
+        """
+        상담사 → 관리자 1:1 문의 생성
+        - inquirer_type = COUNSELOR
+        - inquirer_id = counselor_id
+        - category = 'CS_TO_ADMIN'
+        - inquiry_type = PAY, ACCOUNT, CS, EVENT, ETC
+        """
+        log = get_logger_with_request_id()
+        log.info("Creating counselor admin inquiry", counselor_id=counselor_id, inquiry_type=inquiry_type)
+
+        inquiry = Inquiry(
+            inquirer_type=InquirerType.COUNSELOR.value,
+            inquirer_id=counselor_id,
+            counselor_id=None,  # 상담사가 관리자에게 문의하므로 counselor_id는 없음
+            category='CS_TO_ADMIN',
+            title=title,
+            content=content,
+            inquiry_type=inquiry_type,
+            is_read=False,
+            created_at=datetime.utcnow()
+        )
+
+        self.db.add(inquiry)
+        await self.db.flush()
+        await self.db.refresh(inquiry)
+
+        log.info("Counselor admin inquiry created", inquiry_id=inquiry.inquiry_id)
+        return inquiry
+
+    @logger.catch(reraise=True)
     async def get_user_admin_inquiry_detail(
         self,
         inquiry_id: int,
@@ -260,4 +328,46 @@ class InquiryRepository:
             raise Exception(f"문의를 찾을 수 없습니다. (inquiry_id={inquiry_id})")
 
         log.info("User admin inquiry detail retrieved", inquiry_id=inquiry_id)
+        return inquiry
+
+    @logger.catch(reraise=True)
+    async def update_counselor_reply(
+        self,
+        inquiry_id: int,
+        counselor_id: str,
+        reply_content: str
+    ) -> Inquiry:
+        """
+        상담사가 사용자 문의에 답변 작성
+        - inquirer_type = USER
+        - counselor_id = #{counselor_id}
+        """
+        from datetime import datetime, timezone
+
+        log = get_logger_with_request_id()
+        log.info("Updating counselor reply", inquiry_id=inquiry_id, counselor_id=counselor_id)
+
+        # 문의 조회 및 권한 확인
+        stmt = select(Inquiry).where(
+            and_(
+                Inquiry.inquiry_id == inquiry_id,
+                Inquiry.inquirer_type == InquirerType.USER,
+                Inquiry.counselor_id == counselor_id
+            )
+        )
+        result = await self.db.execute(stmt)
+        inquiry = result.scalar_one_or_none()
+
+        if not inquiry:
+            log.warning("Inquiry not found or unauthorized", inquiry_id=inquiry_id, counselor_id=counselor_id)
+            raise Exception(f"문의를 찾을 수 없거나 권한이 없습니다. (inquiry_id={inquiry_id})")
+
+        # 답변 업데이트
+        inquiry.reply_content = reply_content
+        inquiry.answered_at = datetime.now(timezone.utc)
+
+        await self.db.commit()
+        await self.db.refresh(inquiry)
+
+        log.info("Counselor reply updated", inquiry_id=inquiry_id)
         return inquiry

@@ -35,15 +35,23 @@ const counselorApi = {
   // 상담사 로그인
   async login(credentials: LoginRequest): Promise<LoginData> {
     const { $api } = useNuxtApp()
+    console.log('🔍 [counselorApi.login] Calling API with credentials:', { user_id: credentials.user_id })
+
     const response = await $api<LoginResponse>('/api/v1/counselors/login', {
       method: 'POST',
       body: credentials
     })
-    
+
+    console.log('🔍 [counselorApi.login] API response received:', response)
+    console.log('🔍 [counselorApi.login] Response success:', response.success)
+    console.log('🔍 [counselorApi.login] Response data:', response.data)
+
     if (!response.success || !response.data) {
+      console.error('❌ [counselorApi.login] Response validation failed:', { success: response.success, hasData: !!response.data })
       throw new Error(response.error?.message || '상담사 로그인에 실패했습니다.')
     }
-    
+
+    console.log('✅ [counselorApi.login] Returning data:', response.data)
     return response.data
   },
 
@@ -281,6 +289,64 @@ const counselorApi = {
       total: pagination?.total ?? (response.data?.length ?? 0),
       total_pages: pagination?.total_pages ?? 1
     }
+  },
+
+  // 후기 개수만 조회 (최적화)
+  async getCounselorReviewsCount(params: { visible_only?: boolean }): Promise<number> {
+    const { $api } = useNuxtApp()
+    const query = new URLSearchParams()
+    if (params.visible_only !== undefined) query.set('visible_only', String(params.visible_only))
+    const response = await $api<APIResponse<{ count: number }>>(`/api/v1/counselors/inquiries/reviews/count?${query.toString()}`, { method: 'GET' })
+    if (!response.success || !response.data) {
+      throw new Error(response.error?.message || '후기 개수를 불러오지 못했습니다.')
+    }
+    return response.data.count
+  },
+
+  // 상담문의 개수만 조회 (최적화)
+  async getCounselorUserInquiriesCount(): Promise<number> {
+    const { $api } = useNuxtApp()
+    const response = await $api<APIResponse<{ count: number }>>('/api/v1/counselors/inquiries/users/count', { method: 'GET' })
+    if (!response.success || !response.data) {
+      throw new Error(response.error?.message || '상담문의 개수를 불러오지 못했습니다.')
+    }
+    return response.data.count
+  },
+
+  // 관리자문의 개수만 조회 (최적화)
+  async getCounselorAdminInquiriesCount(): Promise<number> {
+    const { $api } = useNuxtApp()
+    const response = await $api<APIResponse<{ count: number }>>('/api/v1/counselors/inquiries/admin/count', { method: 'GET' })
+    if (!response.success || !response.data) {
+      throw new Error(response.error?.message || '관리자문의 개수를 불러오지 못했습니다.')
+    }
+    return response.data.count
+  },
+
+  // 상담문의 답변 작성
+  async replyToUserInquiry(inquiryId: number, replyContent: string): Promise<any> {
+    const { $api } = useNuxtApp()
+    const response = await $api<APIResponse<any>>(`/api/v1/counselors/inquiries/users/${inquiryId}/reply`, {
+      method: 'POST',
+      body: { reply_content: replyContent }
+    })
+    if (!response.success || !response.data) {
+      throw new Error(response.error?.message || '답변 등록에 실패했습니다.')
+    }
+    return response.data
+  },
+
+  // 관리자 문의 작성
+  async createCounselorAdminInquiry(payload: { inquiry_type: string; title?: string; content: string }): Promise<any> {
+    const { $api } = useNuxtApp()
+    const response = await $api<APIResponse<any>>('/api/v1/counselors/inquiries/admin', {
+      method: 'POST',
+      body: payload
+    })
+    if (!response.success || !response.data) {
+      throw new Error(response.error?.message || '관리자 문의 등록에 실패했습니다.')
+    }
+    return response.data
   }
 }
 
@@ -465,6 +531,44 @@ export const useCounselorQueries = () => {
     })
   }
 
+  // 후기 개수 쿼리 (최적화)
+  const useCounselorReviewsCount = (
+    visibleOnly: boolean | Ref<boolean> = true,
+    options?: QueryOpts<number>
+  ) => {
+    const v = computed(() => Boolean(unref(visibleOnly)))
+    return useQuery({
+      queryKey: computed(() => ['counselor', 'reviews', 'count', v.value]),
+      queryFn: () => counselorApi.getCounselorReviewsCount({ visible_only: v.value }),
+      staleTime: 1000 * 60,
+      ...options
+    })
+  }
+
+  // 상담문의 개수 쿼리 (최적화)
+  const useCounselorUserInquiriesCount = (
+    options?: QueryOpts<number>
+  ) => {
+    return useQuery({
+      queryKey: ['counselor', 'inquiries', 'users', 'count'],
+      queryFn: () => counselorApi.getCounselorUserInquiriesCount(),
+      staleTime: 1000 * 60,
+      ...options
+    })
+  }
+
+  // 관리자문의 개수 쿼리 (최적화)
+  const useCounselorAdminInquiriesCount = (
+    options?: QueryOpts<number>
+  ) => {
+    return useQuery({
+      queryKey: ['counselor', 'inquiries', 'admin', 'count'],
+      queryFn: () => counselorApi.getCounselorAdminInquiriesCount(),
+      staleTime: 1000 * 60,
+      ...options
+    })
+  }
+
   return {
     // Mutations
     useLogin,
@@ -477,11 +581,16 @@ export const useCounselorQueries = () => {
     useCounselorReviews,
     useCounselorUserInquiries,
     useCounselorAdminInquiries,
+    useCounselorReviewsCount,
+    useCounselorUserInquiriesCount,
+    useCounselorAdminInquiriesCount,
     usePublicDetail,
     usePublicSearch,
     searchPublic: counselorApi.searchPublic,
     getPublicCounselorReviews: counselorApi.getPublicCounselorReviews,
     getPublicCounselorUserInquiries: counselorApi.getPublicCounselorUserInquiries,
-    createUserInquiry: counselorApi.createUserInquiry
+    createUserInquiry: counselorApi.createUserInquiry,
+    replyToUserInquiry: counselorApi.replyToUserInquiry,
+    createCounselorAdminInquiry: counselorApi.createCounselorAdminInquiry
   }
 }

@@ -112,13 +112,8 @@ const validateForm = (): boolean => {
       errors.user_id = '올바른 이메일 형식을 입력해주세요.'
       isValid = false
     }
-  } else {
-    // 사용자 ID 검증
-    if (!validateMinLength(formData.user_id, 4)) {
-      errors.user_id = '사용자 ID는 4자 이상 입력해주세요.'
-      isValid = false
-    }
   }
+  // 이메일이 아닌 경우 (사용자 ID 또는 상담사 닉네임) - 추가 검증 없음
 
   // 비밀번호 검증
   if (!validateRequired(formData.password)) {
@@ -144,9 +139,14 @@ const clearError = (field: string) => {
 
 // 로그인 제출
 const handleSubmit = async () => {
+  console.log('📝 [LoginForm.handleSubmit] Form submitted with:', { user_id: formData.user_id })
+
   if (!validateForm()) {
+    console.log('❌ [LoginForm.handleSubmit] Validation failed')
     return
   }
+
+  console.log('✅ [LoginForm.handleSubmit] Validation passed, calling login...')
 
   try {
     const result = await login({
@@ -154,14 +154,19 @@ const handleSubmit = async () => {
       password: formData.password
     })
 
+    console.log('🔍 [LoginForm.handleSubmit] Login result:', result)
+
     if (result.success) {
       // 로그인 성공
+      console.log('🎉 [LoginForm.handleSubmit] Login successful, emitting success event')
       emit('success')
     } else {
       // 로그인 실패
+      console.error('❌ [LoginForm.handleSubmit] Login failed with error:', result.error)
       errors.general = result.error || '로그인에 실패했습니다.'
     }
   } catch (error: any) {
+    console.error('❌ [LoginForm.handleSubmit] Exception caught:', error)
     errors.general = error?.message || '로그인 중 오류가 발생했습니다.'
   }
 }

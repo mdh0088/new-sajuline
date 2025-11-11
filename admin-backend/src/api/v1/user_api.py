@@ -10,10 +10,10 @@ from fastapi import APIRouter, Depends, Query
 
 from src.common.response import APIResponse, APIResponseBuilder, ok
 from src.schemas.user_schema import UserListParams, UserUpdateRequest, UserPointAdjustRequest
-from src.schemas.inquiry_schema import UserAdminInquiryCreateRequest
+# from src.schemas.inquiry_schema import UserAdminInquiryCreateRequest  # TODO: 스키마 정의 후 활성화
 from src.services.user_service import UserService
 from src.services.notification_service import NotificationService
-from src.services.inquiry_service import InquiryService
+# from src.services.inquiry_service import InquiryService  # TODO: 사용 시 활성화
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import Session
 from src.core.database import get_db as get_db_maria, get_db_mssql
@@ -23,8 +23,8 @@ from src.repositories.notification_repository import NotificationRepository
 from src.repositories.point_transaction_repository import PointTransactionRepository
 from src.repositories.inquiry_repository import InquiryRepository
 from src.schemas.point_transaction_schema import PointTransactionItem
-from src.common.dependencies.auth import get_current_user, TokenPayload
-
+# from src.services.security import get_current_user  # TODO: 인증 필요 시 활성화
+# from src.schemas.auth_schema import TokenPayload  # TODO: 인증 필요 시 활성화
 
 router = APIRouter(prefix="/users", tags=["users"])
 
