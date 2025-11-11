@@ -109,7 +109,7 @@
           <div class="mb-3">
             <h3 class="text-base font-semibold">인사말</h3>
           </div>
-          <textarea rows="4" class="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10" v-model="greeting" placeholder="고객에게 전할 인사말을 입력해주세요" />
+          <textarea rows="4" class="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white/60 cursor-not-allowed" v-model="greeting" placeholder="고객에게 전할 인사말을 입력해주세요" disabled />
         </div>
 
         <!-- 경력사항 -->
@@ -117,7 +117,7 @@
           <div class="mb-3">
             <h3 class="text-base font-semibold">경력사항</h3>
           </div>
-          <textarea rows="5" class="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10" v-model="career" placeholder="상담 경력 및 전문 분야를 입력해주세요" />
+          <textarea rows="5" class="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white/60 cursor-not-allowed" v-model="career" placeholder="상담 경력 및 전문 분야를 입력해주세요" disabled />
         </div>
 
         <!-- 탭 섹션 -->
