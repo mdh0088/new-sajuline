@@ -23,7 +23,17 @@
       "path": "/counselor",
       "active": false
     },
-
+    {
+      "headTitle1": "Recruitment",
+      "headTitle2": "Recruitment",
+      "korTitle": "신청 관리",
+      "type": "link",
+      "icon": "fa-user-plus",
+      "icon1": "home",
+      "icon2": "fill-home",
+      "path": "/recruitment",
+      "active": false
+    },
 
     {
       "headTitle1": "Users",

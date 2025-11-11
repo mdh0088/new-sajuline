@@ -59,7 +59,8 @@ const callbackMutation = useHandleSocialCallback({
       const loginData = data as SocialLoginSuccess
       handleLoginSuccessWithRole(loginData, 'user')
       toast.success('카카오 로그인 성공!')
-      router.push('/')
+      // 소셜 로그인은 현재 user만 지원하므로 user/mypage로 라우팅
+      router.push('/user/mypage')
     }
   },
   onError: (err: any) => {
