@@ -320,6 +320,39 @@ async def get_counselor_reviews(
     )
 
 
+@router.get("/inquiries/reviews/count", response_model=APIResponse, summary="상담사별 후기 개수 조회")
+async def get_counselor_reviews_count(
+    visible_only: bool = Query(True, description="공개 후기만 조회"),
+    current_user: TokenPayload = Depends(get_current_user),
+    review_service: ConsultationReviewService = Depends(get_consultation_review_service)
+) -> APIResponse:
+    """
+    상담사별 후기 개수만 조회합니다. (최적화된 count 전용)
+
+    - **visible_only**: 공개 후기만 조회 여부 (기본값: true)
+    """
+    # 권한 확인: 상담사만 접근
+    verify_counselor_role(current_user)
+    target_counselor_id = current_user.sub
+
+    log = get_logger_with_request_id()
+    log.info("API: Getting counselor reviews count",
+            counselor_id=target_counselor_id,
+            visible_only=visible_only)
+
+    # 서비스 호출
+    total = await review_service.get_counselor_reviews_count(
+        counselor_id=target_counselor_id,
+        visible_only=visible_only
+    )
+
+    log.info("API: Counselor reviews count retrieved successfully",
+            counselor_id=target_counselor_id,
+            total=total)
+
+    return ok(data={"count": total}, message="상담사 후기 개수 조회 성공")
+
+
 @router.get("/inquiries/users", response_model=APIResponse, summary="상담문의 목록 조회")
 async def get_counselor_user_inquiries(
     page: int = Query(1, ge=1, description="페이지 번호"),
@@ -368,6 +401,34 @@ async def get_counselor_user_inquiries(
     )
 
 
+@router.get("/inquiries/users/count", response_model=APIResponse, summary="상담문의 개수 조회")
+async def get_counselor_user_inquiries_count(
+    current_user: TokenPayload = Depends(get_current_user),
+    inquiry_service: InquiryService = Depends(get_inquiry_service)
+) -> APIResponse:
+    """
+    상담문의 개수만 조회합니다. (최적화된 count 전용)
+    inquirer_type='USER' AND counselor_id=#{counselor_id}
+    """
+    # 권한 확인: 상담사만 접근
+    verify_counselor_role(current_user)
+    counselor_id = current_user.sub
+
+    log = get_logger_with_request_id()
+    log.info("API: Getting counselor user inquiries count", counselor_id=counselor_id)
+
+    # 서비스 호출
+    total = await inquiry_service.get_counselor_user_inquiries_count(
+        counselor_id=counselor_id
+    )
+
+    log.info("API: Counselor user inquiries count retrieved successfully",
+            counselor_id=counselor_id,
+            total=total)
+
+    return ok(data={"count": total}, message="상담문의 개수 조회 성공")
+
+
 @router.get("/inquiries/admin", response_model=APIResponse, summary="관리자 문의 목록 조회")
 async def get_counselor_admin_inquiries(
     page: int = Query(1, ge=1, description="페이지 번호"),
@@ -414,6 +475,34 @@ async def get_counselor_admin_inquiries(
         total=total,
         message="관리자 문의 목록 조회 성공"
     )
+
+
+@router.get("/inquiries/admin/count", response_model=APIResponse, summary="관리자 문의 개수 조회")
+async def get_counselor_admin_inquiries_count(
+    current_user: TokenPayload = Depends(get_current_user),
+    inquiry_service: InquiryService = Depends(get_inquiry_service)
+) -> APIResponse:
+    """
+    관리자 문의 개수만 조회합니다. (최적화된 count 전용)
+    inquirer_type='COUNSELOR' AND inquirer_id=#{counselor_id}
+    """
+    # 권한 확인: 상담사만 접근
+    verify_counselor_role(current_user)
+    counselor_id = current_user.sub
+
+    log = get_logger_with_request_id()
+    log.info("API: Getting counselor admin inquiries count", counselor_id=counselor_id)
+
+    # 서비스 호출
+    total = await inquiry_service.get_counselor_admin_inquiries_count(
+        counselor_id=counselor_id
+    )
+
+    log.info("API: Counselor admin inquiries count retrieved successfully",
+            counselor_id=counselor_id,
+            total=total)
+
+    return ok(data={"count": total}, message="관리자 문의 개수 조회 성공")
 
 
 @router.get(

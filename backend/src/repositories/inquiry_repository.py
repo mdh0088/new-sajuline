@@ -109,6 +109,36 @@ class InquiryRepository:
         return inquiries, total
 
     @logger.catch(reraise=True)
+    async def get_count_counselor_user_inquiries(self, counselor_id: str) -> int:
+        """
+        상담문의 개수만 조회 (최적화)
+        - inquirer_type = 'USER' AND counselor_id = #{counselor_id}
+        """
+        count_stmt = select(func.count(Inquiry.inquiry_id)).where(
+            and_(
+                Inquiry.inquirer_type == InquirerType.USER,
+                Inquiry.counselor_id == counselor_id
+            )
+        )
+        count_result = await self.db.execute(count_stmt)
+        return count_result.scalar() or 0
+
+    @logger.catch(reraise=True)
+    async def get_count_counselor_admin_inquiries(self, counselor_id: str) -> int:
+        """
+        관리자 문의 개수만 조회 (최적화)
+        - inquirer_type = 'COUNSELOR' AND inquirer_id = #{counselor_id}
+        """
+        count_stmt = select(func.count(Inquiry.inquiry_id)).where(
+            and_(
+                Inquiry.inquirer_type == InquirerType.COUNSELOR,
+                Inquiry.inquirer_id == counselor_id
+            )
+        )
+        count_result = await self.db.execute(count_stmt)
+        return count_result.scalar() or 0
+
+    @logger.catch(reraise=True)
     async def create_user_inquiry(
         self,
         *,

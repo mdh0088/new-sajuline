@@ -61,7 +61,24 @@ class InquiryService:
                 total=total)
         
         return inquiry_summaries, page, limit, total
-    
+
+    async def get_counselor_user_inquiries_count(
+        self,
+        counselor_id: str
+    ) -> int:
+        """
+        상담문의 개수만 조회 (최적화된 count 전용)
+        """
+        log = get_logger_with_request_id()
+        log.info("Getting counselor user inquiries count", counselor_id=counselor_id)
+
+        total = await self.inquiry_repo.get_count_counselor_user_inquiries(
+            counselor_id=counselor_id
+        )
+
+        log.info("Counselor user inquiries count retrieved", counselor_id=counselor_id, total=total)
+        return total
+
     async def get_counselor_admin_inquiries(
         self,
         counselor_id: str,
@@ -105,6 +122,23 @@ class InquiryService:
                 total=total)
         
         return inquiry_summaries, page, limit, total
+
+    async def get_counselor_admin_inquiries_count(
+        self,
+        counselor_id: str
+    ) -> int:
+        """
+        관리자 문의 개수만 조회 (최적화된 count 전용)
+        """
+        log = get_logger_with_request_id()
+        log.info("Getting counselor admin inquiries count", counselor_id=counselor_id)
+
+        total = await self.inquiry_repo.get_count_counselor_admin_inquiries(
+            counselor_id=counselor_id
+        )
+
+        log.info("Counselor admin inquiries count retrieved", counselor_id=counselor_id, total=total)
+        return total
 
     async def create_user_inquiry(
         self,

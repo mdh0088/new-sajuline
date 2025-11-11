@@ -10,7 +10,6 @@ from fastapi import APIRouter, Depends, Query
 
 from src.common.response import APIResponse, APIResponseBuilder, ok
 from src.schemas.user_schema import UserListParams, UserUpdateRequest, UserPointAdjustRequest
-from src.schemas.inquiry_schema import UserAdminInquiryCreateRequest
 from src.services.user_service import UserService
 from src.services.notification_service import NotificationService
 from src.services.inquiry_service import InquiryService
@@ -23,7 +22,8 @@ from src.repositories.notification_repository import NotificationRepository
 from src.repositories.point_transaction_repository import PointTransactionRepository
 from src.repositories.inquiry_repository import InquiryRepository
 from src.schemas.point_transaction_schema import PointTransactionItem
-from src.common.dependencies.auth import get_current_user, TokenPayload
+from src.services.security import get_current_user
+from src.schemas.auth_schema import TokenPayload
 
 
 router = APIRouter(prefix="/users", tags=["users"])

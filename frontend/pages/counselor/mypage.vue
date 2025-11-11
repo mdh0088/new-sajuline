@@ -106,18 +106,16 @@
 
         <!-- 인사말 -->
         <div class="mt-5 rounded-2xl border border-white/10 bg-white/5 p-5">
-          <div class="flex items-center justify-between mb-3">
+          <div class="mb-3">
             <h3 class="text-base font-semibold">인사말</h3>
-            <button class="px-3 py-2 rounded-xl bg-gradient-to-r from-purple-600 to-purple-700 text-sm font-semibold active:scale-95" @click="saveGreeting">변경하기</button>
           </div>
           <textarea rows="4" class="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10" v-model="greeting" placeholder="고객에게 전할 인사말을 입력해주세요" />
         </div>
 
         <!-- 경력사항 -->
         <div class="mt-5 rounded-2xl border border-white/10 bg-white/5 p-5">
-          <div class="flex items-center justify-between mb-3">
+          <div class="mb-3">
             <h3 class="text-base font-semibold">경력사항</h3>
-            <button class="px-3 py-2 rounded-xl bg-gradient-to-r from-purple-600 to-purple-700 text-sm font-semibold active:scale-95" @click="saveCareer">변경하기</button>
           </div>
           <textarea rows="5" class="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10" v-model="career" placeholder="상담 경력 및 전문 분야를 입력해주세요" />
         </div>
@@ -126,9 +124,18 @@
         <div class="mt-5">
           <div class="p-1 rounded-xl bg-white/5 border border-white/10 flex">
             <button class="flex-1 py-3 rounded-lg" :class="tab==='notice' ? 'bg-gradient-to-r from-purple-600 to-purple-700' : ''" @click="tab='notice'">공지사항</button>
-            <button class="flex-1 py-3 rounded-lg relative" :class="tab==='review' ? 'bg-gradient-to-r from-purple-600 to-purple-700' : ''" @click="tab='review'">고객 후기 <span v-if="reviewTotal>0" class="absolute top-1 right-2 text-[10px] font-bold bg-red-500/30 text-red-200 px-2 rounded">{{ reviewTotal }}</span></button>
-            <button class="flex-1 py-3 rounded-lg" :class="tab==='inquiry' ? 'bg-gradient-to-r from-purple-600 to-purple-700' : ''" @click="tab='inquiry'">상담 문의</button>
-            <button class="flex-1 py-3 rounded-lg" :class="tab==='admin' ? 'bg-gradient-to-r from-purple-600 to-purple-700' : ''" @click="tab='admin'">관리자문의</button>
+            <button class="flex-1 py-3 rounded-lg relative" :class="tab==='review' ? 'bg-gradient-to-r from-purple-600 to-purple-700' : ''" @click="tab='review'">
+              <span>고객 후기</span>
+              <span v-if="reviewTotal>0" class="tab-badge">{{ reviewTotal }}</span>
+            </button>
+            <button class="flex-1 py-3 rounded-lg relative" :class="tab==='inquiry' ? 'bg-gradient-to-r from-purple-600 to-purple-700' : ''" @click="tab='inquiry'">
+              <span>상담 문의</span>
+              <span v-if="userInquiryTotal>0" class="tab-badge">{{ userInquiryTotal }}</span>
+            </button>
+            <button class="flex-1 py-3 rounded-lg relative" :class="tab==='admin' ? 'bg-gradient-to-r from-purple-600 to-purple-700' : ''" @click="tab='admin'">
+              <span>관리자문의</span>
+              <span v-if="adminInquiryTotal>0" class="tab-badge">{{ adminInquiryTotal }}</span>
+            </button>
           </div>
 
           <div class="mt-4">
@@ -170,16 +177,19 @@
                 @update:page="val => reviewPage = val"
               >
                 <template #default="{ items }">
-                  <div v-for="r in items" :key="r.review_id" class="list-item">
-                    <div class="list-item-header">
-                      <div class="list-item-title flex items-center gap-2">
-                        <span class="text-yellow-300">★ {{ r.rating }}</span>
-                        <span class="text-white/70">{{ r.user_id }}</span>
-                        <span v-if="r.is_best" class="px-2 py-0.5 text-[10px] rounded bg-indigo-500/20 text-indigo-200 border border-indigo-400/30">BEST</span>
+                  <div v-for="r in items" :key="r.review_id" class="review-card">
+                    <div class="review-header">
+                      <div class="reviewer-info">
+                        <span class="reviewer-name">{{ r.user_id }}</span>
+                        <span class="review-date">{{ formatDate(r.created_at) }}</span>
                       </div>
-                      <div class="list-item-date">{{ formatDate(r.created_at) }}</div>
+                      <div class="review-rating">
+                        <span v-for="i in 5" :key="i" class="star" :class="{ filled: i <= r.rating }">⭐</span>
+                      </div>
                     </div>
-                    <div class="list-item-content">{{ r.content || '내용 없음' }}</div>
+                    <div class="review-content">
+                      {{ r.content || '내용 없음' }}
+                    </div>
                   </div>
                 </template>
               </PagedSection>
@@ -197,17 +207,20 @@
                 @update:page="val => userInquiryPage = val"
               >
                 <template #default="{ items }">
-                  <div v-for="q in items" :key="q.inquiry_id" class="list-item">
-                    <div class="list-item-header">
-                      <div class="list-item-title flex items-center gap-2">
-                        <span v-if="!q.is_read" class="px-2 py-0.5 text-[10px] rounded bg-yellow-500/20 text-yellow-200 border border-yellow-400/30">NEW</span>
-                        <span>{{ q.title || q.category || '제목 없음' }}</span>
+                  <div v-for="q in items" :key="q.inquiry_id" class="inquiry-card">
+                    <div class="inquiry-header">
+                      <div class="inquirer-info">
+                        <span class="inquirer-name">{{ q.inquirer_id || '익명' }}</span>
+                        <span class="inquiry-date">{{ formatDate(q.created_at) }}</span>
                       </div>
-                      <div class="list-item-date">{{ formatDate(q.created_at) }}</div>
+                      <div class="inquiry-status-badges">
+                        <span v-if="!q.is_read" class="status-badge status-new">NEW</span>
+                        <span v-if="q.has_reply" class="status-badge status-answered">답변완료</span>
+                        <span v-else class="status-badge status-pending">답변대기</span>
+                      </div>
                     </div>
-                    <div class="list-item-content flex items-center gap-2">
-                      <span class="text-white/70">문의자: {{ q.inquirer_id || '익명' }}</span>
-                      <span :class="q.has_reply ? 'text-teal-300' : 'text-white/50'">{{ q.has_reply ? '답변 완료' : '미답변' }}</span>
+                    <div class="inquiry-content">
+                      {{ q.content || (q.title || q.category || '제목 없음') }}
                     </div>
                   </div>
                 </template>
@@ -226,17 +239,19 @@
                 @update:page="val => adminInquiryPage = val"
               >
                 <template #default="{ items }">
-                  <div v-for="a in items" :key="a.inquiry_id" class="list-item">
-                    <div class="list-item-header">
-                      <div class="list-item-title flex items-center gap-2">
-                        <span v-if="!a.has_reply" class="px-2 py-0.5 text-[10px] rounded bg-purple-500/20 text-purple-200 border border-purple-400/30">답변대기</span>
-                        <span>{{ a.title || a.category || '제목 없음' }}</span>
+                  <div v-for="a in items" :key="a.inquiry_id" class="inquiry-card">
+                    <div class="inquiry-header">
+                      <div class="inquirer-info">
+                        <span class="inquirer-name">나 (상담사)</span>
+                        <span class="inquiry-date">{{ formatDate(a.created_at) }}</span>
                       </div>
-                      <div class="list-item-date">{{ formatDate(a.created_at) }}</div>
+                      <div class="inquiry-status-badges">
+                        <span v-if="a.has_reply" class="status-badge status-answered">답변완료</span>
+                        <span v-else class="status-badge status-pending">답변대기</span>
+                      </div>
                     </div>
-                    <div class="list-item-content flex items-center gap-2">
-                      <span class="text-white/70">작성자: 나 (상담사)</span>
-                      <span :class="a.has_reply ? 'text-teal-300' : 'text-white/50'">{{ a.has_reply ? '답변 완료' : '미답변' }}</span>
+                    <div class="inquiry-content">
+                      {{ a.content || (a.title || a.category || '제목 없음') }}
                     </div>
                   </div>
                 </template>
@@ -271,14 +286,17 @@ const { requireAuth, isCounselor, currentUser } = useAuth()
 const { notifySuccess, notifyConfirm, notifyError } = useNotify()
 await requireAuth()
 
-const { 
-  useMypage, 
-  useMonthlyConsultationStats, 
+const {
+  useMypage,
+  useMonthlyConsultationStats,
   useUpdateMypage,
   useNoticeList,
   useCounselorReviews,
   useCounselorUserInquiries,
-  useCounselorAdminInquiries
+  useCounselorAdminInquiries,
+  useCounselorReviewsCount,
+  useCounselorUserInquiriesCount,
+  useCounselorAdminInquiriesCount
 } = useCounselorQueries()
 const { data: mypage } = useMypage()
 
@@ -459,9 +477,12 @@ const { data: reviewData, isFetching: isReviewFetching, error: reviewQueryError 
 )
 const reviews = computed(() => reviewData.value?.items ?? [])
 const reviewTotalPages = computed(() => reviewData.value?.total_pages ?? 1)
-const reviewTotal = computed(() => reviewData.value?.total ?? 0)
 const isLoadingReviews = computed(() => isReviewFetching.value)
 const reviewError = computed(() => (reviewQueryError.value as any)?.message || '')
+
+// 후기 개수 (count API)
+const { data: reviewCountData } = useCounselorReviewsCount(true)
+const reviewTotal = computed(() => reviewCountData.value ?? 0)
 
 const userInquiryPage = ref(1)
 const userInquiryLimit = ref(10)
@@ -475,6 +496,10 @@ const userInquiryTotalPages = computed(() => userInquiryData.value?.total_pages 
 const isLoadingUserInquiries = computed(() => isUserInquiryFetching.value)
 const userInquiryError = computed(() => (userInquiryQueryError.value as any)?.message || '')
 
+// 상담문의 개수 (count API)
+const { data: userInquiryCountData } = useCounselorUserInquiriesCount()
+const userInquiryTotal = computed(() => userInquiryCountData.value ?? 0)
+
 const adminInquiryPage = ref(1)
 const adminInquiryLimit = ref(10)
 const { data: adminInquiryData, isFetching: isAdminInquiryFetching, error: adminInquiryQueryError } = useCounselorAdminInquiries(
@@ -486,6 +511,10 @@ const adminInquiries = computed(() => adminInquiryData.value?.items ?? [])
 const adminInquiryTotalPages = computed(() => adminInquiryData.value?.total_pages ?? 1)
 const isLoadingAdminInquiries = computed(() => isAdminInquiryFetching.value)
 const adminInquiryError = computed(() => (adminInquiryQueryError.value as any)?.message || '')
+
+// 관리자문의 개수 (count API)
+const { data: adminInquiryCountData } = useCounselorAdminInquiriesCount()
+const adminInquiryTotal = computed(() => adminInquiryCountData.value ?? 0)
 
 // 공통 날짜 포맷터
 const formatDate = (iso: string) => {
@@ -503,6 +532,172 @@ const formatDate = (iso: string) => {
 .list-item-title{font-size:15px;font-weight:600}
 .list-item-date{font-size:12px;color:rgba(255,255,255,.5)}
 .list-item-content{font-size:14px;color:rgba(255,255,255,.7);line-height:1.5;display:-webkit-box;line-clamp:2;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+
+.review-card {
+  padding: 20px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 16px;
+  margin-bottom: 12px;
+  transition: all 0.3s ease;
+}
+
+.review-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.reviewer-info {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.reviewer-name {
+  font-weight: 600;
+}
+
+.review-date {
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.review-rating {
+  display: flex;
+  gap: 2px;
+}
+
+.star {
+  color: rgba(255, 215, 0, 0.3);
+  font-size: 16px;
+}
+
+.star.filled {
+  color: #FFD700;
+}
+
+.review-content {
+  font-size: 14px;
+  line-height: 1.6;
+  color: rgba(255, 255, 255, 0.8);
+}
+
+/* 탭 배지 스타일 */
+.tab-badge {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 6px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  font-weight: 700;
+  background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+  color: white;
+  border-radius: 10px;
+  box-shadow: 0 2px 8px rgba(239, 68, 68, 0.4);
+  animation: badgePulse 2s ease-in-out infinite;
+}
+
+@keyframes badgePulse {
+  0%, 100% {
+    box-shadow: 0 2px 8px rgba(239, 68, 68, 0.4);
+  }
+  50% {
+    box-shadow: 0 2px 12px rgba(239, 68, 68, 0.6);
+  }
+}
+
+/* 문의 카드 스타일 */
+.inquiry-card {
+  padding: 20px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 16px;
+  margin-bottom: 12px;
+  transition: all 0.3s ease;
+}
+
+.inquiry-card:hover {
+  background: rgba(255, 255, 255, 0.05);
+  border-color: rgba(147, 51, 234, 0.3);
+}
+
+.inquiry-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 12px;
+  gap: 8px;
+}
+
+.inquirer-info {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1;
+  min-width: 0;
+}
+
+.inquirer-name {
+  font-weight: 600;
+  font-size: 14px;
+  white-space: nowrap;
+}
+
+.inquiry-date {
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.5);
+  white-space: nowrap;
+}
+
+.inquiry-status-badges {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.status-badge {
+  padding: 4px 10px;
+  border-radius: 12px;
+  font-size: 11px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.status-new {
+  background: rgba(255, 193, 7, 0.2);
+  color: #FFC107;
+  border: 1px solid rgba(255, 193, 7, 0.4);
+}
+
+.status-answered {
+  background: rgba(76, 175, 80, 0.2);
+  color: #4CAF50;
+  border: 1px solid rgba(76, 175, 80, 0.4);
+}
+
+.status-pending {
+  background: rgba(239, 68, 68, 0.2);
+  color: #ef4444;
+  border: 1px solid rgba(239, 68, 68, 0.4);
+}
+
+.inquiry-content {
+  font-size: 14px;
+  line-height: 1.6;
+  color: rgba(255, 255, 255, 0.8);
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+}
 </style>
 
 

@@ -214,7 +214,27 @@ class ConsultationReviewService:
                 total=total)
         
         return review_summaries, page, limit, total
-    
+
+    async def get_counselor_reviews_count(
+        self,
+        counselor_id: str,
+        visible_only: bool = True
+    ) -> int:
+        """
+        상담사별 후기 개수만 조회 (최적화된 count 전용)
+        """
+        log = get_logger_with_request_id()
+        log.info("Getting counselor reviews count", counselor_id=counselor_id, visible_only=visible_only)
+
+        is_visible = True if visible_only else None
+        total = await self.review_repo.get_count_by_counselor_id(
+            counselor_id=counselor_id,
+            is_visible=is_visible
+        )
+
+        log.info("Counselor reviews count retrieved", counselor_id=counselor_id, total=total)
+        return total
+
     async def update_review(
         self,
         review_id: int,
