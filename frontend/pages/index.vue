@@ -24,14 +24,14 @@
         </div>
       </section>
 
-      <!-- 프로모션 배너 -->
-      <section class="promotion-banner">
+      <!-- 프로모션 배너 (주석처리) -->
+      <!-- <section class="promotion-banner">
         <div class="promotion-content">
           <h3 class="promotion-title">🎉 첫 충전 100% 보너스</h3>
           <p class="promotion-desc">지금 충전하면 2배로 돌려드려요!</p>
           <button class="promotion-button" @click="$router.push('/point')">혜택 받기</button>
         </div>
-      </section>
+      </section> -->
 
       <!-- 실시간 인기 상담사 - 그리드 레이아웃 -->
       <section class="counselor-grid">
@@ -121,8 +121,8 @@ definePageMeta({
   requiresAuth: false
 })
 
-// 사용자 포인트
-const userPoints = ref(1200)
+// 사용자 포인트 (주석처리 - 미사용)
+// const userPoints = ref(1200)
 
 // 카테고리 목록
 const categories = ref([
@@ -297,10 +297,10 @@ function setActiveCategoryFilter(index: number) {
   resetAndFetch()
 }
 
-function startFreeTrial() {
-  notifyInfo('🎉 첫 상담 무료체험을 시작합니다!')
-  // TODO: 무료체험 로직 구현
-}
+// function startFreeTrial() {
+//   notifyInfo('🎉 첫 상담 무료체험을 시작합니다!')
+//   // TODO: 무료체험 로직 구현
+// }
 
 function requestAIFortune() {
   notifyInfo('🤖 AI 운세를 준비 중입니다...')

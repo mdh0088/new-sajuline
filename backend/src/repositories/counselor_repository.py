@@ -42,12 +42,25 @@ class CounselorRepository:
         """상담사 ID로 조회"""
         log = get_logger_with_request_id()
         log.info("Looking up counselor by ID", counselor_id=counselor_id)
-        
+
         stmt = select(Counselor).where(Counselor.counselor_id == counselor_id)
         result = await self.db.execute(stmt)
         counselor = result.scalar_one_or_none()
-        
+
         log.info("Counselor lookup completed", counselor_id=counselor_id, found=counselor is not None)
+        return counselor
+
+    @logger.catch(reraise=True)
+    async def get_by_nickname(self, nickname: str) -> Optional[Counselor]:
+        """상담사 닉네임으로 조회"""
+        log = get_logger_with_request_id()
+        log.info("Looking up counselor by nickname", nickname=nickname)
+
+        stmt = select(Counselor).where(Counselor.nickname == nickname)
+        result = await self.db.execute(stmt)
+        counselor = result.scalar_one_or_none()
+
+        log.info("Counselor lookup completed", nickname=nickname, found=counselor is not None)
         return counselor
     
     @logger.catch(reraise=True)

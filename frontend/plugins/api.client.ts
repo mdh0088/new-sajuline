@@ -134,8 +134,19 @@ export default defineNuxtPlugin(() => {
             await refreshToken()
             // @ts-expect-error: 내부 재시도 플래그
             return api(request, { ...options, _retry: true })
-          } catch (_) {
-            // 리프레시 실패 시 아래 표준 에러로 폴백
+          } catch (refreshError) {
+            // Refresh Token 만료 또는 실패 → 명시적 로그아웃 처리
+            console.error('❌ Refresh Token 실패 - 자동 로그아웃 처리', refreshError)
+
+            if (process.client) {
+              // localStorage 세션 삭제
+              localStorage.removeItem('user_session')
+
+              // 로그인 페이지로 리다이렉트 (현재 경로를 redirect 파라미터로 전달)
+              const currentPath = window.location.pathname
+              window.location.href = `/login?redirect=${encodeURIComponent(currentPath)}`
+            }
+            // 에러 계속 throw (호출자에게 알림)
           }
         }
         const errorData = response._data

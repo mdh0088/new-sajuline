@@ -35,15 +35,23 @@ const counselorApi = {
   // 상담사 로그인
   async login(credentials: LoginRequest): Promise<LoginData> {
     const { $api } = useNuxtApp()
+    console.log('🔍 [counselorApi.login] Calling API with credentials:', { user_id: credentials.user_id })
+
     const response = await $api<LoginResponse>('/api/v1/counselors/login', {
       method: 'POST',
       body: credentials
     })
-    
+
+    console.log('🔍 [counselorApi.login] API response received:', response)
+    console.log('🔍 [counselorApi.login] Response success:', response.success)
+    console.log('🔍 [counselorApi.login] Response data:', response.data)
+
     if (!response.success || !response.data) {
+      console.error('❌ [counselorApi.login] Response validation failed:', { success: response.success, hasData: !!response.data })
       throw new Error(response.error?.message || '상담사 로그인에 실패했습니다.')
     }
-    
+
+    console.log('✅ [counselorApi.login] Returning data:', response.data)
     return response.data
   },
 
