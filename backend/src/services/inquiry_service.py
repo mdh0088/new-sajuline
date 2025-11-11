@@ -262,3 +262,38 @@ class InquiryService:
                 user_id=user_id)
 
         return response
+
+    async def reply_to_user_inquiry(
+        self,
+        *,
+        inquiry_id: int,
+        counselor_id: str,
+        reply_content: str
+    ) -> InquiryResponse:
+        """상담사가 사용자 문의에 답변"""
+        log = get_logger_with_request_id()
+        log.info("Replying to user inquiry (service)",
+                inquiry_id=inquiry_id,
+                counselor_id=counselor_id)
+
+        # 파라미터 유효성 검사
+        if not inquiry_id or inquiry_id <= 0:
+            raise ValidationError("inquiry_id는 필수이며 0보다 커야 합니다.")
+        if not reply_content:
+            raise ValidationError("reply_content는 필수입니다.")
+
+        # 답변 작성
+        inquiry = await self.inquiry_repo.update_counselor_reply(
+            inquiry_id=inquiry_id,
+            counselor_id=counselor_id,
+            reply_content=reply_content
+        )
+
+        # 응답 데이터 변환
+        response = InquiryResponse.model_validate(inquiry)
+
+        log.info("Reply to user inquiry completed (service)",
+                inquiry_id=inquiry_id,
+                counselor_id=counselor_id)
+
+        return response

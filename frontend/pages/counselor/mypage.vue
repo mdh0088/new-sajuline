@@ -220,7 +220,48 @@
                       </div>
                     </div>
                     <div class="inquiry-content">
-                      {{ q.content || (q.title || q.category || '제목 없음') }}
+                      <div class="inquiry-text">
+                        {{ q.content || (q.title || q.category || '제목 없음') }}
+                      </div>
+                      <div v-if="q.has_reply && q.reply_content" class="reply-section">
+                        <div class="reply-divider"></div>
+                        <div class="reply-author">{{ nickname }} 상담사</div>
+                        <div class="reply-text">{{ q.reply_content }}</div>
+                        <div v-if="q.answered_at" class="reply-date">답변일: {{ formatDate(q.answered_at) }}</div>
+                      </div>
+                      <div v-else class="reply-action">
+                        <button
+                          class="reply-toggle-btn"
+                          @click="toggleReplyForm(q.inquiry_id)"
+                        >
+                          <span v-if="openReplyFormId === q.inquiry_id">답변 닫기 ▲</span>
+                          <span v-else>답변 작성하기 ▼</span>
+                        </button>
+                        <div v-if="openReplyFormId === q.inquiry_id" class="reply-form">
+                          <div class="reply-divider"></div>
+                          <textarea
+                            v-model="replyContent[q.inquiry_id]"
+                            rows="4"
+                            class="reply-textarea"
+                            placeholder="답변 내용을 입력해주세요..."
+                          />
+                          <div class="reply-form-actions">
+                            <button
+                              class="reply-submit-btn"
+                              @click="submitReply(q.inquiry_id)"
+                              :disabled="!replyContent[q.inquiry_id] || isSubmittingReply"
+                            >
+                              {{ isSubmittingReply ? '답변 등록 중...' : '답변 등록' }}
+                            </button>
+                            <button
+                              class="reply-cancel-btn"
+                              @click="cancelReply(q.inquiry_id)"
+                            >
+                              취소
+                            </button>
+                          </div>
+                        </div>
+                      </div>
                     </div>
                   </div>
                 </template>
@@ -296,7 +337,8 @@ const {
   useCounselorAdminInquiries,
   useCounselorReviewsCount,
   useCounselorUserInquiriesCount,
-  useCounselorAdminInquiriesCount
+  useCounselorAdminInquiriesCount,
+  replyToUserInquiry
 } = useCounselorQueries()
 const { data: mypage } = useMypage()
 
@@ -486,7 +528,7 @@ const reviewTotal = computed(() => reviewCountData.value ?? 0)
 
 const userInquiryPage = ref(1)
 const userInquiryLimit = ref(10)
-const { data: userInquiryData, isFetching: isUserInquiryFetching, error: userInquiryQueryError } = useCounselorUserInquiries(
+const { data: userInquiryData, isFetching: isUserInquiryFetching, error: userInquiryQueryError, refetch: refetchUserInquiries } = useCounselorUserInquiries(
   userInquiryPage,
   userInquiryLimit,
   { enabled: computed(() => tab.value === 'inquiry') }
@@ -499,6 +541,57 @@ const userInquiryError = computed(() => (userInquiryQueryError.value as any)?.me
 // 상담문의 개수 (count API)
 const { data: userInquiryCountData } = useCounselorUserInquiriesCount()
 const userInquiryTotal = computed(() => userInquiryCountData.value ?? 0)
+
+// 답변 작성 관련 상태
+const openReplyFormId = ref<number | null>(null)
+const replyContent = ref<Record<number, string>>({})
+const isSubmittingReply = ref(false)
+
+// 답변 폼 토글
+const toggleReplyForm = (inquiryId: number) => {
+  if (openReplyFormId.value === inquiryId) {
+    openReplyFormId.value = null
+  } else {
+    openReplyFormId.value = inquiryId
+    if (!replyContent.value[inquiryId]) {
+      replyContent.value[inquiryId] = ''
+    }
+  }
+}
+
+// 답변 취소
+const cancelReply = (inquiryId: number) => {
+  openReplyFormId.value = null
+  replyContent.value[inquiryId] = ''
+}
+
+// 답변 제출
+const submitReply = async (inquiryId: number) => {
+  const content = replyContent.value[inquiryId]
+  if (!content || isSubmittingReply.value) return
+
+  try {
+    isSubmittingReply.value = true
+
+    // API 호출
+    await replyToUserInquiry(inquiryId, content)
+
+    // 성공 알림
+    notifySuccess('답변이 등록되었습니다.')
+
+    // 폼 닫기 및 초기화
+    openReplyFormId.value = null
+    replyContent.value[inquiryId] = ''
+
+    // 목록 새로고침
+    await refetchUserInquiries()
+
+  } catch (error: any) {
+    notifyError(error?.message || '답변 등록에 실패했습니다.')
+  } finally {
+    isSubmittingReply.value = false
+  }
+}
 
 const adminInquiryPage = ref(1)
 const adminInquiryLimit = ref(10)
@@ -693,10 +786,135 @@ const formatDate = (iso: string) => {
   font-size: 14px;
   line-height: 1.6;
   color: rgba(255, 255, 255, 0.8);
-  overflow: hidden;
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
+}
+
+.inquiry-text {
+  line-height: 1.6;
+}
+
+.reply-section {
+  margin-top: 16px;
+}
+
+.reply-divider {
+  width: 100%;
+  height: 1px;
+  background: rgba(255, 255, 255, 0.2);
+  margin: 12px 0;
+}
+
+.reply-author {
+  font-size: 13px;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.7);
+  margin-bottom: 8px;
+}
+
+.reply-text {
+  line-height: 1.6;
+  color: rgba(255, 255, 255, 0.8);
+  margin-bottom: 8px;
+}
+
+.reply-date {
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.5);
+  text-align: right;
+}
+
+/* 답변 작성 UI */
+.reply-action {
+  margin-top: 16px;
+}
+
+.reply-toggle-btn {
+  width: 100%;
+  padding: 10px;
+  background: rgba(147, 51, 234, 0.1);
+  border: 1px solid rgba(147, 51, 234, 0.3);
+  border-radius: 8px;
+  color: rgba(255, 255, 255, 0.8);
+  font-size: 13px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.reply-toggle-btn:hover {
+  background: rgba(147, 51, 234, 0.2);
+  border-color: rgba(147, 51, 234, 0.5);
+}
+
+.reply-form {
+  margin-top: 12px;
+}
+
+.reply-textarea {
+  width: 100%;
+  padding: 12px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  color: rgba(255, 255, 255, 0.9);
+  font-size: 14px;
+  line-height: 1.6;
+  resize: vertical;
+  margin-top: 12px;
+}
+
+.reply-textarea:focus {
+  outline: none;
+  border-color: rgba(147, 51, 234, 0.5);
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.reply-textarea::placeholder {
+  color: rgba(255, 255, 255, 0.4);
+}
+
+.reply-form-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 12px;
+  justify-content: flex-end;
+}
+
+.reply-submit-btn {
+  padding: 8px 20px;
+  background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
+  border: none;
+  border-radius: 8px;
+  color: white;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.reply-submit-btn:hover:not(:disabled) {
+  background: linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%);
+  transform: translateY(-1px);
+}
+
+.reply-submit-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.reply-cancel-btn {
+  padding: 8px 20px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 8px;
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.reply-cancel-btn:hover {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.3);
 }
 </style>
 

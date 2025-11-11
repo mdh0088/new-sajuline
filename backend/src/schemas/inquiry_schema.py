@@ -120,3 +120,10 @@ class UserAdminInquiryCreateRequest(BaseModel):
     content: str = Field(..., min_length=1, description="문의 내용")
 
     model_config = ConfigDict(from_attributes=True)
+
+
+class CounselorReplyRequest(BaseModel):
+    """상담사가 사용자 문의에 답변하는 요청 스키마"""
+    reply_content: str = Field(..., min_length=1, description="답변 내용")
+
+    model_config = ConfigDict(from_attributes=True)

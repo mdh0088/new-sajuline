@@ -313,6 +313,19 @@ const counselorApi = {
       throw new Error(response.error?.message || '관리자문의 개수를 불러오지 못했습니다.')
     }
     return response.data.count
+  },
+
+  // 상담문의 답변 작성
+  async replyToUserInquiry(inquiryId: number, replyContent: string): Promise<any> {
+    const { $api } = useNuxtApp()
+    const response = await $api<APIResponse<any>>(`/api/v1/counselors/inquiries/users/${inquiryId}/reply`, {
+      method: 'POST',
+      body: { reply_content: replyContent }
+    })
+    if (!response.success || !response.data) {
+      throw new Error(response.error?.message || '답변 등록에 실패했습니다.')
+    }
+    return response.data
   }
 }
 
@@ -555,6 +568,7 @@ export const useCounselorQueries = () => {
     searchPublic: counselorApi.searchPublic,
     getPublicCounselorReviews: counselorApi.getPublicCounselorReviews,
     getPublicCounselorUserInquiries: counselorApi.getPublicCounselorUserInquiries,
-    createUserInquiry: counselorApi.createUserInquiry
+    createUserInquiry: counselorApi.createUserInquiry,
+    replyToUserInquiry: counselorApi.replyToUserInquiry
   }
 }

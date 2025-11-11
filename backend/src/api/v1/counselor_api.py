@@ -429,6 +429,47 @@ async def get_counselor_user_inquiries_count(
     return ok(data={"count": total}, message="상담문의 개수 조회 성공")
 
 
+@router.post("/inquiries/users/{inquiry_id}/reply", response_model=APIResponse, summary="상담문의 답변 작성")
+async def reply_to_user_inquiry(
+    inquiry_id: int,
+    payload: dict,
+    current_user: TokenPayload = Depends(get_current_user),
+    inquiry_service: InquiryService = Depends(get_inquiry_service)
+) -> APIResponse:
+    """
+    상담문의에 답변을 작성합니다.
+
+    - **inquiry_id**: 문의 ID
+    - **reply_content**: 답변 내용
+    """
+    from src.schemas.inquiry_schema import CounselorReplyRequest
+
+    # 권한 확인: 상담사만 접근
+    verify_counselor_role(current_user)
+    counselor_id = current_user.sub
+
+    log = get_logger_with_request_id()
+    log.info("API: Replying to user inquiry",
+            inquiry_id=inquiry_id,
+            counselor_id=counselor_id)
+
+    # 요청 검증
+    reply_request = CounselorReplyRequest(**payload)
+
+    # 서비스 호출
+    response = await inquiry_service.reply_to_user_inquiry(
+        inquiry_id=inquiry_id,
+        counselor_id=counselor_id,
+        reply_content=reply_request.reply_content
+    )
+
+    log.info("API: Reply to user inquiry successful",
+            inquiry_id=inquiry_id,
+            counselor_id=counselor_id)
+
+    return ok(data=response, message="답변이 등록되었습니다")
+
+
 @router.get("/inquiries/admin", response_model=APIResponse, summary="관리자 문의 목록 조회")
 async def get_counselor_admin_inquiries(
     page: int = Query(1, ge=1, description="페이지 번호"),

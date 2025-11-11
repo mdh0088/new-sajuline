@@ -291,3 +291,45 @@ class InquiryRepository:
 
         log.info("User admin inquiry detail retrieved", inquiry_id=inquiry_id)
         return inquiry
+
+    @logger.catch(reraise=True)
+    async def update_counselor_reply(
+        self,
+        inquiry_id: int,
+        counselor_id: str,
+        reply_content: str
+    ) -> Inquiry:
+        """
+        상담사가 사용자 문의에 답변 작성
+        - inquirer_type = USER
+        - counselor_id = #{counselor_id}
+        """
+        from datetime import datetime, timezone
+
+        log = get_logger_with_request_id()
+        log.info("Updating counselor reply", inquiry_id=inquiry_id, counselor_id=counselor_id)
+
+        # 문의 조회 및 권한 확인
+        stmt = select(Inquiry).where(
+            and_(
+                Inquiry.inquiry_id == inquiry_id,
+                Inquiry.inquirer_type == InquirerType.USER,
+                Inquiry.counselor_id == counselor_id
+            )
+        )
+        result = await self.db.execute(stmt)
+        inquiry = result.scalar_one_or_none()
+
+        if not inquiry:
+            log.warning("Inquiry not found or unauthorized", inquiry_id=inquiry_id, counselor_id=counselor_id)
+            raise Exception(f"문의를 찾을 수 없거나 권한이 없습니다. (inquiry_id={inquiry_id})")
+
+        # 답변 업데이트
+        inquiry.reply_content = reply_content
+        inquiry.answered_at = datetime.now(timezone.utc)
+
+        await self.db.commit()
+        await self.db.refresh(inquiry)
+
+        log.info("Counselor reply updated", inquiry_id=inquiry_id)
+        return inquiry
