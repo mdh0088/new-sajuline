@@ -1,4 +1,4 @@
-import { escapeHtml } from 'file://C:/Users/user/mdh/project/new-sajuline/frontend/node_modules/@vue/shared/dist/shared.cjs.prod.js';
+import { escapeHtml } from 'file://C:/Users/poyi1/mdh/project/new-sajuline/frontend/node_modules/@vue/shared/dist/shared.cjs.prod.js';
 
 const _messages = { "appName": "Nuxt", "statusCode": 500, "statusMessage": "Internal server error", "description": "This page is temporarily unavailable.", "refresh": "Refresh this page" };
 const template = (messages) => {

@@ -1,19 +1,22 @@
-import { createRenderer, getRequestDependencies, getPreloadLinks, getPrefetchLinks } from 'file://C:/Users/user/mdh/project/new-sajuline/frontend/node_modules/vue-bundle-renderer/dist/runtime.mjs';
-import { getQuery, createError, getResponseStatusText, getResponseStatus } from 'file://C:/Users/user/mdh/project/new-sajuline/frontend/node_modules/h3/dist/index.mjs';
-import destr from 'file://C:/Users/user/mdh/project/new-sajuline/frontend/node_modules/destr/dist/index.mjs';
-import { renderToString } from 'file://C:/Users/user/mdh/project/new-sajuline/frontend/node_modules/vue/server-renderer/index.mjs';
+import { createRenderer, getRequestDependencies, getPreloadLinks, getPrefetchLinks } from 'file://C:/Users/poyi1/mdh/project/new-sajuline/frontend/node_modules/vue-bundle-renderer/dist/runtime.mjs';
+import { getQuery, createError, getResponseStatusText, getResponseStatus } from 'file://C:/Users/poyi1/mdh/project/new-sajuline/frontend/node_modules/h3/dist/index.mjs';
+import { joinURL } from 'file://C:/Users/poyi1/mdh/project/new-sajuline/frontend/node_modules/ufo/dist/index.mjs';
+import destr from 'file://C:/Users/poyi1/mdh/project/new-sajuline/frontend/node_modules/destr/dist/index.mjs';
+import { renderToString } from 'file://C:/Users/poyi1/mdh/project/new-sajuline/frontend/node_modules/vue/server-renderer/index.mjs';
 import { b as buildAssetsURL, a as useRuntimeConfig, c as useStorage, d as defineRenderHandler, p as publicAssetsURL, g as getRouteRules, u as useNitroApp } from './nitro.mjs';
-import { createHead as createHead$1, propsToString, renderSSRHead } from 'file://C:/Users/user/mdh/project/new-sajuline/frontend/node_modules/unhead/dist/server.mjs';
-import { stringify, uneval } from 'file://C:/Users/user/mdh/project/new-sajuline/frontend/node_modules/devalue/index.js';
-import { FlatMetaPlugin } from 'file://C:/Users/user/mdh/project/new-sajuline/frontend/node_modules/unhead/dist/plugins.mjs';
-import { walkResolver } from 'file://C:/Users/user/mdh/project/new-sajuline/frontend/node_modules/unhead/dist/utils.mjs';
-import { toValue, isRef, hasInjectionContext, inject, ref, watchEffect, getCurrentInstance, onBeforeUnmount, onDeactivated, onActivated } from 'file://C:/Users/user/mdh/project/new-sajuline/frontend/node_modules/vue/index.mjs';
+import { createHead as createHead$1, propsToString, renderSSRHead } from 'file://C:/Users/poyi1/mdh/project/new-sajuline/frontend/node_modules/unhead/dist/server.mjs';
+import { stringify, uneval } from 'file://C:/Users/poyi1/mdh/project/new-sajuline/frontend/node_modules/devalue/index.js';
+import { FlatMetaPlugin } from 'file://C:/Users/poyi1/mdh/project/new-sajuline/frontend/node_modules/unhead/dist/plugins.mjs';
+import { walkResolver } from 'file://C:/Users/poyi1/mdh/project/new-sajuline/frontend/node_modules/unhead/dist/utils.mjs';
+import { toValue, isRef, hasInjectionContext, inject, ref, watchEffect, getCurrentInstance, onBeforeUnmount, onDeactivated, onActivated } from 'file://C:/Users/poyi1/mdh/project/new-sajuline/frontend/node_modules/vue/index.mjs';
+import { relative } from 'file://C:/Users/poyi1/mdh/project/new-sajuline/frontend/node_modules/pathe/dist/index.mjs';
 
 const VueResolver = (_, value) => {
   return isRef(value) ? toValue(value) : value;
 };
 
 const headSymbol = "usehead";
+// @__NO_SIDE_EFFECTS__
 function vueInstall(head) {
   const plugin = {
     install(app) {
@@ -25,6 +28,7 @@ function vueInstall(head) {
   return plugin.install;
 }
 
+// @__NO_SIDE_EFFECTS__
 function injectHead() {
   if (hasInjectionContext()) {
     const instance = inject(headSymbol);
@@ -36,7 +40,7 @@ function injectHead() {
   throw new Error("useHead() was called without provide context, ensure you call it through the setup() function.");
 }
 function useHead(input, options = {}) {
-  const head = options.head || injectHead();
+  const head = options.head || /* @__PURE__ */ injectHead();
   return head.ssr ? head.push(input || {}, options) : clientUseHead(head, input, options);
 }
 function clientUseHead(head, input, options = {}) {
@@ -65,7 +69,7 @@ function clientUseHead(head, input, options = {}) {
   return entry;
 }
 function useSeoMeta(input = {}, options = {}) {
-  const head = options.head || injectHead();
+  const head = options.head || /* @__PURE__ */ injectHead();
   head.use(FlatMetaPlugin);
   const { title, titleTemplate, ...meta } = input;
   return useHead({
@@ -75,6 +79,7 @@ function useSeoMeta(input = {}, options = {}) {
   }, options);
 }
 
+// @__NO_SIDE_EFFECTS__
 function createHead(options = {}) {
   const head = createHead$1({
     ...options,
@@ -175,12 +180,15 @@ function getRenderer(ssrContext) {
   return ssrContext.noSSR ? getSPARenderer() : getSSRRenderer();
 }
 const getSSRStyles = lazyCachedFunction(() => import('../build/styles.mjs').then((r) => r.default || r));
-const getEntryIds = () => getClientManifest().then((r) => Object.values(r).filter(
-  (r2) => (
-    // @ts-expect-error internal key set by CSS inlining configuration
-    r2._globalCSS
-  )
-).map((r2) => r2.src));
+const getEntryIds = () => getClientManifest().then((r) => {
+  const entryIds = [];
+  for (const entry of Object.values(r)) {
+    if (entry._globalCSS) {
+      entryIds.push(entry.src);
+    }
+  }
+  return entryIds;
+});
 
 useStorage("internal:nuxt:prerender:payload") ;
 useStorage("internal:nuxt:prerender:island") ;
@@ -271,13 +279,14 @@ async function renderInlineStyles(usedModules) {
 
 const renderSSRHeadOptions = {"omitLineBreaks":true};
 
-const entryFileName = "entry-C0D39i1s.js";
+const entryFileName = "entry-IyoL6tLw.js";
 
 globalThis.__buildAssetsURL = buildAssetsURL;
 globalThis.__publicAssetsURL = publicAssetsURL;
 const HAS_APP_TELEPORTS = !!(appTeleportAttrs.id);
 const APP_TELEPORT_OPEN_TAG = HAS_APP_TELEPORTS ? `<${appTeleportTag}${propsToString(appTeleportAttrs)}>` : "";
 const APP_TELEPORT_CLOSE_TAG = HAS_APP_TELEPORTS ? `</${appTeleportTag}>` : "";
+let entryPath;
 const renderer = defineRenderHandler(async (event) => {
   const nitroApp = useNitroApp();
   const ssrError = event.path.startsWith("/__nuxt_error") ? getQuery(event) : null;
@@ -329,12 +338,24 @@ const renderer = defineRenderHandler(async (event) => {
   const NO_SCRIPTS = routeOptions.noScripts;
   const { styles, scripts } = getRequestDependencies(ssrContext, renderer.rendererContext);
   if (!NO_SCRIPTS) {
+    let path = entryPath;
+    if (!path) {
+      path = buildAssetsURL(entryFileName);
+      if (ssrContext.runtimeConfig.app.cdnURL || /^(?:\/|\.+\/)/.test(path)) {
+        entryPath = path;
+      } else {
+        path = relative(event.path.replace(/\/[^/]+$/, "/"), joinURL("/", path));
+        if (!/^(?:\/|\.+\/)/.test(path)) {
+          path = `./${path}`;
+        }
+      }
+    }
     ssrContext.head.push({
       script: [{
         tagPosition: "head",
         tagPriority: -2,
         type: "importmap",
-        innerHTML: JSON.stringify({ imports: { "#entry": buildAssetsURL(entryFileName) } })
+        innerHTML: JSON.stringify({ imports: { "#entry": path } })
       }]
     }, headEntryOptions);
   }
@@ -409,7 +430,14 @@ const renderer = defineRenderHandler(async (event) => {
   };
 });
 function normalizeChunks(chunks) {
-  return chunks.filter(Boolean).map((i) => i.trim());
+  const result = [];
+  for (const _chunk of chunks) {
+    const chunk = _chunk?.trim();
+    if (chunk) {
+      result.push(chunk);
+    }
+  }
+  return result;
 }
 function joinTags(tags) {
   return tags.join("");
