@@ -38,7 +38,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, ref } from 'vue'
+import { computed, onMounted, ref, watch } from 'vue'
 import { useAuth } from '~/composables/auth/useAuth'
 import { useAuthQueries } from '~/composables/api/useAuthQueries'
 import { useUserQueries } from '~/composables/api/useUserQueries'
@@ -51,10 +51,13 @@ const { refetch } = useWhoAmI()
 const route = useRoute()
 const router = useRouter()
 
+// ✅ Computed를 명시적으로 생성하여 Vue 반응성 보장
+const isAuthenticatedComputed = computed(() => isAuthenticated.value)
+
 // 마이페이지 데이터 조회 (포인트 포함)
-// ✅ enabled 옵션에 getter 함수 사용 → Vue 반응성 유지
+// ✅ enabled 옵션에 computed 전달 → Vue Query가 반응성 감지
 const { data: mypageData, refetch: refetchMypage } = useUserMypage({
-  enabled: () => isAuthenticated.value
+  enabled: isAuthenticatedComputed
 })
 
 // 사용자 포인트
@@ -99,15 +102,36 @@ const pageTitle = computed(() => {
   return pageTitleMap[path] || '페이지'
 })
 
+// ✅ isAuthenticated 변경 감지 → 로그인 시 데이터 refetch
+watch(isAuthenticated, async (newValue, oldValue) => {
+  // false → true로 변경될 때만 실행 (로그인 시)
+  if (newValue && !oldValue) {
+    console.log('✅ [AppHeader] User logged in, refetching data...')
+    try {
+      // whoAmI refetch
+      const result = await refetch()
+      if (result.data) {
+        setRole(result.data.role)
+      }
+
+      // mypage refetch
+      await refetchMypage()
+      console.log('✅ [AppHeader] Data refreshed successfully')
+    } catch (error) {
+      console.error('❌ [AppHeader] Failed to refresh data:', error)
+      await logout()
+    }
+  }
+})
+
 onMounted(async () => {
-  // 로그인 상태에서만 whoAmI 요청 (게스트는 호출하지 않음)
+  // 초기 마운트 시에만 실행 (로그인 상태에서만 whoAmI 요청)
   if (!isAuthenticated.value) return
   try {
     const result = await refetch()
     if (result.data) {
       setRole(result.data.role)
     }
-    // ✅ refetchMypage() 제거: enabled: () => isAuthenticated.value가 자동 처리
   } catch (error) {
     // API 호출 실패 시 명시적 로그아웃 (토큰 만료 등)
     console.error('❌ 인증 확인 실패 - 로그아웃 처리:', error)

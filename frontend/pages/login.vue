@@ -135,7 +135,8 @@ onMounted(() => {
     const redirectQuery = route.query.redirect as string
     if (redirectQuery) {
       console.log('🎯 [login.vue] Redirecting to query redirect:', redirectQuery)
-      navigateTo(redirectQuery)
+      // ✅ 강제 새로고침으로 페이지 이동
+      window.location.href = redirectQuery
       return
     }
 
@@ -143,10 +144,12 @@ onMounted(() => {
     const currentRole = role.value
     if (currentRole === 'counselor') {
       console.log('👨‍💼 [login.vue] Redirecting logged-in counselor to mypage')
-      navigateTo('/counselor/mypage')
+      // ✅ 강제 새로고침으로 페이지 이동
+      window.location.href = '/counselor/mypage'
     } else {
       console.log('👤 [login.vue] Redirecting logged-in user to mypage')
-      navigateTo('/user/mypage')
+      // ✅ 강제 새로고침으로 페이지 이동
+      window.location.href = '/user/mypage'
     }
   }
 })
@@ -159,7 +162,8 @@ const handleLoginSuccess = () => {
 
   if (redirectQuery) {
     console.log('🎯 [login.vue] Redirecting to query redirect:', redirectQuery)
-    navigateTo(redirectQuery)
+    // ✅ 강제 새로고침으로 페이지 이동
+    window.location.href = redirectQuery
     return
   }
 
@@ -168,11 +172,13 @@ const handleLoginSuccess = () => {
   console.log('🔍 [login.vue] Current role:', currentRole)
 
   if (currentRole === 'counselor') {
-    console.log('👨‍💼 [login.vue] Redirecting to counselor mypage')
-    navigateTo('/counselor/mypage')
+    console.log('👨‍💼 [login.vue] Redirecting to counselor mypage with page reload')
+    // ✅ 강제 새로고침으로 페이지 이동
+    window.location.href = '/counselor/mypage'
   } else {
-    console.log('👤 [login.vue] Redirecting to user mypage')
-    navigateTo('/user/mypage')
+    console.log('👤 [login.vue] Redirecting to user mypage with page reload')
+    // ✅ 강제 새로고침으로 페이지 이동
+    window.location.href = '/user/mypage'
   }
 }
 
