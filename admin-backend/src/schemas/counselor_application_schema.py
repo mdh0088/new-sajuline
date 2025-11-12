@@ -117,3 +117,35 @@ class CounselorApplicationStatusUpdate(BaseModel):
     )
     admin_note: Optional[str] = Field(default=None, description="관리자 메모")
     reviewed_by: Optional[int] = Field(default=None, description="검토한 관리자 ID")
+
+
+class CounselorConversionRequest(BaseModel):
+    """상담사 전환 요청 스키마 - 신청자 정보를 모두 파라미터로 받음"""
+    counselor_code: str = Field(..., min_length=1, max_length=50, description="상담사 고유 코드")
+    name: str = Field(..., min_length=1, max_length=50, description="실명")
+    nickname: str = Field(..., min_length=1, max_length=100, description="활동명")
+    email: str = Field(..., min_length=1, max_length=100, description="이메일")
+    phone: str = Field(..., min_length=1, max_length=50, description="전화번호")
+    address: Optional[str] = Field(default=None, max_length=500, description="주소")
+    specialty_types: Optional[str] = Field(default=None, description="전문 분야 JSON 문자열")
+    keywords: Optional[str] = Field(default=None, max_length=500, description="키워드")
+    introduction: Optional[str] = Field(default=None, description="자기소개")
+    selected_image_url: Optional[str] = Field(default=None, max_length=500, description="선택된 이미지 URL")
+    upload_image1: Optional[str] = Field(default=None, max_length=500, description="업로드 이미지 1")
+    upload_image2: Optional[str] = Field(default=None, max_length=500, description="업로드 이미지 2")
+    upload_image3: Optional[str] = Field(default=None, max_length=500, description="업로드 이미지 3")
+    application_status: Optional[str] = Field(default=None, max_length=20, description="신청 상태")
+    admin_note: Optional[str] = Field(default=None, description="관리자 메모")
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class CounselorConversionResponse(BaseModel):
+    """상담사 전환 응답 스키마"""
+    counselor_id: str = Field(..., description="생성된 상담사 ID (이메일)")
+    counselor_code: str = Field(..., description="상담사 고유 코드")
+    name: str = Field(..., description="상담사 이름")
+    nickname: str = Field(..., description="상담사 활동명")
+    message: str = Field(default="상담사 전환 완료", description="응답 메시지")
+
+    model_config = ConfigDict(from_attributes=True)

@@ -60,7 +60,7 @@ class CounselorApplicationService:
 
                 # S3 업로드 (파일명만 반환)
                 filename = upload_public_image(
-                    subdirectory="counselor_applications",
+                    subdirectory="cs",
                     content=content,
                     original_name=photo.filename or "image.png"
                 )

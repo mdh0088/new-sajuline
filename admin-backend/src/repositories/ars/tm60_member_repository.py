@@ -60,4 +60,12 @@ class Tm60MemberRepository:
         self.db.rollback()
         return False
 
+    def create(self, member_data: dict) -> Tm60Member:
+        """새 tm60_member 생성 (flush만 수행, commit은 외부에서)"""
+        member = Tm60Member(**member_data)
+        self.db.add(member)
+        self.db.flush()
+        self.db.refresh(member)
+        return member
+
 

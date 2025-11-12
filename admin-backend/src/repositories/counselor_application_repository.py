@@ -24,6 +24,14 @@ class CounselorApplicationRepository:
         result = await self.db.execute(stmt)
         return result.scalar_one_or_none()
 
+    async def get_by_email(self, email: str) -> Optional[CounselorApplication]:
+        """이메일로 단건 조회"""
+        stmt = select(CounselorApplication).where(
+            CounselorApplication.email == email
+        )
+        result = await self.db.execute(stmt)
+        return result.scalar_one_or_none()
+
     async def partial_update(
         self,
         application_id: int,

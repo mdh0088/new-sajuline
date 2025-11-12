@@ -16,11 +16,16 @@ from src.schemas.counselor_application_schema import (
     CounselorApplicationDetailResponse,
     CounselorApplicationResponse,
     CounselorApplicationStatusUpdate,
+    CounselorConversionRequest,
+    CounselorConversionResponse,
 )
 from src.services.counselor_application_service import CounselorApplicationService
 from sqlalchemy.ext.asyncio import AsyncSession
-from src.core.database import get_db as get_db_maria
+from sqlalchemy.orm import Session
+from src.core.database import get_db as get_db_maria, get_db_mssql
 from src.repositories.counselor_application_repository import CounselorApplicationRepository
+from src.repositories.counselor_repository import CounselorRepository
+from src.repositories.ars.tm60_member_repository import Tm60MemberRepository
 from src.services.security import get_current_user
 from src.schemas.auth_schema import TokenPayload
 from src.common.utils.auth_utils import verify_admin_role
@@ -33,6 +38,18 @@ def _get_application_service(
     db: AsyncSession = Depends(get_db_maria),
 ) -> CounselorApplicationService:
     return CounselorApplicationService(CounselorApplicationRepository(db))
+
+
+def _get_conversion_service(
+    db_maria: AsyncSession = Depends(get_db_maria),
+    db_mssql: Session = Depends(get_db_mssql),
+) -> CounselorApplicationService:
+    """상담사 전환을 위한 서비스 (MariaDB + MSSQL)"""
+    return CounselorApplicationService(
+        application_repo=CounselorApplicationRepository(db_maria),
+        counselor_repo=CounselorRepository(db_maria),
+        tm60_repo=Tm60MemberRepository(db_mssql),
+    )
 
 
 @router.get("/list", response_model=APIResponse, summary="상담사 신청 목록 조회")
@@ -165,3 +182,26 @@ async def update_application_detail(
         upload_image3=upload_image3,
     )
     return ok(data=data, message="상담사 신청 정보 수정 성공")
+
+
+@router.post(
+    "/convert-to-counselor",
+    response_model=APIResponse[CounselorConversionResponse],
+    summary="상담사 신청자를 정식 상담사로 전환",
+    description="신청자 정보를 받아 t_counselor와 tm60_members에 데이터를 삽입합니다.",
+)
+async def convert_to_counselor(
+    request: CounselorConversionRequest,
+    conversion_service: CounselorApplicationService = Depends(_get_conversion_service),
+    #current_user: TokenPayload = Depends(get_current_user),
+):
+    """상담사 전환 API
+
+    - counselor_code, email, nickname, phone 중복 체크
+    - t_counselor 삽입 (MariaDB)
+    - tm60_members 삽입 (MSSQL)
+    - 초기 비밀번호: phone + '!'
+    """
+    #verify_admin_role(current_user)
+    result = await conversion_service.convert_to_counselor(request=request)
+    return ok(data=result, message="상담사 전환이 완료되었습니다")
