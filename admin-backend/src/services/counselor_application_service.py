@@ -1,28 +1,42 @@
 """
-관리자 백엔드 상담사 신청 서비스: 목록 조회/상세 수정(+S3 업로드)
+관리자 백엔드 상담사 신청 서비스: 목록 조회/상세 수정(+S3 업로드)/상담사 전환
 """
 from typing import Tuple, List, Optional
 from datetime import datetime
 from json import loads
 
 from fastapi import UploadFile
+from sqlalchemy.orm import Session
 
 from src.exceptions.custom_exceptions import NotFoundError, ValidationError
 from src.repositories.counselor_application_repository import CounselorApplicationRepository
+from src.repositories.counselor_repository import CounselorRepository
+from src.repositories.ars.tm60_member_repository import Tm60MemberRepository
 from src.schemas.counselor_application_schema import (
     CounselorApplicationListParams,
     CounselorApplicationListItem,
     CounselorApplicationDetailUpdate,
     CounselorApplicationDetailResponse,
+    CounselorConversionRequest,
+    CounselorConversionResponse,
 )
 from src.common.storage.s3 import upload_public_image
+from src.services.auth_service import AuthService
 
 
 class CounselorApplicationService:
     """상담사 신청 비즈니스 로직 (관리자)"""
 
-    def __init__(self, application_repo: CounselorApplicationRepository):
+    def __init__(
+        self,
+        application_repo: CounselorApplicationRepository,
+        counselor_repo: Optional[CounselorRepository] = None,
+        tm60_repo: Optional[Tm60MemberRepository] = None,
+    ):
         self.application_repo = application_repo
+        self.counselor_repo = counselor_repo
+        self.tm60_repo = tm60_repo
+        self.auth_service = AuthService()
 
     async def get_detail(self, application_id: int):
         """상담사 신청 상세 조회"""
@@ -227,3 +241,112 @@ class CounselorApplicationService:
             application = await self.application_repo.get_by_id(application_id)
 
         return CounselorApplicationDetailResponse.model_validate(application)
+
+    async def convert_to_counselor(
+        self,
+        *,
+        request: CounselorConversionRequest,
+    ) -> CounselorConversionResponse:
+        """상담사 신청자를 정식 상담사로 전환
+
+        - t_counselor 중복 체크: counselor_code, email, nickname, phone
+        - t_counselor 삽입 (MariaDB)
+        - tm60_members 삽입 (MSSQL)
+        - 트랜잭션 처리 (두 DB 모두 커밋 또는 롤백)
+        """
+        if not self.counselor_repo:
+            raise ValidationError("CounselorRepository가 초기화되지 않았습니다")
+        if not self.tm60_repo:
+            raise ValidationError("Tm60MemberRepository가 초기화되지 않았습니다")
+
+        # 1. t_counselor 중복 체크 (counselor_code, email, nickname, phone)
+        existing_code = await self.counselor_repo.get_by_counselor_code(request.counselor_code)
+        if existing_code:
+            raise ValidationError(f"상담사 코드 '{request.counselor_code}'는 이미 사용 중입니다")
+
+        existing_email = await self.counselor_repo.get_by_id(request.email)
+        if existing_email:
+            raise ValidationError(f"이메일 '{request.email}'은 이미 사용 중입니다")
+
+        existing_nickname = await self.counselor_repo.get_by_nickname(request.nickname)
+        if existing_nickname:
+            raise ValidationError(f"닉네임 '{request.nickname}'은 이미 사용 중입니다")
+
+        existing_phone = await self.counselor_repo.get_by_phone(request.phone)
+        if existing_phone:
+            raise ValidationError(f"전화번호 '{request.phone}'는 이미 사용 중입니다")
+
+        # 2. 비밀번호 해싱 (phone + '!')
+        default_password = f"{request.phone}!"
+        hashed_password = self.auth_service.hash_password(default_password)
+
+        # 3. t_counselor 데이터 매핑
+        counselor_data = {
+            "counselor_id": request.email,  # email -> counselor_id
+            "counselor_code": request.counselor_code,
+            "password_hash": hashed_password,  # password_hash 필드 사용
+            "name": request.name,
+            "nickname": request.nickname,
+            "phone": request.phone,
+            "specialty_types": request.specialty_types,
+            "keywords": request.keywords,
+            "introduction_short": request.introduction,  # introduction -> introduction_short
+            "profile_image_url": request.upload_image1,  # upload_image1 -> profile_image_url
+            "is_show": True,
+            "is_out": False,
+            "created_at": datetime.utcnow(),
+        }
+
+        # 4. tm60_members 데이터 매핑 (한글 필드는 euc-kr 인코딩)
+        def encode_euckr(text: str) -> bytes:
+            """한글을 euc-kr로 인코딩"""
+            try:
+                return text.encode('euc-kr')
+            except Exception:
+                return text.encode('utf-8')
+
+        tm60_data = {
+            "m_code": request.counselor_code,  # counselor_code -> m_code
+            "m_name": encode_euckr(request.name),  # name -> m_name (euc-kr 바이트)
+            "m_nickname": encode_euckr(request.nickname),  # nickname -> m_nickname (euc-kr 바이트)
+            "m_tel": request.phone,  # phone -> m_tel
+            "m_tel1": request.phone,  # phone -> m_tel1
+            "m_tel2": request.phone,  # phone -> m_tel2
+            "m_mobile": request.phone,  # phone -> m_mobile
+            "m_id": request.email,  # email -> m_id
+            "m_state": "3",  # 디폴트 상태값
+            "m_prate": 800,  # 디폴트 요율
+        }
+
+        counselor = None
+        try:
+            # 5. t_counselor 삽입 (MariaDB async - flush만 수행)
+            counselor = await self.counselor_repo.create(counselor_data)
+
+            # 6. tm60_members 삽입 (MSSQL sync - flush만 수행)
+            import asyncio
+            tm60_member = await asyncio.to_thread(self.tm60_repo.create, tm60_data)
+
+            # 7. 신청 상태를 APPROVED로 변경 (email로 조회 후 업데이트)
+            application = await self.application_repo.get_by_email(request.email)
+            if application:
+                await self.application_repo.partial_update(
+                    application.application_id,
+                    application_status="APPROVED",
+                    reviewed_at=datetime.utcnow(),
+                )
+
+            # 8. 두 DB 모두 성공 시 commit (FastAPI 의존성이 자동 처리)
+            # MariaDB commit은 get_db()가 자동 처리
+            # MSSQL commit도 get_db_mssql()이 자동 처리
+
+            return CounselorConversionResponse(
+                counselor_id=counselor.counselor_id,
+                counselor_code=counselor.counselor_code,
+                name=counselor.name,
+                nickname=counselor.nickname,
+                message="상담사 전환이 완료되었습니다",
+            )
+        except Exception as e:
+            # 에러 발생 시 두 DB 모두 rollback (FastAPI 의존성이 자동 처리)
+            raise ValidationError(f"상담사 전환 중 오류가 발생했습니다: {str(e)}")

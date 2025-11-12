@@ -5,3 +5,4 @@ export const getCounselorApplicationsListURL = `${proxyURL}/list`;
 export const getCounselorApplicationDetailURL = `${proxyURL}/detail`;
 export const updateCounselorApplicationURL = (application_id: number) => `${proxyURL}/${application_id}`;
 export const updateCounselorApplicationStatusURL = (application_id: number) => `${proxyURL}/${application_id}/status`;
+export const convertToCounselorURL = `${proxyURL}/convert-to-counselor`;

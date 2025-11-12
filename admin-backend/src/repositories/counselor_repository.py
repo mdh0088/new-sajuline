@@ -21,6 +21,32 @@ class CounselorRepository:
         result = await self.db.execute(stmt)
         return result.scalar_one_or_none()
 
+    async def get_by_counselor_code(self, counselor_code: str) -> Optional[Counselor]:
+        """상담사 코드로 조회"""
+        stmt = select(Counselor).where(Counselor.counselor_code == counselor_code)
+        result = await self.db.execute(stmt)
+        return result.scalar_one_or_none()
+
+    async def get_by_nickname(self, nickname: str) -> Optional[Counselor]:
+        """닉네임으로 조회"""
+        stmt = select(Counselor).where(Counselor.nickname == nickname)
+        result = await self.db.execute(stmt)
+        return result.scalar_one_or_none()
+
+    async def get_by_phone(self, phone: str) -> Optional[Counselor]:
+        """전화번호로 조회"""
+        stmt = select(Counselor).where(Counselor.phone == phone)
+        result = await self.db.execute(stmt)
+        return result.scalar_one_or_none()
+
+    async def create(self, counselor_data: dict) -> Counselor:
+        """새 상담사 생성"""
+        counselor = Counselor(**counselor_data)
+        self.db.add(counselor)
+        await self.db.flush()
+        await self.db.refresh(counselor)
+        return counselor
+
     async def update_last_login(self, counselor_id: str) -> bool:
         from datetime import datetime
 
