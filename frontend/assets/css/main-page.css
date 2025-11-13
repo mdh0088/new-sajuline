@@ -388,19 +388,19 @@
 }
 
 .rating-stars-small {
-  font-size: 12px;
+  font-size: 13px;
   color: #FFD700;
 }
 
 .rating-score {
-  font-size: 13px;
+  font-size: 14px;
   font-weight: 600;
   color: #ffffff;
   line-height: 1.3;
 }
 
 .counselor-price-small {
-  font-size: 14px;
+  font-size: 15px;
   font-weight: 700;
   color: #B794F6;
   line-height: 1.3;
@@ -436,7 +436,7 @@
 }
 
 .counselor-experience {
-  font-size: 11px;
+  font-size: 12px;
   color: rgba(255, 255, 255, 0.5);
   line-height: 1.3;
 }
@@ -447,7 +447,7 @@
   background: linear-gradient(135deg, #9333EA 0%, #7C3AED 100%);
   border: none;
   border-radius: 8px;
-  font-size: 13px;
+  font-size: 14px;
   font-weight: 600;
   color: #ffffff;
   cursor: pointer;
@@ -740,5 +740,187 @@
   .filter-chips-left {
     border-bottom: 1px solid rgba(255, 255, 255, 0.1);
     padding-bottom: 8px;
+  }
+}
+
+/* 작은 화면 대응 - 상담사 카드 레이아웃 개선 */
+@media (max-width: 400px) {
+  /* 헤더 폰트 조정 */
+  .logo {
+    font-size: 20px;
+  }
+
+  .icon-btn {
+    font-size: 16px;
+    width: 32px;
+    height: 32px;
+  }
+
+  .coin-balance {
+    font-size: 13px;
+    padding: 5px 10px;
+  }
+
+  /* 섹션 타이틀 */
+  .section-title {
+    font-size: 18px;
+  }
+
+  .see-all {
+    font-size: 13px;
+  }
+
+  /* 카테고리 카드 */
+  .category-name {
+    font-size: 13px;
+  }
+
+  .category-icon {
+    font-size: 26px;
+    width: 52px;
+    height: 52px;
+  }
+
+  /* 필터 칩 */
+  .chip {
+    font-size: 13px;
+    padding: 8px 16px;
+  }
+
+  /* 프로모션 배너 */
+  .promotion-title {
+    font-size: 18px;
+  }
+
+  .promotion-desc {
+    font-size: 13px;
+  }
+
+  .promotion-button {
+    font-size: 13px;
+    padding: 10px 20px;
+  }
+
+  /* 하단 네비게이션 */
+  .nav-label {
+    font-size: 11px;
+  }
+
+  .nav-icon {
+    font-size: 22px;
+  }
+
+  /* 로딩 */
+  .loading-more {
+    font-size: 13px;
+  }
+
+  /* 상담사 카드 */
+  .counselor-card-compact {
+    flex-direction: column;
+    gap: 12px;
+    padding: 16px;
+  }
+
+  .counselor-avatar-small {
+    width: 100%;
+    height: 160px;
+  }
+
+  .counselor-avatar-small img {
+    object-fit: contain;
+    background: rgba(147, 51, 234, 0.05);
+  }
+
+  .counselor-info-compact {
+    width: 100%;
+  }
+
+  .counselor-main-info {
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .counselor-left-info {
+    width: 100%;
+    gap: 4px;
+  }
+
+  .counselor-name-row {
+    gap: 6px;
+  }
+
+  .counselor-name-small {
+    font-size: 14px;
+  }
+
+  .counselor-code {
+    font-size: 11px;
+    padding: 2px 8px;
+    letter-spacing: 0.5px;
+  }
+
+  .counselor-specialty-small {
+    font-size: 12px;
+  }
+
+  .counselor-tags-small {
+    gap: 4px;
+    margin-top: 0;
+  }
+
+  .tag-small {
+    font-size: 11px;
+    padding: 2px 6px;
+  }
+
+  .counselor-desc-small {
+    font-size: 12px;
+    margin-top: 6px;
+    line-height: 1.4;
+  }
+
+  .counselor-right-info {
+    width: 100%;
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    text-align: left;
+    min-width: auto;
+    padding-top: 8px;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    gap: 4px;
+  }
+
+  .counselor-price-small {
+    flex: 0 0 auto;
+    font-size: 14px;
+  }
+
+  .counselor-rating-small {
+    flex: 0 0 auto;
+    gap: 4px;
+  }
+
+  .rating-stars-small {
+    font-size: 12px;
+  }
+
+  .rating-score {
+    font-size: 13px;
+  }
+
+  .counselor-experience {
+    flex: 0 0 auto;
+    font-size: 11px;
+  }
+
+  .consult-button {
+    flex: 0 0 100%;
+    width: 100%;
+    height: 38px;
+    margin-top: 6px;
+    font-size: 14px;
   }
 }

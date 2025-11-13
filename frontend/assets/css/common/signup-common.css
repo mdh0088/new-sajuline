@@ -241,3 +241,5 @@
   flex-direction: column;
   gap: 20px;
 }
+
+/* 폰트 크기는 typography.css에서 통합 관리됩니다 */

@@ -37,6 +37,18 @@
      --color-gray-50: #f9fafb;
      --color-gray-100: #f3f4f6;
      --color-gray-900: #111827;
+
+     /* 폰트 크기 변수 - 데스크탑/태블릿 */
+     --font-size-display: 28px;     /* 메인 페이지 큰 타이틀 */
+     --font-size-h1: 24px;           /* 페이지 타이틀 */
+     --font-size-h2: 20px;           /* 섹션 타이틀 */
+     --font-size-h3: 18px;           /* 서브 섹션 */
+     --font-size-h4: 16px;           /* 작은 타이틀 */
+     --font-size-h5: 15px;           /* 미니 타이틀 */
+     --font-size-body-large: 14px;   /* 큰 본문 */
+     --font-size-body: 13px;         /* 기본 본문 */
+     --font-size-body-small: 12px;   /* 작은 본문 */
+     --font-size-caption: 11px;      /* 캡션 (최소) */
    }
  }
  
@@ -1728,3 +1740,267 @@
          font-size: 12px;
      }
  }
+
+/* 매우 작은 화면 (400px 이하) - 통일된 폰트 시스템 */
+@media (max-width: 400px) {
+    /* 폰트 크기 변수 오버라이드 */
+    :root {
+        --font-size-display: 22px;    /* 메인 페이지 큰 타이틀 */
+        --font-size-h1: 20px;          /* 페이지 타이틀 */
+        --font-size-h2: 18px;          /* 섹션 타이틀 */
+        --font-size-h3: 16px;          /* 서브 섹션 */
+        --font-size-h4: 15px;          /* 작은 타이틀 */
+        --font-size-h5: 14px;          /* 미니 타이틀 */
+        --font-size-body-large: 14px;  /* 큰 본문 */
+        --font-size-body: 13px;        /* 기본 본문 */
+        --font-size-body-small: 12px;  /* 작은 본문 */
+        --font-size-caption: 11px;     /* 캡션 (최소) */
+    }
+
+    /* 기본 태그 */
+    h1 {
+        font-size: var(--font-size-h1);
+    }
+
+    h2 {
+        font-size: var(--font-size-h2);
+    }
+
+    h3 {
+        font-size: var(--font-size-h3);
+    }
+
+    h4 {
+        font-size: var(--font-size-h4);
+    }
+
+    h5 {
+        font-size: var(--font-size-h5);
+    }
+
+    h6 {
+        font-size: var(--font-size-body-large);
+    }
+
+    /* 기본 폼 요소 */
+    .btn {
+        font-size: var(--font-size-body-large);
+        padding: 10px 16px;
+    }
+
+    .form-input {
+        font-size: var(--font-size-body-large);
+    }
+
+    /* 프로필 섹션 */
+    .page-title {
+        font-size: 24px;
+    }
+
+    .page-subtitle {
+        font-size: 13px;
+    }
+
+    .section-title {
+        font-size: 11px;
+    }
+
+    .benefit-link-btn {
+        font-size: 11px;
+    }
+
+    .profile-user-info .profile-name {
+        font-size: 14px;
+    }
+
+    .profile-stats-mini {
+        font-size: 11px;
+    }
+
+    .membership-badge {
+        font-size: 11px;
+    }
+
+    .membership-benefits {
+        font-size: 11px;
+    }
+
+    .membership-btn {
+        font-size: 11px;
+    }
+
+    .profile-mileage-amount {
+        font-size: 20px;
+    }
+
+    .mileage-btn {
+        font-size: 11px;
+    }
+
+    /* 마일리지 샵 */
+    .mileage-header-title {
+        font-size: 16px;
+    }
+
+    .mileage-page-title {
+        font-size: 24px;
+    }
+
+    .mileage-page-subtitle {
+        font-size: 13px;
+    }
+
+    .mileage-shop-amount {
+        font-size: 22px;
+    }
+
+    .mileage-label {
+        font-size: 14px;
+    }
+
+    .mileage-category-chip {
+        font-size: 13px;
+    }
+
+    .mileage-product-title {
+        font-size: 15px;
+    }
+
+    .mileage-product-description {
+        font-size: 12px;
+    }
+
+    .mileage-product-tag {
+        font-size: 11px;
+    }
+
+    .mileage-price-amount {
+        font-size: 17px;
+    }
+
+    .mileage-price-label {
+        font-size: 11px;
+    }
+
+    .mileage-purchase-button {
+        font-size: 13px;
+    }
+
+    /* 모달 */
+    .mileage-modal-title {
+        font-size: 18px;
+    }
+
+    .mileage-modal-subtitle {
+        font-size: 13px;
+    }
+
+    .mileage-modal-product-title {
+        font-size: 15px;
+    }
+
+    .mileage-modal-product-description {
+        font-size: 12px;
+    }
+
+    .mileage-modal-price-amount {
+        font-size: 18px;
+    }
+
+    .mileage-modal-price-label {
+        font-size: 11px;
+    }
+
+    .mileage-breakdown-title {
+        font-size: 15px;
+    }
+
+    .mileage-breakdown-label {
+        font-size: 13px;
+    }
+
+    .mileage-breakdown-value {
+        font-size: 13px;
+    }
+
+    .mileage-breakdown-value.mileage-highlight {
+        font-size: 15px;
+    }
+
+    .mileage-notice-text {
+        font-size: 13px;
+    }
+
+    .mileage-modal-cancel-btn,
+    .mileage-modal-confirm-btn {
+        font-size: 15px;
+        padding: 14px;
+    }
+
+    .mileage-success-title {
+        font-size: 18px;
+    }
+
+    .mileage-success-message {
+        font-size: 13px;
+    }
+
+    .mileage-success-button {
+        font-size: 15px;
+        padding: 14px;
+    }
+
+    /* 가이드 섹션 */
+    .mileage-guide-title {
+        font-size: 13px;
+    }
+
+    .mileage-guide-toggle {
+        font-size: 11px;
+    }
+
+    .mileage-guide-item h4 {
+        font-size: 12px;
+    }
+
+    .mileage-guide-item li {
+        font-size: 11px;
+    }
+
+    /* 설정 버튼 */
+    .settings-button {
+        font-size: 12px;
+    }
+
+    .settings-icon {
+        font-size: 13px;
+    }
+
+    /* Element Plus 컴포넌트 */
+    .sajuline-confirm-modal .el-message-box__title,
+    .sajuline-alert-modal .el-message-box__title,
+    .sajuline-prompt-modal .el-message-box__title {
+        font-size: 16px !important;
+    }
+
+    .sajuline-confirm-modal .el-message-box__content,
+    .sajuline-alert-modal .el-message-box__content,
+    .sajuline-prompt-modal .el-message-box__content {
+        font-size: 14px !important;
+    }
+
+    .sajuline-confirm-modal .el-button,
+    .sajuline-alert-modal .el-button,
+    .sajuline-prompt-modal .el-button {
+        font-size: 14px !important;
+    }
+
+    /* Footer */
+    .footer-company-name {
+        font-size: 13px;
+    }
+
+    .footer-toggle-button {
+        font-size: 12px;
+    }
+}

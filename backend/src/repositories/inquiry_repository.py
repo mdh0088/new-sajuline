@@ -4,6 +4,7 @@
 """
 from typing import Optional, List, Tuple
 from datetime import datetime
+from zoneinfo import ZoneInfo
 
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, update, func, and_, or_
@@ -12,6 +13,9 @@ from sqlalchemy.engine import Result
 from src.models.inquiry_model import Inquiry, InquirerType
 from src.schemas.inquiry_schema import InquiryCreate, InquiryUpdate, InquiryListParams
 from src.common.logging import logger, get_logger_with_request_id
+
+# 한국 시간대
+KST = ZoneInfo("Asia/Seoul")
 
 
 class InquiryRepository:
@@ -165,7 +169,7 @@ class InquiryRepository:
             title=title,
             content=content,
             is_read=False,
-            created_at=datetime.utcnow()
+            created_at=datetime.now(KST)
         )
 
         self.db.add(inquiry)
@@ -249,7 +253,7 @@ class InquiryRepository:
             content=content,
             inquiry_type=inquiry_type,
             is_read=False,
-            created_at=datetime.utcnow()
+            created_at=datetime.now(KST)
         )
 
         self.db.add(inquiry)
@@ -287,7 +291,7 @@ class InquiryRepository:
             content=content,
             inquiry_type=inquiry_type,
             is_read=False,
-            created_at=datetime.utcnow()
+            created_at=datetime.now(KST)
         )
 
         self.db.add(inquiry)
@@ -342,8 +346,6 @@ class InquiryRepository:
         - inquirer_type = USER
         - counselor_id = #{counselor_id}
         """
-        from datetime import datetime, timezone
-
         log = get_logger_with_request_id()
         log.info("Updating counselor reply", inquiry_id=inquiry_id, counselor_id=counselor_id)
 
@@ -364,7 +366,7 @@ class InquiryRepository:
 
         # 답변 업데이트
         inquiry.reply_content = reply_content
-        inquiry.answered_at = datetime.now(timezone.utc)
+        inquiry.answered_at = datetime.now(KST)
 
         await self.db.commit()
         await self.db.refresh(inquiry)
