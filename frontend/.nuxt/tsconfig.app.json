@@ -89,7 +89,7 @@
         "../node_modules/@nuxt/image/dist/runtime/*"
       ],
       "#nuxt-scripts-validator": [
-        "../node_modules/@nuxt/scripts/dist/runtime/validation/mock"
+        "../node_modules/@nuxt/scripts/dist/runtime/validation/valibot"
       ],
       "#nuxt-scripts": [
         "../node_modules/@nuxt/scripts/dist/runtime"
@@ -107,7 +107,7 @@
         "./imports"
       ],
       "#app-manifest": [
-        "./manifest/meta/23d26289-a10f-46ae-840e-201489f05878.json"
+        "./manifest/meta/90be8e06-400b-4f72-a024-317e1b5aba61"
       ],
       "#components": [
         "./components"

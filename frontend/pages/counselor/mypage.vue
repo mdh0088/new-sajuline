@@ -297,15 +297,6 @@
                     </select>
                   </div>
                   <div>
-                    <label class="block text-sm font-medium mb-1">제목 (선택)</label>
-                    <input
-                      v-model="adminInquiryForm.title"
-                      type="text"
-                      class="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white"
-                      placeholder="제목을 입력해주세요"
-                    />
-                  </div>
-                  <div>
                     <label class="block text-sm font-medium mb-1">문의 내용</label>
                     <textarea
                       v-model="adminInquiryForm.content"
@@ -706,7 +697,6 @@ const formatDate = (iso: string) => {
 const showAdminInquiryForm = ref(false)
 const adminInquiryForm = ref({
   inquiry_type: 'ETC',
-  title: '',
   content: ''
 })
 const isSubmittingAdminInquiry = ref(false)
@@ -724,16 +714,15 @@ const submitAdminInquiry = async () => {
   try {
     await createCounselorAdminInquiry({
       inquiry_type: adminInquiryForm.value.inquiry_type,
-      title: adminInquiryForm.value.title || undefined,
       content: adminInquiryForm.value.content
     })
     notifySuccess('문의가 등록되었습니다.')
     // 폼 초기화 및 닫기
-    adminInquiryForm.value = { inquiry_type: 'ETC', title: '', content: '' }
+    adminInquiryForm.value = { inquiry_type: 'ETC', content: '' }
     showAdminInquiryForm.value = false
     // 목록 새로고침
-    await queryClient.invalidateQueries({ queryKey: ['counselor', 'adminInquiries'] })
-    await queryClient.invalidateQueries({ queryKey: ['counselor', 'adminInquiriesCount'] })
+    await queryClient.invalidateQueries({ queryKey: ['counselor', 'inquiries', 'admin'] })
+    await queryClient.invalidateQueries({ queryKey: ['counselor', 'inquiries', 'admin', 'count'] })
   } catch (e: any) {
     notifyError(e?.message || '문의 등록에 실패했습니다.')
   } finally {
@@ -742,7 +731,7 @@ const submitAdminInquiry = async () => {
 }
 
 const cancelAdminInquiryForm = () => {
-  adminInquiryForm.value = { inquiry_type: 'ETC', title: '', content: '' }
+  adminInquiryForm.value = { inquiry_type: 'ETC', content: '' }
   showAdminInquiryForm.value = false
 }
 </script>

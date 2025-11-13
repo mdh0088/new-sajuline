@@ -2,4 +2,4 @@
 .hero-banner { position: relative; width: 100%; overflow: hidden; background: #0a0a0f; }
 .hero-banner img { width: 100%; height: auto; display: block; object-fit: cover; }
 
-
+/* 폰트 크기는 typography.css에서 통합 관리됩니다 */

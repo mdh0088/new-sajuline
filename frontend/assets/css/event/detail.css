@@ -441,3 +441,5 @@
 .event-comment-submit:active {
   background: rgba(147, 51, 234, 0.7);
 }
+
+/* 폰트 크기는 typography.css에서 통합 관리됩니다 */

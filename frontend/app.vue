@@ -20,6 +20,7 @@
 
 <script setup>
 import '~/assets/css/main.css'
+import '~/assets/css/typography.css'
 import { slateTheme } from 'notivue'
 </script>
 

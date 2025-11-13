@@ -1,0 +1,247 @@
+/**
+ * 사주라인 타이포그래피 시스템
+ * 모든 페이지에서 통일된 폰트 크기 적용
+ */
+
+/* 400px 이하 작은 화면 전용 타이포그래피 */
+@media (max-width: 400px) {
+    /* ===== 타이틀 레벨 ===== */
+
+    /* Display 레벨 - 메인 페이지 큰 타이틀 (22px) */
+    .page-title,
+    .mileage-page-title,
+    .hero-title,
+    .main-title {
+        font-size: var(--font-size-display) !important;
+    }
+
+    /* H1 레벨 - 페이지 타이틀 (20px) */
+    .auth-title,
+    .content-title,
+    .modal-page-title,
+    .counselor-name {
+        font-size: var(--font-size-h1) !important;
+    }
+
+    /* H2 레벨 - 섹션 타이틀 (18px) */
+    .section-title,
+    .header-title,
+    .mileage-header-title,
+    .step-title,
+    .modal-title,
+    .benefit-title,
+    .card-title,
+    .banner-title {
+        font-size: var(--font-size-h2) !important;
+    }
+
+    /* H3 레벨 - 서브 타이틀 (16px) */
+    .sub-title,
+    .category-title,
+    .list-section-title,
+    .profile-section-title {
+        font-size: var(--font-size-h3) !important;
+    }
+
+    /* H4 레벨 - 작은 타이틀 (15px) */
+    .item-title,
+    .counselor-name-small,
+    .product-title,
+    .mileage-product-title,
+    .mileage-modal-product-title,
+    .list-item-title {
+        font-size: var(--font-size-h4) !important;
+    }
+
+    /* H5 레벨 - 미니 타이틀 (14px) */
+    .mini-title,
+    .search-title,
+    .filter-title,
+    .benefit-item-title,
+    .mileage-breakdown-title {
+        font-size: var(--font-size-h5) !important;
+    }
+
+    /* ===== 본문 레벨 ===== */
+
+    /* Body Large - 큰 본문 (14px) */
+    .point-label,
+    .mileage-label,
+    .price-large,
+    .input-field,
+    .auth-button,
+    .button-text,
+    .consult-button,
+    .modal-button,
+    .search-input,
+    .charge-button,
+    .payment-method-btn,
+    .mileage-btn,
+    .membership-btn,
+    .benefit-link-btn {
+        font-size: var(--font-size-body-large) !important;
+    }
+
+    /* Body - 기본 본문 (13px) */
+    .page-subtitle,
+    .auth-subtitle,
+    .modal-subtitle,
+    .mileage-page-subtitle,
+    .counselor-specialty,
+    .counselor-specialty-small,
+    .introduction-text,
+    .description-text,
+    .content-body,
+    .modal-content-text,
+    .benefit-description,
+    .banner-description,
+    .card-text,
+    .list-item-description,
+    .log-description,
+    .review-content,
+    .counselor-desc-small,
+    .mileage-product-description,
+    .mileage-modal-product-description,
+    .input-label,
+    .label-text,
+    .checkbox-label,
+    .link-text,
+    .info-value,
+    .info-label,
+    .summary-label,
+    .summary-value,
+    .mileage-breakdown-label,
+    .mileage-breakdown-value,
+    .rating-text,
+    .rating-score,
+    .section-subtitle,
+    .step-description,
+    .step-subtitle,
+    .see-all,
+    .quick-charge-btn,
+    .active-filter-tag,
+    .filter-tag-label,
+    .chip,
+    .category-chip,
+    .mileage-category-chip,
+    .mileage-notice-text,
+    .mileage-success-message,
+    .mileage-guide-title,
+    .footer-link,
+    .footer-company-name,
+    .footer-toggle-button,
+    .settings-button {
+        font-size: var(--font-size-body) !important;
+    }
+
+    /* Body Small - 작은 본문 (12px) */
+    .helper-text,
+    .notice-text,
+    .terms-text,
+    .terms-content,
+    .error-message,
+    .error-text,
+    .bonus-text,
+    .notice-item,
+    .benefit-item-text,
+    .date-input,
+    .log-date,
+    .log-balance,
+    .review-date,
+    .list-item-date,
+    .price-label,
+    .mileage-price-label,
+    .mileage-modal-price-label,
+    .stats-label,
+    .info-email,
+    .profile-stats-mini,
+    .membership-benefits,
+    .mileage-guide-item h4,
+    .footer-disclaimer p {
+        font-size: var(--font-size-body-small) !important;
+    }
+
+    /* Caption - 캡션 (11px, 최소) */
+    .counselor-code,
+    .tag-small,
+    .counselor-experience,
+    .badge-text,
+    .benefit-badge,
+    .bonus-badge,
+    .status-badge,
+    .mileage-product-tag,
+    .review-author-role,
+    .nav-label,
+    .footer-caption,
+    .mileage-guide-toggle,
+    .mileage-guide-item li,
+    .section-title-small,
+        .benefit-link-btn-small {
+        font-size: var(--font-size-caption) !important;
+    }
+
+    /* ===== 특수 케이스 ===== */
+
+    /* 가격 표시 - 강조 필요 */
+    .current-point .point-value,
+    .price-value-large {
+        font-size: 30px !important;
+    }
+
+    .counselor-price-small,
+    .price-amount,
+    .log-amount,
+    .stats-value {
+        font-size: var(--font-size-h4) !important;
+    }
+
+    .mileage-price-amount,
+    .mileage-modal-price-amount {
+        font-size: 17px !important;
+    }
+
+    .profile-mileage-amount,
+    .mileage-shop-amount {
+        font-size: var(--font-size-h1) !important;
+    }
+
+    /* 아이콘 크기 */
+    .icon-btn,
+    .back-button,
+    .search-icon {
+        font-size: 18px !important;
+    }
+
+    .nav-icon {
+        font-size: 20px !important;
+    }
+
+    /* 특수 버튼 */
+    .mileage-modal-cancel-btn,
+    .mileage-modal-confirm-btn,
+    .mileage-success-button,
+    .total-label,
+    .total-value {
+        font-size: 16px !important;
+    }
+
+    .amount-option {
+        font-size: 16px !important;
+    }
+
+    /* Element Plus 오버라이드 */
+    .sajuline-confirm-modal .el-message-box__title,
+    .sajuline-alert-modal .el-message-box__title,
+    .sajuline-prompt-modal .el-message-box__title {
+        font-size: var(--font-size-h2) !important;
+    }
+
+    .sajuline-confirm-modal .el-message-box__content,
+    .sajuline-alert-modal .el-message-box__content,
+    .sajuline-prompt-modal .el-message-box__content,
+    .sajuline-confirm-modal .el-button,
+    .sajuline-alert-modal .el-button,
+    .sajuline-prompt-modal .el-button {
+        font-size: var(--font-size-body-large) !important;
+    }
+}
