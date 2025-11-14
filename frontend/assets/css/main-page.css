@@ -237,24 +237,12 @@
   gap: 16px;
 }
 
-.counselor-card-compact::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 2px;
-  background: linear-gradient(90deg, #9333EA 0%, #B794F6 100%);
-  opacity: 0;
-  transition: opacity 0.3s ease;
-}
-
 .counselor-card-compact:active {
   transform: scale(0.98);
 }
 
-.counselor-card-compact:hover::before {
-  opacity: 1;
+.counselor-card-compact:hover {
+  border-color: #9333EA;
 }
 
 .counselor-avatar-small {
