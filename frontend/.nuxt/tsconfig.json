@@ -107,7 +107,7 @@
         "./imports"
       ],
       "#app-manifest": [
-        "./manifest/meta/90be8e06-400b-4f72-a024-317e1b5aba61"
+        "./manifest/meta/dev"
       ],
       "#components": [
         "./components"
@@ -184,6 +184,7 @@
     "../node_modules/@vueuse/nuxt/node_modules",
     "../node_modules/@element-plus/nuxt/node_modules",
     "../node_modules/notivue/node_modules",
+    "../node_modules/@nuxt/test-utils/node_modules",
     "../node_modules/@nuxt/devtools/node_modules",
     "../node_modules/@nuxt/telemetry/node_modules",
     "../dist",

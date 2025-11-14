@@ -237,24 +237,12 @@
   gap: 16px;
 }
 
-.counselor-card-compact::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 2px;
-  background: linear-gradient(90deg, #9333EA 0%, #B794F6 100%);
-  opacity: 0;
-  transition: opacity 0.3s ease;
-}
-
 .counselor-card-compact:active {
   transform: scale(0.98);
 }
 
-.counselor-card-compact:hover::before {
-  opacity: 1;
+.counselor-card-compact:hover {
+  border-color: #9333EA;
 }
 
 .counselor-avatar-small {
@@ -451,8 +439,7 @@
   font-weight: 600;
   color: #ffffff;
   cursor: pointer;
-  transition: background 0.3s ease, box-shadow 0.3s ease;
-  box-shadow: 0 2px 8px rgba(147, 51, 234, 0.3);
+  transition: background 0.3s ease;
   white-space: nowrap;
   width: 80px;
   height: 32px;
@@ -464,7 +451,6 @@
 
 .consult-button:hover {
   background: linear-gradient(135deg, #7C3AED 0%, #6D28D9 100%);
-  box-shadow: 0 4px 12px rgba(147, 51, 234, 0.4);
 }
 
 .consult-button:active {
@@ -815,39 +801,45 @@
     font-size: 13px;
   }
 
-  /* 상담사 카드 */
+  /* 상담사 카드 - 가로 레이아웃 + 하단 설명/버튼 */
   .counselor-card-compact {
-    flex-direction: column;
-    gap: 12px;
-    padding: 16px;
+    flex-wrap: wrap;
+    gap: 10px;
+    padding: 14px;
+    min-height: auto;
   }
 
   .counselor-avatar-small {
-    width: 100%;
-    height: 160px;
+    width: 70px;
+    height: 80px;
+    flex-shrink: 0;
   }
 
   .counselor-avatar-small img {
-    object-fit: contain;
-    background: rgba(147, 51, 234, 0.05);
+    object-fit: cover;
   }
 
   .counselor-info-compact {
-    width: 100%;
+    flex: 1;
+    min-width: 0;
   }
 
   .counselor-main-info {
-    flex-direction: column;
-    gap: 10px;
+    gap: 8px;
+    flex-wrap: wrap;
   }
 
   .counselor-left-info {
-    width: 100%;
+    flex: 1;
+    min-width: 0;
     gap: 4px;
+    display: flex;
+    flex-direction: column;
   }
 
   .counselor-name-row {
     gap: 6px;
+    flex-wrap: wrap;
   }
 
   .counselor-name-small {
@@ -856,7 +848,7 @@
 
   .counselor-code {
     font-size: 11px;
-    padding: 2px 8px;
+    padding: 2px 6px;
     letter-spacing: 0.5px;
   }
 
@@ -866,61 +858,65 @@
 
   .counselor-tags-small {
     gap: 4px;
-    margin-top: 0;
+    margin-top: 2px;
   }
 
   .tag-small {
-    font-size: 11px;
+    font-size: 10px;
     padding: 2px 6px;
   }
 
+  /* 상담하기 버튼 - 정보 영역 전체 너비 */
+  .consult-button {
+    width: 100%;
+    height: 36px;
+    font-size: 14px;
+    margin-top: 8px;
+  }
+
+  /* 설명을 카드 하단 전체 너비로 */
   .counselor-desc-small {
+    order: 10;
+    flex: 0 0 calc(100% + 80px);
+    width: calc(100% + 80px);
+    margin-left: -80px;
+    padding-left: 0;
     font-size: 12px;
-    margin-top: 6px;
+    margin-top: 10px;
+    padding-top: 10px;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
     line-height: 1.4;
+    -webkit-line-clamp: 2;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    color: rgba(255, 255, 255, 0.7);
   }
 
   .counselor-right-info {
-    width: 100%;
-    flex-direction: row;
-    flex-wrap: wrap;
-    align-items: center;
-    justify-content: space-between;
-    text-align: left;
-    min-width: auto;
-    padding-top: 8px;
-    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    width: 85px;
+    min-width: 85px;
+    flex-shrink: 0;
     gap: 4px;
   }
 
   .counselor-price-small {
-    flex: 0 0 auto;
-    font-size: 14px;
-  }
-
-  .counselor-rating-small {
-    flex: 0 0 auto;
-    gap: 4px;
-  }
-
-  .rating-stars-small {
-    font-size: 12px;
-  }
-
-  .rating-score {
     font-size: 13px;
   }
 
-  .counselor-experience {
-    flex: 0 0 auto;
+  .counselor-rating-small {
+    gap: 3px;
+  }
+
+  .rating-stars-small {
     font-size: 11px;
   }
 
-  .consult-button {
-    flex: 0 0 100%;
-    width: 100%;
-    height: 38px;
-    margin-top: 6px;
-    font-size: 14px;
+  .rating-score {
+    font-size: 12px;
+  }
+
+  .counselor-experience {
+    font-size: 10px;
   }
 }

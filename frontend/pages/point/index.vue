@@ -4,20 +4,19 @@
     <main class="main-content">
       <!-- 현재 포인트 -->
       <section class="current-point">
-        <div class="point-label">현재 보유 포인트</div>
-        <div class="point-value">
-          <span class="point-icon">💰</span>
-          <span>{{ currentPoints.toLocaleString() }} P</span>
-        </div>
-      </section>
-
-      <!-- 프로모션 배너 -->
-      <section class="promo-banner">
-        <div class="promo-icon">🎉</div>
-        <div class="promo-content">
-          <div class="promo-title">첫 충전 100% 보너스!</div>
-          <div class="promo-desc">지금 충전하면 2배로 받을 수 있어요</div>
-        </div>
+        <template v-if="isUser">
+          <div class="point-label">현재 보유 포인트</div>
+          <div class="point-value">
+            <span class="point-icon">💰</span>
+            <span>{{ currentPoints.toLocaleString() }} P</span>
+          </div>
+        </template>
+        <template v-else>
+          <div class="login-required">
+            <div class="login-message">포인트를 충전하려면 로그인이 필요합니다</div>
+            <button class="login-button" @click="goToLogin">로그인하기</button>
+          </div>
+        </template>
       </section>
 
       <!-- 충전 금액 선택 -->
@@ -39,8 +38,10 @@
             }]"
             @click="selectItem(index)"
           >
-            <div class="charge-amount">{{ item.product_name }}</div>
-            <div v-if="item.bonus_point > 0" class="charge-bonus">+{{ item.bonus_point.toLocaleString() }} P 보너스</div>
+            <div class="charge-amount">
+              <span>{{ item.product_name }}</span>
+              <span v-if="item.bonus_point > 0" class="charge-bonus">+{{ item.bonus_point.toLocaleString() }}P 보너스</span>
+            </div>
             <div class="charge-price">
               <div v-if="item.discount_rate > 0" class="price-with-discount">
                 <div class="discount-badge">{{ item.discount_rate }}% 할인</div>
@@ -66,54 +67,16 @@
             :class="['payment-method', { selected: selectedPaymentIndex === index }]"
             @click="selectPaymentMethod(index)"
           >
-            <div class="payment-icon">{{ method.icon }}</div>
+            <div class="radio-button"></div>
+            <div class="payment-icon">
+              <img v-if="method.image" :src="method.image" :alt="method.name" class="payment-icon-img" />
+              <span v-else>{{ method.icon }}</span>
+            </div>
             <div class="payment-info">
               <div class="payment-name">{{ method.name }}</div>
               <div class="payment-desc">{{ method.description }}</div>
             </div>
-            <div class="radio-button"></div>
           </div>
-        </div>
-      </section>
-
-      <!-- 약관 동의 -->
-      <section class="terms-section">
-        <div class="section-header">
-          <h2 class="section-title">이용약관 동의</h2>
-        </div>
-
-        <!-- 전체 동의 -->
-        <div class="terms-item all-agree">
-          <div
-            :class="['checkbox', { checked: allTermsAgreed }]"
-            @click="toggleAllTerms"
-          ></div>
-          <div class="terms-text">
-            위 주문 내용을 확인 하였으며, 아래 모든 약관에 동의합니다.
-          </div>
-        </div>
-
-        <!-- 개별 약관 -->
-        <div class="terms-item">
-          <div
-            :class="['checkbox', { checked: provisionAgreed }]"
-            @click="provisionAgreed = !provisionAgreed"
-          ></div>
-          <div class="terms-text">
-            <span class="required-badge">[필수]</span> 쇼핑몰 이용약관 동의
-          </div>
-          <button class="terms-detail-btn" @click="openProvisionModal">자세히</button>
-        </div>
-
-        <div class="terms-item">
-          <div
-            :class="['checkbox', { checked: privacyAgreed }]"
-            @click="privacyAgreed = !privacyAgreed"
-          ></div>
-          <div class="terms-text">
-            <span class="required-badge">[필수]</span> 개인정보 수집 및 이용 동의
-          </div>
-          <button class="terms-detail-btn" @click="openPrivacyModal">자세히</button>
         </div>
       </section>
 
@@ -178,114 +141,24 @@
         </div>
       </div>
     </div>
-
-    <!-- 이용약관 모달 -->
-    <div v-if="showProvisionModal" class="terms-modal-backdrop" @click.self="showProvisionModal = false">
-      <div class="terms-modal">
-        <div class="terms-modal-header">
-          <h3 class="terms-modal-title">쇼핑몰 이용약관</h3>
-          <button class="terms-modal-close" @click="showProvisionModal = false">✕</button>
-        </div>
-        <div class="terms-modal-body">
-          <div class="terms-content">
-            <p>본 약관은 피플라인(이하 "회사")이 운영하는 사주라인 서비스(이하 "서비스")의 이용과 관련하여 회사와 이용자 간의 권리, 의무 및 책임사항을 규정함을 목적으로 합니다.</p>
-
-            <h4>제1조 (목적)</h4>
-            <p>본 약관은 회사가 제공하는 서비스의 이용조건 및 절차에 관한 사항과 기타 필요한 사항을 규정함을 목적으로 합니다.</p>
-
-            <h4>제2조 (약관의 효력 및 변경)</h4>
-            <p>1. 본 약관은 서비스를 이용하고자 하는 모든 이용자에 대하여 그 효력을 발생합니다.</p>
-            <p>2. 회사는 필요한 경우 관련 법령을 위배하지 않는 범위 내에서 본 약관을 변경할 수 있습니다.</p>
-
-            <h4>제3조 (서비스의 제공)</h4>
-            <p>1. 회사는 다음과 같은 서비스를 제공합니다:</p>
-            <ul>
-              <li>AI 운세 분석 서비스</li>
-              <li>전문 상담사와의 실시간 채팅 상담</li>
-              <li>포인트 충전 및 결제 서비스</li>
-              <li>기타 회사가 추가 개발하거나 제휴계약 등을 통해 제공하는 서비스</li>
-            </ul>
-
-            <h4>제4조 (서비스 이용요금)</h4>
-            <p>1. 회사가 제공하는 서비스는 기본적으로 유료입니다.</p>
-            <p>2. 이용자는 포인트를 충전하여 서비스를 이용할 수 있습니다.</p>
-            <p>3. 충전된 포인트는 환불이 불가능합니다.</p>
-
-            <h4>제5조 (책임의 제한)</h4>
-            <p>1. 회사는 천재지변 또는 이에 준하는 불가항력으로 인하여 서비스를 제공할 수 없는 경우에는 서비스 제공에 관한 책임이 면제됩니다.</p>
-            <p>2. 회사는 이용자의 귀책사유로 인한 서비스 이용의 장애에 대하여는 책임을 지지 않습니다.</p>
-
-            <h4>제6조 (개인정보보호)</h4>
-            <p>회사는 이용자의 개인정보를 보호하기 위하여 정보통신망법 및 개인정보보호법 등 관계 법령에서 정하는 바를 준수합니다.</p>
-          </div>
-        </div>
-        <div class="terms-modal-footer">
-          <button class="terms-confirm-btn" @click="confirmProvision">확인</button>
-        </div>
-      </div>
-    </div>
-
-    <!-- 개인정보 수집 및 이용 동의 모달 -->
-    <div v-if="showPrivacyModal" class="terms-modal-backdrop" @click.self="showPrivacyModal = false">
-      <div class="terms-modal">
-        <div class="terms-modal-header">
-          <h3 class="terms-modal-title">개인정보 수집 및 이용 동의</h3>
-          <button class="terms-modal-close" @click="showPrivacyModal = false">✕</button>
-        </div>
-        <div class="terms-modal-body">
-          <div class="terms-content">
-            <p>회사는 서비스 제공을 위하여 다음과 같이 개인정보를 수집·이용합니다.</p>
-
-            <h4>1. 수집하는 개인정보 항목</h4>
-            <ul>
-              <li>필수항목: 이름, 이메일, 휴대폰번호, 생년월일</li>
-              <li>선택항목: 프로필 사진, 관심사</li>
-              <li>자동수집: 서비스 이용 기록, 접속 로그, 쿠키, 결제 기록</li>
-            </ul>
-
-            <h4>2. 개인정보의 수집 및 이용 목적</h4>
-            <ul>
-              <li>회원 가입 및 관리: 본인 확인, 개인 식별, 가입 의사 확인</li>
-              <li>서비스 제공: 운세 분석, 상담사 매칭, 포인트 관리</li>
-              <li>결제 서비스: 포인트 충전, 결제 처리, 영수증 발행</li>
-              <li>고객 상담: 문의사항 접수 및 답변, 불만처리</li>
-            </ul>
-
-            <h4>3. 개인정보의 보유 및 이용 기간</h4>
-            <p>회사는 원칙적으로 개인정보 수집 및 이용목적이 달성된 후에는 해당 정보를 지체 없이 파기합니다. 단, 관계법령의 규정에 의하여 보존할 필요가 있는 경우 회사는 아래와 같이 관계법령에서 정한 일정한 기간 동안 회원정보를 보관합니다:</p>
-            <ul>
-              <li>계약 또는 청약철회 등에 관한 기록: 5년</li>
-              <li>대금결제 및 재화 등의 공급에 관한 기록: 5년</li>
-              <li>소비자의 불만 또는 분쟁처리에 관한 기록: 3년</li>
-              <li>접속에 관한 기록: 3개월</li>
-            </ul>
-
-            <h4>4. 개인정보 제공 거부 권리</h4>
-            <p>이용자는 개인정보 수집 및 이용 동의를 거부할 권리가 있습니다. 다만, 필수 항목에 대한 동의를 거부할 경우 서비스 이용이 제한될 수 있습니다.</p>
-
-            <h4>5. 개인정보 보호책임자</h4>
-            <p>- 책임자: 김진형</p>
-            <p>- 연락처: 02-6212-0465</p>
-            <p>- 이메일: help@sajutarot.com</p>
-          </div>
-        </div>
-        <div class="terms-modal-footer">
-          <button class="terms-confirm-btn" @click="confirmPrivacy">확인</button>
-        </div>
-      </div>
-    </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, onUnmounted } from 'vue'
-import { useHead } from 'nuxt/app'
+import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
+import { useHead, navigateTo } from 'nuxt/app'
 import { useNotify } from '~/composables/utils/useNotify'
 import { usePointProductApi, type PointProduct } from '~/composables/api/usePointProduct'
 import { usePaymentApi } from '~/composables/api/usePayment'
 import { useMediaQuery } from '@vueuse/core'
+import { useAuth } from '~/composables/auth/useAuth'
+import { useUserPoints } from '~/composables/user/useUserPoints'
+import { useUserQueries } from '~/composables/api/useUserQueries'
 
 const { notifySuccess, notifyError, notifyInfo } = useNotify()
+const { isUser } = useAuth()
+const { points: userPoints, setPoints } = useUserPoints()
+const { useUserMypage } = useUserQueries()
 
 // SEO 및 메타 데이터 설정
 useHead({
@@ -302,8 +175,22 @@ definePageMeta({
   requiresAuth: true
 })
 
-// 현재 포인트 (임시 값: 실제로는 사용자 포인트 API로 교체 가능)
-const currentPoints = ref(1200)
+// 마이페이지 데이터 가져오기 (포인트 포함)
+const { data: mypageData } = useUserMypage()
+
+// 마이페이지 데이터가 로드되면 포인트 업데이트
+watch(
+  () => mypageData.value?.current_points,
+  (newPoints) => {
+    if (newPoints !== undefined) {
+      setPoints(newPoints)
+    }
+  },
+  { immediate: true }
+)
+
+// 현재 포인트 (실제 사용자 포인트)
+const currentPoints = computed(() => userPoints.value ?? 0)
 
 // API 연동: 포인트 상품 목록
 const { usePublicPointProducts } = usePointProductApi()
@@ -327,6 +214,7 @@ const paymentMethods = ref([
   },
   {
     icon: '💛',
+    image: '/images/kakaopay.png',
     name: '카카오페이',
     description: '간편결제',
     code: 'kakaopay'
@@ -336,15 +224,6 @@ const paymentMethods = ref([
 // 선택된 항목들
 const selectedIndex = ref(0)
 const selectedPaymentIndex = ref(0) // 기본으로 신용카드 선택
-
-// 약관 동의
-const provisionAgreed = ref(false)  // 이용약관 동의
-const privacyAgreed = ref(false)    // 개인정보 동의
-const allTermsAgreed = computed(() => provisionAgreed.value && privacyAgreed.value)
-
-// 약관 모달 상태
-const showProvisionModal = ref(false)
-const showPrivacyModal = ref(false)
 
 // 계산된 속성들
 const selectedProduct = computed<PointProduct | null>(() => products.value[selectedIndex.value] ?? null)
@@ -370,9 +249,7 @@ const finalAmount = computed(() => discountedPriceVal.value + vatAmount.value)
 
 const canProceedPayment = computed(() => {
   return selectedProduct.value !== null &&
-         selectedPaymentMethod.value !== null &&
-         provisionAgreed.value &&
-         privacyAgreed.value
+         selectedPaymentMethod.value !== null
 })
 
 // 디바이스 구분 (VueUse)
@@ -389,34 +266,11 @@ function selectPaymentMethod(index: number) {
   selectedPaymentIndex.value = index
 }
 
-// 전체 약관 동의 토글
-function toggleAllTerms() {
-  const newValue = !allTermsAgreed.value
-  provisionAgreed.value = newValue
-  privacyAgreed.value = newValue
-}
-
-// 약관 모달 열기
-function openProvisionModal() {
-  showProvisionModal.value = true
-}
-
-function openPrivacyModal() {
-  showPrivacyModal.value = true
-}
-
-// 약관 확인 (모달에서 확인 버튼 클릭 시)
-function confirmProvision() {
-  provisionAgreed.value = true
-  showProvisionModal.value = false
-}
-
-function confirmPrivacy() {
-  privacyAgreed.value = true
-  showPrivacyModal.value = false
-}
-
 function discountedPrice(price: number, rate: number) { return price - Math.floor((price * rate) / 100) }
+
+function goToLogin() {
+  navigateTo('/login')
+}
 
 function processPayment() {
   if (!canProceedPayment.value) {
@@ -496,170 +350,6 @@ onUnmounted(() => {
 <style scoped>
 /* point.css 파일을 import하여 사용 */
 @import '~/assets/css/point.css';
-
-/* 약관 섹션 스타일 */
-.terms-item.all-agree {
-  padding: 16px;
-  background: rgba(255, 255, 255, 0.03);
-  border-radius: 12px;
-  margin-bottom: 12px;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-}
-
-.terms-item {
-  position: relative;
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 12px 0;
-}
-
-.required-badge {
-  color: #EF4444;
-  font-weight: 600;
-  font-size: 13px;
-}
-
-.terms-detail-btn {
-  margin-left: auto;
-  padding: 6px 12px;
-  background: rgba(183, 148, 246, 0.1);
-  border: 1px solid rgba(183, 148, 246, 0.3);
-  color: #B794F6;
-  font-size: 13px;
-  font-weight: 500;
-  border-radius: 6px;
-  cursor: pointer;
-  transition: all 0.3s ease;
-}
-
-.terms-detail-btn:hover {
-  background: rgba(183, 148, 246, 0.2);
-  border-color: rgba(183, 148, 246, 0.5);
-}
-
-/* 약관 모달 */
-.terms-modal-backdrop {
-  position: fixed;
-  inset: 0;
-  background: rgba(0, 0, 0, 0.8);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 1000;
-  padding: 20px;
-}
-
-.terms-modal {
-  width: 100%;
-  max-width: 600px;
-  max-height: 80vh;
-  background: #1e293b;
-  border-radius: 16px;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  overflow: hidden;
-  display: flex;
-  flex-direction: column;
-}
-
-.terms-modal-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 20px 24px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-}
-
-.terms-modal-title {
-  font-size: 18px;
-  font-weight: 700;
-  color: #ffffff;
-  margin: 0;
-}
-
-.terms-modal-close {
-  background: transparent;
-  border: none;
-  color: rgba(255, 255, 255, 0.7);
-  font-size: 24px;
-  cursor: pointer;
-  padding: 0;
-  width: 32px;
-  height: 32px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 8px;
-  transition: all 0.3s ease;
-}
-
-.terms-modal-close:hover {
-  background: rgba(255, 255, 255, 0.1);
-  color: #ffffff;
-}
-
-.terms-modal-body {
-  flex: 1;
-  overflow-y: auto;
-  padding: 24px;
-}
-
-.terms-content {
-  color: rgba(255, 255, 255, 0.9);
-  line-height: 1.7;
-}
-
-.terms-content h4 {
-  font-size: 16px;
-  font-weight: 700;
-  color: #B794F6;
-  margin: 24px 0 12px 0;
-}
-
-.terms-content h4:first-child {
-  margin-top: 0;
-}
-
-.terms-content p {
-  margin-bottom: 12px;
-  color: rgba(255, 255, 255, 0.8);
-  font-size: 14px;
-}
-
-.terms-content ul {
-  margin: 12px 0;
-  padding-left: 20px;
-}
-
-.terms-content li {
-  margin-bottom: 8px;
-  color: rgba(255, 255, 255, 0.8);
-  font-size: 14px;
-}
-
-.terms-modal-footer {
-  padding: 16px 24px;
-  border-top: 1px solid rgba(255, 255, 255, 0.1);
-  display: flex;
-  justify-content: flex-end;
-}
-
-.terms-confirm-btn {
-  padding: 12px 32px;
-  background: linear-gradient(135deg, #9333EA 0%, #7C3AED 100%);
-  border: none;
-  border-radius: 8px;
-  color: #ffffff;
-  font-size: 15px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.3s ease;
-}
-
-.terms-confirm-btn:hover {
-  background: linear-gradient(135deg, #7C3AED 0%, #6D28D9 100%);
-  transform: translateY(-1px);
-}
 
 /* 결제 모달 */
 .payment-modal-backdrop {

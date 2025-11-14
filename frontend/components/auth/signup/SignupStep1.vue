@@ -15,9 +15,9 @@
         <span v-if="validator.userIdValidator.value.result.value.isChecking" class="checking-indicator">확인 중...</span>
       </div>
       <p class="help-text">영문, 숫자, 밑줄(_)만 사용 가능하며, 이메일 형식은 사용할 수 없습니다</p>
-      <p v-if="validator.userIdValidator.value.result.value.message" 
-         class="validation-text" 
-         :class="{ 
+      <p v-if="validator.userIdValidator.value.result.value.message && signupFormData.user_id"
+         class="validation-text"
+         :class="{
            'error-text': !validator.userIdValidator.value.result.value.isValid,
            'success-text': validator.userIdValidator.value.result.value.isValid && signupFormData.user_id
          }">
@@ -36,9 +36,9 @@
         >
         <span v-if="validator.emailValidator.value.result.value.isChecking" class="checking-indicator">확인 중...</span>
       </div>
-      <p v-if="validator.emailValidator.value.result.value.message" 
-         class="validation-text" 
-         :class="{ 
+      <p v-if="validator.emailValidator.value.result.value.message && signupFormData.email"
+         class="validation-text"
+         :class="{
            'error-text': !validator.emailValidator.value.result.value.isValid,
            'success-text': validator.emailValidator.value.result.value.isValid && signupFormData.email
          }">
@@ -75,9 +75,9 @@
       </div>
       
       <p class="help-text">영문, 숫자, 특수문자를 포함해 8자 이상 입력해주세요</p>
-      <p v-if="validator.passwordValidator.value.passwordResult.value.message" 
+      <p v-if="validator.passwordValidator.value.passwordResult.value.message && signupFormData.password"
          class="validation-text"
-         :class="{ 
+         :class="{
            'error-text': !validator.passwordValidator.value.passwordResult.value.isValid,
            'success-text': validator.passwordValidator.value.passwordResult.value.isValid && signupFormData.password
          }">
@@ -95,9 +95,9 @@
           placeholder="비밀번호를 다시 입력해주세요"
         >
       </div>
-      <p v-if="validator.passwordValidator.value.confirmResult.value.message" 
+      <p v-if="validator.passwordValidator.value.confirmResult.value.message && signupFormData.confirmPassword"
          class="validation-text"
-         :class="{ 
+         :class="{
            'error-text': !validator.passwordValidator.value.confirmResult.value.isValid,
            'success-text': validator.passwordValidator.value.confirmResult.value.isValid && signupFormData.confirmPassword
          }">

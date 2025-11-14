@@ -244,7 +244,7 @@ export default defineNuxtConfig({
   nitro: {
     routeRules: {
       '/api/v1/**': {
-        proxy: `${process.env.NUXT_PROXY_TARGET}/api/v1/**`
+        proxy: `${process.env.NUXT_PROXY_TARGET || 'http://localhost:8000'}/api/v1/**`
       },
       // 결제 Return URL은 iframe 허용 (SAMEORIGIN)
       '/point': {

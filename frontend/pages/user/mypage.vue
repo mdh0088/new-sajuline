@@ -5,112 +5,84 @@
       <!-- 유저 마이페이지: 프로토타입 반영 -->
       <section class="px-5 py-6">
 
-        <!-- 프로필 섹션 -->
-        <section class="profile-section">
-            <div class="page-title-section">
-                <div class="title-with-settings">
-                    <div>
-                        <h1 class="page-title">마이페이지</h1>
-                        <p class="page-subtitle">내 정보와 활동을 한눈에 확인하세요</p>
-                    </div>
-                    <button class="settings-button" @click="goEdit">
-                        <span class="settings-icon">⚙️</span>
-                        <span class="settings-text">설정</span>
-                    </button>
-                </div>
-            </div>
-
-            <div class="profile-info-container">
-                <!-- 상담 프로필 섹션 -->
-                <div class="profile-section-item">
-                    <div class="section-header">
-                        <h3 class="section-title">프로필</h3>
-                    </div>
-                    <div class="profile-user-info">
-                        <div class="profile-main-info">
-                            <h2 class="profile-name">
-                                <template v-if="isLoading">
-                                    <div class="bg-white/20 animate-pulse rounded h-7 w-24"></div>
-                                </template>
-                                <template v-else>
-                                    {{ userNickname }}
-                                </template>
-                            </h2>
-                        </div>
-                        <div class="profile-stats-mini">
-                            <span>총 상담 {{ stats.consults }}회 | 후기 작성 {{ stats.reviews }}건</span>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- 멤버십 섹션 -->
-                <div class="profile-section-item">
-                    <div class="section-header">
-                        <h3 class="section-title">멤버십</h3>
-                        <NuxtLink to="/membership/benefit" class="benefit-link-btn">혜택 보기</NuxtLink>
-                    </div>
-                    <div class="membership-content">
-                        <div class="membership-main-info">
-                            <div class="membership-badge gold">
-                                <span>👑</span>
-                                <span>
-                                    <template v-if="isLoading">
-                                        <div class="bg-white/20 animate-pulse rounded h-5 w-16"></div>
-                                    </template>
-                                    <template v-else>
-                                        {{ currentGrade }}
-                                    </template>
-                                </span>
-                            </div>
-                        </div>
-                        <div class="membership-benefits">
-                            <template v-if="isLoading">
-                                <div class="bg-white/20 animate-pulse rounded h-4 w-32 mx-auto"></div>
-                            </template>
-                            <template v-else>
-                                <div class="flex items-center justify-center gap-2 text-sm">
-                                    <span>{{ pointEarnRate }} 적립</span>
-                                    <span class="text-white/40">|</span>
-                                    <span>{{ discountRate }} 할인</span>
-                                </div>
-                            </template>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- 마일리지 섹션 -->
-                <div class="profile-section-item">
-                    <div class="section-header">
-                        <h3 class="section-title">마일리지</h3>
-                    </div>
-                    <div class="mileage-content">
-                        <div class="mileage-main-info">
-                            <div class="profile-mileage-amount">
-                                <template v-if="isLoading">
-                                    <div class="bg-white/20 animate-pulse rounded h-7 w-24"></div>
-                                </template>
-                                <template v-else>
-                                    {{ mileagePoints }}M
-                                </template>
-                            </div>
-                        </div>
-                        <div class="mileage-actions">
-                            <NuxtLink to="/user/mileagelog" class="mileage-btn">적립내역</NuxtLink>
-                            <NuxtLink to="/mileageshop" class="mileage-btn">사용하기</NuxtLink>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </section>
-
-        <!-- 포인트 카드 -->
-        <div class="rounded-2xl border border-yellow-400/30 bg-gradient-to-br from-yellow-400/10 to-yellow-400/5 p-5 mb-5">
-          <div class="flex items-center justify-between mb-3">
-            <h3 class="text-lg font-bold flex items-center gap-2">💰 <span>내 포인트</span></h3>
+        <!-- 프로필 헤더 + 등급 진행도 통합 -->
+        <div class="mb-5">
+          <!-- 이름 / 설정 -->
+          <div class="flex items-center justify-between mb-2">
+            <h2 class="text-xl font-bold">
+              <template v-if="isLoading">
+                <div class="bg-white/20 animate-pulse rounded h-7 w-32"></div>
+              </template>
+              <template v-else>{{ userNickname }}님</template>
+            </h2>
+            <button class="flex items-center gap-1.5 px-3 py-2 rounded-lg bg-white/10 hover:bg-white/15 transition-colors text-sm flex-shrink-0" @click="goEdit">
+              <span>⚙️</span>
+              <span>설정</span>
+            </button>
           </div>
-          <div class="text-3xl font-extrabold text-yellow-300 mb-4">
+
+          <!-- 멤버십 혜택 -->
+          <div class="flex items-center gap-2 mb-3 text-sm">
             <template v-if="isLoading">
-              <div class="bg-yellow-300/20 animate-pulse rounded h-10 w-32"></div>
+              <div class="bg-white/20 animate-pulse rounded h-5 w-40"></div>
+            </template>
+            <template v-else>
+              <span class="text-base">👑</span>
+              <span class="font-semibold text-purple-300">{{ currentGrade }}</span>
+              <span class="text-white/40">|</span>
+              <NuxtLink to="/membership/benefit" class="px-2 py-1 rounded-lg bg-white/5 border border-white/10 text-xs font-semibold text-white/80 hover:bg-white/10 transition-colors">
+                {{ pointEarnRate }} 적립
+              </NuxtLink>
+            </template>
+          </div>
+
+          <!-- 등급 진행도 바 -->
+          <div class="mb-3">
+            <div class="flex items-center justify-between mb-1.5 px-0.5">
+              <span class="text-xs text-white/60 flex items-center gap-1">
+                🎯 <span>다음 등급까지</span>
+              </span>
+              <span class="text-xs text-white/50">
+                <template v-if="isLoading">
+                  <span class="bg-white/20 animate-pulse rounded h-3 w-16 inline-block"></span>
+                </template>
+                <template v-else-if="error">-</template>
+                <template v-else>{{ gradeRemaining }}</template>
+              </span>
+            </div>
+            <div class="relative w-full h-1.5 rounded-full bg-white/10 overflow-hidden">
+              <div class="absolute inset-0 bg-gradient-to-r from-purple-600 to-purple-400 rounded-full transition-all duration-500" :style="{ width: progressWidth }"></div>
+            </div>
+            <div class="flex items-center justify-between mt-1 px-0.5">
+              <span class="text-xs text-purple-300 font-medium">
+                <template v-if="isLoading">
+                  <span class="bg-purple-300/20 animate-pulse rounded h-2.5 w-10 inline-block"></span>
+                </template>
+                <template v-else-if="error">-</template>
+                <template v-else>{{ currentGrade }}</template>
+              </span>
+              <span class="text-xs text-white/40">
+                <template v-if="isLoading">
+                  <span class="bg-white/20 animate-pulse rounded h-2.5 w-10 inline-block"></span>
+                </template>
+                <template v-else-if="error">-</template>
+                <template v-else>{{ nextGrade }}</template>
+              </span>
+            </div>
+          </div>
+
+          <div class="h-px bg-gradient-to-r from-white/20 via-white/10 to-transparent mt-4"></div>
+        </div>
+
+        <!-- 포인트 카드 - 강조 -->
+        <div class="rounded-2xl border border-yellow-400/30 bg-gradient-to-br from-yellow-400/10 to-yellow-400/5 p-5 mb-4">
+          <div class="flex items-center gap-2 mb-2">
+            <span class="text-xl">💰</span>
+            <h3 class="text-sm font-semibold text-white/70">보유 포인트</h3>
+          </div>
+          <div class="text-2xl font-bold text-yellow-300 mb-4">
+            <template v-if="isLoading">
+              <div class="bg-yellow-300/20 animate-pulse rounded h-8 w-40"></div>
             </template>
             <template v-else-if="error">
               <span class="text-red-300 text-sm">로딩 실패</span>
@@ -120,51 +92,30 @@
             </template>
           </div>
           <div class="flex gap-3">
-            <NuxtLink to="/point" class="flex-1 py-3 rounded-xl bg-gradient-to-r from-yellow-400 to-amber-400 text-slate-950 font-semibold text-center active:scale-95">충전하기</NuxtLink>
-            <NuxtLink to="/user/pointlog" class="flex-1 py-3 rounded-xl bg-white/10 hover:bg-white/15 font-semibold text-center active:scale-95">포인트 내역</NuxtLink>
+            <NuxtLink to="/point" class="flex-1 py-2.5 rounded-xl bg-gradient-to-r from-yellow-400 to-amber-400 text-slate-950 font-semibold text-sm text-center active:scale-95">충전하기</NuxtLink>
+            <NuxtLink to="/user/pointlog" class="flex-1 py-2.5 rounded-xl bg-white/10 hover:bg-white/15 font-semibold text-sm text-center active:scale-95">포인트 내역</NuxtLink>
           </div>
         </div>
 
-        <!-- 등급 진행도 -->
-        <div class="rounded-2xl border border-purple-500/30 bg-purple-500/5 p-5 mb-5">
-          <div class="flex items-center justify-between mb-3">
-            <div class="text-purple-200 font-semibold flex items-center gap-2">🎯 <span>다음 등급까지</span></div>
-            <div class="text-sm text-white/80">
-              <template v-if="isLoading">
-                <div class="bg-white/20 animate-pulse rounded h-4 w-16"></div>
-              </template>
-              <template v-else-if="error">
-                <span class="text-red-300">-</span>
-              </template>
-              <template v-else>
-                {{ gradeRemaining }}
-              </template>
+        <!-- 마일리지 카드 -->
+        <div class="rounded-xl border border-blue-500/30 bg-blue-500/5 p-5 mb-4">
+          <div class="flex items-center justify-between mb-2">
+            <div class="flex items-center gap-2">
+              <span class="text-xl">💎</span>
+              <h3 class="text-sm font-semibold text-white/70">마일리지</h3>
+            </div>
+            <div class="flex gap-2">
+              <NuxtLink to="/mileageshop" class="px-8 py-1.5 rounded-lg bg-white/10 hover:bg-white/15 text-xs font-semibold text-center active:scale-95">사용</NuxtLink>
+              <NuxtLink to="/user/mileagelog" class="px-8 py-1.5 rounded-lg bg-white/10 hover:bg-white/15 text-xs font-semibold text-center active:scale-95">내역</NuxtLink>
             </div>
           </div>
-          <div class="w-full h-2 rounded-lg bg-white/10 overflow-hidden">
-            <div class="h-full bg-gradient-to-r from-purple-600 to-purple-300 rounded-lg" :style="{ width: progressWidth }"></div>
-          </div>
-          <div class="flex items-center justify-between mt-2 text-xs text-white/60">
-            <div class="flex items-center gap-1">
-              🥉
-              <span class="text-purple-200 font-medium">
-                <template v-if="isLoading">
-                  <div class="bg-purple-200/20 animate-pulse rounded h-3 w-12 inline-block"></div>
-                </template>
-                <template v-else-if="error">-</template>
-                <template v-else>{{ currentGrade }}</template>
-              </span>
-            </div>
-            <div class="flex items-center gap-1">
-              👑
-              <span class="text-white/80 font-medium">
-                <template v-if="isLoading">
-                  <div class="bg-white/20 animate-pulse rounded h-3 w-12 inline-block"></div>
-                </template>
-                <template v-else-if="error">-</template>
-                <template v-else>{{ nextGrade }}</template>
-              </span>
-            </div>
+          <div class="text-2xl font-bold">
+            <template v-if="isLoading">
+              <div class="bg-white/20 animate-pulse rounded h-8 w-40"></div>
+            </template>
+            <template v-else>
+              {{ mileagePoints }}M
+            </template>
           </div>
         </div>
 
@@ -187,6 +138,13 @@
               <div class="menu-item"><div class="menu-left"><div class="menu-icon">🤝</div><div><div class="menu-title">친구 초대</div><div class="menu-desc">초대하고 5,000P 받기</div></div></div><div class="menu-right">›</div></div>
             </div>
           </div> -->
+
+          <div>
+            <h4 class="text-sm text-white/60 mb-2 px-1">멤버십</h4>
+            <div class="rounded-2xl overflow-hidden border border-white/10">
+              <NuxtLink to="/membership/benefit" class="menu-item"><div class="menu-left"><div class="menu-icon">👑</div><div><div class="menu-title">멤버십 혜택</div><div class="menu-desc">등급별 할인 및 적립 혜택</div></div></div><div class="menu-right">›</div></NuxtLink>
+            </div>
+          </div>
 
           <div>
             <h4 class="text-sm text-white/60 mb-2 px-1">이벤트</h4>
