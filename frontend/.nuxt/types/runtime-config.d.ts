@@ -40,7 +40,7 @@ import { RuntimeConfig as UserRuntimeConfig, PublicRuntimeConfig as UserPublicRu
    cdnBase: string,
 
    "nuxt-scripts": {
-      version: any,
+      version: string,
 
       defaultScriptOptions: {
          trigger: string,

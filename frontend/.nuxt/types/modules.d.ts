@@ -10,6 +10,7 @@ declare module '@nuxt/schema' {
     ["@vueuse/nuxt"]?: ModuleDependencyMeta<typeof import("@vueuse/nuxt").default extends NuxtModule<infer O> ? O : Record<string, unknown>>
     ["@element-plus/nuxt"]?: ModuleDependencyMeta<typeof import("@element-plus/nuxt").default extends NuxtModule<infer O> ? O : Record<string, unknown>>
     ["notivue/nuxt"]?: ModuleDependencyMeta<typeof import("notivue/nuxt").default extends NuxtModule<infer O> ? O : Record<string, unknown>>
+    ["@nuxt/test-utils"]?: ModuleDependencyMeta<typeof import("@nuxt/test-utils").default extends NuxtModule<infer O> ? O : Record<string, unknown>>
     ["@nuxt/devtools"]?: ModuleDependencyMeta<typeof import("@nuxt/devtools").default extends NuxtModule<infer O> ? O : Record<string, unknown>>
     ["@nuxt/telemetry"]?: ModuleDependencyMeta<typeof import("@nuxt/telemetry").default extends NuxtModule<infer O> ? O : Record<string, unknown>>
   }
@@ -50,6 +51,10 @@ declare module '@nuxt/schema' {
      * Configuration for `notivue/nuxt`
      */
     ["notivue"]: typeof import("notivue/nuxt").default extends NuxtModule<infer O, unknown, boolean> ? O : Record<string, any>
+    /**
+     * Configuration for `@nuxt/test-utils`
+     */
+    ["testUtils"]: typeof import("@nuxt/test-utils").default extends NuxtModule<infer O, unknown, boolean> ? O : Record<string, any>
     /**
      * Configuration for `@nuxt/devtools`
      */
@@ -97,6 +102,10 @@ declare module '@nuxt/schema' {
      */
     ["notivue"]?: typeof import("notivue/nuxt").default extends NuxtModule<infer O, unknown, boolean> ? Partial<O> : Record<string, any>
     /**
+     * Configuration for `@nuxt/test-utils`
+     */
+    ["testUtils"]?: typeof import("@nuxt/test-utils").default extends NuxtModule<infer O, unknown, boolean> ? Partial<O> : Record<string, any>
+    /**
      * Configuration for `@nuxt/devtools`
      */
     ["devtools"]?: typeof import("@nuxt/devtools").default extends NuxtModule<infer O, unknown, boolean> ? Partial<O> : Record<string, any>
@@ -104,7 +113,7 @@ declare module '@nuxt/schema' {
      * Configuration for `@nuxt/telemetry`
      */
     ["telemetry"]?: typeof import("@nuxt/telemetry").default extends NuxtModule<infer O, unknown, boolean> ? Partial<O> : Record<string, any>
-    modules?: (undefined | null | false | NuxtModule<any> | string | [NuxtModule | string, Record<string, any>] | ["@nuxt/image", Exclude<NuxtConfig["image"], boolean>] | ["@nuxt/scripts", Exclude<NuxtConfig["scripts"], boolean>] | ["@nuxt/icon", Exclude<NuxtConfig["icon"], boolean>] | ["@nuxt/fonts", Exclude<NuxtConfig["fonts"], boolean>] | ["@nuxtjs/tailwindcss", Exclude<NuxtConfig["tailwindcss"], boolean>] | ["@pinia/nuxt", Exclude<NuxtConfig["pinia"], boolean>] | ["@vueuse/nuxt", Exclude<NuxtConfig["vueuse"], boolean>] | ["@element-plus/nuxt", Exclude<NuxtConfig["elementPlus"], boolean>] | ["notivue/nuxt", Exclude<NuxtConfig["notivue"], boolean>] | ["@nuxt/devtools", Exclude<NuxtConfig["devtools"], boolean>] | ["@nuxt/telemetry", Exclude<NuxtConfig["telemetry"], boolean>])[],
+    modules?: (undefined | null | false | NuxtModule<any> | string | [NuxtModule | string, Record<string, any>] | ["@nuxt/image", Exclude<NuxtConfig["image"], boolean>] | ["@nuxt/scripts", Exclude<NuxtConfig["scripts"], boolean>] | ["@nuxt/icon", Exclude<NuxtConfig["icon"], boolean>] | ["@nuxt/fonts", Exclude<NuxtConfig["fonts"], boolean>] | ["@nuxtjs/tailwindcss", Exclude<NuxtConfig["tailwindcss"], boolean>] | ["@pinia/nuxt", Exclude<NuxtConfig["pinia"], boolean>] | ["@vueuse/nuxt", Exclude<NuxtConfig["vueuse"], boolean>] | ["@element-plus/nuxt", Exclude<NuxtConfig["elementPlus"], boolean>] | ["notivue/nuxt", Exclude<NuxtConfig["notivue"], boolean>] | ["@nuxt/test-utils", Exclude<NuxtConfig["testUtils"], boolean>] | ["@nuxt/devtools", Exclude<NuxtConfig["devtools"], boolean>] | ["@nuxt/telemetry", Exclude<NuxtConfig["telemetry"], boolean>])[],
   }
 }
 declare module 'nuxt/schema' {
@@ -118,6 +127,7 @@ declare module 'nuxt/schema' {
     ["@vueuse/nuxt"]?: ModuleDependencyMeta<typeof import("@vueuse/nuxt").default extends NuxtModule<infer O> ? O : Record<string, unknown>>
     ["@element-plus/nuxt"]?: ModuleDependencyMeta<typeof import("@element-plus/nuxt").default extends NuxtModule<infer O> ? O : Record<string, unknown>>
     ["notivue/nuxt"]?: ModuleDependencyMeta<typeof import("notivue/nuxt").default extends NuxtModule<infer O> ? O : Record<string, unknown>>
+    ["@nuxt/test-utils"]?: ModuleDependencyMeta<typeof import("@nuxt/test-utils").default extends NuxtModule<infer O> ? O : Record<string, unknown>>
     ["@nuxt/devtools"]?: ModuleDependencyMeta<typeof import("@nuxt/devtools").default extends NuxtModule<infer O> ? O : Record<string, unknown>>
     ["@nuxt/telemetry"]?: ModuleDependencyMeta<typeof import("@nuxt/telemetry").default extends NuxtModule<infer O> ? O : Record<string, unknown>>
   }
@@ -167,6 +177,11 @@ declare module 'nuxt/schema' {
      * @see https://www.npmjs.com/package/notivue/nuxt
      */
     ["notivue"]: typeof import("notivue/nuxt").default extends NuxtModule<infer O, unknown, boolean> ? O : Record<string, any>
+    /**
+     * Configuration for `@nuxt/test-utils`
+     * @see https://www.npmjs.com/package/@nuxt/test-utils
+     */
+    ["testUtils"]: typeof import("@nuxt/test-utils").default extends NuxtModule<infer O, unknown, boolean> ? O : Record<string, any>
     /**
      * Configuration for `@nuxt/devtools`
      * @see https://www.npmjs.com/package/@nuxt/devtools
@@ -225,6 +240,11 @@ declare module 'nuxt/schema' {
      */
     ["notivue"]?: typeof import("notivue/nuxt").default extends NuxtModule<infer O, unknown, boolean> ? Partial<O> : Record<string, any>
     /**
+     * Configuration for `@nuxt/test-utils`
+     * @see https://www.npmjs.com/package/@nuxt/test-utils
+     */
+    ["testUtils"]?: typeof import("@nuxt/test-utils").default extends NuxtModule<infer O, unknown, boolean> ? Partial<O> : Record<string, any>
+    /**
      * Configuration for `@nuxt/devtools`
      * @see https://www.npmjs.com/package/@nuxt/devtools
      */
@@ -234,6 +254,6 @@ declare module 'nuxt/schema' {
      * @see https://www.npmjs.com/package/@nuxt/telemetry
      */
     ["telemetry"]?: typeof import("@nuxt/telemetry").default extends NuxtModule<infer O, unknown, boolean> ? Partial<O> : Record<string, any>
-    modules?: (undefined | null | false | NuxtModule<any> | string | [NuxtModule | string, Record<string, any>] | ["@nuxt/image", Exclude<NuxtConfig["image"], boolean>] | ["@nuxt/scripts", Exclude<NuxtConfig["scripts"], boolean>] | ["@nuxt/icon", Exclude<NuxtConfig["icon"], boolean>] | ["@nuxt/fonts", Exclude<NuxtConfig["fonts"], boolean>] | ["@nuxtjs/tailwindcss", Exclude<NuxtConfig["tailwindcss"], boolean>] | ["@pinia/nuxt", Exclude<NuxtConfig["pinia"], boolean>] | ["@vueuse/nuxt", Exclude<NuxtConfig["vueuse"], boolean>] | ["@element-plus/nuxt", Exclude<NuxtConfig["elementPlus"], boolean>] | ["notivue/nuxt", Exclude<NuxtConfig["notivue"], boolean>] | ["@nuxt/devtools", Exclude<NuxtConfig["devtools"], boolean>] | ["@nuxt/telemetry", Exclude<NuxtConfig["telemetry"], boolean>])[],
+    modules?: (undefined | null | false | NuxtModule<any> | string | [NuxtModule | string, Record<string, any>] | ["@nuxt/image", Exclude<NuxtConfig["image"], boolean>] | ["@nuxt/scripts", Exclude<NuxtConfig["scripts"], boolean>] | ["@nuxt/icon", Exclude<NuxtConfig["icon"], boolean>] | ["@nuxt/fonts", Exclude<NuxtConfig["fonts"], boolean>] | ["@nuxtjs/tailwindcss", Exclude<NuxtConfig["tailwindcss"], boolean>] | ["@pinia/nuxt", Exclude<NuxtConfig["pinia"], boolean>] | ["@vueuse/nuxt", Exclude<NuxtConfig["vueuse"], boolean>] | ["@element-plus/nuxt", Exclude<NuxtConfig["elementPlus"], boolean>] | ["notivue/nuxt", Exclude<NuxtConfig["notivue"], boolean>] | ["@nuxt/test-utils", Exclude<NuxtConfig["testUtils"], boolean>] | ["@nuxt/devtools", Exclude<NuxtConfig["devtools"], boolean>] | ["@nuxt/telemetry", Exclude<NuxtConfig["telemetry"], boolean>])[],
   }
 }
