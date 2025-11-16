@@ -170,9 +170,28 @@ class FindPasswordResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
 
+class WithdrawRequest(BaseModel):
+    """회원탈퇴 요청 스키마"""
+    password: Optional[str] = Field(None, description="비밀번호 확인 (소셜 로그인 사용자는 null)")
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class UserOutResponse(BaseModel):
+    """회원탈퇴 응답 스키마"""
+    out_idx: int = Field(..., description="탈퇴 고유 식별자")
+    user_id: Optional[str] = Field(None, description="탈퇴한 사용자 ID")
+    nickname: Optional[str] = Field(None, description="탈퇴한 사용자 닉네임")
+    phone: Optional[str] = Field(None, description="탈퇴한 사용자 전화번호")
+    email: Optional[str] = Field(None, description="탈퇴한 사용자 이메일")
+    created_at: datetime = Field(..., description="탈퇴 일시")
+
+    model_config = ConfigDict(from_attributes=True)
+
+
 # TODO: 추후 필요시 참고용 스키마들
 # class UserLogin(BaseModel):
-#     """로그인 요청 스키마"""  
+#     """로그인 요청 스키마"""
 #     user_id: str = Field(..., description="사용자 ID 또는 이메일")
 #     password: str = Field(..., description="비밀번호")
 #
@@ -184,6 +203,6 @@ class FindPasswordResponse(BaseModel):
 # class UserListResponse(BaseModel):
 #     """사용자 목록 응답 스키마"""
 #     users: list[UserResponse] = Field(..., description="사용자 목록")
-#     total: int = Field(..., description="전체 사용자 수") 
+#     total: int = Field(..., description="전체 사용자 수")
 #     page: int = Field(..., description="현재 페이지")
 #     size: int = Field(..., description="페이지 크기")

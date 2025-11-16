@@ -341,10 +341,39 @@ const userApi = {
     const response = await $api<APIResponse<null>>(`/api/v1/users/${userId}`, {
       method: 'DELETE'
     })
-    
+
     if (!response.success) {
       throw new Error(response.error?.message || '사용자 삭제에 실패했습니다.')
     }
+  },
+
+  // 회원 탈퇴
+  async withdrawUser(password?: string): Promise<{
+    out_idx: number
+    user_id: string | null
+    nickname: string | null
+    phone: string | null
+    email: string | null
+    created_at: string
+  }> {
+    const { $api } = useNuxtApp()
+    const response = await $api<APIResponse<{
+      out_idx: number
+      user_id: string | null
+      nickname: string | null
+      phone: string | null
+      email: string | null
+      created_at: string
+    }>>('/api/v1/users/withdraw', {
+      method: 'POST',
+      body: { password: password || null }
+    })
+
+    if (!response.success || !response.data) {
+      throw new Error(response.error?.message || '회원 탈퇴에 실패했습니다.')
+    }
+
+    return response.data
   }
 }
 
@@ -685,6 +714,28 @@ export const useUserQueries = () => {
     })
   }
 
+  // 회원 탈퇴 뮤테이션
+  const useWithdrawUser = (
+    options?: UseMutationOptions<{
+      out_idx: number
+      user_id: string | null
+      nickname: string | null
+      phone: string | null
+      email: string | null
+      created_at: string
+    }, APIError, string | undefined>
+  ) => {
+    return useMutation({
+      mutationFn: userApi.withdrawUser,
+      onSuccess: () => {
+        // 탈퇴 성공 시 모든 사용자 관련 캐시 클리어
+        queryClient.removeQueries({ queryKey: ['user'] })
+        queryClient.removeQueries({ queryKey: ['users'] })
+      },
+      ...options
+    })
+  }
+
   // 토큰 갱신 뮤테이션
   // (이전 위치에서 이동됨) refreshToken은 useAuthQueries로 분리됨
 
@@ -721,6 +772,7 @@ export const useUserQueries = () => {
     useAuthenticateUser,
     useFindUserId,
     useFindPassword,
+    useWithdrawUser,
     useCreateUserReview,
     useUpdateUserReview,
     useDeleteUserReview

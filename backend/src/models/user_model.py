@@ -185,3 +185,58 @@ class User(Base):
     
     def __repr__(self) -> str:
         return f"<User(user_id={self.user_id}, email={self.email})>"
+
+
+class UserOut(Base):
+    """회원 탈퇴 유저 테이블"""
+
+    __tablename__ = "t_user_out"
+
+    # 기본키
+    out_idx: Mapped[int] = mapped_column(
+        Integer,
+        primary_key=True,
+        autoincrement=True,
+        comment="탈퇴 고유 식별자"
+    )
+
+    # 탈퇴 유저 정보
+    user_id: Mapped[Optional[str]] = mapped_column(
+        String(100),
+        nullable=True,
+        comment="탈퇴한 사용자 ID"
+    )
+    nickname: Mapped[Optional[str]] = mapped_column(
+        String(100),
+        nullable=True,
+        comment="탈퇴한 사용자 닉네임"
+    )
+    phone: Mapped[Optional[str]] = mapped_column(
+        String(15),
+        nullable=True,
+        comment="탈퇴한 사용자 전화번호"
+    )
+    email: Mapped[Optional[str]] = mapped_column(
+        String(100),
+        nullable=True,
+        comment="탈퇴한 사용자 이메일"
+    )
+
+    # 타임스탬프
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime,
+        nullable=False,
+        default=datetime.utcnow,
+        comment="탈퇴 일시"
+    )
+
+    # 인덱스 정의
+    __table_args__ = (
+        Index('idx_user_out_user_id', 'user_id'),
+        Index('idx_user_out_phone', 'phone'),
+        Index('idx_user_out_created_at', 'created_at'),
+        {'comment': '회원 탈퇴 유저'}
+    )
+
+    def __repr__(self) -> str:
+        return f"<UserOut(out_idx={self.out_idx}, user_id={self.user_id})>"
