@@ -28,15 +28,6 @@
           </div>
         </div>
       </div>
-
-      <!-- QR 코드 영역 -->
-      <div class="qr-section">
-        <h3>모바일 앱 설치하고</h3>
-        <p>더욱 편리하게 만나보세요</p>
-        <div class="qr-code">
-          <div class="qr-placeholder">QR 코드</div>
-        </div>
-      </div>
     </aside>
 
     <!-- 중앙 모바일 뷰포트 -->
@@ -73,24 +64,24 @@
 const adBanners = ref([
   {
     id: 1,
-    title: '첫 상담 50% 할인',
-    description: '신규 회원 특별 혜택',
-    image: '/images/sidebar-ad-1.jpg',
-    link: '/point'
+    title: '',
+    description: '',
+    image: '/images/banners/banner-1.jpg',
+    link: '/signup'
   },
   {
     id: 2,
-    title: '인기 상담사 추천',
-    description: '평점 4.9 이상 전문가들',
-    image: '/images/sidebar-ad-2.jpg',
+    title: '',
+    description: '',
+    image: '/images/banners/banner-2.jpg',
     link: '/categories'
   },
   {
     id: 3,
-    title: 'AI 운세 무료 체험',
-    description: '오늘의 운세를 확인하세요',
-    image: '/images/sidebar-ad-3.jpg',
-    link: '/'
+    title: '',
+    description: '',
+    image: '/images/banners/banner-3.jpg',
+    link: '/reviews'
   }
 ])
 
@@ -301,39 +292,6 @@ const handleAdClick = (ad) => {
     margin: 0;
     font-size: 12px;
     opacity: 0.9;
-  }
-
-  .qr-section {
-    text-align: center;
-    padding: 20px;
-    background: rgba(255, 255, 255, 0.03);
-    border-radius: 12px;
-    border: 1px solid rgba(255, 255, 255, 0.1);
-  }
-
-  .qr-section h3 {
-    color: white;
-    font-size: 16px;
-    margin: 0 0 8px 0;
-  }
-
-  .qr-section p {
-    color: rgba(255, 255, 255, 0.7);
-    font-size: 12px;
-    margin: 0 0 16px 0;
-  }
-
-  .qr-placeholder {
-    width: 100px;
-    height: 100px;
-    background: rgba(255, 255, 255, 0.9);
-    border-radius: 8px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    margin: 0 auto;
-    color: #333;
-    font-size: 12px;
   }
 
   .mobile-viewport {
