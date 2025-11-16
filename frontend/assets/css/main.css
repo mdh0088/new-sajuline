@@ -2004,3 +2004,18 @@
         font-size: 12px;
     }
 }
+
+/* 모바일 자동 줌 방지 - input 최소 폰트 크기 16px */
+input,
+select,
+textarea,
+input[type="text"],
+input[type="email"],
+input[type="password"],
+input[type="tel"],
+input[type="number"],
+input[type="date"],
+input[type="time"],
+input[type="search"] {
+  font-size: 16px !important;
+}
