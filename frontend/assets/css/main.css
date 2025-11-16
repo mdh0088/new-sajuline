@@ -1036,27 +1036,27 @@
      z-index: 2001;
      width: 90%;
      max-width: 400px;
-     max-height: 80vh;
+     max-height: 90vh;
      overflow-y: auto;
  }
  
  .mileage-modal-header {
-     padding: 24px 24px 0;
+     padding: 20px 20px 0;
      text-align: center;
      position: relative;
  }
- 
+
  .mileage-modal-title {
-     font-size: 20px;
+     font-size: 18px;
      font-weight: 700;
      color: #ffffff;
-     margin-bottom: 8px;
+     margin-bottom: 6px;
  }
- 
+
  .mileage-modal-subtitle {
-     font-size: 14px;
+     font-size: 13px;
      color: rgba(255, 255, 255, 0.6);
-     margin-bottom: 24px;
+     margin-bottom: 16px;
  }
  
  .mileage-close-button {
@@ -1079,15 +1079,15 @@
  }
  
  .mileage-modal-content {
-     padding: 0 24px 24px;
+     padding: 0 20px 20px;
  }
- 
+
  /* 상품 정보 섹션 */
  .mileage-modal-product-info {
      background: rgba(255, 255, 255, 0.03);
-     border-radius: 16px;
-     padding: 20px;
-     margin-bottom: 24px;
+     border-radius: 12px;
+     padding: 16px;
+     margin-bottom: 16px;
  }
  
  .mileage-modal-product-header {
@@ -1146,24 +1146,24 @@
  .mileage-breakdown {
      background: rgba(147, 51, 234, 0.05);
      border: 1px solid rgba(147, 51, 234, 0.2);
-     border-radius: 16px;
-     padding: 20px;
-     margin-bottom: 24px;
+     border-radius: 12px;
+     padding: 14px 16px;
+     margin-bottom: 14px;
  }
- 
+
  .mileage-breakdown-title {
-     font-size: 16px;
+     font-size: 15px;
      font-weight: 700;
      color: #B794F6;
-     margin-bottom: 16px;
+     margin-bottom: 12px;
      text-align: center;
  }
- 
+
  .mileage-breakdown-item {
      display: flex;
      justify-content: space-between;
      align-items: center;
-     padding: 12px 0;
+     padding: 10px 0;
      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
  }
  
@@ -1308,12 +1308,12 @@
      background: rgba(147, 51, 234, 0.03);
      border: 1px solid rgba(147, 51, 234, 0.15);
      border-radius: 12px;
-     margin-bottom: 20px;
+     margin-bottom: 14px;
      overflow: hidden;
  }
- 
+
  .mileage-guide-header {
-     padding: 16px 20px;
+     padding: 12px 16px;
      display: flex;
      justify-content: space-between;
      align-items: center;
@@ -1339,7 +1339,7 @@
  }
  
  .mileage-guide-content {
-     padding: 16px 20px;
+     padding: 12px 16px;
      animation: slideDown 0.3s ease-out;
  }
  

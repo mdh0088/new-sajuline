@@ -91,14 +91,12 @@
                 :key="transaction.id"
                 class="transaction-item"
               >
-                <div class="trans-left">
-                  <span class="trans-date">{{ formatDate(transaction.created_at) }}</span>
+                <span class="trans-date">{{ formatDate(transaction.created_at) }}</span>
+                <div class="trans-bottom">
                   <div class="trans-desc">
                     <span class="trans-icon">💰</span>
                     <span>{{ transaction.description }}</span>
                   </div>
-                </div>
-                <div class="trans-right">
                   <div class="trans-amount amount-positive">
                     <span>+</span>
                     <span>{{ Math.abs(transaction.amount).toLocaleString() }}P</span>
