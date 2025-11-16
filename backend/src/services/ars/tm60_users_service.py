@@ -26,4 +26,10 @@ class Tm60UsersService:
         """TM60 사용자 포인트 증가/감소 (증가: 양수, 감소: 음수)"""
         return await self.repo.update_user_points(user_id, point_amount)
 
+    async def delete_user_by_phone(self, phone: str) -> bool:
+        """TM60 사용자 삭제 (전화번호 기반)"""
+        log = get_logger_with_request_id()
+        log.info("Deleting TM60 user by phone via service", phone=phone)
+        return await self.repo.delete_by_phone(phone)
+
 

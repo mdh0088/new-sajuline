@@ -9,7 +9,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, update, delete, and_
 from sqlalchemy.engine import Result
 
-from src.models.user_model import User, JoinType
+from src.models.user_model import User, UserOut, JoinType, UserStatus
 from src.schemas.user_schema import UserSignup
 from src.common.logging import logger, get_logger_with_request_id
 from src.exceptions.custom_exceptions import BaseAppException
@@ -261,5 +261,53 @@ class UserRepository:
         updated = result.rowcount > 0
 
         log.info("User mileage point update completed", user_id=user_id, updated=updated)
+        return updated
+
+    @logger.catch(reraise=True)
+    async def create_user_out(
+        self,
+        user_id: str,
+        nickname: str,
+        phone: str,
+        email: str
+    ) -> UserOut:
+        """회원 탈퇴 정보 기록"""
+        log = get_logger_with_request_id()
+        log.info("Creating user out record", user_id=user_id)
+
+        user_out = UserOut(
+            user_id=user_id,
+            nickname=nickname,
+            phone=phone,
+            email=email
+        )
+
+        self.db.add(user_out)
+        await self.db.flush()
+        await self.db.refresh(user_out)
+
+        log.info("User out record created", user_id=user_id, out_idx=user_out.out_idx)
+        return user_out
+
+    @logger.catch(reraise=True)
+    async def update_user_status_to_withdrawn(self, user_id: str) -> bool:
+        """사용자 상태를 WITHDRAWN으로 변경"""
+        log = get_logger_with_request_id()
+        log.info("Updating user status to WITHDRAWN", user_id=user_id)
+
+        stmt = (
+            update(User)
+            .where(User.user_id == user_id)
+            .values(
+                user_status=UserStatus.WITHDRAWN,
+                withdrawn_at=datetime.utcnow(),
+                updated_at=datetime.utcnow()
+            )
+            .execution_options(synchronize_session="evaluate")
+        )
+        result = await self.db.execute(stmt)
+        updated = result.rowcount > 0
+
+        log.info("User status updated to WITHDRAWN", user_id=user_id, updated=updated)
         return updated
 

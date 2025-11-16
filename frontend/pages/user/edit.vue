@@ -239,8 +239,10 @@
           </p>
         </div>
         <div class="modal-footer">
-          <button class="modal-cancel-btn" @click="closeFinalConfirmModal">취소</button>
-          <button class="modal-danger-btn" @click="handleWithdrawal">탈퇴하기</button>
+          <button class="modal-cancel-btn" @click="closeFinalConfirmModal" :disabled="isWithdrawing">취소</button>
+          <button class="modal-danger-btn" @click="handleWithdrawal" :disabled="isWithdrawing">
+            {{ isWithdrawing ? '처리 중...' : '탈퇴하기' }}
+          </button>
         </div>
       </div>
     </div>
@@ -252,9 +254,12 @@
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuth } from '~/composables/auth/useAuth'
+import { useUserQueries } from '~/composables/api/useUserQueries'
+import { push } from 'notivue'
 
 const router = useRouter()
 const { logout } = useAuth()
+const { useWithdrawUser } = useUserQueries()
 
 // 모달 상태
 const showPasswordModal = ref(false)
@@ -265,6 +270,9 @@ const showFinalConfirmModal = ref(false)
 const withdrawalPassword = ref('')
 const agreedToTerms = ref(false)
 const showPassword = ref(false)
+
+// 회원탈퇴 mutation
+const { mutateAsync: withdrawUser, isPending: isWithdrawing } = useWithdrawUser()
 
 // 비밀번호 변경 모달
 const openPasswordModal = () => {
@@ -314,30 +322,39 @@ const closeFinalConfirmModal = () => {
 // 회원탈퇴 실행
 const handleWithdrawal = async () => {
   try {
-    // TODO: 실제 API 호출
-    // await withdrawalAPI(withdrawalPassword.value)
-
-    // 임시: 콘솔 로그
-    console.log('회원탈퇴 처리:', {
-      password: withdrawalPassword.value,
-      agreed: agreedToTerms.value
-    })
+    // 회원탈퇴 API 호출
+    const result = await withdrawUser(withdrawalPassword.value || undefined)
 
     // 모달 닫기
     showFinalConfirmModal.value = false
     document.body.style.overflow = 'auto'
 
+    // 성공 알림
+    push.success({
+      title: '회원탈퇴 완료',
+      message: '회원탈퇴가 완료되었습니다. 그동안 이용해 주셔서 감사합니다.',
+      duration: 3000
+    })
+
     // 로그아웃 처리
     await logout()
 
     // 로그인 페이지로 이동
-    router.push('/login')
+    setTimeout(() => {
+      router.push('/login')
+    }, 1000)
 
-    // 성공 알림 (선택사항)
-    alert('회원탈퇴가 완료되었습니다.')
-  } catch (error) {
+  } catch (error: any) {
     console.error('회원탈퇴 실패:', error)
-    alert('회원탈퇴 처리 중 오류가 발생했습니다.')
+
+    // 에러 메시지 표시
+    const errorMessage = error?.message || '회원탈퇴 처리 중 오류가 발생했습니다.'
+
+    push.error({
+      title: '회원탈퇴 실패',
+      message: errorMessage,
+      duration: 5000
+    })
   }
 }
 </script>
