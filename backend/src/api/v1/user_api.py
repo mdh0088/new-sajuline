@@ -45,6 +45,7 @@ from src.schemas.consultation_review_schema import (
 from src.schemas.user_schema import (
     UserResponse, UserSignup, UserMypageResponse, SearchType, OrderType,
     FindIdRequest, FindIdResponse, FindPasswordRequest, FindPasswordResponse,
+    PasswordChangeRequest, PasswordChangeResponse,
     WithdrawRequest, UserOutResponse
 )
 from src.common.utils.auth_utils import verify_user_role
@@ -1124,6 +1125,45 @@ async def remove_bookmark(
     verify_user_role(current_user)
     removed = await bookmark_service.remove_bookmark(current_user.sub, counselor_id)
     return ok(data=removed, message="즐겨찾기 삭제 성공")
+
+
+@router.put(
+    "/password",
+    response_model=APIResponse[PasswordChangeResponse],
+    summary="비밀번호 변경",
+    description="로그인한 사용자의 비밀번호를 변경합니다. 일반 가입 사용자만 가능합니다.",
+    responses={
+        200: {"description": "비밀번호 변경 성공"},
+        400: {"description": "유효하지 않은 요청 또는 소셜 로그인 사용자"},
+        401: {"description": "현재 비밀번호 불일치"},
+        404: {"description": "사용자를 찾을 수 없음"},
+        429: {"description": "요청 한도 초과"}
+    }
+)
+async def change_password(
+    request_obj: Request,  # Rate Limiting 필수
+    password_change_request: PasswordChangeRequest,
+    current_user: TokenPayload = Depends(get_current_user),
+    user_service: UserService = Depends(get_user_service)
+) -> APIResponse[PasswordChangeResponse]:
+    """
+    비밀번호 변경
+
+    - 일반 가입 사용자만 가능 (소셜 로그인 사용자는 불가)
+    - 현재 비밀번호 확인 필수
+    - 새 비밀번호는 8자 이상
+    """
+    log = get_logger_with_request_id()
+    user_id = current_user.sub
+    log.info("API: Password change request", user_id=user_id)
+
+    verify_user_role(current_user)
+
+    result = await user_service.change_password(user_id, password_change_request)
+
+    log.info("API: Password changed successfully", user_id=user_id)
+
+    return ok(data=result, message="비밀번호가 성공적으로 변경되었습니다.")
 
 
 @router.post(
