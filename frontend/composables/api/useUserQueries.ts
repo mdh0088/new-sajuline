@@ -347,6 +347,29 @@ const userApi = {
     }
   },
 
+  // 비밀번호 변경
+  async changePassword(params: { current_password: string; new_password: string }): Promise<{
+    user_id: string
+    password_changed_at: string
+    message: string
+  }> {
+    const { $api } = useNuxtApp()
+    const response = await $api<APIResponse<{
+      user_id: string
+      password_changed_at: string
+      message: string
+    }>>('/api/v1/users/password', {
+      method: 'PUT',
+      body: params
+    })
+
+    if (!response.success || !response.data) {
+      throw new Error(response.error?.message || '비밀번호 변경에 실패했습니다.')
+    }
+
+    return response.data
+  },
+
   // 회원 탈퇴
   async withdrawUser(password?: string): Promise<{
     out_idx: number
@@ -714,6 +737,20 @@ export const useUserQueries = () => {
     })
   }
 
+  // 비밀번호 변경 뮤테이션
+  const useChangePassword = (
+    options?: UseMutationOptions<{
+      user_id: string
+      password_changed_at: string
+      message: string
+    }, APIError, { current_password: string; new_password: string }>
+  ) => {
+    return useMutation({
+      mutationFn: userApi.changePassword,
+      ...options
+    })
+  }
+
   // 회원 탈퇴 뮤테이션
   const useWithdrawUser = (
     options?: UseMutationOptions<{
@@ -772,6 +809,7 @@ export const useUserQueries = () => {
     useAuthenticateUser,
     useFindUserId,
     useFindPassword,
+    useChangePassword,
     useWithdrawUser,
     useCreateUserReview,
     useUpdateUserReview,

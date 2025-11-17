@@ -170,6 +170,23 @@ class FindPasswordResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
 
+class PasswordChangeRequest(BaseModel):
+    """비밀번호 변경 요청 스키마"""
+    current_password: str = Field(..., description="현재 비밀번호")
+    new_password: str = Field(..., min_length=8, max_length=128, description="새 비밀번호 (8자 이상)")
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class PasswordChangeResponse(BaseModel):
+    """비밀번호 변경 응답 스키마"""
+    user_id: str = Field(..., description="사용자 ID")
+    password_changed_at: datetime = Field(..., description="비밀번호 변경일시")
+    message: str = Field(..., description="안내 메시지")
+
+    model_config = ConfigDict(from_attributes=True)
+
+
 class WithdrawRequest(BaseModel):
     """회원탈퇴 요청 스키마"""
     password: Optional[str] = Field(None, description="비밀번호 확인 (소셜 로그인 사용자는 null)")
