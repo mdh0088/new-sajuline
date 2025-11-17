@@ -21,6 +21,8 @@ from src.schemas.user_schema import (
     FindIdResponse,
     FindPasswordRequest,
     FindPasswordResponse,
+    PasswordChangeRequest,
+    PasswordChangeResponse,
     WithdrawRequest,
     UserOutResponse,
 )
@@ -620,6 +622,73 @@ class UserService:
             user_id=user.user_id,
             email=masked_email,
             message=f"임시 비밀번호가 {masked_email}로 전송되었습니다. 로그인 후 비밀번호를 변경해주세요."
+        )
+
+    async def change_password(self, user_id: str, request: PasswordChangeRequest) -> PasswordChangeResponse:
+        """
+        비밀번호 변경 처리
+
+        프로세스:
+        1. 사용자 존재 확인
+        2. 소셜 로그인 사용자인 경우 변경 불가
+        3. 현재 비밀번호 검증
+        4. 새 비밀번호 해싱
+        5. DB 업데이트
+
+        Args:
+            user_id: 사용자 ID (TokenPayload에서 추출)
+            request: 비밀번호 변경 요청 데이터
+
+        Returns:
+            PasswordChangeResponse: 비밀번호 변경 정보
+
+        Raises:
+            NotFoundError: 사용자를 찾을 수 없음
+            AuthenticationError: 현재 비밀번호 불일치
+            ValidationError: 소셜 로그인 사용자 또는 변경 실패
+        """
+        log = get_logger_with_request_id()
+        log.info("Starting password change process", user_id=user_id)
+
+        # 1. 사용자 존재 확인
+        user = await self.user_repo.get_by_id(user_id)
+        if not user:
+            log.warning("User not found for password change", user_id=user_id)
+            raise NotFoundError("사용자를 찾을 수 없습니다.")
+
+        # 2. 소셜 로그인 사용자인 경우 변경 불가
+        if user.join_type != JoinType.COMMON:
+            log.warning("Password change not allowed for social login user",
+                       user_id=user_id,
+                       join_type=user.join_type.value)
+            raise ValidationError("소셜 로그인 사용자는 비밀번호를 변경할 수 없습니다.")
+
+        # 3. 현재 비밀번호 검증
+        if not user.password_hash or not self.auth_service.verify_password(request.current_password, user.password_hash):
+            log.warning("Current password verification failed", user_id=user_id)
+            raise AuthenticationError("현재 비밀번호가 일치하지 않습니다.")
+
+        log.info("Current password verified", user_id=user_id)
+
+        # 4. 새 비밀번호 해싱
+        new_password_hash = self.auth_service.hash_password(request.new_password)
+        log.info("New password hashed", user_id=user_id)
+
+        # 5. DB 업데이트
+        update_success = await self.user_repo.update_password(user_id, new_password_hash)
+
+        if not update_success:
+            log.error("Failed to update password in DB", user_id=user_id)
+            raise ValidationError("비밀번호 변경에 실패했습니다. 다시 시도해주세요.")
+
+        await self.user_repo.db.commit()
+        log.info("Password updated successfully", user_id=user_id)
+
+        # 6. 응답 생성
+        return PasswordChangeResponse(
+            user_id=user_id,
+            password_changed_at=datetime.utcnow(),
+            message="비밀번호가 성공적으로 변경되었습니다."
         )
 
     async def withdraw_user(self, user_id: str, request: WithdrawRequest) -> UserOutResponse:

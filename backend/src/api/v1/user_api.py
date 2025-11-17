@@ -34,6 +34,8 @@ from src.services.grade_service import GradeService
 from src.services.ars.tm60_chatlog_service import Tm60ChatlogService
 from src.repositories.ars.tm60_chatlog_repository import Tm60ChatlogRepository
 from src.services.point_transaction_service import PointTransactionService
+from src.repositories.notification_repository import NotificationRepository
+from src.services.notification_service import NotificationService
 from src.schemas.consultation_review_schema import (
     UserReviewSummary,
     UserReviewList,
@@ -45,6 +47,7 @@ from src.schemas.consultation_review_schema import (
 from src.schemas.user_schema import (
     UserResponse, UserSignup, UserMypageResponse, SearchType, OrderType,
     FindIdRequest, FindIdResponse, FindPasswordRequest, FindPasswordResponse,
+    PasswordChangeRequest, PasswordChangeResponse,
     WithdrawRequest, UserOutResponse
 )
 from src.common.utils.auth_utils import verify_user_role
@@ -210,6 +213,16 @@ def get_tm60_chatlog_repository():
         return Tm60ChatlogRepository(mssql_session)
 
 
+def get_notification_repository(db: AsyncSession = Depends(get_db_maria)) -> NotificationRepository:
+    """알림 리포지토리 의존성 주입"""
+    return NotificationRepository(db)
+
+
+def get_notification_service(
+    notification_repo: NotificationRepository = Depends(get_notification_repository)
+) -> NotificationService:
+    """알림 서비스 의존성 주입"""
+    return NotificationService(notification_repo)
 
 
 @router.get(
@@ -361,13 +374,29 @@ async def create_user_inquiry_api(
 async def signup(
     request: Request,  # Rate Limiting 필수
     signup_data: UserSignup,
-    user_service: UserService = Depends(get_user_service)
+    user_service: UserService = Depends(get_user_service),
+    notification_service: NotificationService = Depends(get_notification_service)
 ) -> APIResponse[UserResponse]:
     """통합 회원가입 - 일반/소셜 가입 통합 처리"""
+    log = get_logger_with_request_id()
+
     if not signup_data.phone_chk:
         raise BaseAppException("휴대폰 인증이 필요합니다.", status_code=400)
 
     result = await user_service.signup(signup_data)
+
+    # 회원가입 알림톡 발송 (실패해도 회원가입은 성공)
+    try:
+        await notification_service.user_join_alert(
+            phone=result.phone,
+            nick_name=result.nickname,
+            user_id=result.user_id
+        )
+        log.info("Signup Kakao AlimTalk sent successfully", user_id=result.user_id)
+    except Exception as e:
+        log.warning("Signup Kakao AlimTalk failed but signup succeeded",
+                   user_id=result.user_id, error=str(e))
+
     return ok(data=result, message="회원가입이 완료되었습니다.")
 
 
@@ -388,7 +417,8 @@ async def social_signup_with_login(
     request: Request,  # Rate Limiting 필수
     response: Response,
     signup_data: UserSignup,
-    user_service: UserService = Depends(get_user_service)
+    user_service: UserService = Depends(get_user_service),
+    notification_service: NotificationService = Depends(get_notification_service)
 ) -> APIResponse[UserResponse]:
     """소셜 회원가입 + 자동 로그인"""
     log = get_logger_with_request_id()
@@ -404,7 +434,7 @@ async def social_signup_with_login(
 
     # 회원가입 처리
     result = await user_service.signup(signup_data)
-    
+
     # 자동 로그인을 위한 JWT 토큰들 생성
     auth_service = AuthService()
     access_token = auth_service.create_access_token(
@@ -412,13 +442,13 @@ async def social_signup_with_login(
         email=result.email,
         role="user"
     )
-    
+
     refresh_token = auth_service.create_refresh_token(
         user_id=result.user_id,
         email=result.email,
         role="user"
     )
-    
+
     # HttpOnly 쿠키에 JWT 토큰들 설정
     # Access Token (30분)
     response.set_cookie(
@@ -429,7 +459,7 @@ async def social_signup_with_login(
         samesite="lax",  # CSRF 보호
         max_age=30 * 60  # 30분
     )
-    
+
     # Refresh Token (7일)
     response.set_cookie(
         key="refresh_token",
@@ -439,10 +469,22 @@ async def social_signup_with_login(
         samesite="lax",  # CSRF 보호
         max_age=7 * 24 * 60 * 60  # 7일
     )
-    
+
     # 마지막 로그인 시간 업데이트
     await user_service.user_repo.update_last_login(result.user_id)
-    
+
+    # 회원가입 알림톡 발송 (실패해도 회원가입은 성공)
+    try:
+        await notification_service.user_join_alert(
+            phone=result.phone,
+            nick_name=result.nickname,
+            user_id=result.user_id
+        )
+        log.info("Social signup Kakao AlimTalk sent successfully", user_id=result.user_id)
+    except Exception as e:
+        log.warning("Social signup Kakao AlimTalk failed but signup succeeded",
+                   user_id=result.user_id, error=str(e))
+
     log.info("Social signup with auto-login completed with refresh token", user_id=result.user_id, provider=signup_data.social_provider)
     return ok(data=result, message="소셜 회원가입 및 로그인이 완료되었습니다.")
 
@@ -1124,6 +1166,45 @@ async def remove_bookmark(
     verify_user_role(current_user)
     removed = await bookmark_service.remove_bookmark(current_user.sub, counselor_id)
     return ok(data=removed, message="즐겨찾기 삭제 성공")
+
+
+@router.put(
+    "/password",
+    response_model=APIResponse[PasswordChangeResponse],
+    summary="비밀번호 변경",
+    description="로그인한 사용자의 비밀번호를 변경합니다. 일반 가입 사용자만 가능합니다.",
+    responses={
+        200: {"description": "비밀번호 변경 성공"},
+        400: {"description": "유효하지 않은 요청 또는 소셜 로그인 사용자"},
+        401: {"description": "현재 비밀번호 불일치"},
+        404: {"description": "사용자를 찾을 수 없음"},
+        429: {"description": "요청 한도 초과"}
+    }
+)
+async def change_password(
+    request_obj: Request,  # Rate Limiting 필수
+    password_change_request: PasswordChangeRequest,
+    current_user: TokenPayload = Depends(get_current_user),
+    user_service: UserService = Depends(get_user_service)
+) -> APIResponse[PasswordChangeResponse]:
+    """
+    비밀번호 변경
+
+    - 일반 가입 사용자만 가능 (소셜 로그인 사용자는 불가)
+    - 현재 비밀번호 확인 필수
+    - 새 비밀번호는 8자 이상
+    """
+    log = get_logger_with_request_id()
+    user_id = current_user.sub
+    log.info("API: Password change request", user_id=user_id)
+
+    verify_user_role(current_user)
+
+    result = await user_service.change_password(user_id, password_change_request)
+
+    log.info("API: Password changed successfully", user_id=user_id)
+
+    return ok(data=result, message="비밀번호가 성공적으로 변경되었습니다.")
 
 
 @router.post(

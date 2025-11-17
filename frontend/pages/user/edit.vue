@@ -21,7 +21,7 @@
               <div class="form-input-readonly">
                 <input
                   type="text"
-                  value="user123@example.com"
+                  :value="userId"
                   readonly
                   class="readonly-input"
                 >
@@ -51,17 +51,20 @@
               </div>
             </div>
 
-            <!-- 닉네임 (변경 가능) -->
+            <!-- 닉네임 (변경 불가) -->
             <div class="form-group">
-              <label class="form-label">닉네임</label>
-              <input
-                type="text"
-                value="김사주"
-                class="form-input"
-                placeholder="닉네임을 입력하세요"
-                maxlength="20"
-              >
-              <div class="form-help">최대 20자</div>
+              <label class="form-label">
+                닉네임<span class="required">*</span>
+              </label>
+              <div class="form-input-readonly">
+                <input
+                  type="text"
+                  :value="nickname"
+                  readonly
+                  class="readonly-input"
+                >
+                <span class="readonly-badge">변경 불가</span>
+              </div>
             </div>
 
             <!-- 휴대폰 번호 (변경 불가) -->
@@ -72,7 +75,7 @@
               <div class="form-input-readonly">
                 <input
                   type="tel"
-                  value="010-1234-5678"
+                  :value="phone"
                   readonly
                   class="readonly-input"
                 >
@@ -113,6 +116,7 @@
           <div class="form-group">
             <label class="form-label">현재 비밀번호</label>
             <input
+              v-model="currentPassword"
               type="password"
               class="form-input"
               placeholder="현재 비밀번호를 입력하세요"
@@ -121,14 +125,16 @@
           <div class="form-group">
             <label class="form-label">새 비밀번호</label>
             <input
+              v-model="newPassword"
               type="password"
               class="form-input"
-              placeholder="새 비밀번호를 입력하세요"
+              placeholder="새 비밀번호를 입력하세요 (8자 이상)"
             >
           </div>
           <div class="form-group">
             <label class="form-label">새 비밀번호 확인</label>
             <input
+              v-model="newPasswordConfirm"
               type="password"
               class="form-input"
               placeholder="새 비밀번호를 다시 입력하세요"
@@ -136,8 +142,10 @@
           </div>
         </div>
         <div class="modal-footer">
-          <button class="modal-cancel-btn" @click="closePasswordModal">취소</button>
-          <button class="modal-save-btn">변경</button>
+          <button class="modal-cancel-btn" @click="closePasswordModal" :disabled="isChangingPassword">취소</button>
+          <button class="modal-save-btn" @click="handlePasswordChange" :disabled="isChangingPassword">
+            {{ isChangingPassword ? '변경 중...' : '변경' }}
+          </button>
         </div>
       </div>
     </div>
@@ -251,38 +259,111 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuth } from '~/composables/auth/useAuth'
 import { useUserQueries } from '~/composables/api/useUserQueries'
-import { push } from 'notivue'
+import auth from '~/middleware/auth'
+
+// 인증 가드 설정
+definePageMeta({
+  middleware: [auth],
+  requiresAuth: true,
+  requireRole: 'user'
+})
 
 const router = useRouter()
-const { logout } = useAuth()
-const { useWithdrawUser } = useUserQueries()
+const { logout, userSession } = useAuth()
+const { useWithdrawUser, useChangePassword, useUserMypage } = useUserQueries()
+
+// 사용자 정보 조회
+const { data: mypage, isLoading: isLoadingUserInfo } = useUserMypage()
+
+// 사용자 정보
+const userId = computed(() => mypage.value?.user_info.user_id || userSession.value?.user_id || '')
+const nickname = computed(() => mypage.value?.user_info.nickname || userSession.value?.nickname || '')
+const phone = computed(() => mypage.value?.user_info.phone || '')
 
 // 모달 상태
 const showPasswordModal = ref(false)
 const showWithdrawalModal = ref(false)
 const showFinalConfirmModal = ref(false)
 
+// 비밀번호 변경 폼 상태
+const currentPassword = ref('')
+const newPassword = ref('')
+const newPasswordConfirm = ref('')
+
 // 회원탈퇴 관련 상태
 const withdrawalPassword = ref('')
 const agreedToTerms = ref(false)
 const showPassword = ref(false)
 
-// 회원탈퇴 mutation
+// Mutations
+const { mutateAsync: changePassword, isPending: isChangingPassword } = useChangePassword()
 const { mutateAsync: withdrawUser, isPending: isWithdrawing } = useWithdrawUser()
 
 // 비밀번호 변경 모달
 const openPasswordModal = () => {
   showPasswordModal.value = true
   document.body.style.overflow = 'hidden'
+  // 폼 초기화
+  currentPassword.value = ''
+  newPassword.value = ''
+  newPasswordConfirm.value = ''
 }
 
 const closePasswordModal = () => {
   showPasswordModal.value = false
   document.body.style.overflow = 'auto'
+  // 폼 초기화
+  currentPassword.value = ''
+  newPassword.value = ''
+  newPasswordConfirm.value = ''
+}
+
+// 비밀번호 변경 처리
+const handlePasswordChange = async () => {
+  // 유효성 검사
+  if (!currentPassword.value) {
+    alert('현재 비밀번호를 입력해주세요.')
+    return
+  }
+
+  if (!newPassword.value) {
+    alert('새 비밀번호를 입력해주세요.')
+    return
+  }
+
+  if (newPassword.value.length < 8) {
+    alert('새 비밀번호는 8자 이상이어야 합니다.')
+    return
+  }
+
+  if (newPassword.value !== newPasswordConfirm.value) {
+    alert('새 비밀번호가 일치하지 않습니다.')
+    return
+  }
+
+  try {
+    // 비밀번호 변경 API 호출
+    await changePassword({
+      current_password: currentPassword.value,
+      new_password: newPassword.value
+    })
+
+    // 모달 닫기
+    closePasswordModal()
+
+    // 성공 알림
+    alert('비밀번호가 성공적으로 변경되었습니다.')
+  } catch (error: any) {
+    console.error('비밀번호 변경 실패:', error)
+
+    // 에러 메시지 표시
+    const errorMessage = error?.message || '비밀번호 변경 중 오류가 발생했습니다.'
+    alert('비밀번호 변경 실패\n\n' + errorMessage)
+  }
 }
 
 // 1단계: 회원탈퇴 모달 (비밀번호 입력 + 유의사항)
@@ -330,31 +411,20 @@ const handleWithdrawal = async () => {
     document.body.style.overflow = 'auto'
 
     // 성공 알림
-    push.success({
-      title: '회원탈퇴 완료',
-      message: '회원탈퇴가 완료되었습니다. 그동안 이용해 주셔서 감사합니다.',
-      duration: 3000
-    })
+    alert('회원탈퇴가 완료되었습니다.\n그동안 이용해 주셔서 감사합니다.')
 
     // 로그아웃 처리
     await logout()
 
     // 로그인 페이지로 이동
-    setTimeout(() => {
-      router.push('/login')
-    }, 1000)
+    router.push('/login')
 
   } catch (error: any) {
     console.error('회원탈퇴 실패:', error)
 
     // 에러 메시지 표시
     const errorMessage = error?.message || '회원탈퇴 처리 중 오류가 발생했습니다.'
-
-    push.error({
-      title: '회원탈퇴 실패',
-      message: errorMessage,
-      duration: 5000
-    })
+    alert('회원탈퇴 실패\n\n' + errorMessage)
   }
 }
 </script>
