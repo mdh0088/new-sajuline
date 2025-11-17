@@ -118,8 +118,8 @@
   border-radius: 16px;
   padding: 20px;
   display: flex;
-  justify-content: space-between;
-  align-items: center;
+  flex-direction: column;
+  gap: 8px;
   transition: all 0.3s ease;
 }
 
@@ -128,18 +128,19 @@
   transform: translateY(-2px);
 }
 
-.trans-left {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  padding-left: 12px;
-  flex: 1;
-  max-width: calc(100% - 140px);
-}
-
 .trans-date {
   font-size: 13px;
   color: rgba(255, 255, 255, 0.6);
+  padding-left: 12px;
+}
+
+.trans-bottom {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  padding-left: 12px;
+  padding-right: 12px;
 }
 
 .trans-desc {
@@ -162,15 +163,6 @@
   font-size: 16px;
 }
 
-.trans-right {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-  gap: 6px;
-  min-width: 120px;
-  margin-left: 16px;
-}
-
 .trans-amount {
   font-size: 17px;
   font-weight: 700;
@@ -190,32 +182,29 @@
 
 /* 반응형 디자인 */
 @media (max-width: 768px) {
-  .transaction-item {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 12px;
-  }
-
-  .trans-right {
-    align-items: flex-start;
-  }
-
-  .trans-left {
-    max-width: 100%;
-  }
-
-  .date-search {
-    flex-direction: column;
-    gap: 12px;
-  }
-
   .date-input-wrapper {
-    width: 100%;
+    flex: 1;
+    min-width: 0;
+  }
+
+  .date-input {
+    font-size: 12px;
+    padding: 8px 6px;
   }
 
   .search-btn {
-    width: 100%;
-    justify-self: stretch;
+    padding: 8px 10px;
+    font-size: 13px;
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+
+  .trans-desc {
+    font-size: 14px;
+  }
+
+  .trans-amount {
+    font-size: 16px;
   }
 }
 
