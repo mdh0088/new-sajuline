@@ -11,8 +11,8 @@
 
       <!-- 오른쪽 액션 영역 -->
       <div class="header-actions">
-        <!-- 포인트 표시 -->
-        <div v-if="isAuthenticated" class="coin-balance" @click="$router.push('/point')">
+        <!-- 포인트 표시 (사용자만) -->
+        <div v-if="isAuthenticated && isUser" class="coin-balance" @click="$router.push('/point')">
           <span>💰</span>
           <span>{{ formattedUserPoints }}P</span>
         </div>
@@ -42,22 +42,36 @@ import { computed, onMounted, ref, watch } from 'vue'
 import { useAuth } from '~/composables/auth/useAuth'
 import { useAuthQueries } from '~/composables/api/useAuthQueries'
 import { useUserQueries } from '~/composables/api/useUserQueries'
+import { useCounselorQueries } from '~/composables/api/useCounselorQueries'
 import { useRoute, useRouter } from 'vue-router'
 
 const { isAuthenticated, isUser, isCounselor, logout, setRole } = useAuth()
 const { useWhoAmI } = useAuthQueries()
 const { useUserMypage } = useUserQueries()
+const { useMypage: useCounselorMypage } = useCounselorQueries()
 const { refetch } = useWhoAmI()
 const route = useRoute()
 const router = useRouter()
 
-// ✅ Computed를 명시적으로 생성하여 Vue 반응성 보장
-const isAuthenticatedComputed = computed(() => isAuthenticated.value)
+// ✅ 역할별 인증 상태 computed
+const isUserAuthenticated = computed(() => isAuthenticated.value && isUser.value)
+const isCounselorAuthenticated = computed(() => isAuthenticated.value && isCounselor.value)
 
-// 마이페이지 데이터 조회 (포인트 포함)
-// ✅ enabled 옵션에 computed 전달 → Vue Query가 반응성 감지
-const { data: mypageData, refetch: refetchMypage } = useUserMypage({
-  enabled: isAuthenticatedComputed
+// ✅ 사용자 마이페이지 쿼리 (사용자일 때만 활성화)
+const { data: userMypageData, refetch: refetchUserMypage } = useUserMypage({
+  enabled: isUserAuthenticated
+})
+
+// ✅ 상담사 마이페이지 쿼리 (상담사일 때만 활성화)
+const { data: counselorMypageData, refetch: refetchCounselorMypage } = useCounselorMypage({
+  enabled: isCounselorAuthenticated
+})
+
+// ✅ 통합 마이페이지 데이터 (역할에 따라 자동 선택)
+const mypageData = computed(() => {
+  if (isUser.value) return userMypageData.value
+  if (isCounselor.value) return counselorMypageData.value
+  return null
 })
 
 // 사용자 포인트
@@ -114,8 +128,15 @@ watch(isAuthenticated, async (newValue, oldValue) => {
         setRole(result.data.role)
       }
 
-      // mypage refetch
-      await refetchMypage()
+      // ✅ 역할별 마이페이지 refetch
+      if (isUser.value) {
+        await refetchUserMypage()
+        console.log('✅ [AppHeader] User mypage refreshed')
+      } else if (isCounselor.value) {
+        await refetchCounselorMypage()
+        console.log('✅ [AppHeader] Counselor mypage refreshed')
+      }
+
       console.log('✅ [AppHeader] Data refreshed successfully')
     } catch (error) {
       console.error('❌ [AppHeader] Failed to refresh data:', error)
