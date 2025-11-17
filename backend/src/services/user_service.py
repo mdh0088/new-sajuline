@@ -21,6 +21,8 @@ from src.schemas.user_schema import (
     FindIdResponse,
     FindPasswordRequest,
     FindPasswordResponse,
+    WithdrawRequest,
+    UserOutResponse,
 )
 from src.common.utils.email_service import email_service
 from src.repositories.user_repository import UserRepository
@@ -619,3 +621,110 @@ class UserService:
             email=masked_email,
             message=f"임시 비밀번호가 {masked_email}로 전송되었습니다. 로그인 후 비밀번호를 변경해주세요."
         )
+
+    async def withdraw_user(self, user_id: str, request: WithdrawRequest) -> UserOutResponse:
+        """
+        회원 탈퇴 처리
+
+        프로세스:
+        1. 사용자 존재 및 상태 확인
+        2. 비밀번호 검증 (일반 가입자만)
+        3. t_user_out 테이블에 탈퇴 정보 기록
+        4. t_user 상태를 WITHDRAWN으로 변경
+        5. tm60_users에서 전화번호로 삭제
+
+        Args:
+            user_id: 탈퇴 요청 사용자 ID (TokenPayload에서 추출)
+            request: 탈퇴 요청 데이터 (비밀번호 포함, 소셜 로그인은 null)
+
+        Returns:
+            UserOutResponse: 탈퇴 정보
+
+        Raises:
+            NotFoundError: 사용자를 찾을 수 없음
+            AuthenticationError: 비밀번호 불일치
+            ValidationError: 탈퇴 처리 실패
+        """
+        log = get_logger_with_request_id()
+        log.info("Starting user withdrawal process", user_id=user_id)
+
+        # 1. 사용자 존재 확인
+        user = await self.user_repo.get_by_id(user_id)
+        if not user:
+            log.warning("User not found for withdrawal", user_id=user_id)
+            raise NotFoundError("사용자를 찾을 수 없습니다.")
+
+        # 이미 탈퇴한 사용자인지 확인
+        if user.user_status == UserStatus.WITHDRAWN:
+            log.warning("User already withdrawn", user_id=user_id)
+            raise ValidationError("이미 탈퇴한 사용자입니다.")
+
+        # 2. 비밀번호 검증 (일반 가입자만)
+        if user.join_type == JoinType.COMMON:
+            if not request.password:
+                log.warning("Password required for common user withdrawal", user_id=user_id)
+                raise ValidationError("비밀번호를 입력해주세요.")
+
+            if not user.password_hash or not self.auth_service.verify_password(request.password, user.password_hash):
+                log.warning("Password verification failed for withdrawal", user_id=user_id)
+                raise AuthenticationError("비밀번호가 일치하지 않습니다.")
+
+            log.info("Password verified for common user withdrawal", user_id=user_id)
+        else:
+            log.info("Social login user withdrawal (no password verification)",
+                    user_id=user_id,
+                    join_type=user.join_type.value)
+
+        # 3. 탈퇴 처리 (MariaDB → MSSQL 순서, 실패시 보상 트랜잭션)
+        user_out = None
+        try:
+            # 3-1. t_user_out에 탈퇴 정보 기록
+            user_out = await self.user_repo.create_user_out(
+                user_id=user.user_id,
+                nickname=user.nickname,
+                phone=user.phone,
+                email=user.email
+            )
+            log.info("User out record created", user_id=user_id, out_idx=user_out.out_idx)
+
+            # 3-2. t_user 상태를 WITHDRAWN으로 변경
+            update_success = await self.user_repo.update_user_status_to_withdrawn(user_id)
+            if not update_success:
+                log.error("Failed to update user status to WITHDRAWN", user_id=user_id)
+                raise ValidationError("회원 탈퇴 처리 중 오류가 발생했습니다.")
+
+            log.info("User status updated to WITHDRAWN", user_id=user_id)
+
+            # 3-3. MariaDB 커밋
+            await self.user_repo.db.commit()
+            log.info("MariaDB withdrawal completed and committed", user_id=user_id)
+
+            # 3-4. tm60_users에서 전화번호로 삭제 (MSSQL)
+            if not self.tm60_users_service:
+                raise ValidationError("외부 시스템 연동 서비스가 초기화되지 않았습니다.")
+
+            tm60_delete_success = await self.tm60_users_service.delete_user_by_phone(user.phone)
+            if not tm60_delete_success:
+                log.warning("TM60 user deletion failed, but MariaDB withdrawal succeeded",
+                          user_id=user_id,
+                          phone=user.phone)
+                # MSSQL 삭제 실패해도 MariaDB 탈퇴는 성공으로 처리 (보상 트랜잭션 없음)
+                # 이유: 사용자는 이미 탈퇴 처리됨, MSSQL은 별도 정리 가능
+            else:
+                log.info("TM60 user deleted successfully", user_id=user_id, phone=user.phone)
+
+        except (NotFoundError, AuthenticationError, ValidationError):
+            # 이미 알려진 예외는 그대로 재발생
+            await self.user_repo.db.rollback()
+            raise
+        except Exception as e:
+            # 기타 예외시 롤백
+            await self.user_repo.db.rollback()
+            log.error("User withdrawal failed", user_id=user_id, error=str(e))
+            raise ValidationError(f"회원 탈퇴 처리 중 오류가 발생했습니다: {str(e)}")
+
+        log.info("User withdrawal completed successfully",
+                user_id=user_id,
+                out_idx=user_out.out_idx)
+
+        return UserOutResponse.model_validate(user_out)

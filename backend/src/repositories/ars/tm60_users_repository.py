@@ -217,3 +217,39 @@ class Tm60UsersRepository:
         except Exception as e:
             log.warning("TM60 user points query failed", user_id=user_id, error=str(e))
             raise BaseAppException(f"ARS 시스템 포인트 조회 실패: {str(e)}", status_code=500)
+
+    @logger.catch(reraise=True)
+    async def delete_by_phone(self, phone: str) -> bool:
+        """전화번호로 TM60 사용자 삭제"""
+        log = get_logger_with_request_id()
+        log.info("Deleting TM60 user by phone", phone=phone)
+
+        def _sync_delete_by_phone() -> bool:
+            """동기 MSSQL 삭제"""
+            try:
+                # 사용자 조회
+                tm60_user = self.mssql_session.query(Tm60Users).filter(Tm60Users.u_tel == phone).first()
+                if not tm60_user:
+                    log.warning("TM60 user not found for deletion", phone=phone)
+                    return False
+
+                # 삭제 실행
+                self.mssql_session.delete(tm60_user)
+                self.mssql_session.flush()
+                self.mssql_session.commit()
+
+                log.info("TM60 user deleted successfully", phone=phone, tm60_idx=tm60_user.idx)
+                return True
+
+            except Exception as e:
+                log.warning("TM60 user deletion failed", phone=phone, error=str(e))
+                self.mssql_session.rollback()
+                raise BaseAppException(f"ARS 시스템 사용자 삭제 실패: {str(e)}", status_code=500)
+
+        try:
+            return await asyncio.to_thread(_sync_delete_by_phone)
+        except BaseAppException:
+            raise
+        except Exception as e:
+            log.warning("TM60 user deletion failed", phone=phone, error=str(e))
+            raise BaseAppException(f"ARS 시스템 사용자 삭제 실패: {str(e)}", status_code=500)

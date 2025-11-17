@@ -1249,3 +1249,16 @@ SELECT
     REGIST_DATE,
     UPDATE_DATE
 FROM TBL_MILEAGE_PRODUCT;
+
+
+insert into t_user_out
+(
+  user_id, nickname, phone, email, created_at
+)
+select
+	USER_ID,
+	NICK_NAME,
+	PHONE,
+	EMAIL,
+	REGIST_DATE 
+from TBL_USER_EX;

@@ -44,7 +44,8 @@ from src.schemas.consultation_review_schema import (
 )
 from src.schemas.user_schema import (
     UserResponse, UserSignup, UserMypageResponse, SearchType, OrderType,
-    FindIdRequest, FindIdResponse, FindPasswordRequest, FindPasswordResponse
+    FindIdRequest, FindIdResponse, FindPasswordRequest, FindPasswordResponse,
+    WithdrawRequest, UserOutResponse
 )
 from src.common.utils.auth_utils import verify_user_role
 from src.schemas.user_bookmark_schema import UserBookmarkResponse
@@ -1123,6 +1124,50 @@ async def remove_bookmark(
     verify_user_role(current_user)
     removed = await bookmark_service.remove_bookmark(current_user.sub, counselor_id)
     return ok(data=removed, message="즐겨찾기 삭제 성공")
+
+
+@router.post(
+    "/withdraw",
+    response_model=APIResponse[UserOutResponse],
+    summary="회원 탈퇴",
+    description="사용자 회원 탈퇴를 처리합니다. 일반 가입자는 비밀번호 확인이 필요하며, 소셜 로그인 사용자는 비밀번호 없이 탈퇴 가능합니다.",
+    responses={
+        200: {"description": "회원 탈퇴 성공"},
+        400: {"description": "유효하지 않은 요청 또는 이미 탈퇴한 사용자"},
+        401: {"description": "비밀번호 불일치"},
+        404: {"description": "사용자를 찾을 수 없음"}
+    }
+)
+async def withdraw_user(
+    request: WithdrawRequest,
+    current_user: TokenPayload = Depends(get_current_user),
+    user_service: UserService = Depends(get_user_service)
+) -> APIResponse[UserOutResponse]:
+    """
+    회원 탈퇴 처리
+
+    - 일반 가입자: 비밀번호 확인 필수
+    - 소셜 로그인: 비밀번호 불필요
+    - 탈퇴 정보는 t_user_out에 기록됨
+    - 사용자 상태는 WITHDRAWN으로 변경됨
+    - ARS 시스템(tm60_users)에서도 삭제됨
+
+    프론트엔드는 응답 수신 후 로그아웃 처리 필요
+    """
+    log = get_logger_with_request_id()
+    user_id = current_user.sub
+
+    verify_user_role(current_user)
+
+    log.info("API: User withdrawal request", user_id=user_id)
+
+    result = await user_service.withdraw_user(user_id, request)
+
+    log.info("API: User withdrawal completed successfully",
+            user_id=user_id,
+            out_idx=result.out_idx)
+
+    return ok(data=result, message="회원 탈퇴가 완료되었습니다. 그동안 이용해 주셔서 감사합니다.")
 
 
 # ===========================
