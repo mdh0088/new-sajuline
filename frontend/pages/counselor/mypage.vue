@@ -61,13 +61,13 @@
                         <span v-else>{{ currentMonthHours }}</span>
                       </div>
                     </div>
-                    <div>
+                    <!-- <div>
                       <div class="text-xs text-white/60">상담 포인트</div>
                       <div class="text-lg font-extrabold text-yellow-400">
                         <span v-if="isFetchingMonthly">...</span>
                         <span v-else>{{ currentMonthPoints }}P</span>
                       </div>
-                    </div>
+                    </div> -->
                   </div>
                 </div>
                 
@@ -191,7 +191,50 @@
                       </div>
                     </div>
                     <div class="review-content">
-                      {{ r.content || '내용 없음' }}
+                      <div class="review-text">
+                        {{ r.content || '내용 없음' }}
+                      </div>
+                      <!-- 답변 내용 표시 -->
+                      <div v-if="r.counselor_reply" class="reply-section">
+                        <div class="reply-divider"></div>
+                        <div class="reply-author">{{ nickname }} 상담사</div>
+                        <div class="reply-text">{{ r.counselor_reply }}</div>
+                        <div v-if="r.counselor_replied_at" class="reply-date">답변일: {{ formatDate(r.counselor_replied_at) }}</div>
+                      </div>
+                      <!-- 답변 작성 폼 -->
+                      <div v-else class="reply-action">
+                        <button
+                          class="reply-toggle-btn"
+                          @click="toggleReviewReplyForm(r.review_id)"
+                        >
+                          <span v-if="openReviewReplyFormId === r.review_id">답변 닫기 ▲</span>
+                          <span v-else>답변 작성하기 ▼</span>
+                        </button>
+                        <div v-if="openReviewReplyFormId === r.review_id" class="reply-form">
+                          <div class="reply-divider"></div>
+                          <textarea
+                            v-model="reviewReplyContent[r.review_id]"
+                            rows="4"
+                            class="reply-textarea"
+                            placeholder="답변 내용을 입력해주세요..."
+                          />
+                          <div class="reply-form-actions">
+                            <button
+                              class="reply-submit-btn"
+                              @click="submitReviewReply(r.review_id)"
+                              :disabled="!reviewReplyContent[r.review_id] || isSubmittingReviewReply"
+                            >
+                              {{ isSubmittingReviewReply ? '답변 등록 중...' : '답변 등록' }}
+                            </button>
+                            <button
+                              class="reply-cancel-btn"
+                              @click="cancelReviewReply(r.review_id)"
+                            >
+                              취소
+                            </button>
+                          </div>
+                        </div>
+                      </div>
                     </div>
                   </div>
                 </template>
@@ -403,7 +446,8 @@ const {
   useCounselorReviewsCount,
   useCounselorUserInquiriesCount,
   useCounselorAdminInquiriesCount,
-  replyToUserInquiry
+  replyToUserInquiry,
+  replyToReview
 } = useCounselorQueries()
 const { data: mypage } = useMypage()
 
@@ -586,7 +630,7 @@ const toggleNotice = (noticeId: number) => {
 
 const reviewPage = ref(1)
 const reviewLimit = ref(10)
-const { data: reviewData, isFetching: isReviewFetching, error: reviewQueryError } = useCounselorReviews(
+const { data: reviewData, isFetching: isReviewFetching, error: reviewQueryError, refetch: refetchReviews } = useCounselorReviews(
   reviewPage,
   reviewLimit,
   true,
@@ -665,6 +709,57 @@ const submitReply = async (inquiryId: number) => {
     notifyError(error?.message || '답변 등록에 실패했습니다.')
   } finally {
     isSubmittingReply.value = false
+  }
+}
+
+// 고객 후기 답변 작성 관련 상태
+const openReviewReplyFormId = ref<number | null>(null)
+const reviewReplyContent = ref<Record<number, string>>({})
+const isSubmittingReviewReply = ref(false)
+
+// 고객 후기 답변 폼 토글
+const toggleReviewReplyForm = (reviewId: number) => {
+  if (openReviewReplyFormId.value === reviewId) {
+    openReviewReplyFormId.value = null
+  } else {
+    openReviewReplyFormId.value = reviewId
+    if (!reviewReplyContent.value[reviewId]) {
+      reviewReplyContent.value[reviewId] = ''
+    }
+  }
+}
+
+// 고객 후기 답변 취소
+const cancelReviewReply = (reviewId: number) => {
+  openReviewReplyFormId.value = null
+  reviewReplyContent.value[reviewId] = ''
+}
+
+// 고객 후기 답변 제출
+const submitReviewReply = async (reviewId: number) => {
+  const content = reviewReplyContent.value[reviewId]
+  if (!content || isSubmittingReviewReply.value) return
+
+  try {
+    isSubmittingReviewReply.value = true
+
+    // API 호출
+    await replyToReview(reviewId, content)
+
+    // 성공 알림
+    notifySuccess('답변이 등록되었습니다.')
+
+    // 폼 닫기 및 초기화
+    openReviewReplyFormId.value = null
+    reviewReplyContent.value[reviewId] = ''
+
+    // 목록 새로고침
+    await refetchReviews()
+
+  } catch (error: any) {
+    notifyError(error?.message || '답변 등록에 실패했습니다.')
+  } finally {
+    isSubmittingReviewReply.value = false
   }
 }
 
