@@ -134,6 +134,12 @@ class Settings(BaseSettings):
     google_email_id: Optional[str] = Field(None, env="GOOGLE_EMAIL_ID")
     google_email_password: Optional[str] = Field(None, env="GOOGLE_EMAIL_PASSWORD")
     
+    # kakao 알림톡 설정
+    kakao_alarm_url = Optional[str] = Field(None, env="KAKAO_ALARM_URL")
+    kakao_alarm_key = Optional[str] = Field(None, env="KAKAO_ALARM_KEY")
+    kakao_alarm_site_id = Optional[str] = Field(None, env="KAKAO_ALARM_SITE_ID")
+    
+    
     class Config:
         # 환경에 따라 자동으로 env 파일 선택
         env_file = ".env.development" if os.getenv("ENVIRONMENT", "development") == "development" else ".env.production"
