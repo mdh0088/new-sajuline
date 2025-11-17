@@ -867,3 +867,41 @@
 }
 
 /* 폰트 크기는 typography.css에서 통합 관리됩니다 */
+
+/* 400px 미만 화면 최적화 */
+@media (max-width: 400px) {
+  .inquiry-page-title {
+    font-size: 18px !important;
+  }
+
+  .inquiry-form-title {
+    font-size: 16px !important;
+  }
+
+  .inquiry-label {
+    font-size: 13px !important;
+  }
+
+  .inquiry-input,
+  .inquiry-textarea,
+  .inquiry-select {
+    font-size: 14px !important;
+  }
+
+  .inquiry-submit-btn {
+    font-size: 14px !important;
+    padding: 12px !important;
+  }
+
+  .inquiry-list-item-title {
+    font-size: 14px !important;
+  }
+
+  .inquiry-list-item-date {
+    font-size: 12px !important;
+  }
+
+  .inquiry-detail-content {
+    font-size: 13px !important;
+  }
+}

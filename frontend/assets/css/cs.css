@@ -63,7 +63,7 @@
 }
 
 .cs-hours-time {
-  font-size: 16px;
+  font-size: 15px;
   font-weight: 700;
   color: #ffffff;
 }
@@ -96,7 +96,7 @@
 }
 
 .cs-phone-number {
-  font-size: 18px;
+  font-size: 16px;
   font-weight: 700;
   color: #ffffff;
   letter-spacing: 1px;
@@ -139,7 +139,7 @@
   border: none;
   border-radius: 12px;
   color: white;
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 600;
   cursor: pointer;
   transition: all 0.3s ease;
@@ -316,7 +316,7 @@
 }
 
 .cs-category-name {
-  font-size: 16px;
+  font-size: 15px;
   font-weight: 600;
   color: #ffffff;
   margin-bottom: 4px;
@@ -368,7 +368,7 @@
 
 .cs-faq-text {
   flex: 1;
-  font-size: 15px;
+  font-size: 14px;
   font-weight: 500;
 }
 
@@ -642,3 +642,39 @@
 }
 
 /* 폰트 크기는 typography.css에서 통합 관리됩니다 */
+
+/* 400px 미만 화면 최적화 */
+@media (max-width: 400px) {
+  .cs-page-title {
+    font-size: 18px !important;
+  }
+
+  .cs-section-title {
+    font-size: 16px !important;
+  }
+
+  .cs-category-btn {
+    font-size: 12px !important;
+    padding: 8px 12px !important;
+  }
+
+  .cs-item-title {
+    font-size: 14px !important;
+  }
+
+  .cs-item-content {
+    font-size: 13px !important;
+  }
+
+  .cs-faq-question {
+    font-size: 14px !important;
+  }
+
+  .cs-faq-answer {
+    font-size: 13px !important;
+  }
+
+  .cs-contact-info {
+    font-size: 13px !important;
+  }
+}

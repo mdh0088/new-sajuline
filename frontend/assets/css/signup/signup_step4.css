@@ -163,3 +163,36 @@
 }
 
 /* 폰트 크기는 typography.css에서 통합 관리됩니다 */
+
+/* 400px 미만 화면 최적화 */
+@media (max-width: 400px) {
+  .signup-step-title {
+    font-size: 18px !important;
+  }
+
+  .signup-form-label {
+    font-size: 13px !important;
+  }
+
+  .signup-input,
+  .signup-select {
+    font-size: 14px !important;
+  }
+
+  .signup-btn {
+    font-size: 14px !important;
+    padding: 12px !important;
+  }
+
+  .signup-helper-text {
+    font-size: 12px !important;
+  }
+
+  .signup-checkbox-label {
+    font-size: 13px !important;
+  }
+
+  .signup-error-message {
+    font-size: 12px !important;
+  }
+}

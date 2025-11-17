@@ -56,7 +56,7 @@
 /* 메인 콘텐츠 */
 .apply-main-content {
   flex: 1;
-  padding: 80px 20px 20px 20px; /* 상단 헤더 공간 추가 (60px + 20px 여백) */
+  padding: 80px 20px 120px 20px; /* 상단 헤더 공간 추가 (60px + 20px 여백), 하단 제출 버튼 공간 추가 */
   overflow-y: auto;
 }
 
@@ -335,6 +335,7 @@ textarea.apply-form-input {
   border-top: 1px solid rgba(255, 255, 255, 0.1);
   padding: 16px 20px;
   padding-bottom: calc(16px + env(safe-area-inset-bottom));
+  z-index: 10000; /* 하단 네비게이션(z-index: 9999)보다 높게 설정 */
 }
 
 .apply-submit-button {
@@ -443,7 +444,7 @@ textarea.apply-form-input {
 /* 반응형 디자인 */
 @media (max-width: 768px) {
   .apply-main-content {
-    padding: 80px 16px 100px 16px;
+    padding: 0 16px 100px 16px;
   }
 
   .apply-form-section {
@@ -457,7 +458,6 @@ textarea.apply-form-input {
   }
 
   .apply-category-grid {
-    grid-template-columns: 1fr;
     gap: 10px;
   }
 
@@ -485,7 +485,7 @@ textarea.apply-form-input {
 
 @media (max-width: 480px) {
   .apply-main-content {
-    padding: 80px 12px 100px 12px;
+    padding: 0 12px 100px 12px;
   }
 
   .apply-form-section {
@@ -538,3 +538,38 @@ textarea.apply-form-input {
 }
 
 /* 폰트 크기는 typography.css에서 통합 관리됩니다 */
+
+/* 400px 미만 화면 최적화 */
+@media (max-width: 400px) {
+  .apply-page-title {
+    font-size: 18px !important;
+  }
+
+  .apply-step-title {
+    font-size: 16px !important;
+  }
+
+  .apply-label,
+  .apply-form-label {
+    font-size: 13px !important;
+  }
+
+  .apply-input,
+  .apply-textarea {
+    font-size: 14px !important;
+  }
+
+  .apply-btn {
+    font-size: 14px !important;
+    padding: 12px !important;
+  }
+
+  .apply-section-title {
+    font-size: 16px !important;
+  }
+
+  .apply-helper-text,
+  .apply-desc {
+    font-size: 12px !important;
+  }
+}
