@@ -242,4 +242,135 @@
   gap: 20px;
 }
 
+/* 회원가입 완료 화면 */
+.completion-section {
+  text-align: center;
+  padding: 3rem 1.5rem;
+}
+
+.completion-icon {
+  font-size: 4rem;
+  margin-bottom: 1.5rem;
+}
+
+.completion-title {
+  font-size: 1.875rem;
+  font-weight: 700;
+  color: white;
+  margin-bottom: 0.75rem;
+}
+
+.completion-desc {
+  font-size: 1rem;
+  color: rgba(255, 255, 255, 0.7);
+  margin-bottom: 2rem;
+}
+
+.welcome-bonus {
+  background: linear-gradient(135deg, rgba(147, 51, 234, 0.1) 0%, rgba(124, 58, 237, 0.1) 100%);
+  border: 1px solid rgba(147, 51, 234, 0.3);
+  border-radius: 16px;
+  padding: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+.bonus-title {
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: white;
+  margin-bottom: 0.75rem;
+}
+
+.bonus-desc {
+  font-size: 0.9375rem;
+  color: rgba(255, 255, 255, 0.8);
+  line-height: 1.6;
+}
+
 /* 폰트 크기는 typography.css에서 통합 관리됩니다 */
+
+/* 400px 미만 화면 최적화 */
+@media (max-width: 400px) {
+  .main-content {
+    padding: 1.5rem 1rem !important;
+  }
+
+  .section-title {
+    font-size: 18px !important;
+    margin-bottom: 0.5rem !important;
+  }
+
+  .section-subtitle {
+    font-size: 14px !important;
+    margin-bottom: 1.5rem !important;
+  }
+
+  .input-label {
+    font-size: 13px !important;
+  }
+
+  .input-field {
+    font-size: 14px !important;
+    padding: 14px 16px !important;
+  }
+
+  .verify-button {
+    font-size: 13px !important;
+    padding: 14px 18px !important;
+  }
+
+  .prev-button,
+  .next-button {
+    font-size: 14px !important;
+    padding: 14px !important;
+  }
+
+  .help-text {
+    font-size: 11px !important;
+  }
+
+  .validation-text {
+    font-size: 13px !important;
+  }
+
+  .step-indicator {
+    margin-bottom: 1.5rem !important;
+  }
+
+  .button-group {
+    margin-top: 1.5rem !important;
+  }
+
+  .completion-section {
+    padding: 2rem 1rem !important;
+  }
+
+  .completion-icon {
+    font-size: 3rem !important;
+    margin-bottom: 1rem !important;
+  }
+
+  .completion-title {
+    font-size: 18px !important;
+    margin-bottom: 0.5rem !important;
+  }
+
+  .completion-desc {
+    font-size: 14px !important;
+    margin-bottom: 1.5rem !important;
+  }
+
+  .welcome-bonus {
+    padding: 1rem !important;
+    margin-bottom: 1.5rem !important;
+  }
+
+  .bonus-title {
+    font-size: 16px !important;
+    margin-bottom: 0.5rem !important;
+  }
+
+  .bonus-desc {
+    font-size: 13px !important;
+  }
+}

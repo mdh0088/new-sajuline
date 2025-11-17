@@ -1,7 +1,7 @@
 <template>
   <div class="min-h-screen bg-slate-950 text-white">
     <!-- 메인 콘텐츠 -->
-    <main class="pt-[60px] pb-24">
+    <main class="pb-24">
       <section class="px-5 py-6">
         <!-- 문의 작성 폼 -->
         <div class="inquiry-write-container">

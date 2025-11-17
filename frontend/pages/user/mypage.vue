@@ -277,7 +277,7 @@ const goEdit = () => router.push('/user/edit')
 .menu-item:last-child{border-bottom:none}
 .menu-left{display:flex;align-items:center;gap:16px}
 .menu-icon{width:40px;height:40px;background:rgba(147,51,234,.1);border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:20px}
-.menu-title{font-size:16px;font-weight:500;margin-bottom:2px}
+.menu-title{font-size:14px;font-weight:500;margin-bottom:2px}
 .menu-desc{font-size:13px;color:rgba(255,255,255,.6)}
 .menu-right{color:rgba(255,255,255,.3);font-size:14px}
 .point-card{background:linear-gradient(135deg, rgba(147,51,234,.1) 0%, rgba(124,58,237,.05) 100%);border:1px solid rgba(147,51,234,.2);border-radius:20px;padding:16px;text-decoration:none;color:inherit}

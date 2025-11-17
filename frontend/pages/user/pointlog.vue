@@ -1,7 +1,7 @@
 <template>
   <div class="min-h-screen bg-slate-950 text-white">
 
-    <main class="pt-[60px] pb-24">
+    <main class="pb-24">
       <!-- 검색 영역 -->
       <div class="search-section mx-5 mt-5">
         <div class="search-title">날짜 검색</div>

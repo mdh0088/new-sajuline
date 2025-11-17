@@ -5,21 +5,21 @@
       <div class="max-w-md mx-auto">
         <!-- 히어로 섹션 -->
         <div class="text-center mb-10">
-          <div class="text-6xl mb-4">🔍</div>
-          <h2 class="text-3xl font-bold mb-3">아이디 찾기</h2>
-          <p class="text-white/70 text-base">
+          <div class="auth-hero-emoji">🔍</div>
+          <h2 class="auth-page-title">아이디 찾기</h2>
+          <p class="auth-subtitle">
             본인인증을 통해<br />
             가입하신 아이디를 찾아드립니다
           </p>
         </div>
 
         <!-- 본인인증 안내 -->
-        <div class="mb-8 p-6 bg-white/5 border border-white/10 rounded-xl">
-          <div class="flex items-start gap-3 mb-4">
-            <div class="text-2xl">📱</div>
+        <div class="auth-info-box">
+          <div class="auth-info-header">
+            <div class="auth-info-icon">📱</div>
             <div>
-              <h3 class="text-lg font-semibold mb-2">휴대폰 본인인증</h3>
-              <p class="text-white/60 text-sm leading-relaxed">
+              <h3 class="auth-info-title">휴대폰 본인인증</h3>
+              <p class="auth-info-desc">
                 휴대폰 본인인증을 진행하시면<br />
                 해당 번호로 가입된 아이디를 확인하실 수 있습니다
               </p>
@@ -29,7 +29,7 @@
           <!-- 본인인증 버튼 -->
           <button
             type="button"
-            class="w-full py-4 bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800 text-white font-bold rounded-xl transition-all transform hover:scale-[1.02] active:scale-98 shadow-lg shadow-purple-500/25"
+            class="auth-btn-verify"
             :disabled="isVerifying"
             @click="startVerification"
           >
@@ -39,37 +39,32 @@
         </div>
 
         <!-- 결과 표시 영역 (본인인증 후 표시) -->
-        <div v-if="foundUserId" class="mb-8 p-6 bg-green-500/10 border border-green-500/30 rounded-xl">
-          <div class="text-center">
-            <div class="text-3xl mb-3">✅</div>
-            <h3 class="text-lg font-semibold mb-3">아이디를 찾았습니다</h3>
-            <div class="p-4 bg-white/5 rounded-lg mb-4">
-              <p class="text-2xl font-bold text-purple-400">{{ foundUserId }}</p>
-            </div>
-            <p class="text-white/60 text-sm">
-              가입일: {{ foundUserDate }}
-            </p>
+        <div v-if="foundUserId" class="auth-result-box success">
+          <div class="auth-result-icon">✅</div>
+          <h3 class="auth-result-title">아이디를 찾았습니다</h3>
+          <div class="auth-result-content">
+            <p class="auth-result-value">{{ foundUserId }}</p>
           </div>
+          <p class="auth-result-meta">
+            가입일: {{ foundUserDate }}
+          </p>
         </div>
 
         <!-- 에러 메시지 표시 -->
-        <div v-if="errorMessage" class="mb-8 p-4 bg-red-500/10 border border-red-500/30 rounded-xl">
-          <div class="flex items-center gap-2 text-red-400">
+        <div v-if="errorMessage" class="auth-error-message">
+          <div class="flex items-center gap-2">
             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
             </svg>
-            <p class="text-sm">{{ errorMessage }}</p>
+            <p>{{ errorMessage }}</p>
           </div>
         </div>
 
         <!-- 하단 링크 -->
-        <div class="space-y-4">
+        <div class="auth-footer-links">
           <!-- 로그인 링크 -->
           <div class="text-center">
-            <NuxtLink
-              to="/login"
-              class="inline-flex items-center gap-2 text-purple-400 hover:text-purple-300 font-medium transition-colors"
-            >
+            <NuxtLink to="/login" class="auth-footer-link">
               <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1"></path>
               </svg>
@@ -78,10 +73,10 @@
           </div>
 
           <!-- 비밀번호 찾기 링크 -->
-          <div class="text-center pt-4 border-t border-white/10">
-            <p class="text-white/60 text-sm">
+          <div class="text-center auth-divider">
+            <p class="auth-secondary-text">
               비밀번호를 잊으셨나요?
-              <NuxtLink to="/user/find-password" class="text-purple-400 hover:text-purple-300 hover:underline font-medium ml-1">
+              <NuxtLink to="/user/find-password" class="auth-link-primary">
                 비밀번호 찾기
               </NuxtLink>
             </p>
