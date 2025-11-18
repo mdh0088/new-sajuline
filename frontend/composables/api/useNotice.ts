@@ -99,7 +99,7 @@ export const useNoticeApi = () => {
       queryKey: computed(() => ['notices', 'detail', id.value]),
       queryFn: () => noticeApi.detail(id.value),
       enabled: computed(() => !!id.value),
-      staleTime: 0,
+      staleTime: 5 * 60 * 1000, // 5분 캐시 (공지사항은 자주 변경되지 않음)
       ...options
     })
   }

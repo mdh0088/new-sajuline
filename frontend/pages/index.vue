@@ -189,13 +189,30 @@ const categoryFilters = ref(['전체', '🔥 HOT', '⭐ 베스트', '🆕 신규
 const activeStatusFilter = ref(0)
 const activeCategoryFilter = ref(0)
 
-// 상담사 목록 (API 연동)
-const items = ref<CounselorSearchItem[]>([])
+// 상담사 목록 (SSR 호환 API 연동)
 const params = ref<CounselorSearchParams>({ page: 1, limit: 10, cs_status: null, is_best: null, is_new: null, cs_specialties: null, cs_keywords: null, search_name: null })
-const totalPages = ref(1)
-const isLoading = ref(false)
 const { usePublicSearch, searchPublic } = useCounselorQueries()
-const { data: pageData } = usePublicSearch(params, { enabled: false })
+
+// SSR에서 초기 데이터 페칭 (enabled: true로 자동 실행)
+const { data: pageData, isLoading } = usePublicSearch(params, {
+  staleTime: 60 * 1000 // 1분 캐시
+})
+
+// 페이징 처리를 위한 로컬 상태
+const items = ref<CounselorSearchItem[]>([])
+const totalPages = ref(1)
+
+// pageData 변경 시 items 업데이트
+watch(pageData, (data) => {
+  if (data) {
+    if (params.value.page === 1) {
+      items.value = data.items
+    } else {
+      items.value = [...items.value, ...data.items]
+    }
+    totalPages.value = data.total_pages
+  }
+}, { immediate: true })
 
 // 기존 목업 데이터 제거
 const counselors = ref([
@@ -338,14 +355,16 @@ function setActiveStatusFilter(index: number) {
   activeStatusFilter.value = index
   const map = [null, '2', '3', '1'] as (string | null)[]
   params.value.cs_status = map[index] || null
-  resetAndFetch()
+  params.value.page = 1
+  items.value = [] // 리셋
 }
 
 function setActiveCategoryFilter(index: number) {
   activeCategoryFilter.value = index
   params.value.is_best = index === 2 ? true : null
   params.value.is_new = index === 3 ? true : null
-  resetAndFetch()
+  params.value.page = 1
+  items.value = [] // 리셋
 }
 
 // function startFreeTrial() {
@@ -363,31 +382,11 @@ function openChat() {
   // TODO: 채팅 열기 로직
 }
 
-async function resetAndFetch() {
-  items.value = []
-  params.value.page = 1
-  await fetchNext()
-}
-
-async function fetchNext() {
-  if (isLoading.value) return
-  isLoading.value = true
-  try {
-    const res = await searchPublic(params.value)
-    totalPages.value = Math.max(1, res.total_pages || 1)
-    if ((params.value.page || 1) === 1) items.value = res.items
-    else items.value = [...items.value, ...res.items]
-  } finally {
-    isLoading.value = false
-  }
-}
-
 // 무한 스크롤 센티넬 ref
 const sentinelRef = ref<HTMLElement | null>(null)
 
-onMounted(async () => {
-  await resetAndFetch()
-
+// 무한 스크롤 처리 (클라이언트에서만 실행)
+onMounted(() => {
   // IntersectionObserver 설정
   if (sentinelRef.value) {
     const io = new IntersectionObserver(async (entries) => {
@@ -396,8 +395,8 @@ onMounted(async () => {
       if (isLoading.value) return
       if ((params.value.page || 1) >= totalPages.value) return
 
+      // 다음 페이지 로드
       params.value.page = (params.value.page || 1) + 1
-      await fetchNext()
     }, {
       rootMargin: '100px' // 100px 전에 미리 로드
     })
