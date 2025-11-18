@@ -14,9 +14,8 @@ export default defineNuxtConfig({
     // 정적 페이지는 빌드 시점에 프리렌더링 (개발 환경에서는 비활성화)
     ...(process.env.NODE_ENV === 'production' ? {
       '/': { prerender: true },
-      '/about': { prerender: true },
-      '/terms': { prerender: true },
       '/privacy': { prerender: true },
+      '/provision': { prerender: true },
     } : {}),
     
     // 동적 콘텐츠는 SWR(Stale-While-Revalidate) 캐싱

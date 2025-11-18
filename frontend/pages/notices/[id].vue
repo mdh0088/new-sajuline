@@ -98,12 +98,29 @@ import { useNoticeApi } from '~/composables/api/useNotice'
 
 const route = useRoute();
 
-// 상태 관리
-const notice = ref<INoticeDetail | null>(null);
-const isLoading = ref(false);
-const error = ref(false);
+// SSR 호환 데이터 페칭 (setup 최상위에서 직접 호출)
+const noticeId = computed(() => parseInt(route.params.id as string))
 const { useNoticeDetail, useIncreaseView } = useNoticeApi()
+const { data: notice, isLoading, error: queryError } = useNoticeDetail(noticeId)
 const { mutateAsync: increaseView } = useIncreaseView()
+const error = ref(false)
+
+// 조회수 증가는 클라이언트에서만 실행 (부수효과)
+if (process.client) {
+  watch(
+    () => notice.value?.id,
+    async (id) => {
+      if (id) {
+        try {
+          await increaseView(id)
+        } catch (err) {
+          console.error('조회수 증가 실패:', err)
+        }
+      }
+    },
+    { immediate: true }
+  )
+}
 
 // 임시 목데이터 제거: 실제 API 사용
 
@@ -140,46 +157,13 @@ const formatContent = (content: string): string => {
   return formatted;
 };
 
-// 공지사항 로드
-const loadNotice = async (id: string) => {
-  isLoading.value = true;
-  error.value = false;
-
-  try {
-    const noticeId = parseInt(id)
-    const { data, refetch } = useNoticeDetail(noticeId)
-    const result = data?.value ?? (await refetch()).data
-    if (result) {
-      notice.value = result as INoticeDetail
-      await increaseView(noticeId)
-    } else {
-      error.value = true
-    }
-  } catch (err) {
-    console.error('공지사항 로드 실패:', err);
-    error.value = true;
-  } finally {
-    isLoading.value = false;
+// 에러 처리 (queryError를 error에 동기화)
+watch(queryError, (err) => {
+  if (err) {
+    error.value = true
+    console.error('공지사항 로드 실패:', err)
   }
-};
-
-// 라우트 변경 감지
-watch(
-  () => route.params.id,
-  (newId) => {
-    if (newId && typeof newId === 'string') {
-      loadNotice(newId);
-    }
-  }
-);
-
-// 컴포넌트 마운트 시 초기 로드
-onMounted(() => {
-  const id = route.params.id;
-  if (id && typeof id === 'string') {
-    loadNotice(id);
-  }
-});
+})
 
 // SEO 메타 데이터 설정
 const seoTitle = computed(() =>
