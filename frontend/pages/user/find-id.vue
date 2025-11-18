@@ -112,6 +112,7 @@ useHead({
     { name: 'description', content: '사주라인 아이디 찾기. 휴대폰 본인인증으로 가입하신 아이디를 찾으실 수 있습니다.' },
     { property: 'og:title', content: '아이디 찾기 - 사주라인' },
     { property: 'og:description', content: '사주라인 아이디 찾기. 휴대폰 본인인증으로 가입하신 아이디를 찾으실 수 있습니다.' },
+    { name: 'robots', content: 'noindex,nofollow' }
   ],
 })
 

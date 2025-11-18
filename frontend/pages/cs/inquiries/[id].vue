@@ -88,6 +88,14 @@ definePageMeta({
   middleware: 'auth'
 })
 
+// SEO 메타 데이터 설정
+useHead({
+  title: '문의 상세 - 사주라인',
+  meta: [
+    { name: 'robots', content: 'noindex,nofollow' }
+  ]
+})
+
 const router = useRouter()
 const route = useRoute()
 

@@ -43,6 +43,9 @@
       "vite/client": [
         "../node_modules/vite/client"
       ],
+      "nuxt-site-config": [
+        "../node_modules/nuxt-site-config"
+      ],
       "~": [
         ".."
       ],
@@ -97,6 +100,18 @@
       "#nuxt-scripts/*": [
         "../node_modules/@nuxt/scripts/dist/runtime/*"
       ],
+      "#sitemap": [
+        "../node_modules/@nuxtjs/sitemap/dist/runtime"
+      ],
+      "#sitemap/*": [
+        "../node_modules/@nuxtjs/sitemap/dist/runtime/*"
+      ],
+      "#site-config": [
+        "../node_modules/nuxt-site-config/dist/runtime"
+      ],
+      "#site-config/*": [
+        "../node_modules/nuxt-site-config/dist/runtime/*"
+      ],
       "#vue-router": [
         "../node_modules/vue-router"
       ],
@@ -107,7 +122,7 @@
         "./imports"
       ],
       "#app-manifest": [
-        "./manifest/meta/dev"
+        "./manifest/meta/2b362dc1-b7fd-4aa7-b4d8-0a52da7fafcc"
       ],
       "#components": [
         "./components"
@@ -169,7 +184,9 @@
     "../modules/*/shared/**/*",
     "../layers/*/shared/**/*",
     "../node_modules/runtime",
-    "../node_modules/dist/runtime"
+    "../node_modules/dist/runtime",
+    "../node_modules/nuxt-site-config/dist/runtime",
+    "../node_modules/nuxt-site-config/dist/dist/runtime"
   ],
   "exclude": [
     "../node_modules",
@@ -180,11 +197,12 @@
     "../node_modules/@nuxt/icon/node_modules",
     "../node_modules/@nuxt/fonts/node_modules",
     "../node_modules/@nuxtjs/tailwindcss/node_modules",
+    "../node_modules/nuxt-site-config/node_modules",
+    "../node_modules/@nuxtjs/sitemap/node_modules",
     "../node_modules/@pinia/nuxt/node_modules",
     "../node_modules/@vueuse/nuxt/node_modules",
     "../node_modules/@element-plus/nuxt/node_modules",
     "../node_modules/notivue/node_modules",
-    "../node_modules/@nuxt/test-utils/node_modules",
     "../node_modules/@nuxt/devtools/node_modules",
     "../node_modules/@nuxt/telemetry/node_modules",
     "../dist",
@@ -193,6 +211,8 @@
     "../layers/*/server/**/*",
     "../layers/*/modules/*/runtime/server/**/*",
     "../node_modules/runtime/server",
-    "../node_modules/dist/runtime/server"
+    "../node_modules/dist/runtime/server",
+    "../node_modules/nuxt-site-config/dist/runtime/server",
+    "../node_modules/nuxt-site-config/dist/dist/runtime/server"
   ]
 }

@@ -177,12 +177,25 @@ onMounted(async () => {
   }
 })
 
-// SEO 설정
-useHead({
+// SEO 메타 데이터 설정
+useSeoMeta({
   title: '전체 후기 - 사주라인',
-  meta: [
-    { name: 'description', content: '사주라인 전체 후기를 확인하세요. 다른 사용자들의 상담 경험을 살펴보세요.' }
-  ]
+  description: '사주라인 전체 상담 후기를 확인하세요. 실제 사용자들의 생생한 상담 경험과 평가를 통해 믿을 수 있는 상담사를 선택하세요.',
+  keywords: '사주 후기, 타로 후기, 상담 후기, 사용자 리뷰, 상담 평가, 사주라인 후기',
+  ogTitle: '전체 후기 - 사주라인',
+  ogDescription: '실제 사용자들의 생생한 상담 후기와 평가. 믿을 수 있는 상담사 선택을 도와드립니다.',
+  ogImage: 'https://sajuline.com/images/og-reviews.jpg',
+  ogUrl: 'https://sajuline.com/reviews',
+  ogType: 'website',
+  twitterCard: 'summary_large_image',
+  twitterTitle: '전체 후기 - 사주라인',
+  twitterDescription: '실제 사용자들의 생생한 상담 후기와 평가',
+  twitterImage: 'https://sajuline.com/images/og-reviews.jpg',
+  robots: 'index,follow'
+})
+
+useHead({
+  link: [{ rel: 'canonical', href: 'https://sajuline.com/reviews' }]
 })
 </script>
 

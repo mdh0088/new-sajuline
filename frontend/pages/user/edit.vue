@@ -272,6 +272,14 @@ definePageMeta({
   requireRole: 'user'
 })
 
+// SEO 메타 데이터 설정
+useHead({
+  title: '정보 수정 - 사주라인',
+  meta: [
+    { name: 'robots', content: 'noindex,nofollow' }
+  ]
+})
+
 const router = useRouter()
 const { logout, userSession } = useAuth()
 const { useWithdrawUser, useChangePassword, useUserMypage } = useUserQueries()

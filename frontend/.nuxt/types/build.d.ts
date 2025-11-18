@@ -16,8 +16,6 @@ declare module "#build/image-options.mjs";
 declare module "#build/element-plus-injection.plugin.mjs";
 declare module "#build/element-plus-teleports.plugin.mjs";
 declare module "#build/001.notivue.client.mjs";
-declare module "#build/devtools/settings.mjs";
-declare module "#build/runtime.vue-devtools-client.XT8mGCqi2q5U4EQ_ERH9E1rRSlwwodC227wnp1gFAmg.js";
 declare module "#build/routes.mjs";
 declare module "#build/pages.mjs";
 declare module "#build/router.options.mjs";

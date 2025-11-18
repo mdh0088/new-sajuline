@@ -337,10 +337,27 @@ const goToRegisterLogin = () => {
 }
 
 // SEO 설정
+const seoTitle = computed(() => `${categoryInfo.value.label} 상담사 - 사주라인`)
+const seoDescription = computed(() => `사주라인 ${categoryInfo.value.label} 전문 상담사. ${categoryInfo.value.description}`)
+
 useHead({
-  title: `${categoryInfo.value.label} 상담사 - 사주라인`,
+  title: seoTitle,
   meta: [
-    { name: 'description', content: `사주라인 ${categoryInfo.value.label} 전문 상담사. ${categoryInfo.value.description}` }
+    { name: 'description', content: seoDescription },
+    { name: 'keywords', content: computed(() => `${categoryInfo.value.label}, 사주상담, 타로상담, 전화상담, 온라인상담`) },
+    { property: 'og:title', content: seoTitle },
+    { property: 'og:description', content: seoDescription },
+    { property: 'og:image', content: 'https://sajuline.com/images/og-category.jpg' },
+    { property: 'og:url', content: computed(() => `https://sajuline.com${route.path}`) },
+    { property: 'og:type', content: 'website' },
+    { name: 'twitter:card', content: 'summary_large_image' },
+    { name: 'twitter:title', content: seoTitle },
+    { name: 'twitter:description', content: seoDescription },
+    { name: 'twitter:image', content: 'https://sajuline.com/images/og-category.jpg' },
+    { name: 'robots', content: 'index,follow' }
+  ],
+  link: [
+    { rel: 'canonical', href: computed(() => `https://sajuline.com${route.path}`) }
   ]
 })
 </script>

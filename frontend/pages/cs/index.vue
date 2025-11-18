@@ -192,6 +192,27 @@ definePageMeta({
   layout: 'default'
 })
 
+// SEO 메타 데이터 설정
+useSeoMeta({
+  title: '고객센터 - 사주라인',
+  description: '사주라인 고객센터입니다. 문의사항은 평일 09:00-22:00, 주말 10:00-20:00에 운영되며 평균 응답시간은 10분 이내입니다. 전화상담은 02-6212-0465로 연락 주세요.',
+  keywords: '고객센터, 문의하기, 사주라인 고객지원, 상담문의, 결제문의, FAQ',
+  ogTitle: '고객센터 - 사주라인',
+  ogDescription: '빠르고 정확한 답변을 제공하는 사주라인 고객센터. 평균 응답시간 10분 이내',
+  ogImage: 'https://sajuline.com/images/og-cs.jpg',
+  ogUrl: 'https://sajuline.com/cs',
+  ogType: 'website',
+  twitterCard: 'summary_large_image',
+  twitterTitle: '고객센터 - 사주라인',
+  twitterDescription: '빠르고 정확한 답변을 제공하는 사주라인 고객센터',
+  twitterImage: 'https://sajuline.com/images/og-cs.jpg',
+  robots: 'index,follow'
+})
+
+useHead({
+  link: [{ rel: 'canonical', href: 'https://sajuline.com/cs' }]
+})
+
 // 인증 상태 관리
 const { isAuthenticated, isAuthChecking, restoreSession } = useAuth()
 

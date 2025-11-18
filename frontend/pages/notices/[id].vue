@@ -181,16 +181,108 @@ onMounted(() => {
   }
 });
 
-// SEO 설정
-useHead({
-  title: () => notice.value ? `${notice.value.title} - 공지사항 - 사주라인` : '공지사항 - 사주라인',
-  meta: [
-    {
-      name: 'description',
-      content: () => notice.value ? notice.value.content.substring(0, 100) : '사주라인 공지사항',
+// SEO 메타 데이터 설정
+const seoTitle = computed(() =>
+  notice.value ? `${notice.value.title} - 공지사항 - 사주라인` : '공지사항 - 사주라인'
+)
+const seoDescription = computed(() =>
+  notice.value ? notice.value.content.substring(0, 150).replace(/<[^>]*>/g, '') : '사주라인의 최신 소식과 공지사항을 확인하세요'
+)
+
+useSeoMeta({
+  title: seoTitle,
+  description: seoDescription,
+  keywords: () => notice.value
+    ? `공지사항, ${getBadgeText(notice.value.category)}, 사주라인, 업데이트`
+    : '공지사항, 사주라인',
+  ogTitle: seoTitle,
+  ogDescription: seoDescription,
+  ogImage: 'https://sajuline.com/images/og-notice.jpg',
+  ogUrl: () => `https://sajuline.com${route.path}`,
+  ogType: 'article',
+  twitterCard: 'summary_large_image',
+  twitterTitle: seoTitle,
+  twitterDescription: seoDescription,
+  twitterImage: 'https://sajuline.com/images/og-notice.jpg',
+  robots: 'index,follow'
+})
+
+// JSON-LD Article 스키마
+const structuredData = computed(() => {
+  if (!notice.value) return null
+
+  return {
+    "@context": "https://schema.org",
+    "@type": "Article",
+    "headline": notice.value.title,
+    "description": notice.value.content.substring(0, 150).replace(/<[^>]*>/g, ''),
+    "datePublished": notice.value.createdAt,
+    "dateModified": notice.value.updatedAt || notice.value.createdAt,
+    "author": {
+      "@type": "Organization",
+      "name": "사주라인"
     },
-  ],
-});
+    "publisher": {
+      "@type": "Organization",
+      "name": "사주라인",
+      "logo": {
+        "@type": "ImageObject",
+        "url": "https://sajuline.com/logo.png"
+      }
+    },
+    "articleSection": getBadgeText(notice.value.category)
+  }
+})
+
+// JSON-LD BreadcrumbList 스키마
+const breadcrumbSchema = computed(() => {
+  if (!notice.value) return null
+
+  return {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    "itemListElement": [
+      {
+        "@type": "ListItem",
+        "position": 1,
+        "name": "홈",
+        "item": "https://sajuline.com"
+      },
+      {
+        "@type": "ListItem",
+        "position": 2,
+        "name": "공지사항",
+        "item": "https://sajuline.com/notices"
+      },
+      {
+        "@type": "ListItem",
+        "position": 3,
+        "name": notice.value.title,
+        "item": `https://sajuline.com${route.path}`
+      }
+    ]
+  }
+})
+
+useHead({
+  link: [{ rel: 'canonical', href: computed(() => `https://sajuline.com${route.path}`) }],
+  script: computed(() => {
+    const scripts = []
+    if (structuredData.value) {
+      scripts.push({
+        type: 'application/ld+json',
+        innerHTML: JSON.stringify(structuredData.value)
+      })
+    }
+    if (breadcrumbSchema.value) {
+      scripts.push({
+        type: 'application/ld+json',
+        innerHTML: JSON.stringify(breadcrumbSchema.value)
+      })
+    }
+    return scripts
+  })
+})
 </script>
 
 <style scoped>

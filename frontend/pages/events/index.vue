@@ -74,9 +74,34 @@
 
 <script setup lang="ts">
 import { ref, computed } from 'vue'
+import { useHead, useRoute } from 'nuxt/app'
 import { useEventApi } from '~/composables/api/useEvent'
 import '~/assets/css/main-page.css'
 import '~/assets/css/event/list.css'
+
+// SEO 메타 데이터 설정
+const route = useRoute()
+
+useHead({
+  title: '이벤트',
+  meta: [
+    { name: 'description', content: '사주라인의 다양한 이벤트와 혜택을 만나보세요. 포인트 충전 보너스, 무료 상담권, 특별 할인 등 다양한 이벤트가 진행 중입니다.' },
+    { name: 'keywords', content: '사주라인 이벤트, 할인 이벤트, 포인트 보너스, 무료 상담, 사주 이벤트' },
+    { property: 'og:title', content: '이벤트 - 사주라인' },
+    { property: 'og:description', content: '사주라인의 다양한 이벤트와 혜택을 만나보세요' },
+    { property: 'og:image', content: 'https://sajuline.com/images/og-events.jpg' },
+    { property: 'og:url', content: `https://sajuline.com${route.path}` },
+    { property: 'og:type', content: 'website' },
+    { name: 'twitter:card', content: 'summary_large_image' },
+    { name: 'twitter:title', content: '이벤트 - 사주라인' },
+    { name: 'twitter:description', content: '사주라인의 다양한 이벤트와 혜택' },
+    { name: 'twitter:image', content: 'https://sajuline.com/images/og-events.jpg' },
+    { name: 'robots', content: 'index,follow' }
+  ],
+  link: [
+    { rel: 'canonical', href: `https://sajuline.com${route.path}` }
+  ]
+})
 
 const { useEventList } = useEventApi()
 const { data } = useEventList()

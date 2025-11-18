@@ -173,12 +173,24 @@
 import AppHeader from '~/components/common/AppHeader.vue'
 import AppBottomNavi from '~/components/common/AppBottomNavi.vue'
 
-// 페이지 메타 설정
-useHead({
+// SEO 메타 데이터 설정
+useSeoMeta({
   title: '이용약관 - 사주라인',
-  meta: [
-    { name: 'description', content: '사주라인 서비스 이용약관' }
-  ]
+  description: '사주라인 서비스 이용약관입니다. 회원가입, 서비스 이용, 요금 및 결제, 환불 정책 등에 관한 사항을 안내합니다.',
+  keywords: '이용약관, 서비스 약관, 회원약관, 사주라인 이용조건',
+  ogTitle: '이용약관 - 사주라인',
+  ogDescription: '사주라인 서비스 이용약관 안내',
+  ogImage: 'https://sajuline.com/images/og-default.jpg',
+  ogUrl: 'https://sajuline.com/provision',
+  ogType: 'website',
+  twitterCard: 'summary',
+  twitterTitle: '이용약관 - 사주라인',
+  twitterDescription: '사주라인 서비스 이용약관',
+  robots: 'index,follow'
+})
+
+useHead({
+  link: [{ rel: 'canonical', href: 'https://sajuline.com/provision' }]
 })
 </script>
 

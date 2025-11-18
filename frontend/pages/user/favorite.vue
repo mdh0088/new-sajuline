@@ -54,6 +54,14 @@ definePageMeta({
   requireRole: 'user'
 })
 
+// SEO 메타 데이터 설정
+useHead({
+  title: '찜한 상담사 - 사주라인',
+  meta: [
+    { name: 'robots', content: 'noindex,nofollow' }
+  ]
+})
+
 const { useBookmarkList, useRemoveBookmark } = useBookmarkQueries()
 const page = ref(1)
 const limit = ref(20)

@@ -62,6 +62,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { useRoute } from 'vue-router'
+import { useHead, useSeoMeta } from 'nuxt/app'
 import { useEventApi } from '~/composables/api/useEvent'
 import { useCdn } from '~/composables/utils/useCdn'
 import '~/assets/css/main-page.css'
@@ -73,6 +74,112 @@ const { useEventDetail } = useEventApi()
 const { cdnUrl } = useCdn()
 
 const { data: event } = useEventDetail(eventId)
+
+// SEO 메타 데이터 설정
+useSeoMeta({
+  title: () => event.value ? `${event.value.event_name} - 사주라인` : '이벤트 상세',
+  description: () => event.value
+    ? `${event.value.description} | ${event.value.period}`
+    : '사주라인의 특별한 이벤트를 확인하세요',
+  ogTitle: () => event.value ? `${event.value.event_name} - 사주라인` : '이벤트 상세',
+  ogDescription: () => event.value?.description || '사주라인의 특별한 이벤트',
+  ogImage: () => event.value?.banner_image_url
+    ? cdnUrl('events', event.value.banner_image_url)
+    : 'https://sajuline.com/images/og-event-default.jpg',
+  ogUrl: () => `https://sajuline.com${route.path}`,
+  ogType: 'website',
+  twitterCard: 'summary_large_image',
+  twitterTitle: () => event.value ? `${event.value.event_name}` : '이벤트 상세',
+  twitterDescription: () => event.value?.description || '사주라인의 특별한 이벤트',
+  twitterImage: () => event.value?.banner_image_url
+    ? cdnUrl('events', event.value.banner_image_url)
+    : 'https://sajuline.com/images/og-event-default.jpg',
+  robots: 'index,follow'
+})
+
+// JSON-LD Event 스키마
+const structuredData = computed(() => {
+  if (!event.value) return null
+
+  const eventStatusMap = {
+    ongoing: 'https://schema.org/EventScheduled',
+    upcoming: 'https://schema.org/EventScheduled',
+    completed: 'https://schema.org/EventScheduled'
+  }
+
+  return {
+    "@context": "https://schema.org",
+    "@type": "Event",
+    "name": event.value.event_name,
+    "description": event.value.description,
+    "eventStatus": eventStatusMap[event.value.status as keyof typeof eventStatusMap] || 'https://schema.org/EventScheduled',
+    "eventAttendanceMode": "https://schema.org/OnlineEventAttendanceMode",
+    "location": {
+      "@type": "VirtualLocation",
+      "url": `https://sajuline.com/events/${event.value.event_id}`
+    },
+    "image": event.value.banner_image_url
+      ? cdnUrl('events', event.value.banner_image_url)
+      : undefined,
+    "organizer": {
+      "@type": "Organization",
+      "name": "사주라인",
+      "url": "https://sajuline.com"
+    }
+  }
+})
+
+// JSON-LD BreadcrumbList 스키마
+const breadcrumbSchema = computed(() => {
+  if (!event.value) return null
+
+  return {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    "itemListElement": [
+      {
+        "@type": "ListItem",
+        "position": 1,
+        "name": "홈",
+        "item": "https://sajuline.com"
+      },
+      {
+        "@type": "ListItem",
+        "position": 2,
+        "name": "이벤트",
+        "item": "https://sajuline.com/events"
+      },
+      {
+        "@type": "ListItem",
+        "position": 3,
+        "name": event.value.event_name,
+        "item": `https://sajuline.com${route.path}`
+      }
+    ]
+  }
+})
+
+useHead({
+  link: [
+    { rel: 'canonical', href: () => `https://sajuline.com${route.path}` }
+  ],
+  script: computed(() => {
+    const scripts = []
+    if (structuredData.value) {
+      scripts.push({
+        type: 'application/ld+json',
+        innerHTML: JSON.stringify(structuredData.value)
+      })
+    }
+    if (breadcrumbSchema.value) {
+      scripts.push({
+        type: 'application/ld+json',
+        innerHTML: JSON.stringify(breadcrumbSchema.value)
+      })
+    }
+    return scripts
+  })
+})
 </script>
 
 <style scoped>

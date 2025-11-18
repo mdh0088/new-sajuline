@@ -104,16 +104,67 @@ import type { CounselorSearchParams, CounselorSearchItem } from '~/types/counsel
 
 const { notifySuccess, notifyInfo } = useNotify()
 
-// SEO 및 메타 데이터 설정
-useHead({
+// SEO 메타 데이터 설정
+useSeoMeta({
   title: '사주라인 - 당신의 운명을 밝히는 빛',
-  meta: [
-    { name: 'description', content: 'AI와 전문가의 하이브리드 사주 상담 플랫폼. 언제 어디서나 신뢰할 수 있는 사주 상담을 받아보세요.' },
-    { property: 'og:title', content: '사주라인 - 당신의 운명을 밝히는 빛' },
-    { property: 'og:description', content: 'AI와 전문가의 하이브리드 사주 상담 플랫폼. 언제 어디서나 신뢰할 수 있는 사주 상담을 받아보세요.' },
-    { property: 'og:image', content: '/images/og-image.jpg' },
-    { name: 'twitter:card', content: 'summary_large_image' },
-  ],
+  description: 'AI와 전문가의 하이브리드 사주 상담 플랫폼. 언제 어디서나 신뢰할 수 있는 사주, 타로, 신점 상담을 받아보세요. 실시간 채팅 상담과 AI 운세 분석 서비스를 제공합니다.',
+  keywords: '사주상담, 타로상담, 신점, AI운세, 실시간상담, 온라인상담, 사주라인, 운세, 점집',
+  ogTitle: '사주라인 - 당신의 운명을 밝히는 빛',
+  ogDescription: 'AI와 전문가의 하이브리드 사주 상담 플랫폼. 신뢰할 수 있는 전문가와 실시간 상담을 시작하세요.',
+  ogImage: 'https://sajuline.com/images/og-image.jpg',
+  ogUrl: 'https://sajuline.com',
+  ogType: 'website',
+  twitterCard: 'summary_large_image',
+  twitterTitle: '사주라인 - 당신의 운명을 밝히는 빛',
+  twitterDescription: 'AI와 전문가의 하이브리드 사주 상담 플랫폼',
+  twitterImage: 'https://sajuline.com/images/og-image.jpg',
+  robots: 'index,follow'
+})
+
+// JSON-LD 구조화 데이터
+const organizationSchema = {
+  "@context": "https://schema.org",
+  "@type": "Organization",
+  "name": "사주라인",
+  "url": "https://sajuline.com",
+  "logo": "https://sajuline.com/logo.png",
+  "description": "AI와 전문가의 하이브리드 사주 상담 플랫폼",
+  "contactPoint": {
+    "@type": "ContactPoint",
+    "telephone": "+82-2-6212-0465",
+    "contactType": "customer service",
+    "availableLanguage": "Korean"
+  },
+  "sameAs": [
+    "https://www.instagram.com/sajuline",
+    "https://pf.kakao.com/_xjPxlxgC"
+  ]
+}
+
+const websiteSchema = {
+  "@context": "https://schema.org",
+  "@type": "WebSite",
+  "name": "사주라인",
+  "url": "https://sajuline.com",
+  "potentialAction": {
+    "@type": "SearchAction",
+    "target": "https://sajuline.com/search?q={search_term_string}",
+    "query-input": "required name=search_term_string"
+  }
+}
+
+useHead({
+  link: [{ rel: 'canonical', href: 'https://sajuline.com' }],
+  script: [
+    {
+      type: 'application/ld+json',
+      innerHTML: JSON.stringify(organizationSchema)
+    },
+    {
+      type: 'application/ld+json',
+      innerHTML: JSON.stringify(websiteSchema)
+    }
+  ]
 })
 
 // 페이지 메타 설정

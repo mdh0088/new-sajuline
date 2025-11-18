@@ -228,11 +228,36 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
+import { useHead, useRoute } from 'nuxt/app'
 import type { MileageProduct } from '~/types/mileage'
 import { useMileageProductApi } from '~/composables/api/useMileageProduct'
 import { useUserQueries } from '~/composables/api/useUserQueries'
 import { useNotify } from '~/composables/utils/useNotify'
 import { useCdn } from '~/composables/utils/useCdn'
+
+// SEO 메타 데이터 설정
+const route = useRoute()
+
+useHead({
+  title: '마일리지 샵 - 사주라인',
+  meta: [
+    { name: 'description', content: '마일리지로 포인트를 충전하고 다양한 혜택을 받아보세요. 상담 마일리지를 활용한 특별한 리워드 시스템입니다.' },
+    { name: 'keywords', content: '마일리지 샵, 포인트 충전, 상담 리워드, 마일리지 적립, 사주 혜택' },
+    { property: 'og:title', content: '마일리지 샵 - 사주라인' },
+    { property: 'og:description', content: '마일리지로 포인트를 충전하고 다양한 혜택을 받아보세요' },
+    { property: 'og:image', content: 'https://sajuline.com/images/og-mileage.jpg' },
+    { property: 'og:url', content: `https://sajuline.com${route.path}` },
+    { property: 'og:type', content: 'website' },
+    { name: 'twitter:card', content: 'summary_large_image' },
+    { name: 'twitter:title', content: '마일리지 샵 - 사주라인' },
+    { name: 'twitter:description', content: '마일리지로 포인트를 충전하고 다양한 혜택을 받아보세요' },
+    { name: 'twitter:image', content: 'https://sajuline.com/images/og-mileage.jpg' },
+    { name: 'robots', content: 'index,follow' }
+  ],
+  link: [
+    { rel: 'canonical', href: `https://sajuline.com${route.path}` }
+  ]
+})
 
 // API 및 유틸리티
 const { useMileageProducts, usePurchaseMileage } = useMileageProductApi()

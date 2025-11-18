@@ -183,6 +183,13 @@ definePageMeta({
   requireRole: 'user'
 })
 
+// SEO 메타 데이터 설정
+useHead({
+  title: '마이페이지 - 사주라인',
+  meta: [
+    { name: 'robots', content: 'noindex,nofollow' }
+  ]
+})
 
 const { useUserMypage } = useUserQueries()
 const { data: mypage, isLoading, error } = useUserMypage()

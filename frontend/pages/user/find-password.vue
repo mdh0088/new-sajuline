@@ -139,6 +139,7 @@ useHead({
     { name: 'description', content: '사주라인 비밀번호 찾기. 아이디와 본인인증으로 임시 비밀번호를 받으실 수 있습니다.' },
     { property: 'og:title', content: '비밀번호 찾기 - 사주라인' },
     { property: 'og:description', content: '사주라인 비밀번호 찾기. 아이디와 본인인증으로 임시 비밀번호를 받으실 수 있습니다.' },
+    { name: 'robots', content: 'noindex,nofollow' }
   ],
 })
 

@@ -252,12 +252,25 @@ watch(() => route.query.category, (newCategory) => {
   }
 })
 
-// SEO 설정
-useHead({
+// SEO 메타 데이터 설정
+useSeoMeta({
   title: '카테고리별 상담사 - 사주라인',
-  meta: [
-    { name: 'description', content: '사주라인 카테고리별 상담사. 타로, 사주, 신점 전문가를 찾아보세요.' }
-  ]
+  description: '사주라인 카테고리별 상담사 찾기. 타로, 사주, 신점 전문가와 실시간 상담을 시작하세요. 검증된 전문 상담사들이 준비되어 있습니다.',
+  keywords: '카테고리별 상담사, 타로상담사, 사주상담사, 신점상담사, 전문상담, 실시간상담, 사주라인',
+  ogTitle: '카테고리별 상담사 - 사주라인',
+  ogDescription: '타로, 사주, 신점 전문가와 실시간 상담. 검증된 전문 상담사들이 준비되어 있습니다.',
+  ogImage: 'https://sajuline.com/images/og-categories.jpg',
+  ogUrl: `https://sajuline.com${route.path}`,
+  ogType: 'website',
+  twitterCard: 'summary_large_image',
+  twitterTitle: '카테고리별 상담사 - 사주라인',
+  twitterDescription: '타로, 사주, 신점 전문가와 실시간 상담',
+  twitterImage: 'https://sajuline.com/images/og-categories.jpg',
+  robots: 'index,follow'
+})
+
+useHead({
+  link: [{ rel: 'canonical', href: `https://sajuline.com${route.path}` }]
 })
 </script>
 

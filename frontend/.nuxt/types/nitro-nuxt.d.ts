@@ -1,6 +1,8 @@
 
 /// <reference path="app.config.d.ts" />
 /// <reference path="runtime-config.d.ts" />
+/// <reference path="../module/nuxt-site-config.d.ts" />
+/// <reference path="../module/nuxt-sitemap.d.ts" />
 /// <reference path="nitro-middleware.d.ts" />
 
 import type { RuntimeConfig } from 'nuxt/schema'

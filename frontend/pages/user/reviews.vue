@@ -184,6 +184,14 @@ definePageMeta({
   requireRole: 'user'
 })
 
+// SEO 메타 데이터 설정
+useHead({
+  title: '내 리뷰 관리 - 사주라인',
+  meta: [
+    { name: 'robots', content: 'noindex,nofollow' }
+  ]
+})
+
 // 반응형 데이터
 const activeTab = ref<'completed' | 'pending'>('completed')
 const showModal = ref(false)

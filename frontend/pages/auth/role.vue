@@ -38,6 +38,14 @@ import AppHeader from '~/components/common/AppHeader.vue'
 import { useAuth } from '~/composables/auth/useAuth'
 import { useAuthQueries } from '~/composables/api/useAuthQueries'
 
+// SEO 메타 데이터 설정
+useHead({
+  title: '권한 조회 - 사주라인',
+  meta: [
+    { name: 'robots', content: 'noindex,nofollow' }
+  ]
+})
+
 const { isAuthenticated, currentUser, role, isCounselor, setRole } = useAuth()
 const { useWhoAmI } = useAuthQueries()
 const { refetch } = useWhoAmI()
