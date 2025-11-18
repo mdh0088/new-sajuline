@@ -30,6 +30,14 @@ definePageMeta({
   layout: false
 })
 
+// SEO 메타 데이터 설정
+useHead({
+  title: '네이버 로그인 - 사주라인',
+  meta: [
+    { name: 'robots', content: 'noindex,nofollow' }
+  ]
+})
+
 const route = useRoute()
 const router = useRouter()
 const toast = useToast()

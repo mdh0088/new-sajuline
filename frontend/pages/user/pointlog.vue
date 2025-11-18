@@ -164,6 +164,14 @@ definePageMeta({
   requireRole: 'user'
 })
 
+// SEO 메타 데이터 설정
+useHead({
+  title: '포인트 내역 - 사주라인',
+  meta: [
+    { name: 'robots', content: 'noindex,nofollow' }
+  ]
+})
+
 // 날짜 검색
 const startDate = ref('')
 const endDate = ref('')

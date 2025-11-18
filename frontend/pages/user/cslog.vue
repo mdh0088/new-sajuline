@@ -153,6 +153,14 @@ definePageMeta({
   requireRole: 'user'
 })
 
+// SEO 메타 데이터 설정
+useHead({
+  title: '상담 내역 - 사주라인',
+  meta: [
+    { name: 'robots', content: 'noindex,nofollow' }
+  ]
+})
+
 // 상담 내역 데이터 (임시 - 실제로는 API에서 가져옴)
 const consultHistory = ref([
   {

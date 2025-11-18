@@ -239,16 +239,26 @@ watch(
   }
 )
 
-// SEO 설정
-useHead({
+// SEO 메타 데이터 설정
+useSeoMeta({
   title: '공지사항 - 사주라인',
-  meta: [
-    {
-      name: 'description',
-      content: '사주라인의 공지사항과 새로운 소식을 확인하세요.',
-    },
-  ],
-});
+  description: '사주라인의 공지사항과 새로운 소식을 확인하세요. 서비스 업데이트, 이벤트, 중요 안내사항을 실시간으로 제공합니다.',
+  keywords: '공지사항, 사주라인 소식, 서비스 업데이트, 이벤트 공지, 중요 안내',
+  ogTitle: '공지사항 - 사주라인',
+  ogDescription: '사주라인의 최신 소식과 공지사항. 서비스 업데이트와 이벤트 정보를 확인하세요.',
+  ogImage: 'https://sajuline.com/images/og-notices.jpg',
+  ogUrl: 'https://sajuline.com/notices',
+  ogType: 'website',
+  twitterCard: 'summary_large_image',
+  twitterTitle: '공지사항 - 사주라인',
+  twitterDescription: '사주라인의 최신 소식과 공지사항',
+  twitterImage: 'https://sajuline.com/images/og-notices.jpg',
+  robots: 'index,follow'
+})
+
+useHead({
+  link: [{ rel: 'canonical', href: 'https://sajuline.com/notices' }]
+})
 </script>
 
 <style scoped>

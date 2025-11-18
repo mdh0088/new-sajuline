@@ -651,8 +651,102 @@ const canViewInquiry = (inquiry: InquirySummary) => {
 
 // 페이지 메타데이터
 useSeoMeta({
-  title: () => counselor.value ? `${counselor.value.nickname} 선생님 - 사주라인` : '상담사 상세 - 사주라인',
-  description: () => counselor.value ? `${counselor.value.nickname} 선생님의 상담을 받아보세요.` : '전문 상담사와 함께하는 사주 상담 서비스'
+  title: () => counselor.value ? `${counselor.value.nickname} 선생님 - 사주라인` : '상담사 상세',
+  description: () => counselor.value
+    ? `${counselor.value.nickname} 선생님 | ${counselor.value.introduction_short || '전문 사주 상담사'}`
+    : '전문 상담사와 함께하는 사주 상담 서비스',
+  ogTitle: () => counselor.value ? `${counselor.value.nickname} 선생님 - 사주라인` : '상담사 상세',
+  ogDescription: () => counselor.value?.introduction_short || '전문 사주 상담사',
+  ogImage: () => counselor.value?.profile_image_url || 'https://sajuline.com/images/og-counselor-default.jpg',
+  ogUrl: () => `https://sajuline.com${route.path}`,
+  twitterCard: 'summary_large_image',
+  twitterTitle: () => counselor.value ? `${counselor.value.nickname} 선생님` : '상담사 상세',
+  twitterDescription: () => counselor.value?.introduction_short || '전문 사주 상담사',
+  twitterImage: () => counselor.value?.profile_image_url || 'https://sajuline.com/images/og-counselor-default.jpg'
+})
+
+// JSON-LD Person 스키마
+const structuredData = computed(() => {
+  if (!counselor.value) return null
+
+  return {
+    "@context": "https://schema.org",
+    "@type": "Person",
+    "name": counselor.value.nickname,
+    "jobTitle": "사주 전문 상담사",
+    "description": counselor.value.introduction_short || counselor.value.greeting_message,
+    "image": counselor.value.profile_image_url,
+    "aggregateRating": counselor.value.rating_avg ? {
+      "@type": "AggregateRating",
+      "ratingValue": counselor.value.rating_avg,
+      "reviewCount": counselor.value.consultation_count || 0,
+      "bestRating": "5",
+      "worstRating": "1"
+    } : undefined,
+    "makesOffer": {
+      "@type": "Offer",
+      "itemOffered": {
+        "@type": "Service",
+        "name": "사주 상담 서비스",
+        "provider": {
+          "@type": "Person",
+          "name": counselor.value.nickname
+        }
+      }
+    }
+  }
+})
+
+// JSON-LD BreadcrumbList 스키마
+const breadcrumbSchema = computed(() => {
+  if (!counselor.value) return null
+
+  return {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    "itemListElement": [
+      {
+        "@type": "ListItem",
+        "position": 1,
+        "name": "홈",
+        "item": "https://sajuline.com"
+      },
+      {
+        "@type": "ListItem",
+        "position": 2,
+        "name": "상담사",
+        "item": "https://sajuline.com/categories"
+      },
+      {
+        "@type": "ListItem",
+        "position": 3,
+        "name": counselor.value.nickname,
+        "item": `https://sajuline.com${route.path}`
+      }
+    ]
+  }
+})
+
+useHead({
+  link: [
+    { rel: 'canonical', href: `https://sajuline.com${route.path}` }
+  ],
+  script: computed(() => {
+    const scripts = []
+    if (structuredData.value) {
+      scripts.push({
+        type: 'application/ld+json',
+        innerHTML: JSON.stringify(structuredData.value)
+      })
+    }
+    if (breadcrumbSchema.value) {
+      scripts.push({
+        type: 'application/ld+json',
+        innerHTML: JSON.stringify(breadcrumbSchema.value)
+      })
+    }
+    return scripts
+  })
 })
 
 // 데이터 로딩

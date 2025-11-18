@@ -107,6 +107,14 @@ definePageMeta({
   layout: 'default'
 })
 
+// SEO 메타 데이터 설정
+useHead({
+  title: '소셜 회원가입 - 사주라인',
+  meta: [
+    { name: 'robots', content: 'noindex,nofollow' }
+  ]
+})
+
 const route = useRoute()
 const router = useRouter()
 const toast = useToast()

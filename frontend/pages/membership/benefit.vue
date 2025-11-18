@@ -158,20 +158,26 @@
 </template>
 
 <script setup lang="ts">
-// SEO 설정
-useHead({
+// SEO 메타 데이터 설정
+useSeoMeta({
   title: '멤버십 혜택 - 사주라인',
-  meta: [
-    {
-      name: 'description',
-      content: '사주라인 멤버십 등급별 혜택과 마일리지 적립 안내',
-    },
-    {
-      name: 'keywords',
-      content: '사주라인, 멤버십, 혜택, 마일리지, 등급, VIP, VVIP',
-    },
-  ],
-});
+  description: '사주라인 멤버십 등급별 혜택과 마일리지 적립 안내입니다. 일반, VIP, VVIP 등급에 따른 포인트 적립률, 할인 혜택, 전용 서비스를 확인하세요.',
+  keywords: '사주라인, 멤버십, 혜택, 마일리지, 등급, VIP, VVIP, 포인트 적립, 회원 혜택',
+  ogTitle: '멤버십 혜택 - 사주라인',
+  ogDescription: '사주라인 멤버십 등급별 혜택. 일반, VIP, VVIP 등급의 특별한 혜택을 확인하세요.',
+  ogImage: 'https://sajuline.com/images/og-membership.jpg',
+  ogUrl: 'https://sajuline.com/membership/benefit',
+  ogType: 'website',
+  twitterCard: 'summary_large_image',
+  twitterTitle: '멤버십 혜택 - 사주라인',
+  twitterDescription: '사주라인 멤버십 등급별 혜택 안내',
+  twitterImage: 'https://sajuline.com/images/og-membership.jpg',
+  robots: 'index,follow'
+})
+
+useHead({
+  link: [{ rel: 'canonical', href: 'https://sajuline.com/membership/benefit' }]
+})
 </script>
 
 <style scoped>

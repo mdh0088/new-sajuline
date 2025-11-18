@@ -114,6 +114,7 @@ useHead({
     { name: 'description', content: '사주라인 로그인. 사용자 ID와 비밀번호로 로그인하여 AI 운세와 전문 상담사 서비스를 이용하세요.' },
     { property: 'og:title', content: '로그인 - 사주라인' },
     { property: 'og:description', content: '사주라인 로그인. 사용자 ID와 비밀번호로 로그인하여 AI 운세와 전문 상담사 서비스를 이용하세요.' },
+    { name: 'robots', content: 'noindex,nofollow' }
   ],
 })
 

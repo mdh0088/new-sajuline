@@ -96,14 +96,25 @@
 import { ref } from 'vue'
 import { useHead } from 'nuxt/app'
 
-// SEO 및 메타 데이터 설정
-useHead({
+// SEO 메타 데이터 설정
+useSeoMeta({
   title: '충전 안내 - 사주라인',
-  meta: [
-    { name: 'description', content: '사주라인 포인트 충전 및 상담 이용 방법을 안내합니다.' },
-    { property: 'og:title', content: '충전 안내 - 사주라인' },
-    { property: 'og:description', content: '사주라인 포인트 충전 및 상담 이용 방법을 안내합니다.' }
-  ]
+  description: '사주라인 포인트 충전 및 상담 이용 방법을 안내합니다. 신용카드, 휴대폰 결제, 가상계좌, 카카오페이 등 다양한 결제 수단을 이용하실 수 있습니다.',
+  keywords: '포인트 충전, 충전 안내, 결제 방법, 사주라인 포인트, 상담 이용 안내',
+  ogTitle: '충전 안내 - 사주라인',
+  ogDescription: '사주라인 포인트 충전 및 상담 이용 방법 안내. 다양한 결제 수단 지원',
+  ogImage: 'https://sajuline.com/images/og-point-guide.jpg',
+  ogUrl: 'https://sajuline.com/point/guide',
+  ogType: 'website',
+  twitterCard: 'summary_large_image',
+  twitterTitle: '충전 안내 - 사주라인',
+  twitterDescription: '사주라인 포인트 충전 및 상담 이용 방법 안내',
+  twitterImage: 'https://sajuline.com/images/og-point-guide.jpg',
+  robots: 'index,follow'
+})
+
+useHead({
+  link: [{ rel: 'canonical', href: 'https://sajuline.com/point/guide' }]
 })
 
 // 페이지 메타 설정

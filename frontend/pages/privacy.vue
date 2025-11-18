@@ -146,12 +146,24 @@
 import AppHeader from '~/components/common/AppHeader.vue'
 import AppBottomNavi from '~/components/common/AppBottomNavi.vue'
 
-// 페이지 메타 설정
-useHead({
+// SEO 메타 데이터 설정
+useSeoMeta({
   title: '개인정보처리방침 - 사주라인',
-  meta: [
-    { name: 'description', content: '사주라인 개인정보처리방침' }
-  ]
+  description: '사주라인 개인정보처리방침입니다. 개인정보의 수집, 이용, 보관, 파기 등에 관한 사항을 안내합니다.',
+  keywords: '개인정보처리방침, 개인정보보호, 정보보호정책, 사주라인 약관',
+  ogTitle: '개인정보처리방침 - 사주라인',
+  ogDescription: '사주라인 개인정보처리방침 안내',
+  ogImage: 'https://sajuline.com/images/og-default.jpg',
+  ogUrl: 'https://sajuline.com/privacy',
+  ogType: 'website',
+  twitterCard: 'summary',
+  twitterTitle: '개인정보처리방침 - 사주라인',
+  twitterDescription: '사주라인 개인정보처리방침',
+  robots: 'index,follow'
+})
+
+useHead({
+  link: [{ rel: 'canonical', href: 'https://sajuline.com/privacy' }]
 })
 </script>
 

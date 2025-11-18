@@ -101,6 +101,7 @@ export default defineNuxtConfig({
     '@nuxt/icon',         // 아이콘 시스템
     '@nuxt/fonts',        // 웹폰트 최적화
     '@nuxtjs/tailwindcss', // Tailwind CSS
+    '@nuxtjs/sitemap',    // 사이트맵 자동 생성
     '@pinia/nuxt',        // 상태 관리
     '@vueuse/nuxt',       // Vue 유틸리티 컬렉션
     '@element-plus/nuxt', // Element Plus UI 라이브러리
@@ -122,6 +123,33 @@ export default defineNuxtConfig({
       global: {
         duration: 4000            // 기본 알림 표시 시간 (밀리초, 4초)
       }
+    }
+  },
+
+  // 사이트맵 자동 생성 설정
+  site: {
+    url: 'https://sajuline.com'
+  },
+
+  sitemap: {
+    exclude: [
+      // 인증 페이지
+      '/login',
+      '/signup',
+      '/signup/**',
+      '/auth/**',
+      // 사용자 전용 페이지
+      '/user/**',
+      '/counselor/mypage',
+      // 문의 작성
+      '/cs/write',
+      '/cs/inquiries/**',
+      // 역할 선택
+      '/auth/role'
+    ],
+    defaults: {
+      changefreq: 'daily',
+      priority: 0.5
     }
   },
 

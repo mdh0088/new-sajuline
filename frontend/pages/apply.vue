@@ -206,6 +206,27 @@ import { useRouter } from 'vue-router'
 import { useCounselorApplicationQueries } from '~/composables/api/useCounselorApplicationQueries'
 import { useNotify } from '~/composables/utils/useNotify'
 
+// SEO 메타 데이터 설정
+useSeoMeta({
+  title: '상담사 지원 - 사주라인',
+  description: '사주라인 상담사로 지원하세요. 타로, 사주, 신점 전문가를 모집합니다. 경력과 전문성을 활용하여 온라인 상담사로 활동하실 수 있습니다.',
+  keywords: '상담사 모집, 타로 상담사 지원, 사주 전문가 채용, 온라인 상담사, 재택근무',
+  ogTitle: '상담사 지원 - 사주라인',
+  ogDescription: '사주라인 전문 상담사 모집. 타로, 사주, 신점 전문가를 찾습니다.',
+  ogImage: 'https://sajuline.com/images/og-apply.jpg',
+  ogUrl: 'https://sajuline.com/apply',
+  ogType: 'website',
+  twitterCard: 'summary_large_image',
+  twitterTitle: '상담사 지원 - 사주라인',
+  twitterDescription: '사주라인 전문 상담사 모집',
+  twitterImage: 'https://sajuline.com/images/og-apply.jpg',
+  robots: 'index,follow'
+})
+
+useHead({
+  link: [{ rel: 'canonical', href: 'https://sajuline.com/apply' }]
+})
+
 const router = useRouter()
 const { useCreateApplication } = useCounselorApplicationQueries()
 const { notifySuccess, notifyError } = useNotify()

@@ -204,6 +204,14 @@ definePageMeta({
   middleware: 'auth'
 })
 
+// SEO 메타 데이터 설정
+useHead({
+  title: '문의 내역 - 사주라인',
+  meta: [
+    { name: 'robots', content: 'noindex,nofollow' }
+  ]
+})
+
 // 검색 및 필터 상태
 const searchQuery = ref('')
 const currentSearch = ref('')

@@ -161,12 +161,26 @@ const { points: userPoints, setPoints } = useUserPoints()
 const { useUserMypage } = useUserQueries()
 
 // SEO 및 메타 데이터 설정
+const route = useRoute()
+
 useHead({
   title: '포인트 충전 - 사주라인',
   meta: [
-    { name: 'description', content: '안전하고 간편한 포인트 충전으로 사주 상담을 받아보세요.' },
+    { name: 'description', content: '안전하고 간편한 포인트 충전으로 사주 상담을 받아보세요. 신용카드, 가상계좌, 카카오페이로 간편하게 충전하세요.' },
+    { name: 'keywords', content: '포인트 충전, 사주 포인트, 카카오페이, 온라인 결제, 사주 상담 결제' },
     { property: 'og:title', content: '포인트 충전 - 사주라인' },
-    { property: 'og:description', content: '안전하고 간편한 포인트 충전으로 사주 상담을 받아보세요.' }
+    { property: 'og:description', content: '안전하고 간편한 포인트 충전으로 사주 상담을 받아보세요.' },
+    { property: 'og:image', content: 'https://sajuline.com/images/og-point.jpg' },
+    { property: 'og:url', content: `https://sajuline.com${route.path}` },
+    { property: 'og:type', content: 'website' },
+    { name: 'twitter:card', content: 'summary_large_image' },
+    { name: 'twitter:title', content: '포인트 충전 - 사주라인' },
+    { name: 'twitter:description', content: '안전하고 간편한 포인트 충전' },
+    { name: 'twitter:image', content: 'https://sajuline.com/images/og-point.jpg' },
+    { name: 'robots', content: 'index,follow' }
+  ],
+  link: [
+    { rel: 'canonical', href: `https://sajuline.com${route.path}` }
   ]
 })
 

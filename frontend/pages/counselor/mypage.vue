@@ -421,6 +421,15 @@ definePageMeta({
   requiresAuth: true,
   requireRole: 'counselor'
 })
+
+// SEO 메타 데이터 설정
+useHead({
+  title: '상담사 마이페이지 - 사주라인',
+  meta: [
+    { name: 'robots', content: 'noindex,nofollow' }
+  ]
+})
+
 import AppHeader from '~/components/common/AppHeader.vue'
 import AppBottomNavi from '~/components/common/AppBottomNavi.vue'
 import PagedSection from '~/components/common/PagedSection.vue'

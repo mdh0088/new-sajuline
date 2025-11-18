@@ -348,12 +348,25 @@ onMounted(async () => {
   io.observe(sentinel)
 })
 
-// SEO 설정
-useHead({
+// SEO 메타 데이터 설정
+useSeoMeta({
   title: '상담사 검색 - 사주라인',
-  meta: [
-    { name: 'description', content: '사주라인 상담사 검색. 타로, 사주, 운세 전문가를 찾아보세요.' }
-  ]
+  description: '사주라인 상담사 검색 서비스입니다. 타로, 사주, 신점 전문가를 상담 분야, 평점, 경력으로 검색하고 실시간 상담을 시작하세요.',
+  keywords: '상담사 검색, 타로 상담사, 사주 상담사, 신점 전문가, 운세 전문가, 실시간 상담',
+  ogTitle: '상담사 검색 - 사주라인',
+  ogDescription: '타로, 사주, 신점 전문가 검색. 상담 분야와 평점으로 최적의 상담사를 찾으세요.',
+  ogImage: 'https://sajuline.com/images/og-search.jpg',
+  ogUrl: 'https://sajuline.com/search',
+  ogType: 'website',
+  twitterCard: 'summary_large_image',
+  twitterTitle: '상담사 검색 - 사주라인',
+  twitterDescription: '타로, 사주, 신점 전문가 검색',
+  twitterImage: 'https://sajuline.com/images/og-search.jpg',
+  robots: 'index,follow'
+})
+
+useHead({
+  link: [{ rel: 'canonical', href: 'https://sajuline.com/search' }]
 })
 </script>
 
