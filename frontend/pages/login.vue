@@ -5,9 +5,9 @@
       <div class="max-w-md mx-auto">
         <!-- 히어로 섹션 -->
         <div class="text-center mb-10">
-          <div class="text-6xl mb-4">🔮</div>
-          <h2 class="text-3xl font-bold mb-3">다시 만나서 반가워요!</h2>
-          <p class="text-white/70 text-base">
+          <div class="auth-hero-emoji">🔮</div>
+          <h2 class="auth-page-title">다시 만나서 반가워요!</h2>
+          <p class="auth-subtitle">
             로그인하여 개인화된 운세와<br />
             전문 상담사 서비스를 이용하세요
           </p>
@@ -55,7 +55,7 @@
         <!-- 구분선 -->
         <div class="flex items-center gap-4 my-8">
           <div class="flex-1 h-px bg-white/10"></div>
-          <span class="text-white/50 text-sm">또는 간편 로그인</span>
+          <span class="auth-divider-text">또는 간편 로그인</span>
           <div class="flex-1 h-px bg-white/10"></div>
         </div>
 
@@ -66,14 +66,14 @@
         <div class="flex items-center justify-center gap-4 mt-6">
           <NuxtLink
             to="/user/find-id"
-            class="text-white/60 hover:text-white/90 text-sm transition-colors"
+            class="auth-link"
           >
             아이디 찾기
           </NuxtLink>
           <div class="w-px h-3 bg-white/20"></div>
           <NuxtLink
             to="/user/find-password"
-            class="text-white/60 hover:text-white/90 text-sm transition-colors"
+            class="auth-link"
           >
             비밀번호 찾기
           </NuxtLink>
@@ -81,9 +81,9 @@
 
         <!-- 회원가입 링크 -->
         <div class="text-center mt-6">
-          <p class="text-white/60 text-sm">
+          <p class="auth-secondary-text">
             아직 계정이 없으신가요?
-            <NuxtLink to="/signup" class="text-purple-400 hover:text-purple-300 hover:underline font-medium ml-1">
+            <NuxtLink to="/signup" class="auth-link-primary">
               회원가입하기
             </NuxtLink>
           </p>
@@ -91,7 +91,7 @@
 
         <!-- 게스트 모드 -->
         <div class="text-center mt-6 pt-6 border-t border-white/10">
-          <div class="inline-flex items-center gap-2 text-white/40 text-sm">
+          <div class="inline-flex items-center gap-2 auth-muted-text">
             <span>✨</span>
             회원가입 없이 AI 운세 체험하기 (준비중)
           </div>

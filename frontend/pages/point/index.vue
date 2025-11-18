@@ -337,6 +337,15 @@ function processPayment() {
 
 // PC 결제 완료 postMessage 이벤트 핸들러
 function handlePaymentMessage(event: MessageEvent) {
+  // Origin 검증 (보안 강화)
+  const allowedOrigin = window.location.origin
+  if (event.origin !== allowedOrigin) {
+    console.warn('[Payment] Unauthorized message origin:', event.origin)
+    return
+  }
+
+  console.log('[Payment] Received postMessage:', event.data)
+
   if (event.data?.type === 'payment_success') {
     showPaymentModal.value = false
     notifySuccess('결제가 성공적으로 완료되었습니다.')
@@ -347,6 +356,14 @@ function handlePaymentMessage(event: MessageEvent) {
   } else if (event.data?.type === 'payment_fail') {
     showPaymentModal.value = false
     notifyError('결제가 실패했습니다. 다시 시도해주세요.')
+  } else if (event.data?.type === 'payment_pending') {
+    showPaymentModal.value = false
+    const message = event.data.message || '가상계좌가 발급되었습니다. 입금해주세요.'
+    notifyInfo(message)
+    // 가상계좌 안내 페이지로 이동 (또는 현재 페이지에서 안내)
+    setTimeout(() => {
+      window.location.reload()
+    }, 1500)
   }
 }
 

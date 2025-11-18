@@ -18,20 +18,68 @@
   text-align: center;
   cursor: pointer;
   transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 56px;
+}
+
+.gender-option:hover {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(147, 51, 234, 0.3);
 }
 
 .gender-option.selected {
   background: rgba(147, 51, 234, 0.2);
-  border-color: rgba(147, 51, 234, 0.4);
-}
-
-.gender-icon {
-  font-size: 32px;
-  margin-bottom: 8px;
+  border-color: rgba(147, 51, 234, 0.5);
 }
 
 .gender-label {
-  font-size: 14px;
+  font-size: 16px;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.9);
 }
 
 /* 폰트 크기는 typography.css에서 통합 관리됩니다 */
+
+/* 400px 미만 화면 최적화 */
+@media (max-width: 400px) {
+  .signup-step-title {
+    font-size: 18px !important;
+  }
+
+  .signup-form-label {
+    font-size: 13px !important;
+  }
+
+  .signup-input,
+  .signup-select {
+    font-size: 14px !important;
+  }
+
+  .signup-btn {
+    font-size: 14px !important;
+    padding: 12px !important;
+  }
+
+  .signup-helper-text {
+    font-size: 12px !important;
+  }
+
+  .signup-checkbox-label {
+    font-size: 13px !important;
+  }
+
+  .signup-error-message {
+    font-size: 12px !important;
+  }
+
+  .gender-option {
+    padding: 14px !important;
+    min-height: 50px !important;
+  }
+
+  .gender-label {
+    font-size: 14px !important;
+  }
+}

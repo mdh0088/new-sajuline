@@ -1,5 +1,10 @@
 <template>
-  <nav v-if="!shouldHide" class="bottom-nav" style="background: rgba(10, 10, 15, 0.95) !important; backdrop-filter: blur(10px) !important; position: sticky !important; bottom: 0 !important; z-index: 9999 !important; margin-top: auto !important;">
+  <nav
+    v-if="!shouldHide"
+    class="bottom-nav"
+    :class="{ 'nav-hidden': !isNavVisible }"
+    style="background: rgba(10, 10, 15, 0.95) !important; backdrop-filter: blur(10px) !important; position: sticky !important; bottom: 0 !important; z-index: 9999 !important; margin-top: auto !important;"
+  >
     <NuxtLink to="/" :class="['nav-item', { active: $route.path === '/' }]">
       <span class="nav-icon">🏠</span>
       <span class="nav-label">홈</span>
@@ -28,7 +33,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, ref, onMounted, onUnmounted } from 'vue'
 import { useRoute } from 'vue-router'
 import { useAuth } from '~/composables/auth/useAuth'
 
@@ -38,6 +43,49 @@ const mypagePath = computed(() => isCounselor.value ? '/counselor/mypage' : '/us
 
 // 페이지 메타에서 hideBottomNav 설정 확인
 const shouldHide = computed(() => route.meta?.hideBottomNav === true)
+
+// 스크롤 감지를 위한 상태
+const isNavVisible = ref(true)
+let lastScrollY = 0
+let scrollTimeout: NodeJS.Timeout | null = null
+
+// 스크롤 이벤트 핸들러
+const handleScroll = () => {
+  const currentScrollY = window.scrollY
+
+  // 스크롤 방향 감지
+  if (currentScrollY > lastScrollY && currentScrollY > 100) {
+    // 아래로 스크롤 중이고 100px 이상 스크롤된 경우 숨김
+    isNavVisible.value = false
+  } else {
+    // 위로 스크롤 중이거나 최상단 근처인 경우 표시
+    isNavVisible.value = true
+  }
+
+  lastScrollY = currentScrollY
+
+  // 스크롤이 멈추면 네비게이션 다시 표시
+  if (scrollTimeout) {
+    clearTimeout(scrollTimeout)
+  }
+  scrollTimeout = setTimeout(() => {
+    isNavVisible.value = true
+  }, 1000) // 1초 동안 스크롤이 없으면 다시 표시
+}
+
+// 컴포넌트 마운트 시 스크롤 이벤트 리스너 추가
+onMounted(() => {
+  window.addEventListener('scroll', handleScroll, { passive: true })
+})
+
+// 컴포넌트 언마운트 시 이벤트 리스너 제거
+onUnmounted(() => {
+  window.removeEventListener('scroll', handleScroll)
+  if (scrollTimeout) {
+    clearTimeout(scrollTimeout)
+  }
+})
+
 // 네비게이션 클릭 처리
 const handleNavClick = (tab: 'home' | 'fortune' | 'chat' | 'profile') => {
   if (tab === 'home') return navigateTo('/')

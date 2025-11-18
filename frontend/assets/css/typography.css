@@ -79,7 +79,7 @@
     .mileage-btn,
     .membership-btn,
     .benefit-link-btn {
-        font-size: var(--font-size-body-large) !important;
+        font-size: var(--font-size-body) !important;
     }
 
     /* Body - 기본 본문 (13px) */
@@ -222,7 +222,7 @@
     .mileage-success-button,
     .total-label,
     .total-value {
-        font-size: 16px !important;
+        font-size: 14px !important;
     }
 
     .amount-option {

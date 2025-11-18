@@ -169,3 +169,24 @@
 }
 
 /* 폰트 크기는 typography.css에서 통합 관리됩니다 */
+
+/* 400px 미만 화면 최적화 */
+@media (max-width: 400px) {
+  .privacy-title {
+    font-size: 18px !important;
+  }
+
+  .privacy-section-title {
+    font-size: 16px !important;
+  }
+
+  .privacy-content,
+  .privacy-text {
+    font-size: 13px !important;
+    line-height: 1.6 !important;
+  }
+
+  .privacy-list-item {
+    font-size: 13px !important;
+  }
+}

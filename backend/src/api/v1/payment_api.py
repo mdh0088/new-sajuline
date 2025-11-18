@@ -410,13 +410,40 @@ async def payment_return(
         </head>
         <body>
             <script>
-                if (window.opener) {
-                    window.opener.postMessage({type: 'payment_pending', message: '입금해주세요'}, '*');
-                    window.close();
-                } else {
-                    alert('입금해주세요');
-                    window.location.href = '/point';
-                }
+                (function() {
+                    const messageData = {type: 'payment_pending', message: '가상계좌가 발급되었습니다. 입금해주세요.'};
+                    let sent = false;
+
+                    // 1. iframe 케이스 (우선순위 높음)
+                    try {
+                        if (window.parent && window.parent !== window) {
+                            console.log('[Payment] Sending postMessage to parent (iframe)');
+                            window.parent.postMessage(messageData, '*');
+                            sent = true;
+                        }
+                    } catch(e) {
+                        console.error('[Payment] Failed to send to parent:', e);
+                    }
+
+                    // 2. 새 창 케이스
+                    try {
+                        if (window.opener && !window.opener.closed) {
+                            console.log('[Payment] Sending postMessage to opener (popup)');
+                            window.opener.postMessage(messageData, '*');
+                            window.close();
+                            sent = true;
+                        }
+                    } catch(e) {
+                        console.error('[Payment] Failed to send to opener:', e);
+                    }
+
+                    // 3. Fallback: 단독 페이지
+                    if (!sent) {
+                        console.log('[Payment] Fallback: Full page redirect');
+                        alert('가상계좌가 발급되었습니다. 입금해주세요.');
+                        window.location.href = '/point';
+                    }
+                })();
             </script>
         </body>
         </html>
@@ -447,13 +474,40 @@ async def payment_return(
         </head>
         <body>
             <script>
-                if (window.opener) {
-                    window.opener.postMessage({type: 'payment_fail'}, '*');
-                    window.close();
-                } else {
-                    alert('결제가 실패했습니다. 다시 시도해주세요.');
-                    window.location.href = '/point';
-                }
+                (function() {
+                    const messageData = {type: 'payment_fail'};
+                    let sent = false;
+
+                    // 1. iframe 케이스 (우선순위 높음)
+                    try {
+                        if (window.parent && window.parent !== window) {
+                            console.log('[Payment] Sending postMessage to parent (iframe)');
+                            window.parent.postMessage(messageData, '*');
+                            sent = true;
+                        }
+                    } catch(e) {
+                        console.error('[Payment] Failed to send to parent:', e);
+                    }
+
+                    // 2. 새 창 케이스
+                    try {
+                        if (window.opener && !window.opener.closed) {
+                            console.log('[Payment] Sending postMessage to opener (popup)');
+                            window.opener.postMessage(messageData, '*');
+                            window.close();
+                            sent = true;
+                        }
+                    } catch(e) {
+                        console.error('[Payment] Failed to send to opener:', e);
+                    }
+
+                    // 3. Fallback: 단독 페이지
+                    if (!sent) {
+                        console.log('[Payment] Fallback: Full page redirect');
+                        alert('결제가 실패했습니다. 다시 시도해주세요.');
+                        window.location.href = '/point';
+                    }
+                })();
             </script>
         </body>
         </html>
@@ -472,13 +526,40 @@ async def payment_return(
     </head>
     <body>
         <script>
-            if (window.opener) {
-                window.opener.postMessage({type: 'payment_success'}, '*');
-                window.close();
-            } else {
-                alert('결제가 성공적으로 완료되었습니다.');
-                window.location.href = '/point';
-            }
+            (function() {
+                const messageData = {type: 'payment_success'};
+                let sent = false;
+
+                // 1. iframe 케이스 (우선순위 높음)
+                try {
+                    if (window.parent && window.parent !== window) {
+                        console.log('[Payment] Sending postMessage to parent (iframe)');
+                        window.parent.postMessage(messageData, '*');
+                        sent = true;
+                    }
+                } catch(e) {
+                    console.error('[Payment] Failed to send to parent:', e);
+                }
+
+                // 2. 새 창 케이스
+                try {
+                    if (window.opener && !window.opener.closed) {
+                        console.log('[Payment] Sending postMessage to opener (popup)');
+                        window.opener.postMessage(messageData, '*');
+                        window.close();
+                        sent = true;
+                    }
+                } catch(e) {
+                    console.error('[Payment] Failed to send to opener:', e);
+                }
+
+                // 3. Fallback: 단독 페이지
+                if (!sent) {
+                    console.log('[Payment] Fallback: Full page redirect');
+                    alert('결제가 성공적으로 완료되었습니다.');
+                    window.location.href = '/point';
+                }
+            })();
         </script>
     </body>
     </html>

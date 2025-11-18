@@ -353,6 +353,47 @@ async def get_counselor_reviews_count(
     return ok(data={"count": total}, message="상담사 후기 개수 조회 성공")
 
 
+@router.post("/inquiries/reviews/{review_id}/reply", response_model=APIResponse, summary="고객 후기 답변 작성")
+async def reply_to_review(
+    review_id: int,
+    payload: dict,
+    current_user: TokenPayload = Depends(get_current_user),
+    review_service: ConsultationReviewService = Depends(get_consultation_review_service)
+) -> APIResponse:
+    """
+    고객 후기에 답변을 작성합니다.
+
+    - **review_id**: 후기 ID
+    - **counselor_reply**: 답변 내용
+    """
+    from src.schemas.consultation_review_schema import CounselorReplyCreate
+
+    # 권한 확인: 상담사만 접근
+    verify_counselor_role(current_user)
+    counselor_id = current_user.sub
+
+    log = get_logger_with_request_id()
+    log.info("API: Replying to review",
+            review_id=review_id,
+            counselor_id=counselor_id)
+
+    # 요청 검증
+    reply_request = CounselorReplyCreate(**payload)
+
+    # 서비스 호출
+    response = await review_service.add_counselor_reply(
+        review_id=review_id,
+        reply_data=reply_request,
+        counselor_id=counselor_id
+    )
+
+    log.info("API: Reply to review successful",
+            review_id=review_id,
+            counselor_id=counselor_id)
+
+    return ok(data=response, message="답변이 등록되었습니다")
+
+
 @router.get("/inquiries/users", response_model=APIResponse, summary="상담문의 목록 조회")
 async def get_counselor_user_inquiries(
     page: int = Query(1, ge=1, description="페이지 번호"),

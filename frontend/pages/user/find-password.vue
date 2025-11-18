@@ -5,9 +5,9 @@
       <div class="max-w-md mx-auto">
         <!-- 히어로 섹션 -->
         <div class="text-center mb-10">
-          <div class="text-6xl mb-4">🔑</div>
-          <h2 class="text-3xl font-bold mb-3">비밀번호 찾기</h2>
-          <p class="text-white/70 text-base">
+          <div class="auth-hero-emoji">🔑</div>
+          <h2 class="auth-page-title">비밀번호 찾기</h2>
+          <p class="auth-subtitle">
             아이디와 본인인증을 통해<br />
             임시 비밀번호를 발송해드립니다
           </p>
@@ -17,7 +17,7 @@
         <form @submit.prevent="handleSubmit" class="space-y-6">
           <!-- 아이디 입력 -->
           <div>
-            <label class="block text-sm font-medium text-white/80 mb-2">
+            <label class="auth-label">
               아이디
             </label>
             <input
@@ -31,12 +31,12 @@
           </div>
 
           <!-- 안내 메시지 -->
-          <div class="p-4 bg-blue-500/10 border border-blue-500/30 rounded-xl">
+          <div class="auth-result-box info">
             <div class="flex items-start gap-3">
-              <div class="text-xl">💡</div>
-              <div class="text-sm text-white/70 leading-relaxed">
-                <p class="font-semibold mb-1">임시 비밀번호 안내</p>
-                <ul class="space-y-1 text-xs">
+              <div class="auth-info-icon">💡</div>
+              <div>
+                <p class="auth-info-title">임시 비밀번호 안내</p>
+                <ul class="auth-notice-list">
                   <li>• 임시 비밀번호는 가입하신 이메일로 발송됩니다</li>
                   <li>• 로그인 후 반드시 비밀번호를 변경해주세요</li>
                   <li>• 보안을 위해 정기적으로 비밀번호를 변경하세요</li>
@@ -49,7 +49,7 @@
           <button
             type="submit"
             :disabled="!userId.trim() || isVerifying"
-            class="w-full py-4 bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800 disabled:from-gray-600 disabled:to-gray-700 disabled:cursor-not-allowed text-white font-bold rounded-xl transition-all transform hover:scale-[1.02] active:scale-98 shadow-lg shadow-purple-500/25 disabled:shadow-none"
+            class="auth-btn-verify"
           >
             <span v-if="!isVerifying">휴대폰 본인인증 하기</span>
             <span v-else class="flex items-center justify-center gap-2">
@@ -63,40 +63,35 @@
         </form>
 
         <!-- 성공 메시지 (발송 완료 후 표시) -->
-        <div v-if="successMessage" class="mt-6 p-6 bg-green-500/10 border border-green-500/30 rounded-xl">
-          <div class="text-center">
-            <div class="text-3xl mb-3">✅</div>
-            <h3 class="text-lg font-semibold mb-3">임시 비밀번호 발송 완료</h3>
-            <p class="text-white/70 text-sm leading-relaxed mb-2">
-              가입하신 이메일로 임시 비밀번호가 발송되었습니다
-            </p>
-            <div class="p-3 bg-white/5 rounded-lg mb-2">
-              <p class="text-purple-400 font-medium">{{ maskedEmail }}</p>
-            </div>
-            <p class="text-white/50 text-xs">
-              {{ successMessage }}
-            </p>
+        <div v-if="successMessage" class="mt-6 auth-result-box success">
+          <div class="auth-result-icon">✅</div>
+          <h3 class="auth-result-title">임시 비밀번호 발송 완료</h3>
+          <p class="auth-info-desc mb-2">
+            가입하신 이메일로 임시 비밀번호가 발송되었습니다
+          </p>
+          <div class="auth-result-content">
+            <p class="auth-result-value">{{ maskedEmail }}</p>
           </div>
+          <p class="auth-result-meta">
+            {{ successMessage }}
+          </p>
         </div>
 
         <!-- 에러 메시지 표시 -->
-        <div v-if="errorMessage" class="mt-6 p-4 bg-red-500/10 border border-red-500/30 rounded-xl">
-          <div class="flex items-center gap-2 text-red-400">
+        <div v-if="errorMessage" class="mt-6 auth-error-message">
+          <div class="flex items-center gap-2">
             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
             </svg>
-            <p class="text-sm">{{ errorMessage }}</p>
+            <p>{{ errorMessage }}</p>
           </div>
         </div>
 
         <!-- 하단 링크 -->
-        <div class="space-y-4 mt-8">
+        <div class="auth-footer-links">
           <!-- 로그인 링크 -->
           <div class="text-center">
-            <NuxtLink
-              to="/login"
-              class="inline-flex items-center gap-2 text-purple-400 hover:text-purple-300 font-medium transition-colors"
-            >
+            <NuxtLink to="/login" class="auth-footer-link">
               <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1"></path>
               </svg>
@@ -105,10 +100,10 @@
           </div>
 
           <!-- 아이디 찾기 링크 -->
-          <div class="text-center pt-4 border-t border-white/10">
-            <p class="text-white/60 text-sm">
+          <div class="text-center auth-divider">
+            <p class="auth-secondary-text">
               아이디를 잊으셨나요?
-              <NuxtLink to="/user/find-id" class="text-purple-400 hover:text-purple-300 hover:underline font-medium ml-1">
+              <NuxtLink to="/user/find-id" class="auth-link-primary">
                 아이디 찾기
               </NuxtLink>
             </p>

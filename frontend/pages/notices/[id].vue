@@ -311,7 +311,7 @@ useHead({
 }
 
 .notice-detail-title {
-    font-size: 20px;
+    font-size: 18px;
     font-weight: 700;
     margin-bottom: 12px;
     line-height: 1.4;
@@ -328,7 +328,7 @@ useHead({
 }
 
 .notice-detail-content {
-    font-size: 15px;
+    font-size: 14px;
     line-height: 1.8;
     color: rgba(255, 255, 255, 0.8);
     white-space: pre-wrap;

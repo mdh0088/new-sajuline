@@ -776,7 +776,6 @@
  
  /* 메인 콘텐츠 */
  .mileage-main-content {
-     margin-top: 60px;
      padding: 20px 20px 100px;
  }
  
@@ -1745,15 +1744,15 @@
 @media (max-width: 400px) {
     /* 폰트 크기 변수 오버라이드 */
     :root {
-        --font-size-display: 22px;    /* 메인 페이지 큰 타이틀 */
-        --font-size-h1: 20px;          /* 페이지 타이틀 */
-        --font-size-h2: 18px;          /* 섹션 타이틀 */
-        --font-size-h3: 16px;          /* 서브 섹션 */
-        --font-size-h4: 15px;          /* 작은 타이틀 */
-        --font-size-h5: 14px;          /* 미니 타이틀 */
-        --font-size-body-large: 14px;  /* 큰 본문 */
-        --font-size-body: 13px;        /* 기본 본문 */
-        --font-size-body-small: 12px;  /* 작은 본문 */
+        --font-size-display: 18px;    /* 메인 페이지 큰 타이틀 */
+        --font-size-h1: 18px;          /* 페이지 타이틀 */
+        --font-size-h2: 16px;          /* 섹션 타이틀 */
+        --font-size-h3: 15px;          /* 서브 섹션 */
+        --font-size-h4: 14px;          /* 작은 타이틀 */
+        --font-size-h5: 13px;          /* 미니 타이틀 */
+        --font-size-body-large: 15px;  /* 큰 본문 */
+        --font-size-body: 12px;        /* 기본 본문 */
+        --font-size-body-small: 11px;  /* 작은 본문 */
         --font-size-caption: 11px;     /* 캡션 (최소) */
     }
 
@@ -1794,7 +1793,7 @@
 
     /* 프로필 섹션 */
     .page-title {
-        font-size: 24px;
+        font-size: 18px;
     }
 
     .page-subtitle {
@@ -1802,11 +1801,11 @@
     }
 
     .section-title {
-        font-size: 11px;
+        font-size: 12px;
     }
 
     .benefit-link-btn {
-        font-size: 11px;
+        font-size: 12px;
     }
 
     .profile-user-info .profile-name {
@@ -1814,27 +1813,27 @@
     }
 
     .profile-stats-mini {
-        font-size: 11px;
+        font-size: 12px;
     }
 
     .membership-badge {
-        font-size: 11px;
+        font-size: 12px;
     }
 
     .membership-benefits {
-        font-size: 11px;
+        font-size: 12px;
     }
 
     .membership-btn {
-        font-size: 11px;
+        font-size: 12px;
     }
 
     .profile-mileage-amount {
-        font-size: 20px;
+        font-size: 18px;
     }
 
     .mileage-btn {
-        font-size: 11px;
+        font-size: 12px;
     }
 
     /* 마일리지 샵 */
@@ -1843,7 +1842,7 @@
     }
 
     .mileage-page-title {
-        font-size: 24px;
+        font-size: 18px;
     }
 
     .mileage-page-subtitle {
@@ -1851,7 +1850,7 @@
     }
 
     .mileage-shop-amount {
-        font-size: 22px;
+        font-size: 18px;
     }
 
     .mileage-label {
@@ -1871,15 +1870,15 @@
     }
 
     .mileage-product-tag {
-        font-size: 11px;
+        font-size: 12px;
     }
 
     .mileage-price-amount {
-        font-size: 17px;
+        font-size: 15px;
     }
 
     .mileage-price-label {
-        font-size: 11px;
+        font-size: 12px;
     }
 
     .mileage-purchase-button {
@@ -1908,7 +1907,7 @@
     }
 
     .mileage-modal-price-label {
-        font-size: 11px;
+        font-size: 12px;
     }
 
     .mileage-breakdown-title {
@@ -1934,7 +1933,7 @@
     .mileage-modal-cancel-btn,
     .mileage-modal-confirm-btn {
         font-size: 15px;
-        padding: 14px;
+        padding: 12px;
     }
 
     .mileage-success-title {
@@ -1956,7 +1955,7 @@
     }
 
     .mileage-guide-toggle {
-        font-size: 11px;
+        font-size: 12px;
     }
 
     .mileage-guide-item h4 {
@@ -1964,7 +1963,7 @@
     }
 
     .mileage-guide-item li {
-        font-size: 11px;
+        font-size: 12px;
     }
 
     /* 설정 버튼 */
@@ -2005,17 +2004,19 @@
     }
 }
 
-/* 모바일 자동 줌 방지 - input 최소 폰트 크기 16px */
-input,
-select,
-textarea,
-input[type="text"],
-input[type="email"],
-input[type="password"],
-input[type="tel"],
-input[type="number"],
-input[type="date"],
-input[type="time"],
-input[type="search"] {
-  font-size: 16px !important;
+/* 모바일 자동 줌 방지 - input 최소 폰트 크기 16px (400px 이상 화면에만 적용) */
+@media (min-width: 401px) {
+  input,
+  select,
+  textarea,
+  input[type="text"],
+  input[type="email"],
+  input[type="password"],
+  input[type="tel"],
+  input[type="number"],
+  input[type="date"],
+  input[type="time"],
+  input[type="search"] {
+    font-size: 16px !important;
+  }
 }

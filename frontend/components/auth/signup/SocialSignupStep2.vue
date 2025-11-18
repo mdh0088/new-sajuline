@@ -67,14 +67,13 @@
 
     <!-- 성별 선택 -->
     <div class="input-group">
-      <label class="input-label">성별</label>
+      <label class="input-label">성별 (선택)</label>
       <div class="gender-select">
         <div
           class="gender-option"
           :class="{ selected: signupFormData.gender === Gender.MALE }"
           @click="signupFormData.gender = Gender.MALE"
         >
-          <div class="gender-icon">👨</div>
           <div class="gender-label">남성</div>
         </div>
         <div
@@ -82,7 +81,6 @@
           :class="{ selected: signupFormData.gender === Gender.FEMALE }"
           @click="signupFormData.gender = Gender.FEMALE"
         >
-          <div class="gender-icon">👩</div>
           <div class="gender-label">여성</div>
         </div>
       </div>

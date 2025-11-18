@@ -336,6 +336,19 @@ const counselorApi = {
     return response.data
   },
 
+  // 고객 후기 답변 작성
+  async replyToReview(reviewId: number, replyContent: string): Promise<any> {
+    const { $api } = useNuxtApp()
+    const response = await $api<APIResponse<any>>(`/api/v1/counselors/inquiries/reviews/${reviewId}/reply`, {
+      method: 'POST',
+      body: { counselor_reply: replyContent }
+    })
+    if (!response.success || !response.data) {
+      throw new Error(response.error?.message || '답변 등록에 실패했습니다.')
+    }
+    return response.data
+  },
+
   // 관리자 문의 작성
   async createCounselorAdminInquiry(payload: { inquiry_type: string; title?: string; content: string }): Promise<any> {
     const { $api } = useNuxtApp()
@@ -388,7 +401,7 @@ export const useCounselorQueries = () => {
 
   // 상담사 마이페이지 조회 쿼리
   const useMypage = (
-    options?: UseQueryOptions<any, APIError, any>
+    options?: QueryOpts<any>
   ) => {
     return useQuery({
       queryKey: ['counselor', 'mypage'],
@@ -591,6 +604,7 @@ export const useCounselorQueries = () => {
     getPublicCounselorUserInquiries: counselorApi.getPublicCounselorUserInquiries,
     createUserInquiry: counselorApi.createUserInquiry,
     replyToUserInquiry: counselorApi.replyToUserInquiry,
+    replyToReview: counselorApi.replyToReview,
     createCounselorAdminInquiry: counselorApi.createCounselorAdminInquiry
   }
 }

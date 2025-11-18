@@ -1,7 +1,7 @@
 <template>
   <div class="min-h-screen bg-slate-950 text-white">
     <!-- 메인 콘텐츠 -->
-    <main class="pt-[60px] pb-24">
+    <main class="pb-24">
       <!-- 상단 안내 섹션 -->
       <section class="cs-info-section">
         <div class="cs-info-icon">🚀</div>
@@ -133,8 +133,8 @@
           <div class="cs-login-icon">🔒</div>
           <h3 class="cs-login-title">로그인이 필요합니다</h3>
           <p class="cs-login-desc">
-            문의 내역을 확인하고 새로운 문의를 작성하려면<br>
-            로그인해 주세요.
+            문의 내역을 확인하고 새로운 문의를 <br>
+           작성하려면 로그인해 주세요.
           </p>
           <NuxtLink to="/login" class="cs-login-button">
             로그인하기
@@ -345,14 +345,14 @@ const goToWrite = () => {
 }
 
 .cs-login-title {
-  font-size: 20px;
+  font-size: 18px;
   font-weight: 700;
   margin-bottom: 12px;
   color: white;
 }
 
 .cs-login-desc {
-  font-size: 15px;
+  font-size: 14px;
   color: rgba(255, 255, 255, 0.7);
   line-height: 1.6;
   margin-bottom: 24px;
@@ -366,7 +366,7 @@ const goToWrite = () => {
   background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
   color: white;
   border-radius: 12px;
-  font-size: 16px;
+  font-size: 14px;
   font-weight: 600;
   text-decoration: none;
   transition: all 0.3s;
