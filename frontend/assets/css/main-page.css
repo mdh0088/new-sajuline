@@ -79,6 +79,15 @@
   transform: scale(0.95);
 }
 
+.coin-balance .point-icon {
+  width: 20px;
+  height: 20px;
+  object-fit: contain;
+  border-radius: 50%;
+  background: 0;
+  padding: 2px;
+}
+
 /* 메인 콘텐츠 */
 .main-content {
   margin-top: 0;
@@ -143,7 +152,6 @@
 
 .category-card {
   background: rgba(255, 255, 255, 0.03);
-  border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: 16px;
   padding: 20px 12px;
   text-align: center;
@@ -177,13 +185,19 @@
   width: 56px;
   height: 56px;
   margin: 0 auto 12px;
-  background: linear-gradient(135deg, rgba(147, 51, 234, 0.2) 0%, rgba(124, 58, 237, 0.1) 100%);
   border-radius: 16px;
   display: flex;
   align-items: center;
   justify-content: center;
   font-size: 28px;
   position: relative;
+}
+
+.category-icon img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  display: block;
 }
 
 .category-icon::after {
@@ -378,6 +392,36 @@
 .rating-stars-small {
   font-size: 13px;
   color: #FFD700;
+  display: flex;
+  gap: 2px;
+}
+
+.rating-stars-small .star-icon {
+  width: 14px;
+  height: 14px;
+  object-fit: contain;
+}
+
+.rating-stars-small .star-empty {
+  opacity: 0.3;
+}
+
+/* 메뉴 아이콘 컨테이너 */
+.menu-icon {
+  width: 24px;
+  height: 24px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* 메뉴 아이콘 이미지 */
+.menu-icon-img {
+  width: 24px;
+  height: 24px;
+  object-fit: contain;
+  display: block;
 }
 
 .rating-score {
@@ -491,12 +535,21 @@
   white-space: nowrap;
   cursor: pointer;
   transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  gap: 6px;
 }
 
 .chip.active {
   background: rgba(147, 51, 234, 0.2);
   color: #B794F6;
   border-color: rgba(147, 51, 234, 0.4);
+}
+
+.chip .chip-icon {
+  width: 16px;
+  height: 16px;
+  object-fit: contain;
 }
 
 /* 프로모션 배너 */
@@ -624,11 +677,22 @@
 .nav-icon {
   font-size: 24px;
   margin-bottom: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.nav-icon img {
+  width: 32px;
+  height: 32px;
+  object-fit: contain;
+  display: block;
 }
 
 .nav-label {
   font-size: 11px;
   font-weight: 500;
+  color: white;
 }
 
 /* 플로팅 액션 버튼 */

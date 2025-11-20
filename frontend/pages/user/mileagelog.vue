@@ -94,7 +94,7 @@
                 <div class="trans-left">
                   <span class="trans-date">{{ formatDate(transaction.created_at) }}</span>
                   <div class="trans-desc">
-                    <span class="trans-icon">⭐</span>
+                    <span class="trans-icon"><img src="/images/milage.png" alt="마일리지" style="width: 16px; height: 16px; object-fit: contain;" /></span>
                     <span>{{ transaction.description || '마일리지 적립' }}</span>
                   </div>
                 </div>
@@ -117,7 +117,7 @@
                 <div class="trans-left">
                   <span class="trans-date">{{ formatDate(transaction.created_at) }}</span>
                   <div class="trans-desc">
-                    <span class="trans-icon">🎁</span>
+                    <span class="trans-icon"><img src="/images/event.png" alt="이벤트" style="width: 16px; height: 16px; object-fit: contain;" /></span>
                     <span>{{ transaction.description || '마일리지 사용' }}</span>
                   </div>
                 </div>

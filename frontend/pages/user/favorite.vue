@@ -1,7 +1,7 @@
 <template>
   <div class="min-h-screen bg-slate-950 text-white">
 
-    <main class="pt-[60px] pb-24">
+    <main class="pb-24">
       <div class="px-5 py-6">
         <!-- 즐겨찾기 상담사 리스트 -->
         <div v-if="items.length > 0" class="favorite-list">
@@ -25,7 +25,7 @@
 
         <!-- 빈 상태 -->
         <div v-else class="empty-state">
-          <div class="empty-icon">📭</div>
+          <div class="empty-icon"><img src="/images/favorite.png" alt="즐겨찾기" width="48" height="48" /></div>
           <div class="empty-title">즐겨찾기한 상담사가 없습니다</div>
           <div class="empty-desc">마음에 드는 상담사를 찾아 즐겨찾기에 추가해보세요!</div>
           <NuxtLink

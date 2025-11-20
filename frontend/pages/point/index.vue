@@ -7,7 +7,7 @@
         <template v-if="isUser">
           <div class="point-label">현재 보유 포인트</div>
           <div class="point-value">
-            <span class="point-icon">💰</span>
+            <img src="/images/point.png" alt="포인트" class="point-icon-img" />
             <span>{{ currentPoints.toLocaleString() }} P</span>
           </div>
         </template>
@@ -215,6 +215,7 @@ const products = computed<PointProduct[]>(() => productList?.value ?? [])
 const paymentMethods = ref([
   {
     icon: '💳',
+    image: '/images/credit.png',
     name: '신용/체크카드',
     description: '모든 카드 결제 가능',
     //code: 'allthegate'
@@ -222,6 +223,7 @@ const paymentMethods = ref([
   },
   {
     icon: '🏦',
+    image: '/images/bank.png',
     name: '가상계좌',
     description: '무통장입금',
     code: 'virtualaccount'

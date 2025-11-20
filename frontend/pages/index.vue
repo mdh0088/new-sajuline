@@ -18,7 +18,10 @@
             class="category-card"
             @click="$router.push(category.path)"
           >
-            <div class="category-icon">{{ category.icon }}</div>
+            <div class="category-icon">
+              <img v-if="category.icon.startsWith('/')" :src="category.icon" :alt="category.name" />
+              <span v-else>{{ category.icon }}</span>
+            </div>
             <div class="category-name">{{ category.name }}</div>
           </div>
         </div>
@@ -53,11 +56,12 @@
           <div class="filter-chips-right">
             <div
               v-for="(filter, index) in categoryFilters"
-              :key="filter"
+              :key="typeof filter === 'string' ? filter : filter.text"
               :class="['chip', { active: activeCategoryFilter === index }]"
               @click="setActiveCategoryFilter(index)"
             >
-              {{ filter }}
+              <img v-if="typeof filter === 'object' && filter.icon" :src="filter.icon" :alt="filter.text" class="chip-icon" />
+              <span>{{ typeof filter === 'string' ? filter : filter.text }}</span>
             </div>
           </div>
         </div>
@@ -177,15 +181,15 @@ definePageMeta({
 
 // 카테고리 목록
 const categories = ref([
-  { name: '타로', path: '/categories?category=TARO', icon: '🔮' },
-  { name: '사주', path: '/categories?category=SAJU', icon: '📜' },
-  { name: '신점', path: '/categories?category=FORTUNE', icon: '✨' },
-  { name: '전체 후기', path: '/reviews', icon: '📝' }
+  { name: '타로', path: '/categories?category=TARO', icon: '/images/tarot.png' },
+  { name: '사주', path: '/categories?category=SAJU', icon: '/images/shaman.png' },
+  { name: '신점', path: '/categories?category=FORTUNE', icon: '/images/fortune.png' },
+  { name: '전체 후기', path: '/reviews', icon: '/images/review.png' }
 ])
 
 // 필터 목록 - 상태 필터와 카테고리 필터 분리
 const statusFilters = ref(['전체', '상담중', '부재중', '대기중'])
-const categoryFilters = ref(['전체', '🔥 HOT', '⭐ 베스트', '🆕 신규'])
+const categoryFilters = ref(['전체', { text: 'HOT', icon: '/images/best.png' }, { text: '베스트', icon: '/images/Best_1.png' }, { text: '신규', icon: '/images/new.png' }])
 const activeStatusFilter = ref(0)
 const activeCategoryFilter = ref(0)
 
@@ -222,7 +226,7 @@ const counselors = ref([
     avatar: '🌙',
     image: '/images/cs_1.png',
     isOnline: true,
-    specialty: '타로 마스터',
+    specialty: '전화타로',
     experience: '20년 경력',
     tags: ['🔮 타로', '💕 연애', '🔄 재회'],
     description: '모든 인연에는 의미가 있습니다. 20년간 수만건의 상담을 통해 쌓은 통찰력으로 당신의 마음을 읽어드립니다.',

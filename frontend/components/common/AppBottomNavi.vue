@@ -6,27 +6,37 @@
     style="background: rgba(10, 10, 15, 0.95) !important; backdrop-filter: blur(10px) !important; position: sticky !important; bottom: 0 !important; z-index: 9999 !important; margin-top: auto !important;"
   >
     <NuxtLink to="/" :class="['nav-item', { active: $route.path === '/' }]">
-      <span class="nav-icon">🏠</span>
+      <span class="nav-icon">
+        <img src="/images/home.png" alt="홈" />
+      </span>
       <span class="nav-label">홈</span>
     </NuxtLink>
 
     <NuxtLink to="/user/favorite" :class="['nav-item', { active: $route.path === '/user/favorite' }]">
-      <span class="nav-icon">⭐</span>
+      <span class="nav-icon">
+        <img src="/images/favorite.png" alt="즐겨찾기" />
+      </span>
       <span class="nav-label">즐겨찾기</span>
     </NuxtLink>
 
     <NuxtLink to="/search" :class="['nav-item', { active: $route.path === '/search' }]">
-      <span class="nav-icon">🔍</span>
+      <span class="nav-icon">
+        <img src="/images/search.png" alt="검색" />
+      </span>
       <span class="nav-label">검색</span>
     </NuxtLink>
 
     <NuxtLink to="/point" :class="['nav-item', { active: $route.path === '/point' }]">
-      <span class="nav-icon">💰</span>
+      <span class="nav-icon">
+        <img src="/images/point.png" alt="충전" />
+      </span>
       <span class="nav-label">충전</span>
     </NuxtLink>
 
     <NuxtLink :to="mypagePath" :class="['nav-item', { active: $route.path.includes('/mypage') }]">
-      <span class="nav-icon">👤</span>
+      <span class="nav-icon">
+        <img src="/images/mypage.png" alt="마이" />
+      </span>
       <span class="nav-label">마이</span>
     </NuxtLink>
   </nav>
