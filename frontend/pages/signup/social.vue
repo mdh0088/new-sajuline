@@ -1,12 +1,20 @@
 <template>
   <div class="signup-container">
+    <!-- KCP 리다이렉트 후 데이터 복원 중 로딩 오버레이 -->
+    <div v-if="isRestoringData" class="restoration-overlay">
+      <div class="restoration-spinner">
+        <div class="spinner"></div>
+        <p class="restoration-message">인증 정보를 불러오는 중...</p>
+      </div>
+    </div>
+
     <!-- 진행 표시 -->
     <div class="progress-bar">
       <div class="progress-fill" :style="`width: ${(Math.min(currentStep, totalSteps) / totalSteps) * 100}%`"></div>
     </div>
 
     <!-- 메인 콘텐츠 -->
-    <main class="main-content">
+    <main class="main-content" :class="{ 'is-loading': isRestoringData }">
       <!-- 단계 표시 -->
       <div class="step-indicator">
         <div
@@ -20,10 +28,10 @@
       <!-- 소셜 로그인 안내 -->
       <div v-if="currentStep === 1" class="text-center mb-8">
         <div class="text-6xl mb-4">
-          {{ socialProvider === 'kakao' ? '💬' : 'N' }}
+          {{ socialInfo?.provider === 'kakao' ? '💬' : 'N' }}
         </div>
         <h2 class="text-3xl font-bold mb-3">
-          {{ socialProvider === 'kakao' ? '카카오' : '네이버' }} 회원가입
+          {{ socialInfo?.provider === 'kakao' ? '카카오' : '네이버' }} 회원가입
         </h2>
         <p class="text-white/70">
           추가 정보를 입력하여 회원가입을 완료해주세요
@@ -99,6 +107,7 @@
 import { useToast } from '~/composables/ui/useToast'
 import { useSocialAuthQueries, type SocialSignupRequest } from '~/composables/api/useSocialAuthQueries'
 import { useAuth } from '~/composables/auth/useAuth'
+import { usePhoneVerification, type PhoneVerificationResult } from '~/composables/api/usePhoneVerification'
 import { JoinType, Gender } from '~/types/user/models'
 import type { SignupFormData } from '~/types/auth/signup'
 import '~/assets/css/common/signup-common.css'
@@ -127,8 +136,53 @@ const socialId = computed(() => route.query.social_id as string)
 const socialEmail = computed(() => route.query.email as string)
 const socialName = computed(() => route.query.name as string)
 
-// 유효성 검사
-if (!socialProvider.value || !socialId.value) {
+// localStorage 키
+const SOCIAL_SIGNUP_FORM_KEY = 'social_signup_form_data'
+const SOCIAL_INFO_KEY = 'social_signup_info'  // 소셜 정보 별도 저장
+
+// KCP Fallback 감지 (페이지 진입 시점부터)
+const fromKcp = route.query.from_kcp as string
+const isRestoringData = ref(fromKcp === 'true')  // KCP 복원 중 로딩 표시
+
+// 소셜 정보 (localStorage에서 복원 가능하도록)
+interface SocialInfo {
+  provider: 'kakao' | 'naver'
+  social_id: string
+  email: string
+  name: string
+}
+
+// 소셜 정보 초기화 (URL 쿼리 또는 localStorage에서)
+const getSocialInfo = (): SocialInfo | null => {
+  // 1. URL 쿼리 파라미터에서 먼저 확인
+  if (socialProvider.value && socialId.value) {
+    return {
+      provider: socialProvider.value,
+      social_id: socialId.value,
+      email: socialEmail.value || '',
+      name: socialName.value || ''
+    }
+  }
+
+  // 2. localStorage에서 복원 시도 (KCP Fallback 케이스)
+  if (process.client) {
+    const stored = localStorage.getItem(SOCIAL_INFO_KEY)
+    if (stored) {
+      try {
+        return JSON.parse(stored) as SocialInfo
+      } catch (e) {
+        console.error('[Social Signup] Failed to parse social info:', e)
+      }
+    }
+  }
+
+  return null
+}
+
+const socialInfo = ref<SocialInfo | null>(getSocialInfo())
+
+// 유효성 검사 (KCP Fallback 복원 후에도 유효해야 함)
+if (!socialInfo.value && !fromKcp) {
   toast.error('잘못된 접근입니다.')
   router.push('/login')
 }
@@ -143,19 +197,131 @@ const isSigningUp = ref(false)
 // 회원가입 폼 데이터 (Step1 필드 제외, 소셜 정보로 채움)
 const signupFormData = reactive<SignupFormData>({
   user_id: '', // 소셜 로그인은 user_id 불필요
-  email: socialEmail.value || '',
+  email: socialInfo.value?.email || '',
   password: '', // 소셜 로그인은 password 불필요
   confirmPassword: '',
-  name: socialName.value || '',
+  name: socialInfo.value?.name || '',
   nickname: '',
   phone: '',
   phone_chk: false,
   gender: Gender.MALE,
   birth_date: '',
-  join_type: socialProvider.value === 'kakao' ? JoinType.KAKAO : JoinType.NAVER,
+  join_type: socialInfo.value?.provider === 'kakao' ? JoinType.KAKAO : JoinType.NAVER,
   is_marketing_agreed: false,
   agreeService: false,
   agreePrivacy: false
+})
+
+// KCP Fallback 처리 (Mobile에서 인증 완료 후 리다이렉트)
+const { setupPostMessageListener } = usePhoneVerification()
+
+// 소셜 정보를 localStorage에 저장 (KCP Fallback 대비)
+watch(() => socialInfo.value, (info) => {
+  if (process.client && info) {
+    localStorage.setItem(SOCIAL_INFO_KEY, JSON.stringify(info))
+  }
+}, { immediate: true })
+
+// 폼 데이터 변경 시 localStorage에 저장 (KCP Fallback 대비)
+watch(signupFormData, (newData) => {
+  if (process.client) {
+    localStorage.setItem(SOCIAL_SIGNUP_FORM_KEY, JSON.stringify(newData))
+  }
+}, { deep: true })
+
+onMounted(async () => {
+  // 클라이언트 체크
+  if (!process.client) return
+
+  // KCP Fallback에서 돌아온 경우 처리
+  if (fromKcp === 'true') {
+    console.log('[Social Signup] KCP Fallback detected')
+
+    // DOM 업데이트 대기 - 로딩 오버레이가 렌더링될 때까지
+    await nextTick()
+
+    // 최소 표시 시간 보장 (300ms)
+    const startTime = Date.now()
+
+    try {
+      // 1. localStorage에서 소셜 정보 복원
+      const storedSocialInfo = localStorage.getItem(SOCIAL_INFO_KEY)
+      if (storedSocialInfo) {
+        try {
+          socialInfo.value = JSON.parse(storedSocialInfo)
+          console.log('[Social Signup] Social info restored:', socialInfo.value)
+        } catch (e) {
+          console.error('[Social Signup] Failed to parse social info:', e)
+        }
+      }
+
+      // 2. localStorage에서 폼 데이터 복원
+      const savedFormData = localStorage.getItem(SOCIAL_SIGNUP_FORM_KEY)
+      if (savedFormData) {
+        try {
+          const parsedData = JSON.parse(savedFormData)
+          Object.assign(signupFormData, parsedData)
+          console.log('[Social Signup] Form data restored from localStorage')
+        } catch (e) {
+          console.error('[Social Signup] Failed to parse saved form data:', e)
+        }
+      }
+
+      // 3. Query parameter에서 KCP 인증 결과 세팅
+      // 백엔드가 보내는 파라미터: phone, phone_chk (= is_phone_matched), verified_phone
+      const phone = route.query.phone as string
+      const phoneChk = route.query.phone_chk === 'true'  // 백엔드에서 is_phone_matched 값을 phone_chk로 전달
+      const verifiedPhone = route.query.verified_phone as string
+
+      if (phone) {
+        signupFormData.phone = phone
+        signupFormData.phone_chk = phoneChk
+        signupFormData.verified_phone = verifiedPhone
+
+        if (phoneChk) {
+          toast.success('휴대폰 인증이 완료되었습니다')
+          console.log('[Social Signup] KCP verification completed', {
+            phone,
+            phone_chk: phoneChk,
+            verified_phone: verifiedPhone
+          })
+        } else {
+          toast.error('입력한 번호와 인증한 번호가 다릅니다')
+        }
+      }
+
+      // 4. URL clean up (소셜 정보 쿼리 파라미터 복원)
+      const cleanParams: Record<string, string> = {}
+      if (socialInfo.value) {
+        cleanParams.provider = socialInfo.value.provider
+        cleanParams.social_id = socialInfo.value.social_id
+        if (socialInfo.value.email) cleanParams.email = socialInfo.value.email
+        if (socialInfo.value.name) cleanParams.name = socialInfo.value.name
+      }
+
+      await router.replace({ path: '/signup/social', query: cleanParams })
+
+      console.log('[Social Signup] KCP redirect - data restored')
+
+      // 최소 표시 시간 보장 - 300ms 미만이면 남은 시간 대기
+      const elapsed = Date.now() - startTime
+      if (elapsed < 300) {
+        await new Promise(resolve => setTimeout(resolve, 300 - elapsed))
+      }
+    } finally {
+      // 로딩 종료
+      isRestoringData.value = false
+      await nextTick()
+    }
+  }
+
+  // postMessage 리스너 설정 (PC 팝업 인증용)
+  setupPostMessageListener((result: PhoneVerificationResult) => {
+    if (result.success && result.is_phone_matched) {
+      signupFormData.phone = result.phone || ''
+      signupFormData.phone_chk = true
+    }
+  })
 })
 
 // 각 Step 검증
@@ -196,23 +362,28 @@ const completeSignup = async () => {
     return
   }
 
+  if (!socialInfo.value) {
+    toast.error('소셜 로그인 정보가 없습니다.')
+    return
+  }
+
   isSigningUp.value = true
 
-  // Provider별 user_id 생성
-  const userId = socialProvider.value === 'kakao'
-    ? `kko${socialId.value}`  // Kakao: kko + 카카오ID
-    : socialId.value           // Naver: 이메일 (social_id가 email)
+  // Provider별 user_id 생성 (socialInfo에서 가져옴)
+  const userId = socialInfo.value.provider === 'kakao'
+    ? `kko${socialInfo.value.social_id}`  // Kakao: kko + 카카오ID
+    : socialInfo.value.social_id           // Naver: 이메일 (social_id가 email)
 
   // Gender enum을 백엔드 형식으로 변환
   const convertGender = (gender: Gender): 'MALE' | 'FEMALE' => {
     return gender === Gender.MALE ? 'MALE' : 'FEMALE'
   }
 
-  // 소셜 회원가입 데이터 생성
+  // 소셜 회원가입 데이터 생성 (socialInfo에서 가져옴)
   const signupData: SocialSignupRequest = {
     user_id: userId,
-    social_provider: socialProvider.value,
-    social_id: socialId.value,
+    social_provider: socialInfo.value.provider,
+    social_id: socialInfo.value.social_id,
     email: signupFormData.email || undefined,
     nickname: signupFormData.nickname,
     phone: signupFormData.phone,
@@ -224,9 +395,17 @@ const completeSignup = async () => {
 
   try {
     await socialSignupMutation.mutateAsync(signupData)
+    // 성공 시 localStorage 정리
+    clearStorage()
   } catch (error) {
     // 에러는 mutation onError에서 처리됨
   }
+}
+
+// localStorage 정리
+const clearStorage = () => {
+  localStorage.removeItem(SOCIAL_SIGNUP_FORM_KEY)
+  localStorage.removeItem(SOCIAL_INFO_KEY)
 }
 
 const goToHome = () => {
@@ -274,3 +453,55 @@ const closeTermsModal = () => {
   showTermsModal.value = false
 }
 </script>
+
+<style scoped>
+/* KCP 리다이렉트 후 데이터 복원 중 로딩 오버레이 */
+.restoration-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.8);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+}
+
+.restoration-spinner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+}
+
+.spinner {
+  width: 48px;
+  height: 48px;
+  border: 4px solid rgba(255, 255, 255, 0.1);
+  border-top-color: #667eea;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.restoration-message {
+  color: white;
+  font-size: 1rem;
+  font-weight: 500;
+  margin: 0;
+}
+
+/* 로딩 중 메인 콘텐츠 비활성화 */
+.main-content.is-loading {
+  pointer-events: none;
+  opacity: 0.5;
+  user-select: none;
+}
+</style>
