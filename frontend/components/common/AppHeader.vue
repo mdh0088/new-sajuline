@@ -13,7 +13,7 @@
       <div class="header-actions">
         <!-- 포인트 표시 (사용자만) -->
         <div v-if="isAuthenticated && isUser" class="coin-balance" @click="$router.push('/point')">
-          <span>💰</span>
+          <img src="/images/point.png" alt="포인트" class="point-icon" />
           <span>{{ formattedUserPoints }}P</span>
         </div>
 

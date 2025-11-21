@@ -10,7 +10,7 @@
           v-model="searchQuery"
           @keyup.enter="addSearchTag"
         >
-        <span class="search-icon">🔍</span>
+        <span class="search-icon"><img src="/images/search.png" alt="검색" width="20" height="20" /></span>
       </div>
     </section>
 
@@ -59,7 +59,7 @@
 
       <!-- 빈 상태 -->
       <div class="empty-state" v-if="sortedCounselors.length === 0 && !isLoading">
-        <div class="empty-icon">🔍</div>
+        <div class="empty-icon"><img src="/images/search.png" alt="검색" width="48" height="48" /></div>
         <div class="empty-title">검색 결과가 없습니다</div>
         <div class="empty-desc">다른 키워드로 검색해보세요</div>
       </div>
@@ -158,9 +158,9 @@ const styleOptions = [
 ]
 
 const sortOptions = [
-  { value: '', label: '전체', icon: '📋' },
-  { value: 'review', label: '리뷰 높은 순', icon: '⭐' },
-  { value: 'price', label: '가격 낮은 순', icon: '💰' }
+  { value: '', label: '전체', icon: '/images/review.png' },
+  { value: 'review', label: '리뷰 높은 순', icon: '/images/favorite.png' },
+  { value: 'price', label: '가격 낮은 순', icon: '/images/point.png' }
 ]
 
 // 필터 레이블 computed

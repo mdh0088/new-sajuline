@@ -44,7 +44,7 @@
         <!-- 작성 대기 탭 -->
         <template v-if="activeTab === 'pending'">
           <div v-if="pendingItems.length === 0 && !isLoading" class="empty-state">
-            <div class="empty-icon">📝</div>
+            <div class="empty-icon"><img src="/images/review.png" alt="후기" width="48" height="48" /></div>
             <div class="empty-title">작성 대기 중인 후기가 없습니다</div>
             <div class="empty-desc">상담 후 후기를 작성하고 포인트를 받아보세요!</div>
           </div>
@@ -64,7 +64,7 @@
                     height="40"
                     loading="lazy"
                   />
-                  <div v-else class="profile-placeholder">🔮</div>
+                  <div v-else class="profile-placeholder"><img src="/images/tarot.png" alt="타로" width="40" height="40" style="object-fit: contain;" /></div>
                 </div>
                 <div class="counselor-info-text">
                   <div class="counselor-name">{{ item.counselor?.nickname || '상담사' }}</div>
@@ -90,7 +90,7 @@
         <!-- 작성한 후기 탭 -->
         <template v-if="activeTab === 'completed'">
           <div v-if="reviewItems.length === 0 && !isLoading" class="empty-state">
-            <div class="empty-icon">📝</div>
+            <div class="empty-icon"><img src="/images/review.png" alt="후기" width="48" height="48" /></div>
             <div class="empty-title">작성한 후기가 없습니다</div>
             <div class="empty-desc">첫 상담 후기를 작성해보세요!</div>
           </div>
@@ -110,7 +110,7 @@
                     height="40"
                     loading="lazy"
                   />
-                  <div v-else class="profile-placeholder">🔮</div>
+                  <div v-else class="profile-placeholder"><img src="/images/tarot.png" alt="타로" width="40" height="40" style="object-fit: contain;" /></div>
                 </div>
                 <div class="counselor-info-text">
                   <div class="counselor-name">{{ review.counselor?.nickname || '상담사' }}</div>

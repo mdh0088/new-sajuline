@@ -104,14 +104,16 @@
                 <div class="rating-large">{{ counselor.rating }}</div>
                 <div class="rating-details">
                   <div class="stars">
-                    <span
+                    <img
                       v-for="i in 5"
                       :key="i"
+                      src="/images/favorite.png"
+                      alt="별점"
                       class="star"
-                      :class="{ filled: i <= Math.floor(counselor.rating) }"
-                    >
-                      ⭐
-                    </span>
+                      :class="{ filled: i <= Math.floor(counselor.rating), 'star-empty': i > Math.floor(counselor.rating) }"
+                      width="16"
+                      height="16"
+                    />
                   </div>
                   <div class="review-count">{{ counselor.reviewCount.toLocaleString() }}개의 리뷰</div>
                 </div>
@@ -134,14 +136,16 @@
                     <span class="review-date">{{ formatDate(review.created_at) }}</span>
                   </div>
                   <div class="review-rating">
-                    <span
+                    <img
                       v-for="i in 5"
                       :key="i"
+                      src="/images/favorite.png"
+                      alt="별점"
                       class="star"
-                      :class="{ filled: i <= review.rating }"
-                    >
-                      ⭐
-                    </span>
+                      :class="{ filled: i <= review.rating, 'star-empty': i > review.rating }"
+                      width="14"
+                      height="14"
+                    />
                   </div>
                 </div>
                 <div class="review-content">
@@ -158,7 +162,7 @@
           <div v-if="activeTab === 'inquiries'" class="tab-content">
             <div class="tab-header-actions">
               <button class="tab-action-button" @click="writeInquiry">
-                <span class="button-icon">💬</span>
+                <span class="button-icon"><img src="/images/cs.png" alt="문의" width="18" height="18" /></span>
                 <span>문의하기</span>
               </button>
             </div>
@@ -752,9 +756,9 @@ useHead({
 // 데이터 로딩
 // const { usePublicDetail, useCounselorReviews, useCounselorUserInquiries } = useCounselorQueries()
 const specialtyMap: Record<string, string> = {
-  SAJU: '사주 마스터',
-  FOURTUNE: '운세 마스터',
-  TARO: '타로 마스터'
+  SAJU: '전화사주',
+  FOURTUNE: '전화신점',
+  TARO: '전화타로'
 }
 const specialtyLabel = computed(() => {
   const list = (counselor.value?.specialty_types ?? []) as string[]
