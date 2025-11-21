@@ -1,7 +1,15 @@
 <template>
   <div class="auth-container">
+    <!-- KCP 리다이렉트 후 데이터 복원 중 로딩 오버레이 -->
+    <div v-if="isRestoringData" class="restoration-overlay">
+      <div class="restoration-spinner">
+        <div class="spinner"></div>
+        <p class="restoration-message">인증 정보를 처리하는 중...</p>
+      </div>
+    </div>
+
     <!-- 메인 콘텐츠 -->
-    <main class="auth-main">
+    <main class="auth-main" :class="{ 'is-loading': isRestoringData }">
       <div class="max-w-md mx-auto">
         <!-- 히어로 섹션 -->
         <div class="text-center mb-10">
@@ -122,6 +130,8 @@ const foundUserId = ref('')
 const foundUserDate = ref('')
 const errorMessage = ref('')
 const isVerifying = ref(false)
+// ✅ KCP Fallback 리다이렉트 시 페이지 진입부터 로딩 표시
+const isRestoringData = ref(route.query.from_kcp === 'true')
 
 // 팝업 및 리스너 관리
 let closePopup: (() => void) | null = null
@@ -148,14 +158,36 @@ const { mutate: findUserId } = useFindUserId({
 })
 
 // 모바일 리다이렉트 처리 (query parameter에서 전화번호 받기)
-onMounted(() => {
+onMounted(async () => {
   const fromKcp = route.query.from_kcp
   const phone = route.query.phone as string
 
   if (fromKcp === 'true' && phone) {
-    // 모바일에서 본인인증 완료 후 리다이렉트된 경우
-    console.log('[Find-ID] KCP redirect received', phone)
-    findUserId(phone)
+    // ✅ 로딩 상태는 이미 초기화 시점에 true로 설정됨 (페이지 진입부터 표시)
+
+    // ✅ DOM 업데이트 대기 - 로딩 오버레이가 실제로 렌더링될 때까지 대기
+    await nextTick()
+
+    // ✅ 최소 표시 시간 보장 (300ms) - UX 개선 및 깜빡임 방지
+    const startTime = Date.now()
+
+    try {
+      // 모바일에서 본인인증 완료 후 리다이렉트된 경우
+      console.log('[Find-ID] KCP redirect received', phone)
+      findUserId(phone)
+
+      // ✅ 최소 표시 시간 보장 - 300ms 미만이면 남은 시간 대기
+      const elapsed = Date.now() - startTime
+      if (elapsed < 300) {
+        await new Promise(resolve => setTimeout(resolve, 300 - elapsed))
+      }
+    } finally {
+      // 로딩 종료 - 에러가 발생해도 반드시 로딩 해제
+      isRestoringData.value = false
+
+      // ✅ DOM 업데이트 대기 - 로딩 오버레이 제거가 반영될 때까지 대기
+      await nextTick()
+    }
   }
 })
 
@@ -226,3 +258,55 @@ onUnmounted(() => {
   }
 })
 </script>
+
+<style scoped>
+/* KCP 리다이렉트 후 데이터 복원 중 로딩 오버레이 */
+.restoration-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.8);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+}
+
+.restoration-spinner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+}
+
+.spinner {
+  width: 48px;
+  height: 48px;
+  border: 4px solid rgba(255, 255, 255, 0.1);
+  border-top-color: #667eea;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.restoration-message {
+  color: white;
+  font-size: 1rem;
+  font-weight: 500;
+  margin: 0;
+}
+
+/* 로딩 중 메인 콘텐츠 비활성화 */
+.auth-main.is-loading {
+  pointer-events: none;
+  opacity: 0.5;
+  user-select: none;
+}
+</style>

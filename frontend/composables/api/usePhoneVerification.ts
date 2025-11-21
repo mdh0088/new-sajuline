@@ -10,6 +10,7 @@ import type { APIResponse, APIError } from '~/types/common/api'
  */
 export interface PhoneVerificationInitiateRequest {
   phone_number: string // 01012345678 (하이픈 없이)
+  return_url?: string // 인증 완료 후 리다이렉트할 URL (Fallback용, 기본값: /signup)
 }
 
 /**

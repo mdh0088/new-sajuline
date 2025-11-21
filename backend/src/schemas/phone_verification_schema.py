@@ -11,6 +11,7 @@ class PhoneVerificationInitiateRequest(BaseModel):
     """본인인증 시작 요청 - KCP 모달에서 사용자 정보 입력"""
 
     phone_number: str = Field(..., description="휴대폰 번호 (하이픈 없이)", pattern=r'^010\d{8}$')
+    return_url: str = Field(default="/signup", description="인증 완료 후 리다이렉트할 URL (Fallback용)")
 
 
 class PhoneVerificationForFindIdRequest(BaseModel):

@@ -1,7 +1,15 @@
 <template>
   <div class="signup-container">
+    <!-- KCP 리다이렉트 후 데이터 복원 중 로딩 오버레이 -->
+    <div v-if="isRestoringData" class="restoration-overlay">
+      <div class="restoration-spinner">
+        <div class="spinner"></div>
+        <p class="restoration-message">인증 정보를 불러오는 중...</p>
+      </div>
+    </div>
+
     <!-- 메인 콘텐츠 -->
-    <main class="main-content">
+    <main class="main-content" :class="{ 'is-loading': isRestoringData }">
       <!-- 진행 표시 (완료 단계에서는 숨김) -->
       <div v-if="currentStep < 5" class="progress-bar-wrapper">
         <div class="progress-bar-inline">
@@ -129,6 +137,8 @@ const currentStep = ref(1)
 const totalSteps = ref(4)
 const showTermsModal = ref(false)
 const termsContent = ref('')
+// ✅ KCP Fallback 리다이렉트 시 페이지 진입부터 로딩 표시
+const isRestoringData = ref(route.query.from_kcp === 'true')
 
 // 회원가입 폼 데이터
 const signupFormData = reactive<SignupFormData>({
@@ -180,46 +190,69 @@ onMounted(async () => {
   const fromKcp = route.query.from_kcp
 
   if (fromKcp === 'true') {
-    // 1. localStorage에서 기존 폼 데이터 복원 (Step1 데이터)
-    const stored = localStorage.getItem(STORAGE_KEY)
-    if (stored) {
-      try {
-        const data = JSON.parse(stored)
-        Object.assign(signupFormData, data)
-      } catch (e) {
-        console.error('Failed to restore form data:', e)
+    // ✅ 로딩 상태는 이미 초기화 시점에 true로 설정됨 (페이지 진입부터 표시)
+    // isRestoringData.value = true  ← 불필요 (초기값으로 이미 설정)
+
+    // ✅ DOM 업데이트 대기 - 로딩 오버레이가 실제로 렌더링될 때까지 대기
+    await nextTick()
+
+    // ✅ 최소 표시 시간 보장 (300ms) - UX 개선 및 깜빡임 방지
+    const startTime = Date.now()
+
+    try {
+      // 1. localStorage에서 기존 폼 데이터 복원 (Step1 데이터)
+      const stored = localStorage.getItem(STORAGE_KEY)
+      if (stored) {
+        try {
+          const data = JSON.parse(stored)
+          Object.assign(signupFormData, data)
+        } catch (e) {
+          console.error('Failed to restore form data:', e)
+        }
       }
-    }
 
-    // 2. Query parameter에서 KCP 인증 결과 세팅
-    const phone = route.query.phone as string
-    const phoneChk = route.query.phone_chk === 'true'
-    const verifiedPhone = route.query.verified_phone as string
+      // 2. Query parameter에서 KCP 인증 결과 세팅
+      const phone = route.query.phone as string
+      const phoneChk = route.query.phone_chk === 'true'
+      const verifiedPhone = route.query.verified_phone as string
 
-    if (phone) {
-      signupFormData.phone = phone
-      signupFormData.phone_chk = phoneChk
-      signupFormData.verified_phone = verifiedPhone
+      if (phone) {
+        signupFormData.phone = phone
+        signupFormData.phone_chk = phoneChk
+        signupFormData.verified_phone = verifiedPhone
 
-      if (phoneChk) {
-        toast.success('휴대폰 인증이 완료되었습니다')
-        console.log('[Signup] KCP verification completed', {
-          phone,
-          phone_chk: phoneChk,
-          verified_phone: verifiedPhone
-        })
-      } else {
-        toast.error('입력한 번호와 인증한 번호가 다릅니다')
+        if (phoneChk) {
+          toast.success('휴대폰 인증이 완료되었습니다')
+          console.log('[Signup] KCP verification completed', {
+            phone,
+            phone_chk: phoneChk,
+            verified_phone: verifiedPhone
+          })
+        } else {
+          toast.error('입력한 번호와 인증한 번호가 다릅니다')
+        }
       }
+
+      // 3. Step2로 이동 (KCP 인증 완료 상태)
+      currentStep.value = 2
+
+      // 4. URL clean up (query parameter 제거 - 새로고침 시 재실행 방지)
+      await router.replace({ path: '/signup' })
+
+      console.log('[Signup] KCP redirect - auto restored to step2')
+
+      // ✅ 최소 표시 시간 보장 - 300ms 미만이면 남은 시간 대기
+      const elapsed = Date.now() - startTime
+      if (elapsed < 300) {
+        await new Promise(resolve => setTimeout(resolve, 300 - elapsed))
+      }
+    } finally {
+      // 로딩 종료 - 에러가 발생해도 반드시 로딩 해제
+      isRestoringData.value = false
+
+      // ✅ DOM 업데이트 대기 - 로딩 오버레이 제거가 반영될 때까지 대기
+      await nextTick()
     }
-
-    // 3. Step2로 이동 (KCP 인증 완료 상태)
-    currentStep.value = 2
-
-    // 4. URL clean up (query parameter 제거 - 새로고침 시 재실행 방지)
-    await router.replace({ path: '/signup' })
-
-    console.log('[Signup] KCP redirect - auto restored to step2')
   }
 
   // 일반 접근 (새로고침, 직접 접근): 아무것도 안함
@@ -354,3 +387,54 @@ const closeTermsModal = () => {
 }
 </script>
 
+<style scoped>
+/* KCP 리다이렉트 후 데이터 복원 중 로딩 오버레이 */
+.restoration-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.8);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+}
+
+.restoration-spinner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+}
+
+.spinner {
+  width: 48px;
+  height: 48px;
+  border: 4px solid rgba(255, 255, 255, 0.1);
+  border-top-color: #667eea;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.restoration-message {
+  color: white;
+  font-size: 1rem;
+  font-weight: 500;
+  margin: 0;
+}
+
+/* 로딩 중 메인 콘텐츠 비활성화 */
+.main-content.is-loading {
+  pointer-events: none;
+  opacity: 0.5;
+  user-select: none;
+}
+</style>
