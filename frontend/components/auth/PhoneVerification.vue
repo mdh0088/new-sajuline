@@ -79,13 +79,15 @@ interface Props {
   phoneChk?: boolean // v-model:phoneChk (휴대폰 인증 완료 여부)
   verifiedPhone?: string // v-model:verifiedPhone (KCP 인증한 번호)
   useModal?: boolean // true: 모달 사용, false: 팝업 사용 (기본값)
+  returnUrl?: string // Mobile Fallback 리다이렉트 URL (기본값: /signup)
 }
 
 const props = withDefaults(defineProps<Props>(), {
   modelValue: '',
   phoneChk: false,
   verifiedPhone: '',
-  useModal: false
+  useModal: false,
+  returnUrl: '/signup'
 })
 
 const emit = defineEmits<{
@@ -237,7 +239,7 @@ const startVerification = async () => {
   // step2에서 입력한 번호로 세션 생성 (return_url 포함 - Fallback 리다이렉트용)
   await verificationMutation.mutateAsync({
     phone_number: phoneNumber.value,
-    return_url: '/signup'  // Fallback 시 /signup으로 리다이렉트
+    return_url: props.returnUrl  // Fallback 시 props.returnUrl로 리다이렉트 (기본값: /signup)
   })
 }
 

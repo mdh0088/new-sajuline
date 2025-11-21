@@ -62,6 +62,7 @@
       :name="signupFormData.name"
       :birthDate="signupFormData.birth_date"
       :gender="convertGenderForKCP(signupFormData.gender)"
+      :returnUrl="socialReturnUrl"
       @verified="handlePhoneVerified"
     />
 
@@ -98,6 +99,10 @@ import PhoneVerification from '~/components/auth/PhoneVerification.vue'
 
 // defineModel로 간단하게 처리
 const signupFormData = defineModel<SignupFormData>('signupFormData', { required: true })
+
+// 소셜 회원가입용 return URL (쿼리 파라미터 없이 - 백엔드에서 ?를 추가하므로)
+// 소셜 정보는 localStorage에 저장되어 복원됨
+const socialReturnUrl = '/signup/social'
 
 // 검증 로직 (이메일 + 닉네임)
 const { validateEmail, validateNickname } = useValidation()
