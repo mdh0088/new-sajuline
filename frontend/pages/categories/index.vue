@@ -9,7 +9,7 @@
         :key="category.value"
         @click="selectCategory(category.value)"
       >
-        <span class="tab-icon">{{ category.icon }}</span>
+        <img :src="category.icon" :alt="category.label" class="tab-icon" width="20" height="20" />
         <span class="tab-label">{{ category.label }}</span>
       </button>
     </section>
@@ -55,7 +55,7 @@
 
       <!-- 빈 상태 -->
       <div class="empty-state" v-if="counselors.length === 0 && !isLoading">
-        <div class="empty-icon">😔</div>
+        <div class="empty-icon"><img src="/images/search.png" alt="검색" width="48" height="48" /></div>
         <div class="empty-title">해당 카테고리의 상담사가 없습니다</div>
         <div class="empty-desc">다른 카테고리를 선택해보세요</div>
       </div>
@@ -90,10 +90,10 @@ const activeStatusFilter = ref(0)
 
 // 카테고리 목록 (타로/사주/신점만)
 const categories = [
-  { value: 'all', label: '전체', icon: '🌟' },
-  { value: 'TARO', label: '타로', icon: '🔮' },
-  { value: 'SAJU', label: '사주', icon: '📜' },
-  { value: 'FORTUNE', label: '신점', icon: '✨' }
+  { value: 'all', label: '전체', icon: '/images/home.png' },
+  { value: 'TARO', label: '타로', icon: '/images/tarot.png' },
+  { value: 'SAJU', label: '사주', icon: '/images/shaman.png' },
+  { value: 'FORTUNE', label: '신점', icon: '/images/fortune.png' }
 ]
 
 // 상태 필터

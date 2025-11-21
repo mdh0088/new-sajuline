@@ -33,10 +33,12 @@
       <!-- 필터 버튼들 -->
       <div class="filter-buttons">
         <button class="filter-btn" :class="{ active: selectedFilters.style }" @click="openFilterModal('style')">
-          <span>🗣️ {{ styleFilterLabel }}</span>
+          <img src="/images/setting.png" alt="필터" width="16" height="16" />
+          <span>{{ styleFilterLabel }}</span>
         </button>
         <button class="filter-btn" :class="{ active: selectedFilters.sort }" @click="openFilterModal('sort')">
-          <span>↕️ {{ sortFilterLabel }}</span>
+          <img src="/images/target.png" alt="정렬" width="16" height="16" />
+          <span>{{ sortFilterLabel }}</span>
         </button>
       </div>
     </section>
@@ -115,7 +117,7 @@
             @click="selectModalOption(option.value)"
           >
             <div class="radio-button"></div>
-            <span class="radio-icon">{{ option.icon }}</span>
+            <img :src="option.icon" :alt="option.label" class="radio-icon" width="20" height="20" />
             <span class="radio-label">{{ option.label }}</span>
           </div>
         </div>
