@@ -5,10 +5,12 @@ KCP 본인인증을 사용한 휴대폰 인증 엔드포인트
 """
 from fastapi import APIRouter, Depends, Request
 from fastapi.responses import HTMLResponse
+from sqlalchemy.ext.asyncio import AsyncSession
 from src.services.phone_verification_service import (
     PhoneVerificationService,
     get_phone_verification_service
 )
+from typing import Optional, Dict
 from src.schemas.phone_verification_schema import (
     PhoneVerificationInitiateRequest,
     PhoneVerificationInitiateResponse,
@@ -16,9 +18,11 @@ from src.schemas.phone_verification_schema import (
     PhoneVerificationForFindIdRequest,
     PhoneVerificationForFindPasswordRequest
 )
+from src.schemas.user_schema import FindPasswordRequest
 from src.common.response.wrapper import ok, APIResponse
 from src.common.logging import get_logger_with_request_id
 from src.exceptions.custom_exceptions import ValidationError
+from src.config.settings import settings
 
 router = APIRouter(prefix="/phone-verification", tags=["phone-verification"])
 
@@ -44,10 +48,12 @@ async def initiate_verification(
     """
     log = get_logger_with_request_id()
     log.info("Phone verification initiate request",
-            phone=request.phone_number[:3] + "****" + request.phone_number[-4:])
+            phone=request.phone_number[:3] + "****" + request.phone_number[-4:],
+            return_url=request.return_url)
 
     result = await phone_service.initiate_verification(
-        phone_number=request.phone_number
+        phone_number=request.phone_number,
+        return_url=request.return_url
     )
 
     return ok(
@@ -108,33 +114,13 @@ async def initiate_verification_for_find_password(
 
 
 async def _kcp_callback_handler(
-    site_cd: str,
-    ordr_idxx: str,
-    cert_no: str,
-    enc_cert_data2: str,
-    dn_hash: str,
-    res_cd: str,
-    res_msg: str,
-    phone_service: PhoneVerificationService
+    result:Dict
 ) -> HTMLResponse:
     """KCP 콜백 처리 핸들러 (GET/POST 공통)"""
     log = get_logger_with_request_id()
     log.info("KCP callback received",
-            session_id=ordr_idxx,
-            res_cd=res_cd)
-
+            result=result)
     try:
-        # KCP 콜백 처리
-        result = await phone_service.process_callback(
-            site_cd=site_cd,
-            ordr_idxx=ordr_idxx,
-            cert_no=cert_no,
-            enc_cert_data2=enc_cert_data2,
-            dn_hash=dn_hash,
-            res_cd=res_cd,
-            res_msg=res_msg
-        )
-
         # 성공 응답 HTML (Popup + Fallback 패턴)
         html_response = f"""
         <!DOCTYPE html>
@@ -159,18 +145,7 @@ async def _kcp_callback_handler(
 
                     let sent = false;
 
-                    // 1. Try posting to parent window (iframe case)
-                    try {{
-                        if (window.parent && window.parent !== window) {{
-                            console.log('[KCP] Sending postMessage to parent');
-                            window.parent.postMessage(messageData, '*');
-                            sent = true;
-                        }}
-                    }} catch(e) {{
-                        console.error('[KCP] Failed to send to parent:', e);
-                    }}
-
-                    // 2. Try posting to opener window (popup case)
+                    // 1. Try posting to opener window (popup case - Desktop 우선)
                     try {{
                         if (window.opener && !window.opener.closed) {{
                             console.log('[KCP] Sending postMessage to opener');
@@ -181,7 +156,20 @@ async def _kcp_callback_handler(
                         console.error('[KCP] Failed to send to opener:', e);
                     }}
 
-                    // 3. Fallback: Redirect to signup (full page redirect case)
+                    // 2. opener가 없으면 parent 시도 (iframe case - 현재 미사용)
+                    if (!sent) {{
+                        try {{
+                            if (window.parent && window.parent !== window) {{
+                                console.log('[KCP] Sending postMessage to parent');
+                                window.parent.postMessage(messageData, '*');
+                                sent = true;
+                            }}
+                        }} catch(e) {{
+                            console.error('[KCP] Failed to send to parent:', e);
+                        }}
+                    }}
+
+                    // 3. Fallback: 둘 다 실패한 경우 리다이렉트 (Mobile)
                     if (!sent) {{
                         console.log('[KCP] Fallback: Redirecting to page');
 
@@ -199,8 +187,8 @@ async def _kcp_callback_handler(
                             params.append('user_id', userId);
                         }}
 
-                        // Redirect to page with KCP result
-                        window.location.href = `http://localhost:3000{result.get("return_url", "/signup")}?${{params.toString()}}`;
+                        // Redirect to page with KCP result (환경변수 기반 URL)
+                        window.location.href = `{settings.frontend_url}{result.get("return_url", "/signup")}?${{params.toString()}}`;
                     }} else {{
                         // Success - close popup after delay
                         setTimeout(function() {{
@@ -318,11 +306,21 @@ async def kcp_callback(
                      missing_params=missing)
             raise ValidationError(f"필수 파라미터 누락: {', '.join(missing)}")
 
-        return await _kcp_callback_handler(
-            site_cd, ordr_idxx, cert_no,
-            enc_cert_data2, dn_hash, res_cd, res_msg,
-            phone_service
-        )
+        result = await phone_service.process_callback(
+                    site_cd=site_cd,
+                    ordr_idxx=ordr_idxx,
+                    cert_no=cert_no,
+                    enc_cert_data2=enc_cert_data2,
+                    dn_hash=dn_hash,
+                    res_cd=res_cd,
+                    res_msg=res_msg
+                )
+
+        log.info("KCP callback received",
+                    session_id=ordr_idxx,
+                    res_cd=res_cd)
+
+        return await _kcp_callback_handler(result)
     except ValidationError:
         raise
     except Exception as e:

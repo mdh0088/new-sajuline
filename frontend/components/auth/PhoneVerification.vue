@@ -234,9 +234,10 @@ const startVerification = async () => {
   isVerifying.value = true
   errorMessage.value = ''
 
-  // step2에서 입력한 번호로 세션 생성
+  // step2에서 입력한 번호로 세션 생성 (return_url 포함 - Fallback 리다이렉트용)
   await verificationMutation.mutateAsync({
-    phone_number: phoneNumber.value
+    phone_number: phoneNumber.value,
+    return_url: '/signup'  // Fallback 시 /signup으로 리다이렉트
   })
 }
 

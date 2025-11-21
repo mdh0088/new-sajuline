@@ -36,12 +36,14 @@ class PhoneVerificationService:
 
     async def initiate_verification(
         self,
-        phone_number: str
+        phone_number: str,
+        return_url: str = "/signup"
     ) -> Dict[str, str]:
         """본인인증 프로세스 시작
 
         Args:
             phone_number: 휴대폰 번호 (하이픈 없이)
+            return_url: 인증 완료 후 리다이렉트할 URL (Fallback용)
 
         Returns:
             Dict[str, str]: gateway_url, session_id 포함
@@ -61,6 +63,7 @@ class PhoneVerificationService:
         session_data = {
             "phone_number": phone_number,
             "status": "initiated",
+            "return_url": return_url,  # Fallback 리다이렉트용 URL 저장
             "created_at": datetime.utcnow().isoformat()
         }
 
@@ -447,7 +450,7 @@ class PhoneVerificationService:
         await self.redis.setex(key, ttl, json.dumps(data))
 
     async def _get_session(self, session_id: str) -> Optional[Dict]:
-        """Redis에서 세션 조회
+        """Redis에서 세션 조회 (조회 후 자동 삭제)
 
         Args:
             session_id: 세션 ID
@@ -457,15 +460,20 @@ class PhoneVerificationService:
         """
         import json
         key = f"phone_verification:{session_id}"
-        data = await self.redis.get(key)
-
-        if not data:
-            return None
 
         try:
-            return json.loads(data)
-        except json.JSONDecodeError:
-            return None
+            data = await self.redis.get(key)
+
+            if not data:
+                return None
+
+            try:
+                return json.loads(data)
+            except json.JSONDecodeError:
+                return None
+        finally:
+            # 조회 후 즉시 삭제 (일회용)
+            await self.redis.delete(key)
 
 
 # 의존성 함수 (프로젝트 규격 준수)

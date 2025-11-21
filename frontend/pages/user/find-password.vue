@@ -1,7 +1,15 @@
 <template>
   <div class="auth-container">
+    <!-- KCP 리다이렉트 후 데이터 복원 중 로딩 오버레이 -->
+    <div v-if="isRestoringData" class="restoration-overlay">
+      <div class="restoration-spinner">
+        <div class="spinner"></div>
+        <p class="restoration-message">인증 정보를 처리하는 중...</p>
+      </div>
+    </div>
+
     <!-- 메인 콘텐츠 -->
-    <main class="auth-main">
+    <main class="auth-main" :class="{ 'is-loading': isRestoringData }">
       <div class="max-w-md mx-auto">
         <!-- 히어로 섹션 -->
         <div class="text-center mb-10">
@@ -150,6 +158,10 @@ const maskedEmail = ref('')
 const successMessage = ref('')
 const errorMessage = ref('')
 const isVerifying = ref(false)
+// ✅ KCP Fallback 리다이렉트 시 페이지 진입부터 로딩 표시
+const isRestoringData = ref(route.query.from_kcp === 'true')
+// ✅ 중복 호출 방지 플래그
+const isProcessing = ref(false)
 
 // 팝업 및 리스너 관리
 let closePopup: (() => void) | null = null
@@ -161,27 +173,23 @@ const { mutate: findPassword } = useFindPassword({
     maskedEmail.value = data.email
     successMessage.value = data.message
     isVerifying.value = false
+    isProcessing.value = false  // ✅ 처리 완료
     toast.success('임시 비밀번호가 발송되었습니다')
   },
   onError: (error: any) => {
     console.error('Find password error:', error)
     errorMessage.value = error.message || '비밀번호 찾기 중 오류가 발생했습니다. 다시 시도해주세요.'
     isVerifying.value = false
+    isProcessing.value = false  // ✅ 처리 완료 (에러 시에도)
     toast.error(errorMessage.value)
   }
 })
 
-// 모바일 리다이렉트 처리 (query parameter에서 user_id와 전화번호 받기)
+// ✅ onMounted 처리 제거 - postMessage로만 처리
+// 모바일 리다이렉트는 발생하지 않아야 함 (KCP 콜백에서 postMessage 사용)
 onMounted(() => {
-  const fromKcp = route.query.from_kcp
-  const phone = route.query.phone as string
-  const userIdParam = route.query.user_id as string
-
-  if (fromKcp === 'true' && phone && userIdParam) {
-    // 모바일에서 본인인증 완료 후 리다이렉트된 경우
-    console.log('[Find-Password] KCP redirect received', { user_id: userIdParam, phone })
-    userId.value = userIdParam
-    findPassword({ user_id: userIdParam, phone })
+  if (route.query.from_kcp === 'true') {
+    isRestoringData.value = false
   }
 })
 
@@ -189,10 +197,18 @@ onMounted(() => {
 const handleSubmit = async () => {
   if (!userId.value.trim() || isVerifying.value) return
 
+  // ✅ 재인증 시작 - 이전 상태 초기화
   isVerifying.value = true
   errorMessage.value = ''
   successMessage.value = ''
   maskedEmail.value = ''
+  isProcessing.value = false  // ✅ 재인증을 위해 플래그 초기화
+
+  // ✅ 기존 리스너 완전 제거 (중복 등록 방지)
+  if (cleanupListener) {
+    cleanupListener()
+    cleanupListener = null
+  }
 
   // 비밀번호 찾기 전용 API 호출
   try {
@@ -222,7 +238,16 @@ const handleSubmit = async () => {
 
 // 본인인증 완료 핸들러
 const handleVerificationComplete = (result: PhoneVerificationResult) => {
-  console.log('[KCP] handleVerificationComplete called', result)
+  // ✅ 중복 호출 방지 - 이미 처리 중이면 무시
+  if (isProcessing.value) {
+    return
+  }
+
+  // ✅ 즉시 리스너 제거 (중복 실행 방지)
+  if (cleanupListener) {
+    cleanupListener()
+    cleanupListener = null
+  }
 
   // 팝업 닫기
   if (closePopup) {
@@ -231,7 +256,10 @@ const handleVerificationComplete = (result: PhoneVerificationResult) => {
   }
 
   if (result.success && result.phone) {
-    // 인증된 전화번호로 비밀번호 찾기 API 호출
+    // ✅ 처리 시작 플래그 설정 (1회성 보장)
+    isProcessing.value = true
+
+    // ✅ 인증된 전화번호로 비밀번호 찾기 API 단 1회 호출
     findPassword({ user_id: userId.value, phone: result.phone })
   } else {
     isVerifying.value = false
@@ -255,3 +283,55 @@ onUnmounted(() => {
   }
 })
 </script>
+
+<style scoped>
+/* KCP 리다이렉트 후 데이터 복원 중 로딩 오버레이 */
+.restoration-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.8);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+}
+
+.restoration-spinner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+}
+
+.spinner {
+  width: 48px;
+  height: 48px;
+  border: 4px solid rgba(255, 255, 255, 0.1);
+  border-top-color: #667eea;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.restoration-message {
+  color: white;
+  font-size: 1rem;
+  font-weight: 500;
+  margin: 0;
+}
+
+/* 로딩 중 메인 콘텐츠 비활성화 */
+.auth-main.is-loading {
+  pointer-events: none;
+  opacity: 0.5;
+  user-select: none;
+}
+</style>
