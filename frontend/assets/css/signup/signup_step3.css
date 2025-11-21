@@ -48,9 +48,10 @@
   --el-input-text-color: rgba(255, 255, 255, 0.9);
   --el-input-placeholder-color: rgba(255, 255, 255, 0.4);
   --el-input-hover-border-color: rgba(255, 255, 255, 0.2);
-  
+
   width: 100% !important;
   display: block !important;
+  height: auto !important;
 }
 
 .custom-date-input :deep(.el-input__wrapper) {
@@ -110,9 +111,11 @@
   color: rgba(255, 255, 255, 0.6) !important;
   /* Element Plus 기본 여백 완전 제거 */
   margin: 0 !important;
+  margin-left: 8px !important;
   padding: 0 !important;
   height: auto !important;
-  min-width: auto !important;
+  min-width: 20px !important;
+  width: 20px !important;
 }
 
 .custom-date-input :deep(.el-input__suffix-inner),
@@ -134,6 +137,8 @@
   margin: 0 !important;
   padding: 0 !important;
   width: 100% !important;
+  max-width: none !important;
+  min-width: 100% !important;
   height: auto !important;
   line-height: normal !important;
   box-sizing: border-box !important;
@@ -145,17 +150,51 @@
   margin: 0 !important;
   padding: 0 !important;
   width: 100% !important;
+  max-width: none !important;
+  min-width: 100% !important;
   display: block !important;
+}
+
+/* Element Plus의 기본 너비 제약 완전 제거 */
+.birth-date-picker.el-date-editor,
+.birth-time-picker.el-time-picker {
+  width: 100% !important;
+  max-width: none !important;
+  min-width: 100% !important;
+}
+
+.birth-date-picker :deep(.el-date-editor),
+.birth-time-picker :deep(.el-time-picker) {
+  width: 100% !important;
+  max-width: none !important;
+  min-width: 100% !important;
 }
 
 /* Element Plus 아이콘 추가 스타일링 */
 .custom-date-input :deep(.el-icon) {
   color: rgba(255, 255, 255, 0.6) !important;
   font-size: 18px !important;
+  width: 18px !important;
+  height: 18px !important;
 }
 
 .custom-date-input :deep(.el-icon:hover) {
   color: rgba(255, 255, 255, 0.8) !important;
+}
+
+/* DatePicker와 TimePicker의 아이콘 위치 완전 통일 */
+.birth-date-picker :deep(.el-input__suffix),
+.birth-time-picker :deep(.el-input__suffix) {
+  margin-left: 8px !important;
+  min-width: 20px !important;
+  width: 20px !important;
+}
+
+.birth-date-picker :deep(.el-input__suffix .el-icon),
+.birth-time-picker :deep(.el-input__suffix .el-icon) {
+  width: 18px !important;
+  height: 18px !important;
+  font-size: 18px !important;
 }
 
 /* Element Plus 팝업 패널 스타일 - 다크 테마 일관성 */

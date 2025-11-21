@@ -37,6 +37,7 @@ services:
 
   # 백엔드 서비스 (FastAPI)
   backend:
+    platform: linux/amd64  # KCP 바이너리는 x86_64 전용
     build:
       context: ../backend
       dockerfile: Dockerfile

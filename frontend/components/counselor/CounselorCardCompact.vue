@@ -24,7 +24,14 @@
           <div class="counselor-price-small">{{ (counselor.after_amount || 0).toLocaleString() }}P/30초</div>
           <div class="counselor-rating-small">
             <span class="rating-stars-small">
-              <span v-for="i in 5" :key="i">{{ i <= Math.round(counselor.rating_avg || 0) ? '⭐' : '☆' }}</span>
+              <img
+                v-for="i in 5"
+                :key="i"
+                :src="i <= Math.round(counselor.rating_avg || 0) ? '/images/favorite.png' : '/images/favorite.png'"
+                :class="i <= Math.round(counselor.rating_avg || 0) ? 'star-filled' : 'star-empty'"
+                alt="별점"
+                class="star-icon"
+              />
             </span>
             <span class="rating-score">{{ Number(counselor.rating_avg || 0).toFixed(1) }}</span>
           </div>
@@ -112,9 +119,9 @@ const showNotificationModal = ref(false)
 const userPoints = computed(() => storePoints.value)
 
 const specialtyMap: Record<string, string> = {
-  TARO: '타로 마스터',
-  SAJU: '사주 마스터',
-  FORTUNE: '운세 마스터'
+  TARO: '전화타로',
+  SAJU: '전화사주',
+  FORTUNE: '전화신점'
 }
 
 const specialtyLabel = computed(() => {

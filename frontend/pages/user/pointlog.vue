@@ -94,7 +94,7 @@
                 <span class="trans-date">{{ formatDate(transaction.created_at) }}</span>
                 <div class="trans-bottom">
                   <div class="trans-desc">
-                    <span class="trans-icon">💰</span>
+                    <span class="trans-icon"><img src="/images/point.png" alt="포인트" style="width: 16px; height: 16px; object-fit: contain;" /></span>
                     <span>{{ transaction.description }}</span>
                   </div>
                   <div class="trans-amount amount-positive">
@@ -120,7 +120,7 @@
                         height="48"
                         loading="lazy"
                       />
-                      <div v-else class="w-12 h-12 rounded-full bg-gradient-to-br from-yellow-400 to-amber-500 flex items-center justify-center text-2xl shadow-[0_4px_12px_rgba(255,215,0,0.3)]">🔮</div>
+                      <div v-else class="w-12 h-12 rounded-full bg-gradient-to-br from-yellow-400 to-amber-500 flex items-center justify-center text-2xl shadow-[0_4px_12px_rgba(255,215,0,0.3)]"><img src="/images/tarot.png" alt="타로" style="width: 32px; height: 32px; object-fit: contain;" /></div>
                     </div>
                     <div class="flex flex-col gap-1">
                       <span class="counselor-name">{{ item.counselor_name }}</span>

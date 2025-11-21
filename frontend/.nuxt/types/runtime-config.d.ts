@@ -77,8 +77,6 @@ import { RuntimeConfig as UserRuntimeConfig, PublicRuntimeConfig as UserPublicRu
                changefreq: string,
 
                priority: number,
-
-               lastmod: any,
             },
 
             include: Array<any>,
@@ -116,7 +114,7 @@ import { RuntimeConfig as UserRuntimeConfig, PublicRuntimeConfig as UserPublicRu
    cdnBase: string,
 
    "nuxt-scripts": {
-      version: any,
+      version: string,
 
       defaultScriptOptions: {
          trigger: string,

@@ -16,7 +16,7 @@
               <template v-else>{{ userNickname }}님</template>
             </h2>
             <button class="flex items-center gap-1.5 px-3 py-2 rounded-lg bg-white/10 hover:bg-white/15 transition-colors text-sm flex-shrink-0" @click="goEdit">
-              <span>⚙️</span>
+              <img src="/images/setting.png" alt="설정" width="23" height="23" style="width: 23px; height: 23px; object-fit: contain;" />
               <span>설정</span>
             </button>
           </div>
@@ -40,7 +40,8 @@
           <div class="mb-3">
             <div class="flex items-center justify-between mb-1.5 px-0.5">
               <span class="text-xs text-white/60 flex items-center gap-1">
-                🎯 <span>다음 등급까지</span>
+                <img src="/images/target.png" alt="타겟" width="14" height="14" style="width: 14px; height: 14px; object-fit: contain;" />
+                <span>다음 등급까지</span>
               </span>
               <span class="text-xs text-white/50">
                 <template v-if="isLoading">
@@ -77,7 +78,7 @@
         <!-- 포인트 카드 - 강조 -->
         <div class="rounded-2xl border border-yellow-400/30 bg-gradient-to-br from-yellow-400/10 to-yellow-400/5 p-5 mb-4">
           <div class="flex items-center gap-2 mb-2">
-            <span class="text-xl">💰</span>
+            <img src="/images/point.png" alt="포인트" width="20" height="20" class="w-5 h-5 object-contain" />
             <h3 class="text-sm font-semibold text-white/70">보유 포인트</h3>
           </div>
           <div class="text-2xl font-bold text-yellow-300 mb-4">
@@ -101,7 +102,7 @@
         <div class="rounded-xl border border-blue-500/30 bg-blue-500/5 p-5 mb-4">
           <div class="flex items-center justify-between mb-2">
             <div class="flex items-center gap-2">
-              <span class="text-xl">💎</span>
+              <img src="/images/milage.png" alt="마일리지" width="20" height="20" class="w-5 h-5 object-contain" />
               <h3 class="text-sm font-semibold text-white/70">마일리지</h3>
             </div>
             <div class="flex gap-2">
@@ -125,8 +126,8 @@
             <h4 class="text-sm text-white/60 mb-2 px-1">상담 관리</h4>
             <div class="rounded-2xl overflow-hidden border border-white/10">
               <!-- <NuxtLink to="/user/cslog" class="menu-item"><div class="menu-left"><div class="menu-icon">💬</div><div><div class="menu-title">상담 내역</div><div class="menu-desc">지난 상담 기록 확인</div></div></div><div class="menu-right">›</div></NuxtLink> -->
-              <NuxtLink to="/user/favorite" class="menu-item"><div class="menu-left"><div class="menu-icon">⭐</div><div><div class="menu-title">즐겨찾기 상담사</div><div class="menu-desc">자주 찾는 상담사 관리</div></div></div><div class="menu-right">›</div></NuxtLink>
-              <NuxtLink to="/user/reviews" class="menu-item"><div class="menu-left"><div class="menu-icon">📝</div><div><div class="menu-title">상담 후기</div><div class="menu-desc">내가 작성한 후기 보기</div></div></div><div class="menu-right">›</div></NuxtLink>
+              <NuxtLink to="/user/favorite" class="menu-item"><div class="menu-left"><div class="menu-icon"><img src="/images/favorite.png" alt="즐겨찾기" width="24" height="24" class="menu-icon-img" /></div><div><div class="menu-title">즐겨찾기 상담사</div><div class="menu-desc">자주 찾는 상담사 관리</div></div></div><div class="menu-right">›</div></NuxtLink>
+              <NuxtLink to="/user/reviews" class="menu-item"><div class="menu-left"><div class="menu-icon"><img src="/images/review.png" alt="후기" width="24" height="24" class="menu-icon-img" /></div><div><div class="menu-title">상담 후기</div><div class="menu-desc">내가 작성한 후기 보기</div></div></div><div class="menu-right">›</div></NuxtLink>
             </div>
           </div>
           <!-- 혜택 영역 숨김처리
@@ -142,27 +143,27 @@
           <div>
             <h4 class="text-sm text-white/60 mb-2 px-1">멤버십</h4>
             <div class="rounded-2xl overflow-hidden border border-white/10">
-              <NuxtLink to="/membership/benefit" class="menu-item"><div class="menu-left"><div class="menu-icon">👑</div><div><div class="menu-title">멤버십 혜택</div><div class="menu-desc">등급별 할인 및 적립 혜택</div></div></div><div class="menu-right">›</div></NuxtLink>
+              <NuxtLink to="/membership/benefit" class="menu-item"><div class="menu-left"><div class="menu-icon"><img src="/images/membership.png" alt="멤버십" width="24" height="24" class="menu-icon-img" /></div><div><div class="menu-title">멤버십 혜택</div><div class="menu-desc">등급별 할인 및 적립 혜택</div></div></div><div class="menu-right">›</div></NuxtLink>
             </div>
           </div>
 
           <div>
             <h4 class="text-sm text-white/60 mb-2 px-1">이벤트</h4>
             <div class="rounded-2xl overflow-hidden border border-white/10">
-              <NuxtLink to="/events" class="menu-item"><div class="menu-left"><div class="menu-icon">🎁</div><div><div class="menu-title">진행중인 이벤트</div><div class="menu-desc">다양한 혜택을 확인하세요</div></div></div><div class="menu-right">›</div></NuxtLink>
+              <NuxtLink to="/events" class="menu-item"><div class="menu-left"><div class="menu-icon"><img src="/images/event.png" alt="이벤트" width="24" height="24" class="menu-icon-img" /></div><div><div class="menu-title">진행중인 이벤트</div><div class="menu-desc">다양한 혜택을 확인하세요</div></div></div><div class="menu-right">›</div></NuxtLink>
             </div>
           </div>
 
           <div>
             <h4 class="text-sm text-white/60 mb-2 px-1">기타</h4>
             <div class="rounded-2xl overflow-hidden border border-white/10">
-              <div class="menu-item" @click="goNotice"><div class="menu-left"><div class="menu-icon">📢</div><div><div class="menu-title">공지사항</div><div class="menu-desc">서비스 소식 확인</div></div></div><div class="menu-right">NEW</div></div>
+              <div class="menu-item" @click="goNotice"><div class="menu-left"><div class="menu-icon"><img src="/images/notice.png" alt="공지사항" width="24" height="24" class="menu-icon-img" /></div><div><div class="menu-title">공지사항</div><div class="menu-desc">서비스 소식 확인</div></div></div><div class="menu-right">NEW</div></div>
               <!-- 알림 설정 메뉴 숨김처리
               <div class="menu-item"><div class="menu-left"><div class="menu-icon">🔔</div><div><div class="menu-title">알림 설정</div><div class="menu-desc">푸시 알림 관리</div></div></div><div class="menu-right">›</div></div>
                -->
-              <div class="menu-item" @click="goCs"><div class="menu-left"><div class="menu-icon">❓</div><div><div class="menu-title">고객센터</div><div class="menu-desc">1:1 문의 및 FAQ</div></div></div><div class="menu-right">›</div></div>
-              <div class="menu-item" @click="goProvision"><div class="menu-left"><div class="menu-icon">📜</div><div><div class="menu-title">이용약관</div><div class="menu-desc">서비스 이용 약관</div></div></div><div class="menu-right">›</div></div>
-              <div class="menu-item" @click="goPrivacy"><div class="menu-left"><div class="menu-icon">🔒</div><div><div class="menu-title">개인정보처리방침</div><div class="menu-desc">개인정보 보호 정책</div></div></div><div class="menu-right">›</div></div>
+              <div class="menu-item" @click="goCs"><div class="menu-left"><div class="menu-icon"><img src="/images/cs.png" alt="고객센터" width="24" height="24" class="menu-icon-img" /></div><div><div class="menu-title">고객센터</div><div class="menu-desc">1:1 문의 및 FAQ</div></div></div><div class="menu-right">›</div></div>
+              <div class="menu-item" @click="goProvision"><div class="menu-left"><div class="menu-icon"><img src="/images/provision.png" alt="이용약관" width="24" height="24" class="menu-icon-img" /></div><div><div class="menu-title">이용약관</div><div class="menu-desc">서비스 이용 약관</div></div></div><div class="menu-right">›</div></div>
+              <div class="menu-item" @click="goPrivacy"><div class="menu-left"><div class="menu-icon"><img src="/images/privacy.png" alt="개인정보처리방침" width="24" height="24" class="menu-icon-img" /></div><div><div class="menu-title">개인정보처리방침</div><div class="menu-desc">개인정보 보호 정책</div></div></div><div class="menu-right">›</div></div>
             </div>
           </div>
         </div>
