@@ -6,7 +6,7 @@
         <button class="mileage-back-button" @click="$router.back()">←</button>
         <h1 class="mileage-header-title">마일리지 샵</h1>
         <div class="mileage-header-actions">
-          <button class="mileage-icon-btn">🔔</button>
+          <button class="mileage-icon-btn"><img src="/images/notice.png" alt="알림" style="width: 20px; height: 20px; object-fit: contain;" /></button>
         </div>
       </div>
     </div>
@@ -21,7 +21,7 @@
 
       <!-- 마일리지 정보 -->
       <div class="mileage-info">
-        <span class="mileage-icon">💎</span>
+        <span class="mileage-icon"><img src="/images/milage.png" alt="마일리지" style="width: 32px; height: 32px; object-fit: contain;" /></span>
         <span class="mileage-shop-amount">{{ currentMileage.toLocaleString() }}</span>
         <span class="mileage-label">마일리지 보유</span>
       </div>
@@ -60,7 +60,7 @@
                 :alt="product.m_product_name"
                 class="mileage-product-image"
               />
-              <span v-else>💎</span>
+              <img v-else src="/images/milage.png" alt="마일리지" style="width: 48px; height: 48px; object-fit: contain;" />
             </div>
             <div class="mileage-product-price">
               <div class="mileage-price-amount">{{ product.m_product_value.toLocaleString() }}M</div>
@@ -120,7 +120,7 @@
                 :alt="selectedProduct.m_product_name"
                 class="mileage-product-image"
               />
-              <span v-else>💎</span>
+              <img v-else src="/images/milage.png" alt="마일리지" style="width: 48px; height: 48px; object-fit: contain;" />
             </div>
             <div class="mileage-modal-product-details">
               <div class="mileage-modal-product-title">{{ selectedProduct.m_product_name }}</div>
@@ -135,7 +135,7 @@
 
         <!-- 마일리지 사용 내역 -->
         <div class="mileage-breakdown">
-          <div class="mileage-breakdown-title">💎 마일리지 사용 내역</div>
+          <div class="mileage-breakdown-title"><img src="/images/milage.png" alt="마일리지" style="width: 20px; height: 20px; object-fit: contain; display: inline-block; vertical-align: middle; margin-right: 4px;" /> 마일리지 사용 내역</div>
           <div class="mileage-breakdown-item">
             <span class="mileage-breakdown-label">보유 마일리지</span>
             <span class="mileage-breakdown-value">{{ currentMileage.toLocaleString() }}M</span>
@@ -160,7 +160,7 @@
             class="mileage-guide-header"
             @click="showGuide = !showGuide"
           >
-            <span class="mileage-guide-title">📋 마일리지 이용안내</span>
+            <span class="mileage-guide-title"><img src="/images/notice.png" alt="안내" style="width: 18px; height: 18px; object-fit: contain; display: inline-block; vertical-align: middle; margin-right: 4px;" /> 마일리지 이용안내</span>
             <span class="mileage-guide-toggle">{{ showGuide ? '▲' : '▼' }}</span>
           </div>
           <div v-show="showGuide" class="mileage-guide-content">
@@ -188,7 +188,7 @@
           v-show="selectedProduct.m_product_value > currentMileage"
           class="mileage-insufficient-notice"
         >
-          <div class="mileage-notice-icon">⚠️</div>
+          <div class="mileage-notice-icon"><img src="/images/event.png" alt="경고" style="width: 32px; height: 32px; object-fit: contain;" /></div>
           <div class="mileage-notice-text">마일리지가 부족합니다<br>추가 마일리지를 충전해주세요</div>
         </div>
 
@@ -213,7 +213,7 @@
       @click.stop
     >
       <div class="mileage-success-modal">
-        <div class="mileage-success-icon">✅</div>
+        <div class="mileage-success-icon"><img src="/images/best.png" alt="완료" style="width: 64px; height: 64px; object-fit: contain;" /></div>
         <div class="mileage-success-title">구매 완료!</div>
         <div class="mileage-success-message">
           {{ selectedProduct?.m_product_name }}을(를)<br>

@@ -222,7 +222,11 @@
     <div v-if="counselor" class="bottom-cta">
       <div class="cta-buttons">
         <button v-if="showFavorite" class="favorite-button" :disabled="favoritePending" @click="toggleFavorite">
-          <span class="star-icon" :class="{ 'filled': isFavorite }">⭐</span>
+          <img
+            src="/images/favorite.png"
+            alt="즐겨찾기"
+            :class="['star-icon', { 'filled': isFavorite, 'empty': !isFavorite }]"
+          />
         </button>
         <!-- 채팅 상담 버튼 - 주석 처리 -->
         <!--

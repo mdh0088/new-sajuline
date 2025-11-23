@@ -210,6 +210,14 @@
   font-size: 64px;
   margin-bottom: 16px;
   opacity: 0.3;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.empty-icon img {
+  display: block;
+  margin: 0 auto;
 }
 
 .empty-title {

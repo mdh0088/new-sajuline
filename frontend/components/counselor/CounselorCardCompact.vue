@@ -15,8 +15,16 @@
             <span class="counselor-code">{{ counselor.counselor_code }}</span>
           </div>
           <div class="counselor-specialty-small">{{ specialtyLabel }}</div>
-          <div class="counselor-tags-small">
-            <span v-for="tag in tags.slice(0, 3)" :key="tag" class="tag-small">{{ tag }}</span>
+          <div ref="tagsWrapperRef" class="counselor-tags-wrapper">
+            <div
+              ref="tagsContainerRef"
+              class="counselor-tags-small"
+              :class="{ 'scrolling': shouldScroll }"
+              :style="shouldScroll ? { animationDuration } : {}"
+            >
+              <span v-for="(tag, idx) in tags" :key="`tag-1-${idx}`" class="tag-small">{{ tag }}</span>
+              <span v-if="shouldScroll" v-for="(tag, idx) in tags" :key="`tag-2-${idx}`" class="tag-small">{{ tag }}</span>
+            </div>
           </div>
           <div class="counselor-desc-small">{{ shortIntro }}</div>
         </div>
@@ -95,7 +103,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed, ref, onMounted, nextTick } from 'vue'
 import { useRouter, navigateTo } from 'nuxt/app'
 import type { CounselorSearchItem } from '~/types/counselor/search'
 import { useCdn } from '~/composables/utils/useCdn'
@@ -118,6 +126,11 @@ const showPhoneModal = ref(false)
 const showNotificationModal = ref(false)
 const userPoints = computed(() => storePoints.value)
 
+// 키워드 스크롤 관련 refs
+const tagsWrapperRef = ref<HTMLElement | null>(null)
+const tagsContainerRef = ref<HTMLElement | null>(null)
+const animationDuration = ref('20s')
+
 const specialtyMap: Record<string, string> = {
   TARO: '전화타로',
   SAJU: '전화사주',
@@ -136,6 +149,11 @@ const tags = computed(() => {
     .split(',')
     .map((s) => s.trim())
     .filter(Boolean)
+})
+
+// 키워드가 많을 때만 스크롤 활성화 (3개 이상)
+const shouldScroll = computed(() => {
+  return tags.value.length > 3
 })
 
 const shortIntro = computed(() => {
@@ -246,11 +264,97 @@ const goToCharge = () => {
 const goToRegisterLogin = () => {
   navigateTo('/login')
 }
+
+// 키워드 스크롤 애니메이션 설정
+onMounted(() => {
+  if (shouldScroll.value && tagsContainerRef.value) {
+    nextTick(() => {
+      const container = tagsContainerRef.value
+      if (container) {
+        const scrollWidth = container.scrollWidth / 2 // 복제된 절반 너비
+        // 너비에 비례한 속도 계산 (더 느리게)
+        const duration = Math.max(25, scrollWidth / 30)
+        animationDuration.value = `${duration}s`
+      }
+    })
+  }
+})
 </script>
 
 <style scoped>
 /* main-page.css 파일을 import하여 사용 */
 @import '~/assets/css/main-page.css';
+
+/* 키워드 자동 롤링 스타일 - 완전히 재작성 */
+.counselor-tags-wrapper {
+  position: relative;
+  max-width: 165px !important;
+  height: 22px;
+  overflow: hidden !important;
+  margin-top: 2px;
+  display: block !important;
+}
+
+/* 스크롤 활성화 시에만 페이드 효과 표시 */
+.counselor-tags-wrapper:has(.scrolling)::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 30px;
+  height: 100%;
+  background: linear-gradient(to right, transparent 0%, rgb(137 34 229 / 20%) 40%, rgba(147, 51, 234, 0.2) 100%);
+  pointer-events: none;
+  z-index: 2;
+}
+
+/* 기본 상태 - 스크롤 없음 */
+.counselor-tags-small {
+  display: flex !important;
+  gap: 6px;
+  flex-wrap: nowrap !important;
+  align-items: center;
+  height: 22px;
+}
+
+/* 스크롤 활성화 시 */
+.counselor-tags-small.scrolling {
+  display: inline-flex !important;
+  width: fit-content !important;
+  min-width: fit-content !important;
+  flex-wrap: nowrap !important;
+  animation-name: scroll-tags;
+  animation-timing-function: linear;
+  animation-iteration-count: infinite;
+  will-change: transform;
+}
+
+.counselor-tags-small.scrolling:hover {
+  animation-play-state: paused;
+}
+
+/* 개별 태그 스타일 */
+.counselor-tags-small .tag-small {
+  flex-shrink: 0 !important;
+  white-space: nowrap !important;
+  display: inline-block !important;
+}
+
+@keyframes scroll-tags {
+  0% {
+    transform: translateX(0);
+  }
+  100% {
+    transform: translateX(-50%);
+  }
+}
+
+/* 모바일 최적화 */
+@media (max-width: 768px) {
+  .counselor-tags-wrapper:has(.scrolling)::after {
+    width: 30px;
+  }
+}
 
 /* 상담 버튼 상태별 스타일 */
 .consult-button-busy {
