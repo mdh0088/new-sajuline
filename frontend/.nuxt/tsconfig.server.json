@@ -96,7 +96,7 @@
         "../node_modules/@nuxt/image/dist/runtime/*"
       ],
       "#nuxt-scripts-validator": [
-        "../node_modules/@nuxt/scripts/dist/runtime/validation/valibot"
+        "../node_modules/@nuxt/scripts/dist/runtime/validation/mock"
       ],
       "#nuxt-scripts": [
         "../node_modules/@nuxt/scripts/dist/runtime"

@@ -6,7 +6,7 @@ declare module '@nuxt/schema' {
     ["@nuxt/icon"]?: ModuleDependencyMeta<typeof import("@nuxt/icon").default extends NuxtModule<infer O> ? O : Record<string, unknown>>
     ["@nuxt/fonts"]?: ModuleDependencyMeta<typeof import("@nuxt/fonts").default extends NuxtModule<infer O> ? O : Record<string, unknown>>
     ["@nuxtjs/tailwindcss"]?: ModuleDependencyMeta<typeof import("@nuxtjs/tailwindcss").default extends NuxtModule<infer O> ? O : Record<string, unknown>>
-    ["C:/Users/user/mdh/project/new-sajuline/frontend/node_modules/nuxt-site-config/dist/module"]?: ModuleDependencyMeta<typeof import("C:/Users/user/mdh/project/new-sajuline/frontend/node_modules/nuxt-site-config/dist/module").default extends NuxtModule<infer O> ? O : Record<string, unknown>>
+    ["C:/Users/poyi1/mdh/project/new-sajuline/frontend/node_modules/nuxt-site-config/dist/module"]?: ModuleDependencyMeta<typeof import("C:/Users/poyi1/mdh/project/new-sajuline/frontend/node_modules/nuxt-site-config/dist/module").default extends NuxtModule<infer O> ? O : Record<string, unknown>>
     ["@nuxtjs/sitemap"]?: ModuleDependencyMeta<typeof import("@nuxtjs/sitemap").default extends NuxtModule<infer O> ? O : Record<string, unknown>>
     ["@pinia/nuxt"]?: ModuleDependencyMeta<typeof import("@pinia/nuxt").default extends NuxtModule<infer O> ? O : Record<string, unknown>>
     ["@vueuse/nuxt"]?: ModuleDependencyMeta<typeof import("@vueuse/nuxt").default extends NuxtModule<infer O> ? O : Record<string, unknown>>
@@ -37,9 +37,9 @@ declare module '@nuxt/schema' {
      */
     ["tailwindcss"]: typeof import("@nuxtjs/tailwindcss").default extends NuxtModule<infer O, unknown, boolean> ? O : Record<string, any>
     /**
-     * Configuration for `C:/Users/user/mdh/project/new-sajuline/frontend/node_modules/nuxt-site-config/dist/module`
+     * Configuration for `C:/Users/poyi1/mdh/project/new-sajuline/frontend/node_modules/nuxt-site-config/dist/module`
      */
-    ["site"]: typeof import("C:/Users/user/mdh/project/new-sajuline/frontend/node_modules/nuxt-site-config/dist/module").default extends NuxtModule<infer O, unknown, boolean> ? O : Record<string, any>
+    ["site"]: typeof import("C:/Users/poyi1/mdh/project/new-sajuline/frontend/node_modules/nuxt-site-config/dist/module").default extends NuxtModule<infer O, unknown, boolean> ? O : Record<string, any>
     /**
      * Configuration for `@nuxtjs/sitemap`
      */
@@ -91,9 +91,9 @@ declare module '@nuxt/schema' {
      */
     ["tailwindcss"]?: typeof import("@nuxtjs/tailwindcss").default extends NuxtModule<infer O, unknown, boolean> ? Partial<O> : Record<string, any>
     /**
-     * Configuration for `C:/Users/user/mdh/project/new-sajuline/frontend/node_modules/nuxt-site-config/dist/module`
+     * Configuration for `C:/Users/poyi1/mdh/project/new-sajuline/frontend/node_modules/nuxt-site-config/dist/module`
      */
-    ["site"]?: typeof import("C:/Users/user/mdh/project/new-sajuline/frontend/node_modules/nuxt-site-config/dist/module").default extends NuxtModule<infer O, unknown, boolean> ? Partial<O> : Record<string, any>
+    ["site"]?: typeof import("C:/Users/poyi1/mdh/project/new-sajuline/frontend/node_modules/nuxt-site-config/dist/module").default extends NuxtModule<infer O, unknown, boolean> ? Partial<O> : Record<string, any>
     /**
      * Configuration for `@nuxtjs/sitemap`
      */
@@ -122,7 +122,7 @@ declare module '@nuxt/schema' {
      * Configuration for `@nuxt/telemetry`
      */
     ["telemetry"]?: typeof import("@nuxt/telemetry").default extends NuxtModule<infer O, unknown, boolean> ? Partial<O> : Record<string, any>
-    modules?: (undefined | null | false | NuxtModule<any> | string | [NuxtModule | string, Record<string, any>] | ["@nuxt/image", Exclude<NuxtConfig["image"], boolean>] | ["@nuxt/scripts", Exclude<NuxtConfig["scripts"], boolean>] | ["@nuxt/icon", Exclude<NuxtConfig["icon"], boolean>] | ["@nuxt/fonts", Exclude<NuxtConfig["fonts"], boolean>] | ["@nuxtjs/tailwindcss", Exclude<NuxtConfig["tailwindcss"], boolean>] | ["C:/Users/user/mdh/project/new-sajuline/frontend/node_modules/nuxt-site-config/dist/module", Exclude<NuxtConfig["site"], boolean>] | ["@nuxtjs/sitemap", Exclude<NuxtConfig["sitemap"], boolean>] | ["@pinia/nuxt", Exclude<NuxtConfig["pinia"], boolean>] | ["@vueuse/nuxt", Exclude<NuxtConfig["vueuse"], boolean>] | ["@element-plus/nuxt", Exclude<NuxtConfig["elementPlus"], boolean>] | ["notivue/nuxt", Exclude<NuxtConfig["notivue"], boolean>] | ["@nuxt/devtools", Exclude<NuxtConfig["devtools"], boolean>] | ["@nuxt/telemetry", Exclude<NuxtConfig["telemetry"], boolean>])[],
+    modules?: (undefined | null | false | NuxtModule<any> | string | [NuxtModule | string, Record<string, any>] | ["@nuxt/image", Exclude<NuxtConfig["image"], boolean>] | ["@nuxt/scripts", Exclude<NuxtConfig["scripts"], boolean>] | ["@nuxt/icon", Exclude<NuxtConfig["icon"], boolean>] | ["@nuxt/fonts", Exclude<NuxtConfig["fonts"], boolean>] | ["@nuxtjs/tailwindcss", Exclude<NuxtConfig["tailwindcss"], boolean>] | ["C:/Users/poyi1/mdh/project/new-sajuline/frontend/node_modules/nuxt-site-config/dist/module", Exclude<NuxtConfig["site"], boolean>] | ["@nuxtjs/sitemap", Exclude<NuxtConfig["sitemap"], boolean>] | ["@pinia/nuxt", Exclude<NuxtConfig["pinia"], boolean>] | ["@vueuse/nuxt", Exclude<NuxtConfig["vueuse"], boolean>] | ["@element-plus/nuxt", Exclude<NuxtConfig["elementPlus"], boolean>] | ["notivue/nuxt", Exclude<NuxtConfig["notivue"], boolean>] | ["@nuxt/devtools", Exclude<NuxtConfig["devtools"], boolean>] | ["@nuxt/telemetry", Exclude<NuxtConfig["telemetry"], boolean>])[],
   }
 }
 declare module 'nuxt/schema' {
@@ -132,7 +132,7 @@ declare module 'nuxt/schema' {
     ["@nuxt/icon"]?: ModuleDependencyMeta<typeof import("@nuxt/icon").default extends NuxtModule<infer O> ? O : Record<string, unknown>>
     ["@nuxt/fonts"]?: ModuleDependencyMeta<typeof import("@nuxt/fonts").default extends NuxtModule<infer O> ? O : Record<string, unknown>>
     ["@nuxtjs/tailwindcss"]?: ModuleDependencyMeta<typeof import("@nuxtjs/tailwindcss").default extends NuxtModule<infer O> ? O : Record<string, unknown>>
-    ["C:/Users/user/mdh/project/new-sajuline/frontend/node_modules/nuxt-site-config/dist/module"]?: ModuleDependencyMeta<typeof import("C:/Users/user/mdh/project/new-sajuline/frontend/node_modules/nuxt-site-config/dist/module").default extends NuxtModule<infer O> ? O : Record<string, unknown>>
+    ["C:/Users/poyi1/mdh/project/new-sajuline/frontend/node_modules/nuxt-site-config/dist/module"]?: ModuleDependencyMeta<typeof import("C:/Users/poyi1/mdh/project/new-sajuline/frontend/node_modules/nuxt-site-config/dist/module").default extends NuxtModule<infer O> ? O : Record<string, unknown>>
     ["@nuxtjs/sitemap"]?: ModuleDependencyMeta<typeof import("@nuxtjs/sitemap").default extends NuxtModule<infer O> ? O : Record<string, unknown>>
     ["@pinia/nuxt"]?: ModuleDependencyMeta<typeof import("@pinia/nuxt").default extends NuxtModule<infer O> ? O : Record<string, unknown>>
     ["@vueuse/nuxt"]?: ModuleDependencyMeta<typeof import("@vueuse/nuxt").default extends NuxtModule<infer O> ? O : Record<string, unknown>>
@@ -168,10 +168,10 @@ declare module 'nuxt/schema' {
      */
     ["tailwindcss"]: typeof import("@nuxtjs/tailwindcss").default extends NuxtModule<infer O, unknown, boolean> ? O : Record<string, any>
     /**
-     * Configuration for `C:/Users/user/mdh/project/new-sajuline/frontend/node_modules/nuxt-site-config/dist/module`
-     * @see https://www.npmjs.com/package/C:/Users/user/mdh/project/new-sajuline/frontend/node_modules/nuxt-site-config/dist/module
+     * Configuration for `C:/Users/poyi1/mdh/project/new-sajuline/frontend/node_modules/nuxt-site-config/dist/module`
+     * @see https://www.npmjs.com/package/C:/Users/poyi1/mdh/project/new-sajuline/frontend/node_modules/nuxt-site-config/dist/module
      */
-    ["site"]: typeof import("C:/Users/user/mdh/project/new-sajuline/frontend/node_modules/nuxt-site-config/dist/module").default extends NuxtModule<infer O, unknown, boolean> ? O : Record<string, any>
+    ["site"]: typeof import("C:/Users/poyi1/mdh/project/new-sajuline/frontend/node_modules/nuxt-site-config/dist/module").default extends NuxtModule<infer O, unknown, boolean> ? O : Record<string, any>
     /**
      * Configuration for `@nuxtjs/sitemap`
      * @see https://www.npmjs.com/package/@nuxtjs/sitemap
@@ -235,10 +235,10 @@ declare module 'nuxt/schema' {
      */
     ["tailwindcss"]?: typeof import("@nuxtjs/tailwindcss").default extends NuxtModule<infer O, unknown, boolean> ? Partial<O> : Record<string, any>
     /**
-     * Configuration for `C:/Users/user/mdh/project/new-sajuline/frontend/node_modules/nuxt-site-config/dist/module`
-     * @see https://www.npmjs.com/package/C:/Users/user/mdh/project/new-sajuline/frontend/node_modules/nuxt-site-config/dist/module
+     * Configuration for `C:/Users/poyi1/mdh/project/new-sajuline/frontend/node_modules/nuxt-site-config/dist/module`
+     * @see https://www.npmjs.com/package/C:/Users/poyi1/mdh/project/new-sajuline/frontend/node_modules/nuxt-site-config/dist/module
      */
-    ["site"]?: typeof import("C:/Users/user/mdh/project/new-sajuline/frontend/node_modules/nuxt-site-config/dist/module").default extends NuxtModule<infer O, unknown, boolean> ? Partial<O> : Record<string, any>
+    ["site"]?: typeof import("C:/Users/poyi1/mdh/project/new-sajuline/frontend/node_modules/nuxt-site-config/dist/module").default extends NuxtModule<infer O, unknown, boolean> ? Partial<O> : Record<string, any>
     /**
      * Configuration for `@nuxtjs/sitemap`
      * @see https://www.npmjs.com/package/@nuxtjs/sitemap
@@ -274,6 +274,6 @@ declare module 'nuxt/schema' {
      * @see https://www.npmjs.com/package/@nuxt/telemetry
      */
     ["telemetry"]?: typeof import("@nuxt/telemetry").default extends NuxtModule<infer O, unknown, boolean> ? Partial<O> : Record<string, any>
-    modules?: (undefined | null | false | NuxtModule<any> | string | [NuxtModule | string, Record<string, any>] | ["@nuxt/image", Exclude<NuxtConfig["image"], boolean>] | ["@nuxt/scripts", Exclude<NuxtConfig["scripts"], boolean>] | ["@nuxt/icon", Exclude<NuxtConfig["icon"], boolean>] | ["@nuxt/fonts", Exclude<NuxtConfig["fonts"], boolean>] | ["@nuxtjs/tailwindcss", Exclude<NuxtConfig["tailwindcss"], boolean>] | ["C:/Users/user/mdh/project/new-sajuline/frontend/node_modules/nuxt-site-config/dist/module", Exclude<NuxtConfig["site"], boolean>] | ["@nuxtjs/sitemap", Exclude<NuxtConfig["sitemap"], boolean>] | ["@pinia/nuxt", Exclude<NuxtConfig["pinia"], boolean>] | ["@vueuse/nuxt", Exclude<NuxtConfig["vueuse"], boolean>] | ["@element-plus/nuxt", Exclude<NuxtConfig["elementPlus"], boolean>] | ["notivue/nuxt", Exclude<NuxtConfig["notivue"], boolean>] | ["@nuxt/devtools", Exclude<NuxtConfig["devtools"], boolean>] | ["@nuxt/telemetry", Exclude<NuxtConfig["telemetry"], boolean>])[],
+    modules?: (undefined | null | false | NuxtModule<any> | string | [NuxtModule | string, Record<string, any>] | ["@nuxt/image", Exclude<NuxtConfig["image"], boolean>] | ["@nuxt/scripts", Exclude<NuxtConfig["scripts"], boolean>] | ["@nuxt/icon", Exclude<NuxtConfig["icon"], boolean>] | ["@nuxt/fonts", Exclude<NuxtConfig["fonts"], boolean>] | ["@nuxtjs/tailwindcss", Exclude<NuxtConfig["tailwindcss"], boolean>] | ["C:/Users/poyi1/mdh/project/new-sajuline/frontend/node_modules/nuxt-site-config/dist/module", Exclude<NuxtConfig["site"], boolean>] | ["@nuxtjs/sitemap", Exclude<NuxtConfig["sitemap"], boolean>] | ["@pinia/nuxt", Exclude<NuxtConfig["pinia"], boolean>] | ["@vueuse/nuxt", Exclude<NuxtConfig["vueuse"], boolean>] | ["@element-plus/nuxt", Exclude<NuxtConfig["elementPlus"], boolean>] | ["notivue/nuxt", Exclude<NuxtConfig["notivue"], boolean>] | ["@nuxt/devtools", Exclude<NuxtConfig["devtools"], boolean>] | ["@nuxt/telemetry", Exclude<NuxtConfig["telemetry"], boolean>])[],
   }
 }

@@ -77,8 +77,6 @@ import { RuntimeConfig as UserRuntimeConfig, PublicRuntimeConfig as UserPublicRu
                changefreq: string,
 
                priority: number,
-
-               lastmod: any,
             },
 
             include: Array<any>,
