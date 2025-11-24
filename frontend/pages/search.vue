@@ -10,7 +10,7 @@
           v-model="searchQuery"
           @keyup.enter="addSearchTag"
         >
-        <span class="search-icon">🔍</span>
+        <span class="search-icon"><img src="/images/search.png" alt="검색" width="20" height="20" /></span>
       </div>
     </section>
 
@@ -33,10 +33,12 @@
       <!-- 필터 버튼들 -->
       <div class="filter-buttons">
         <button class="filter-btn" :class="{ active: selectedFilters.style }" @click="openFilterModal('style')">
-          <span>🗣️ {{ styleFilterLabel }}</span>
+          <img src="/images/setting.png" alt="필터" width="16" height="16" />
+          <span>{{ styleFilterLabel }}</span>
         </button>
         <button class="filter-btn" :class="{ active: selectedFilters.sort }" @click="openFilterModal('sort')">
-          <span>↕️ {{ sortFilterLabel }}</span>
+          <img src="/images/target.png" alt="정렬" width="16" height="16" />
+          <span>{{ sortFilterLabel }}</span>
         </button>
       </div>
     </section>
@@ -59,7 +61,7 @@
 
       <!-- 빈 상태 -->
       <div class="empty-state" v-if="sortedCounselors.length === 0 && !isLoading">
-        <div class="empty-icon">🔍</div>
+        <div class="empty-icon"><img src="/images/search.png" alt="검색" width="48" height="48" /></div>
         <div class="empty-title">검색 결과가 없습니다</div>
         <div class="empty-desc">다른 키워드로 검색해보세요</div>
       </div>
@@ -115,7 +117,7 @@
             @click="selectModalOption(option.value)"
           >
             <div class="radio-button"></div>
-            <span class="radio-icon">{{ option.icon }}</span>
+            <img :src="option.icon" :alt="option.label" class="radio-icon" width="20" height="20" />
             <span class="radio-label">{{ option.label }}</span>
           </div>
         </div>
@@ -158,9 +160,9 @@ const styleOptions = [
 ]
 
 const sortOptions = [
-  { value: '', label: '전체', icon: '📋' },
-  { value: 'review', label: '리뷰 높은 순', icon: '⭐' },
-  { value: 'price', label: '가격 낮은 순', icon: '💰' }
+  { value: '', label: '전체', icon: '/images/review.png' },
+  { value: 'review', label: '리뷰 높은 순', icon: '/images/favorite.png' },
+  { value: 'price', label: '가격 낮은 순', icon: '/images/point.png' }
 ]
 
 // 필터 레이블 computed

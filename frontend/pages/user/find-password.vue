@@ -1,7 +1,15 @@
 <template>
   <div class="auth-container">
+    <!-- KCP 리다이렉트 후 데이터 복원 중 로딩 오버레이 -->
+    <div v-if="isRestoringData" class="restoration-overlay">
+      <div class="restoration-spinner">
+        <div class="spinner"></div>
+        <p class="restoration-message">인증 정보를 처리하는 중...</p>
+      </div>
+    </div>
+
     <!-- 메인 콘텐츠 -->
-    <main class="auth-main">
+    <main class="auth-main" :class="{ 'is-loading': isRestoringData }">
       <div class="max-w-md mx-auto">
         <!-- 히어로 섹션 -->
         <div class="text-center mb-10">
@@ -116,12 +124,14 @@
 
 <script setup lang="ts">
 import { ref } from 'vue'
-import { usePhoneVerification, type PhoneVerificationResult } from '~/composables/api/usePhoneVerification'
-import { useUserQueries } from '~/composables/api/useUserQueries'
+import { usePhoneVerification } from '~/composables/api/usePhoneVerification'
 import { useToast } from '~/composables/ui/useToast'
 
 // 인증 도메인 CSS 로드
 import '~/assets/css/common/auth-common.css'
+
+// ✅ sessionStorage 키 - 브라우저 레벨에서 중복 호출 방지
+const FIND_PASSWORD_PROCESSING_KEY = 'sajuline_find_password_processing'
 
 definePageMeta({
   layout: 'default'
@@ -140,8 +150,7 @@ useHead({
 
 // Composables
 const toast = useToast()
-const { setupPostMessageListener, openVerificationWindow } = usePhoneVerification()
-const { useFindPassword } = useUserQueries()
+const { openVerificationWindow } = usePhoneVerification()
 const route = useRoute()
 
 // 상태 관리
@@ -150,38 +159,70 @@ const maskedEmail = ref('')
 const successMessage = ref('')
 const errorMessage = ref('')
 const isVerifying = ref(false)
+// ✅ KCP redirect 시 페이지 진입부터 로딩 표시
+const isRestoringData = ref(route.query.from_kcp === 'true')
 
-// 팝업 및 리스너 관리
-let closePopup: (() => void) | null = null
-let cleanupListener: (() => void) | null = null
+// ✅ 직접 API 호출 함수 (Vue Query 제거)
+async function callFindPasswordAPI(params: { user_id: string; phone: string }) {
+  const { $api } = useNuxtApp()
+  const response = await $api<any>('/api/v1/users/find-password', {
+    method: 'POST',
+    body: params
+  })
 
-// 비밀번호 찾기 mutation hook
-const { mutate: findPassword } = useFindPassword({
-  onSuccess: (data) => {
-    maskedEmail.value = data.email
-    successMessage.value = data.message
-    isVerifying.value = false
-    toast.success('임시 비밀번호가 발송되었습니다')
-  },
-  onError: (error: any) => {
-    console.error('Find password error:', error)
-    errorMessage.value = error.message || '비밀번호 찾기 중 오류가 발생했습니다. 다시 시도해주세요.'
-    isVerifying.value = false
-    toast.error(errorMessage.value)
+  if (!response.success || !response.data) {
+    throw new Error(response.error?.message || '비밀번호 찾기에 실패했습니다.')
   }
-})
 
-// 모바일 리다이렉트 처리 (query parameter에서 user_id와 전화번호 받기)
-onMounted(() => {
-  const fromKcp = route.query.from_kcp
-  const phone = route.query.phone as string
-  const userIdParam = route.query.user_id as string
+  return response.data
+}
 
-  if (fromKcp === 'true' && phone && userIdParam) {
-    // 모바일에서 본인인증 완료 후 리다이렉트된 경우
-    console.log('[Find-Password] KCP redirect received', { user_id: userIdParam, phone })
-    userId.value = userIdParam
-    findPassword({ user_id: userIdParam, phone })
+// KCP redirect 후 임시비밀번호 API 호출
+onMounted(async () => {
+  // ✅ 클라이언트 사이드에서만 실행 (SSR 방지)
+  if (import.meta.server) return
+
+  // ✅ sessionStorage로 중복 호출 방지 - 가장 먼저 체크
+  if (sessionStorage.getItem(FIND_PASSWORD_PROCESSING_KEY)) {
+    console.log('[DEBUG] sessionStorage 플래그 감지 - 이미 처리 중, 스킵')
+    isRestoringData.value = false
+    return
+  }
+
+  if (route.query.from_kcp === 'true') {
+    const phone = route.query.phone as string
+    const redirectUserId = route.query.user_id as string
+
+    if (phone && redirectUserId) {
+      // ✅ API 호출 전에 즉시 sessionStorage에 플래그 설정
+      sessionStorage.setItem(FIND_PASSWORD_PROCESSING_KEY, 'true')
+      console.log('[DEBUG] API 호출 시작 - sessionStorage 플래그 설정됨')
+
+      // URL 즉시 정리
+      window.history.replaceState({}, '', '/user/find-password')
+
+      userId.value = redirectUserId
+      isVerifying.value = true
+      isRestoringData.value = false
+
+      try {
+        const data = await callFindPasswordAPI({ user_id: redirectUserId, phone: phone })
+        maskedEmail.value = data.email
+        successMessage.value = data.message
+        toast.success('임시 비밀번호가 발송되었습니다')
+      } catch (error: any) {
+        console.error('Find password error:', error)
+        errorMessage.value = error.message || '비밀번호 찾기 중 오류가 발생했습니다.'
+        toast.error(errorMessage.value)
+      } finally {
+        isVerifying.value = false
+        // ✅ 완료 후 플래그 제거 (다음 인증 시도를 위해)
+        sessionStorage.removeItem(FIND_PASSWORD_PROCESSING_KEY)
+      }
+      return
+    }
+
+    isRestoringData.value = false
   }
 })
 
@@ -189,6 +230,8 @@ onMounted(() => {
 const handleSubmit = async () => {
   if (!userId.value.trim() || isVerifying.value) return
 
+  // ✅ 재인증 시작 - 이전 상태 초기화
+  sessionStorage.removeItem(FIND_PASSWORD_PROCESSING_KEY)  // 플래그 리셋
   isVerifying.value = true
   errorMessage.value = ''
   successMessage.value = ''
@@ -206,12 +249,8 @@ const handleSubmit = async () => {
     })
 
     if (response.success && response.data) {
-      // postMessage 리스너 설정
-      cleanupListener = setupPostMessageListener(handleVerificationComplete)
-
-      // 인증창 열기 (팝업 방식)
-      const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)
-      closePopup = openVerificationWindow(response.data.gateway_url, response.data.form_data, isMobile)
+      // ✅ 비밀번호 찾기는 redirect 방식만 사용 (현재 창에서 KCP로 이동)
+      openVerificationWindow(response.data.gateway_url, response.data.form_data, true)
     }
   } catch (error: any) {
     isVerifying.value = false
@@ -220,34 +259,8 @@ const handleSubmit = async () => {
   }
 }
 
-// 본인인증 완료 핸들러
-const handleVerificationComplete = (result: PhoneVerificationResult) => {
-  console.log('[KCP] handleVerificationComplete called', result)
-
-  // 팝업 닫기
-  if (closePopup) {
-    closePopup()
-    closePopup = null
-  }
-
-  if (result.success && result.phone) {
-    // 인증된 전화번호로 비밀번호 찾기 API 호출
-    findPassword({ user_id: userId.value, phone: result.phone })
-  } else {
-    isVerifying.value = false
-    errorMessage.value = result.error || '인증에 실패했습니다'
-    toast.error(errorMessage.value)
-  }
-}
-
 // Cleanup
 onUnmounted(() => {
-  if (cleanupListener) {
-    cleanupListener()
-  }
-  if (closePopup) {
-    closePopup()
-  }
   // Form 정리
   const popupForm = document.getElementById('kcp_cert_form')
   if (popupForm) {
@@ -255,3 +268,55 @@ onUnmounted(() => {
   }
 })
 </script>
+
+<style scoped>
+/* KCP 리다이렉트 후 데이터 복원 중 로딩 오버레이 */
+.restoration-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.8);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+}
+
+.restoration-spinner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+}
+
+.spinner {
+  width: 48px;
+  height: 48px;
+  border: 4px solid rgba(255, 255, 255, 0.1);
+  border-top-color: #667eea;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.restoration-message {
+  color: white;
+  font-size: 1rem;
+  font-weight: 500;
+  margin: 0;
+}
+
+/* 로딩 중 메인 콘텐츠 비활성화 */
+.auth-main.is-loading {
+  pointer-events: none;
+  opacity: 0.5;
+  user-select: none;
+}
+</style>

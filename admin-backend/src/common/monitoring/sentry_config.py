@@ -32,7 +32,7 @@ def initialize_sentry() -> None:
         sentry_sdk.init(
             dsn=settings.sentry_dsn,
             environment=settings.sentry_environment,
-            debug=settings.debug,
+            debug=False,  # DEBUG 로그 비활성화 (콘솔 로그 줄이기)
 
             # 통합 설정 - FastAPI 기반 프로젝트에 최적화
             integrations=[
@@ -48,13 +48,16 @@ def initialize_sentry() -> None:
             # 성능 모니터링 설정 (환경별 샘플링)
             traces_sample_rate=1.0 if settings.is_development else 0.1,
 
+            # 프로파일링 비활성화 (필요시 활성화)
+            profiles_sample_rate=0.0,
+
             # 데이터 보안 설정
             send_default_pii=False,  # 개인정보 제외
 
             # 릴리스 정보 (버전 추적)
             release=f"{settings.app_name}@{settings.app_version}",
 
-            # 민감한 데이터 필터링
+            # 민감한 데이터 필터링 + health check 제외
             before_send=filter_sensitive_data,
         )
 
@@ -77,7 +80,23 @@ def filter_sensitive_data(event: Dict[str, Any], hint: Dict[str, Any]) -> Option
     민감한 데이터 필터링 함수
 
     비밀번호, 토큰, 암호화 키 등 민감한 정보를 자동으로 마스킹
+    health check 등 불필요한 엔드포인트 제외
     """
+    # Health check, metrics 등 모니터링 제외 경로
+    excluded_paths = {'/health', '/metrics', '/ping', '/readiness', '/liveness'}
+
+    # 트랜잭션 이름에서 제외 경로 확인
+    if 'transaction' in event:
+        transaction_name = event.get('transaction', '').lower()
+        if any(path in transaction_name for path in excluded_paths):
+            return None  # 이벤트 전송 안 함
+
+    # URL에서 제외 경로 확인
+    if 'request' in event and 'url' in event['request']:
+        url = event['request']['url'].lower()
+        if any(path in url for path in excluded_paths):
+            return None  # 이벤트 전송 안 함
+
     # 민감한 키워드 목록
     sensitive_keys = {
         'password', 'passwd', 'pwd',

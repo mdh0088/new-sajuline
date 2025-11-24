@@ -12,7 +12,7 @@
       <div class="review-list">
         <!-- 빈 상태 -->
         <div v-if="reviewItems.length === 0 && !isLoading" class="empty-state">
-          <div class="empty-icon">📝</div>
+          <div class="empty-icon"><img src="/images/review.png" alt="후기" width="48" height="48" /></div>
           <div class="empty-title">등록된 후기가 없습니다</div>
           <div class="empty-desc">첫 번째 후기를 작성해보세요!</div>
         </div>
@@ -34,7 +34,7 @@
                   height="40"
                   loading="lazy"
                 />
-                <div v-else class="profile-placeholder">🔮</div>
+                <div v-else class="profile-placeholder"><img src="/images/tarot.png" alt="타로" width="40" height="40" style="object-fit: contain;" /></div>
               </div>
               <div class="counselor-info-text">
                 <div class="counselor-name">{{ review.counselor?.nickname || '상담사' }}</div>
@@ -49,12 +49,16 @@
           </div>
           <div class="rating-section">
             <div class="rating-stars">
-              <span
+              <img
                 v-for="i in 5"
                 :key="i"
+                src="/images/favorite.png"
+                alt="별점"
                 class="star"
-                :class="{ filled: i <= review.rating }"
-              >⭐</span>
+                :class="{ filled: i <= review.rating, 'star-empty': i > review.rating }"
+                width="14"
+                height="14"
+              />
             </div>
           </div>
           <div v-if="review.review_tags && review.review_tags.length > 0" class="review-tags">
@@ -67,7 +71,7 @@
           <!-- 상담사 답변 -->
           <div v-if="review.counselor_reply" class="counselor-reply">
             <div class="reply-header">
-              <div class="reply-icon">💬</div>
+              <div class="reply-icon"><img src="/images/cs.png" alt="답변" width="16" height="16" /></div>
               <div class="reply-label">{{ review.counselor?.nickname || '상담사' }} 선생님의 답변</div>
               <div class="reply-date">{{ formatDateTime(review.counselor_replied_at || review.created_at) }}</div>
             </div>

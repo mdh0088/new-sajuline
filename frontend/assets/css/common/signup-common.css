@@ -34,7 +34,7 @@
 
 /* 메인 콘텐츠 */
 .main-content {
-  padding: 2rem 1.25rem;
+  padding: 0;
   width: 100%;
 }
 
@@ -292,7 +292,7 @@
 /* 400px 미만 화면 최적화 */
 @media (max-width: 400px) {
   .main-content {
-    padding: 1.5rem 1rem !important;
+    padding: 0;
   }
 
   .section-title {

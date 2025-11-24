@@ -114,6 +114,12 @@
   border-radius: 0;
 }
 
+.current-point .point-icon-img {
+  width: 32px;
+  height: 32px;
+  object-fit: contain;
+}
+
 /* 로그인 유도 UI */
 .login-required {
   display: flex;
@@ -423,8 +429,8 @@
 }
 
 .payment-icon {
-  width: 40px;
-  height: 40px;
+  width: 28px;
+  height: 28px;
   background: rgba(147, 51, 234, 0.1);
   border-radius: 10px;
   display: flex;
@@ -740,8 +746,8 @@
   }
 
   .payment-icon {
-    width: 36px;
-    height: 36px;
+    width: 28px;
+    height: 28px;
     font-size: 18px;
   }
 }

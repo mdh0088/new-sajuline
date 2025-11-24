@@ -55,7 +55,18 @@
               <div class="counselor-right-info">
                 <div class="counselor-price-small">{{ counselor.price }}P/30초</div>
                 <div class="counselor-rating-small">
-                  <span class="rating-stars-small">⭐⭐⭐⭐⭐</span>
+                  <span class="rating-stars-small">
+                    <img
+                      v-for="i in 5"
+                      :key="i"
+                      src="/images/favorite.png"
+                      alt="별점"
+                      class="star"
+                      :class="{ filled: i <= Math.floor(counselor.rating), 'star-empty': i > Math.floor(counselor.rating) }"
+                      width="10"
+                      height="10"
+                    />
+                  </span>
                   <span class="rating-score">{{ counselor.rating }}</span>
                 </div>
                 <div class="counselor-experience">{{ counselor.experience }} · 리뷰 {{ counselor.reviewCount }}</div>
@@ -70,7 +81,7 @@
 
       <!-- 빈 상태 -->
       <div class="empty-state" v-if="filteredCounselors.length === 0 && !isLoading">
-        <div class="empty-icon">😔</div>
+        <div class="empty-icon"><img src="/images/search.png" alt="검색" width="48" height="48" /></div>
         <div class="empty-title">{{ categoryInfo.label }} 상담사가 없습니다</div>
         <div class="empty-desc">다른 카테고리를 선택해보세요</div>
       </div>
@@ -131,16 +142,16 @@ const userPoints = computed(() => storePoints.value)
 
 // 카테고리 정보 매핑
 const categoryMap: Record<string, { label: string; icon: string; description: string; value: string }> = {
-  'tarot': { label: '타로', icon: '🔮', description: '타로 카드를 통해 당신의 미래와 운명을 읽어드립니다.', value: 'tarot' },
-  'saju': { label: '사주', icon: '📜', description: '정통 사주명리학으로 인생의 큰 그림을 그려드립니다.', value: 'saju' },
-  'divine': { label: '신점', icon: '✨', description: '신통력과 영감으로 정확한 신점을 봐드립니다.', value: 'divine' },
-  'love': { label: '연애운', icon: '💕', description: '연애와 인연에 대한 깊은 통찰력을 제공합니다.', value: 'love' },
-  'money': { label: '재물운', icon: '💰', description: '재물운과 사업운을 전문으로 상담해드립니다.', value: 'money' },
-  'career': { label: '직장운', icon: '💼', description: '직장과 취업, 커리어에 대한 조언을 드립니다.', value: 'work' }
+  'tarot': { label: '타로', icon: '/images/tarot.png', description: '타로 카드를 통해 당신의 미래와 운명을 읽어드립니다.', value: 'tarot' },
+  'saju': { label: '사주', icon: '/images/review.png', description: '정통 사주명리학으로 인생의 큰 그림을 그려드립니다.', value: 'saju' },
+  'divine': { label: '신점', icon: '/images/new.png', description: '신통력과 영감으로 정확한 신점을 봐드립니다.', value: 'divine' },
+  'love': { label: '연애운', icon: '/images/favorite.png', description: '연애와 인연에 대한 깊은 통찰력을 제공합니다.', value: 'love' },
+  'money': { label: '재물운', icon: '/images/point.png', description: '재물운과 사업운을 전문으로 상담해드립니다.', value: 'money' },
+  'career': { label: '직장운', icon: '/images/cs.png', description: '직장과 취업, 커리어에 대한 조언을 드립니다.', value: 'work' }
 }
 
 const categoryInfo = computed(() => {
-  return categoryMap[slug.value] || { label: '카테고리', icon: '🌟', description: '', value: 'all' }
+  return categoryMap[slug.value] || { label: '카테고리', icon: '/images/favorite.png', description: '', value: 'all' }
 })
 
 // 목업 상담사 데이터
@@ -152,7 +163,7 @@ const counselors = ref([
     avatar: '🌙',
     image: '/images/cs_1.png',
     isOnline: true,
-    specialty: '타로 마스터',
+    specialty: '전화타로',
     experience: '20년 경력',
     category: 'tarot',
     tags: ['🔮 타로', '💕 연애', '🔄 재회'],
@@ -589,6 +600,24 @@ useHead({
 .rating-stars-small {
   font-size: 10px;
   color: #FBBF24;
+  display: inline-flex;
+  align-items: center;
+  gap: 1px;
+}
+
+.rating-stars-small .star {
+  width: 10px;
+  height: 10px;
+  object-fit: contain;
+  display: inline-block;
+}
+
+.rating-stars-small .star.filled {
+  opacity: 1;
+}
+
+.rating-stars-small .star.star-empty {
+  opacity: 0.3;
 }
 
 .rating-score {
@@ -646,6 +675,14 @@ useHead({
 .empty-icon {
   font-size: 64px;
   margin-bottom: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.empty-icon img {
+  display: block;
+  margin: 0 auto;
 }
 
 .empty-title {
