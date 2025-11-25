@@ -23,7 +23,7 @@ from src.repositories.payment_repository import PaymentRepository
 from src.repositories.grade_repository import GradeRepository
 from src.repositories.ars.tm60_chatlog_repository import Tm60ChatlogRepository
 from src.services.user_service import UserService
-from src.services.auth_service import AuthService, get_current_user, TokenPayload
+from src.services.auth_service import AuthService, get_current_user, TokenPayload, KST
 from src.services.event_service import EventService
 from src.services.point_transaction_service import PointTransactionService
 from src.services.user_activity_log_service import UserActivityLogService
@@ -641,7 +641,7 @@ async def logout(
         # Access Token 블랙리스트 처리
         if access_token:
             from datetime import datetime
-            access_expires = datetime.fromtimestamp(current_user.exp)
+            access_expires = datetime.fromtimestamp(current_user.exp, tz=KST)
             await auth_service.blacklist_token(
                 jti=current_user.jti,
                 expires_at=access_expires,
@@ -652,7 +652,7 @@ async def logout(
         if refresh_token:
             try:
                 refresh_payload = await auth_service.verify_refresh_token(refresh_token, redis_client)
-                refresh_expires = datetime.fromtimestamp(refresh_payload["exp"])
+                refresh_expires = datetime.fromtimestamp(refresh_payload["exp"], tz=KST)
                 await auth_service.blacklist_token(
                     jti=refresh_payload["jti"],
                     expires_at=refresh_expires,
