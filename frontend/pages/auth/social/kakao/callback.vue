@@ -53,6 +53,11 @@ const callbackMutation = useHandleSocialCallback({
     if ('requires_signup' in data && data.requires_signup) {
       // 신규 사용자: 회원가입 페이지로 이동
       const signupData = data as SocialSignupRequired
+
+      // 히스토리 스택 재설정: 뒤로가기 시 /login으로 바로 이동하도록
+      // (카카오 OAuth 페이지와 callback 페이지를 건너뜀)
+      window.history.replaceState(null, '', '/login')
+
       router.push({
         path: '/signup/social',
         query: {

@@ -124,7 +124,7 @@
 
 <script setup lang="ts">
 import { ref } from 'vue'
-import { usePhoneVerification } from '~/composables/api/usePhoneVerification'
+import { usePhoneVerification, type PhoneVerificationResult } from '~/composables/api/usePhoneVerification'
 import { useToast } from '~/composables/ui/useToast'
 
 // 인증 도메인 CSS 로드
@@ -150,7 +150,7 @@ useHead({
 
 // Composables
 const toast = useToast()
-const { openVerificationWindow } = usePhoneVerification()
+const { setupPostMessageListener, openVerificationWindow } = usePhoneVerification()
 const route = useRoute()
 
 // 상태 관리
@@ -161,6 +161,10 @@ const errorMessage = ref('')
 const isVerifying = ref(false)
 // ✅ KCP redirect 시 페이지 진입부터 로딩 표시
 const isRestoringData = ref(route.query.from_kcp === 'true')
+
+// 팝업 및 리스너 관리
+let closePopup: (() => void) | null = null
+let cleanupListener: (() => void) | null = null
 
 // ✅ 직접 API 호출 함수 (Vue Query 제거)
 async function callFindPasswordAPI(params: { user_id: string; phone: string }) {
@@ -249,8 +253,12 @@ const handleSubmit = async () => {
     })
 
     if (response.success && response.data) {
-      // ✅ 비밀번호 찾기는 redirect 방식만 사용 (현재 창에서 KCP로 이동)
-      openVerificationWindow(response.data.gateway_url, response.data.form_data, true)
+      // postMessage 리스너 설정
+      cleanupListener = setupPostMessageListener(handleVerificationComplete)
+
+      // 디바이스 감지: PC는 팝업, 모바일은 redirect
+      const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)
+      closePopup = openVerificationWindow(response.data.gateway_url, response.data.form_data, isMobile)
     }
   } catch (error: any) {
     isVerifying.value = false
@@ -259,8 +267,45 @@ const handleSubmit = async () => {
   }
 }
 
+// 본인인증 완료 핸들러 (PC 팝업용)
+const handleVerificationComplete = async (result: PhoneVerificationResult) => {
+  console.log('[KCP] handleVerificationComplete called', result)
+
+  // 팝업 닫기
+  if (closePopup) {
+    closePopup()
+    closePopup = null
+  }
+
+  if (result.success && result.phone) {
+    // 인증된 전화번호로 비밀번호 찾기 API 호출
+    try {
+      const data = await callFindPasswordAPI({ user_id: userId.value, phone: result.phone })
+      maskedEmail.value = data.email
+      successMessage.value = data.message
+      toast.success('임시 비밀번호가 발송되었습니다')
+    } catch (error: any) {
+      console.error('Find password error:', error)
+      errorMessage.value = error.message || '비밀번호 찾기 중 오류가 발생했습니다.'
+      toast.error(errorMessage.value)
+    } finally {
+      isVerifying.value = false
+    }
+  } else {
+    isVerifying.value = false
+    errorMessage.value = result.error || '인증에 실패했습니다'
+    toast.error(errorMessage.value)
+  }
+}
+
 // Cleanup
 onUnmounted(() => {
+  if (cleanupListener) {
+    cleanupListener()
+  }
+  if (closePopup) {
+    closePopup()
+  }
   // Form 정리
   const popupForm = document.getElementById('kcp_cert_form')
   if (popupForm) {

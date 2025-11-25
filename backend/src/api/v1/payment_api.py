@@ -117,11 +117,14 @@ async def request_payment(
     current_user: TokenPayload = Depends(get_current_user),
     product_service: PointProductService = Depends(get_point_product_service),
     user_service: UserService = Depends(get_user_service),
+    payment_service: PaymentService = Depends(get_payment_service),
 ) -> APIResponse[PayletterRequestResponse]:
     """
     결제 요청 API: Payletter 결제 토큰/URL 발급 요청 후 반환
     - 사용자(user)만 가능
     - guest/counselor 차단
+    - PENDING 상태로 payment 생성하여 order_no 추적 보장
+    - Payletter 공식 권장: callback/return 순서 무관하게 조회 가능하도록
     """
     log = get_logger_with_request_id()
     verify_user_role(current_user)

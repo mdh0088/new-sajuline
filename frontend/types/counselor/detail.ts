@@ -9,6 +9,7 @@ export interface CounselorPublic {
   keywords?: string | null
   work_time?: string | null
   specialty_types?: string[] | null
+  grade?: string | null
   after_amount?: number | null
   before_amount?: string | null
   rating_avg?: number | null
