@@ -285,7 +285,7 @@ class UserService:
         # 계정 상태 확인
         user = await self.user_repo.get_by_id(user_response.user_id)
         if user.user_status != UserStatus.ACTIVE:
-            log.warning("Login failed - inactive account", user_id=user.user_id, status=user.user_status.value)
+            log.warning("Login failed - inactive account", user_id=user.user_id, status=user.user_status)
             raise AuthenticationError("계정이 비활성화되었습니다")
         
         # 로그인 성공 시 실패 횟수 초기화
@@ -660,7 +660,7 @@ class UserService:
         if user.join_type != JoinType.COMMON:
             log.warning("Password change not allowed for social login user",
                        user_id=user_id,
-                       join_type=user.join_type.value)
+                       join_type=user.join_type)
             raise ValidationError("소셜 로그인 사용자는 비밀번호를 변경할 수 없습니다.")
 
         # 3. 현재 비밀번호 검증
@@ -742,7 +742,7 @@ class UserService:
         else:
             log.info("Social login user withdrawal (no password verification)",
                     user_id=user_id,
-                    join_type=user.join_type.value)
+                    join_type=user.join_type)
 
         # 3. 탈퇴 처리 (MariaDB → MSSQL 순서, 실패시 보상 트랜잭션)
         user_out = None
