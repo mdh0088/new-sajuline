@@ -332,6 +332,7 @@
 
 .counselor-left-info {
   flex: 1;
+  min-width: 0;
   display: flex;
   flex-direction: column;
   gap: 6px;
@@ -441,7 +442,7 @@
 .counselor-tags-small {
   display: flex;
   gap: 6px;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   margin-top: 2px;
 }
 

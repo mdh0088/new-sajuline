@@ -675,6 +675,14 @@ useHead({
 .empty-icon {
   font-size: 64px;
   margin-bottom: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.empty-icon img {
+  display: block;
+  margin: 0 auto;
 }
 
 .empty-title {
