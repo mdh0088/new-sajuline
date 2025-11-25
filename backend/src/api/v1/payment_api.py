@@ -146,18 +146,47 @@ async def request_payment(
     user_name = user.nickname or ""
     user_email = user.email or ""
 
+    # PENDING 상태로 payment 생성 (callback/return 순서 무관하게 조회 가능)
+    pgcode = payload.payment_method
+    pending_payment = PaymentCreate(
+        order_no=order_no,
+        user_id=user_id,
+        product_id=product.product_id,
+        payment_type="POINT_CHARGE",
+        amount=amount + tax_amount,
+        point_amount=product.point_amount + product.bonus_point,
+        mileage_used=0,
+        payment_method=pgcode,
+        payment_status="PENDING",
+        pg_tid=None,
+        tax_amount=str(tax_amount),
+        code=None,
+        result_message="결제 요청 생성",
+    )
+
+    try:
+        created_payment = await payment_service.create_payment(pending_payment)
+        log.info("Pending payment created",
+                order_no=order_no,
+                payment_id=created_payment.payment_id,
+                user_id=user_id,
+                amount=amount + tax_amount)
+    except Exception as e:
+        log.error("Failed to create pending payment",
+                 order_no=order_no,
+                 user_id=user_id,
+                 error=str(e))
+        raise HTTPException(status_code=500, detail="결제 요청 생성 실패")
+
     # 만료일/시간
     expire_date = (now + timedelta(days=1)).strftime("%Y%m%d")
     expire_time = now.strftime("%H%M")
 
-    # Payletter 요청 페이로드 구성
-    # payment_method는 프론트에서 pgcode(allthegate|virtualaccount|kakaopay)로 전달됨
-    pgcode = payload.payment_method
-
     # custom_parameter를 JSON 객체로 구성
     custom_param_obj = {
         "point_amount": product.point_amount + product.bonus_point,
-        "product_id": product.product_id
+        "product_id": product.product_id,
+        "payment_id": created_payment.payment_id
     }
 
     body = build_payletter_request_body(
@@ -191,16 +220,52 @@ async def request_payment(
                 endpoint = f"{endpoint}/v1.0/payments/request"
             resp = await client.post(endpoint, json=body, headers=headers)
             if resp.status_code != 200:
+                # PG 요청 실패시 payment 상태를 FAIL로 업데이트
+                from src.schemas.payment_schema import PaymentUpdate
+                try:
+                    await payment_service.update_payment(
+                        created_payment.payment_id,
+                        PaymentUpdate(
+                            payment_status="FAIL",
+                            code=str(resp.status_code),
+                            result_message=f"PG 요청 실패: {resp.text or 'Unknown error'}"
+                        )
+                    )
+                    log.warning("Payment status updated to FAIL due to PG error",
+                               payment_id=created_payment.payment_id,
+                               order_no=order_no,
+                               status_code=resp.status_code)
+                except Exception as update_error:
+                    log.error("Failed to update payment status to FAIL",
+                             payment_id=created_payment.payment_id,
+                             error=str(update_error))
                 detail = resp.text or "PG 오류"
                 raise HTTPException(status_code=resp.status_code, detail=detail)
             data = resp.json()
     except HTTPException:
         raise
     except Exception as e:
-        log.error("Payletter request failed", error=str(e))
+        # 예외 발생시 payment 상태를 FAIL로 업데이트
+        from src.schemas.payment_schema import PaymentUpdate
+        try:
+            await payment_service.update_payment(
+                created_payment.payment_id,
+                PaymentUpdate(
+                    payment_status="FAIL",
+                    code="500",
+                    result_message=f"PG 연동 실패: {type(e).__name__}: {str(e)}"
+                )
+            )
+            log.warning("Payment status updated to FAIL due to exception",
+                       payment_id=created_payment.payment_id,
+                       order_no=order_no,
+                       error=str(e))
+        except Exception as update_error:
+            log.error("Failed to update payment status to FAIL",
+                     payment_id=created_payment.payment_id,
+                     error=str(update_error))
+        log.error("Payletter request failed", order_no=order_no, error=str(e))
         raise HTTPException(status_code=502, detail=f"PG 연동 실패: {type(e).__name__}: {str(e)}")
-
-    # 요청 단계에서는 DB 생성 금지 (결제 완료 후 처리)
 
     return ok(data=PayletterRequestResponse(**data), message="결제 요청 성공")
 
@@ -216,8 +281,9 @@ async def payment_callback(
     Payletter Callback URL (Server-to-Server)
     - 결제 성공 시에만 호출됨
     - JSON body로 전달
-    - 주요 비즈니스 로직 처리: 결제 생성, 포인트 충전
+    - 주요 비즈니스 로직: PENDING → SUCCESS 업데이트, 포인트 충전
     - 응답: {"code": 0, "message": "success"} (실패시 5분마다 20번 재전송)
+    - Payletter 공식 권장: callback에서 주요 비즈니스 로직 처리
     """
     log = get_logger_with_request_id()
 
@@ -239,12 +305,33 @@ async def payment_callback(
     if body.amount is None or body.user_id is None:
         return {"code": 9999, "message": "필수 필드 누락"}
 
-    # Callback은 성공시에만 호출되므로 payment_status는 항상 SUCCESS
-    payment_status = "SUCCESS"
-    
-    # order_no는 body에서 전달된 값 사용, 없으면 현재 시간 기반 생성
-    now = datetime.now(KST)
-    order_no = body.order_no or generate_order_no(now)
+    # order_no 필수 검증 (Payletter는 항상 전달)
+    if not body.order_no:
+        log.error("order_no missing in callback",
+                 user_id=body.user_id,
+                 tid=body.tid,
+                 payload=body_dict)
+        return {"code": 9999, "message": "주문번호 누락 - 재전송 요청"}
+
+    order_no = body.order_no
+
+    # 기존 PENDING 상태의 payment 조회
+    existing_payment = await payment_service.get_payment_by_order_no(order_no)
+
+    if not existing_payment:
+        log.error("Payment not found for order_no in callback",
+                 order_no=order_no,
+                 user_id=body.user_id,
+                 tid=body.tid)
+        return {"code": 9999, "message": f"결제 정보 없음 (order_no: {order_no})"}
+
+    if existing_payment.payment_status not in ["PENDING", "FAIL"]:
+        # 이미 처리된 경우 (중복 callback 방지)
+        log.warning("Payment already processed",
+                   order_no=order_no,
+                   payment_id=existing_payment.payment_id,
+                   current_status=existing_payment.payment_status)
+        return {"code": 0, "message": "already processed"}
 
     # transaction_date를 paid_at으로 변환
     paid_at = None
@@ -252,36 +339,32 @@ async def payment_callback(
         try:
             paid_at = datetime.strptime(body.transaction_date, "%Y-%m-%d %H:%M:%S")
         except ValueError:
-            log.warning("Failed to parse transaction_date", transaction_date=body.transaction_date)
+            log.warning("Failed to parse transaction_date",
+                       transaction_date=body.transaction_date)
 
-    # custom_parameter JSON 파싱
+    # custom_parameter JSON 파싱 (기존 값 우선 사용)
     custom_param = {}
-    product_id = None
-    point_amount = 0
+    product_id = existing_payment.product_id
+    point_amount = existing_payment.point_amount
 
     if body.custom_parameter:
         try:
             custom_param = json.loads(body.custom_parameter)
-            product_id = custom_param.get("product_id")
-            point_amount = custom_param.get("point_amount", 0)
+            # custom_parameter가 있으면 우선 사용
+            product_id = custom_param.get("product_id", product_id)
+            point_amount = custom_param.get("point_amount", point_amount)
         except (json.JSONDecodeError, TypeError):
             # 구 버전 호환: 숫자 문자열인 경우
             try:
                 point_amount = int(body.custom_parameter)
             except (ValueError, TypeError):
-                point_amount = 0
+                pass
 
-    # t_payment 생성
-    create = PaymentCreate(
-        order_no=order_no,
-        user_id=body.user_id,
-        product_id=product_id,
-        payment_type="POINT_CHARGE",
-        amount=int(body.amount),
-        point_amount=point_amount,
-        mileage_used=0,
-        payment_method=body.pgcode or "",
-        payment_status=payment_status,
+    # PENDING → SUCCESS 업데이트
+    from src.schemas.payment_schema import PaymentUpdate
+
+    update_data = PaymentUpdate(
+        payment_status="SUCCESS",
         pg_tid=body.tid,
         cid=body.cid or "",
         billkey=body.billkey,
@@ -292,21 +375,25 @@ async def payment_callback(
         install_month=body.install_month,
         pay_hash=body.payhash,
         taxfree_amount=str(body.taxfree_amount) if body.taxfree_amount else None,
-        nonsettle_amount=None,
-        discount_amount=None,
-        point_use_flag=None,
         disposable_cup_deposit=str(body.disposable_cup_deposit) if body.disposable_cup_deposit else None,
         paid_at=paid_at,
-        code="0",  # Callback은 성공시에만 호출
+        code="0",
         result_message=body.message or "결제 성공",
     )
-    
+
     try:
-        created = await payment_service.create_payment(create)
-        log.info("Payment created via callback", payment_id=created.payment_id, order_no=order_no)
+        updated = await payment_service.update_payment(existing_payment.payment_id, update_data)
+        log.info("Payment updated to SUCCESS",
+                payment_id=existing_payment.payment_id,
+                order_no=order_no,
+                user_id=body.user_id,
+                amount=body.amount)
     except Exception as e:
-        log.error("Failed to create payment", error=str(e), order_no=order_no)
-        return {"code": 9999, "message": f"결제 생성 실패: {str(e)}"}
+        log.error("Failed to update payment",
+                 payment_id=existing_payment.payment_id,
+                 order_no=order_no,
+                 error=str(e))
+        return {"code": 9999, "message": f"결제 업데이트 실패: {str(e)}"}
 
     # 포인트 충전
     if point_amount > 0:
@@ -355,10 +442,10 @@ async def payment_return(
 ):
     """
     Payletter Return URL (사용자 브라우저 리다이렉트)
-    - Callback 이후 호출됨
+    - 네트워크 환경에 따라 callback보다 먼저 올 수 있음 (Payletter 공식)
     - GET/POST 방식으로 전달
-    - order_no로 결제 조회 후 실패시 상태 업데이트
-    - 성공/실패 여부에 따라 HTML 응답 반환 (PC/모바일 분기)
+    - order_no로 결제 조회 (PENDING/SUCCESS/FAIL 상태 확인)
+    - 실패시 상태 업데이트, 성공/실패 여부에 따라 HTML 응답 반환
     """
     log = get_logger_with_request_id()
 
@@ -388,14 +475,76 @@ async def payment_return(
 
     # order_no로 기존 결제 조회
     existing_payment = await payment_service.get_payment_by_order_no(order_no)
-    
+
     if not existing_payment:
-        log.warning("Payment not found for order_no", order_no=order_no)
-        # Callback이 먼저 와야 하는데 없는 경우 (비정상)
-        return HTMLResponse(content="<html><body><script>alert('결제 정보를 찾을 수 없습니다'); window.location.href='/point';</script></body></html>")
+        log.error("Payment not found for order_no in return URL",
+                 order_no=order_no,
+                 code=body.code,
+                 message=body.message)
+        # request_payment에서 생성되어야 하는데 없는 경우 (시스템 오류)
+        error_msg = "결제 정보를 찾을 수 없습니다. 고객센터로 문의해주세요."
+        if settings.debug:  # 개발 환경에서만 디버깅 정보 표시
+            error_msg += f"\\n(주문번호: {order_no})"
+
+        return HTMLResponse(content=f"<html><body><script>alert('{error_msg}'); window.location.href='/point';</script></body></html>")
 
     # 가상계좌 체크: payment_method가 virtualaccount인 경우 입금 대기 상태
     payment_method = existing_payment.payment_method
+
+    # PENDING 상태 체크: return이 callback보다 먼저 온 경우
+    if existing_payment.payment_status == "PENDING":
+        log.info("Payment still PENDING in return URL (callback not arrived yet)",
+                order_no=order_no,
+                payment_id=existing_payment.payment_id)
+
+        html_content = """
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <meta charset="UTF-8">
+            <title>결제 처리 중</title>
+        </head>
+        <body>
+            <script>
+                (function() {
+                    const messageData = {type: 'payment_processing', message: '결제 처리 중입니다. 잠시만 기다려주세요.'};
+                    let sent = false;
+
+                    // 1. iframe 케이스
+                    try {
+                        if (window.parent && window.parent !== window) {
+                            console.log('[Payment] Sending postMessage to parent (iframe)');
+                            window.parent.postMessage(messageData, '*');
+                            sent = true;
+                        }
+                    } catch(e) {
+                        console.error('[Payment] Failed to send to parent:', e);
+                    }
+
+                    // 2. 새 창 케이스
+                    try {
+                        if (window.opener && !window.opener.closed) {
+                            console.log('[Payment] Sending postMessage to opener (popup)');
+                            window.opener.postMessage(messageData, '*');
+                            window.close();
+                            sent = true;
+                        }
+                    } catch(e) {
+                        console.error('[Payment] Failed to send to opener:', e);
+                    }
+
+                    // 3. Fallback
+                    if (!sent) {
+                        console.log('[Payment] Fallback: Full page redirect');
+                        alert('결제 처리 중입니다. 잠시 후 다시 확인해주세요.');
+                        window.location.href = '/point';
+                    }
+                })();
+            </script>
+        </body>
+        </html>
+        """
+        return HTMLResponse(content=html_content)
 
     # code 값 확인: 0이 아니면 실패 (가상계좌 제외)
     return_code = body.code or ""
