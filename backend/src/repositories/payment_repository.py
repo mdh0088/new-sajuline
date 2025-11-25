@@ -258,13 +258,33 @@ class PaymentRepository:
         """결제 정보 수정"""
         log = get_logger_with_request_id()
         log.info("Updating payment", payment_id=payment_id)
-        
+
         # None이 아닌 필드만 업데이트
         update_values = {}
         if update_data.payment_status is not None:
             update_values["payment_status"] = update_data.payment_status
         if update_data.pg_tid is not None:
             update_values["pg_tid"] = update_data.pg_tid
+        if update_data.cid is not None:
+            update_values["cid"] = update_data.cid
+        if update_data.billkey is not None:
+            update_values["billkey"] = update_data.billkey
+        if update_data.card_info is not None:
+            update_values["card_info"] = update_data.card_info
+        if update_data.pay_info is not None:
+            update_values["pay_info"] = update_data.pay_info
+        if update_data.tax_amount is not None:
+            update_values["tax_amount"] = update_data.tax_amount
+        if update_data.install_month is not None:
+            update_values["install_month"] = update_data.install_month
+        if update_data.pay_hash is not None:
+            update_values["pay_hash"] = update_data.pay_hash
+        if update_data.taxfree_amount is not None:
+            update_values["taxfree_amount"] = update_data.taxfree_amount
+        if update_data.domestic_flag is not None:
+            update_values["domestic_flag"] = update_data.domestic_flag
+        if update_data.disposable_cup_deposit is not None:
+            update_values["disposable_cup_deposit"] = update_data.disposable_cup_deposit
         if update_data.paid_at is not None:
             update_values["paid_at"] = update_data.paid_at
         # 스키마/모델 기준 컬럼명 반영
@@ -276,11 +296,11 @@ class PaymentRepository:
             update_values["cancel_amount"] = update_data.cancel_amount
         if update_data.cancelled_at is not None:
             update_values["cancelled_at"] = update_data.cancelled_at
-        
+
         if not update_values:
             log.warning("No fields to update", payment_id=payment_id)
             return False
-        
+
         update_values["updated_at"] = datetime.utcnow()
         
         stmt = (
