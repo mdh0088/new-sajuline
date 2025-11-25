@@ -96,7 +96,7 @@
         "../node_modules/@nuxt/image/dist/runtime/*"
       ],
       "#nuxt-scripts-validator": [
-        "../node_modules/@nuxt/scripts/dist/runtime/validation/valibot"
+        "../node_modules/@nuxt/scripts/dist/runtime/validation/mock"
       ],
       "#nuxt-scripts": [
         "../node_modules/@nuxt/scripts/dist/runtime"
@@ -163,7 +163,6 @@
     "../node_modules/@vueuse/nuxt/node_modules",
     "../node_modules/@element-plus/nuxt/node_modules",
     "../node_modules/notivue/node_modules",
-    "../node_modules/@nuxt/test-utils/node_modules",
     "../node_modules/@nuxt/devtools/node_modules",
     "../node_modules/@nuxt/telemetry/node_modules",
     "../dist"
