@@ -174,13 +174,17 @@ export const useAuth = () => {
   const userLogoutMutation = useUserLogout({
     onSuccess: () => {
       clearSession()
-      router.push('/login')
+      if (process.client) {
+        window.location.href = '/login'
+      }
     },
     onError: (error) => {
       console.error('User logout failed:', error)
       // 로그아웃 실패해도 로컬 세션은 클리어
       clearSession()
-      router.push('/login')
+      if (process.client) {
+        window.location.href = '/login'
+      }
     }
   })
 
@@ -190,13 +194,17 @@ export const useAuth = () => {
   const counselorLogoutMutation = useCounselorLogout({
     onSuccess: () => {
       clearSession()
-      router.push('/login')
+      if (process.client) {
+        window.location.href = '/login'
+      }
     },
     onError: (error) => {
       console.error('Counselor logout failed:', error)
       // 로그아웃 실패해도 로컬 세션은 클리어
       clearSession()
-      router.push('/login')
+      if (process.client) {
+        window.location.href = '/login'
+      }
     }
   })
   
