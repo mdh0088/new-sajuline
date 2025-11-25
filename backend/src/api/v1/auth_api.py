@@ -6,7 +6,7 @@ from src.common.middleware.rate_limit import limiter
 from src.core.redis import get_redis
 from src.schemas.auth_schema import RefreshTokenRequest, TokenResponse
 from src.schemas.auth_schema import TokenPayload as TokenPayloadSchema
-from src.services.auth_service import AuthService, get_current_user, TokenPayload as ServiceTokenPayload
+from src.services.auth_service import AuthService, get_current_user, TokenPayload as ServiceTokenPayload, KST
 from src.common.response import APIResponse, ok
 from src.common.logging import get_logger_with_request_id
 from src.exceptions.custom_exceptions import BaseAppException, AuthenticationError
@@ -66,7 +66,7 @@ async def refresh_token(
         
         # 기존 Refresh Token 블랙리스트 처리 (보안)
         from datetime import datetime
-        old_token_expires = datetime.fromtimestamp(refresh_payload["exp"])
+        old_token_expires = datetime.fromtimestamp(refresh_payload["exp"], tz=KST)
         await auth_service.blacklist_token(
             jti=refresh_payload["jti"],
             expires_at=old_token_expires,

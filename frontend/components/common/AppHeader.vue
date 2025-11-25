@@ -43,12 +43,14 @@ import { useAuth } from '~/composables/auth/useAuth'
 import { useAuthQueries } from '~/composables/api/useAuthQueries'
 import { useUserQueries } from '~/composables/api/useUserQueries'
 import { useCounselorQueries } from '~/composables/api/useCounselorQueries'
+import { useUserPoints } from '~/composables/user/useUserPoints'
 import { useRoute, useRouter } from 'vue-router'
 
 const { isAuthenticated, isUser, isCounselor, logout, setRole } = useAuth()
 const { useWhoAmI } = useAuthQueries()
 const { useUserMypage } = useUserQueries()
 const { useMypage: useCounselorMypage } = useCounselorQueries()
+const { setPoints } = useUserPoints()
 const { refetch } = useWhoAmI()
 const route = useRoute()
 const router = useRouter()
@@ -81,6 +83,18 @@ const userPoints = computed(() => mypageData.value?.current_points ?? 0)
 const formattedUserPoints = computed(() => {
   return userPoints.value.toLocaleString('ko-KR')
 })
+
+// ✅ 사용자 포인트가 변경되면 전역 상태 업데이트 (사용자일 때만)
+watch(
+  () => mypageData.value?.current_points,
+  (newPoints) => {
+    // 사용자이고, 포인트 값이 유효할 때만 전역 상태 업데이트
+    if (isUser.value && newPoints !== undefined && newPoints !== null) {
+      setPoints(newPoints)
+    }
+  },
+  { immediate: true }
+)
 
 // 서브페이지 판단 로직
 const isSubPage = computed(() => {
@@ -116,9 +130,9 @@ const pageTitle = computed(() => {
   return pageTitleMap[path] || '페이지'
 })
 
-// ✅ isAuthenticated 변경 감지 → 로그인 시 데이터 refetch
+// ✅ isAuthenticated 변경 감지 → 로그인/로그아웃 처리
 watch(isAuthenticated, async (newValue, oldValue) => {
-  // false → true로 변경될 때만 실행 (로그인 시)
+  // false → true로 변경될 때 실행 (로그인 시)
   if (newValue && !oldValue) {
     console.log('✅ [AppHeader] User logged in, refetching data...')
     try {
@@ -142,6 +156,12 @@ watch(isAuthenticated, async (newValue, oldValue) => {
       console.error('❌ [AppHeader] Failed to refresh data:', error)
       await logout()
     }
+  }
+
+  // true → false로 변경될 때 실행 (로그아웃 시)
+  if (!newValue && oldValue) {
+    console.log('✅ [AppHeader] User logged out, resetting points...')
+    setPoints(0)
   }
 })
 

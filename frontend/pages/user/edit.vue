@@ -29,8 +29,8 @@
               </div>
             </div>
 
-            <!-- 비밀번호 (수정 버튼) -->
-            <div class="form-group">
+            <!-- 비밀번호 (수정 버튼) - 일반 가입자만 표시 -->
+            <div v-if="!isSocialUser" class="form-group">
               <label class="form-label">
                 비밀번호<span class="required">*</span>
               </label>
@@ -158,10 +158,10 @@
           <button class="modal-close" @click="closeWithdrawalModal">✕</button>
         </div>
         <div class="modal-body">
-          <p class="modal-subtitle">비밀번호와 유의사항을 확인해주세요.</p>
+          <p class="modal-subtitle">{{ isSocialUser ? '유의사항을 확인해주세요.' : '비밀번호와 유의사항을 확인해주세요.' }}</p>
 
-          <!-- 비밀번호 입력 -->
-          <div class="form-group">
+          <!-- 비밀번호 입력 - 일반 가입자만 표시 -->
+          <div v-if="!isSocialUser" class="form-group">
             <label class="form-label">비밀번호 확인<span class="required">*</span></label>
             <div class="password-input-wrapper">
               <input
@@ -221,7 +221,7 @@
           <button class="modal-cancel-btn" @click="closeWithdrawalModal">취소</button>
           <button
             class="modal-danger-btn"
-            :disabled="!withdrawalPassword || !agreedToTerms"
+            :disabled="isSocialUser ? !agreedToTerms : (!withdrawalPassword || !agreedToTerms)"
             @click="openFinalConfirmModal"
           >
             다음
@@ -291,6 +291,10 @@ const { data: mypage, isLoading: isLoadingUserInfo } = useUserMypage()
 const userId = computed(() => mypage.value?.user_info.user_id || userSession.value?.user_id || '')
 const nickname = computed(() => mypage.value?.user_info.nickname || userSession.value?.nickname || '')
 const phone = computed(() => mypage.value?.user_info.phone || '')
+const isSocialUser = computed(() => {
+  const joinType = mypage.value?.user_info.join_type
+  return joinType !== 'COMMON' // KAKAO, NAVER 등 소셜 로그인 사용자
+})
 
 // 모달 상태
 const showPasswordModal = ref(false)
@@ -412,7 +416,9 @@ const closeFinalConfirmModal = () => {
 const handleWithdrawal = async () => {
   try {
     // 회원탈퇴 API 호출
-    const result = await withdrawUser(withdrawalPassword.value || undefined)
+    // SNS 가입자는 비밀번호 불필요, 일반 가입자는 비밀번호 필수
+    const password = isSocialUser.value ? undefined : (withdrawalPassword.value || undefined)
+    const result = await withdrawUser(password)
 
     // 모달 닫기
     showFinalConfirmModal.value = false
@@ -424,8 +430,8 @@ const handleWithdrawal = async () => {
     // 로그아웃 처리
     await logout()
 
-    // 로그인 페이지로 이동
-    router.push('/login')
+    // 전체 페이지 새로고침으로 로그인 페이지로 이동 (상태 완전 초기화)
+    window.location.href = '/login'
 
   } catch (error: any) {
     console.error('회원탈퇴 실패:', error)

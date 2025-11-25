@@ -68,11 +68,11 @@
             @click="start060Consult"
           >
             <span class="phone-icon">📞</span>
-            <span>060상담 (060-800-1300)</span>
+            <span>060상담 ({{ phoneNumber060 }})</span>
           </button>
 
           <p class="fee-info">
-            060상담(후불) <strong>{{ resolvedBeforeAmount }}</strong>(30초)(vat별도)
+            060상담(후불) <strong>{{ consultFee060 }}</strong>(30초)(vat별도)
           </p>
 
           <!-- 상담 안내 -->
@@ -104,6 +104,7 @@ interface Counselor {
   nickname: string
   profile_image_url?: string | null
   specialties: string[]
+  grade?: string | null
   afterAmount?: number | null
   beforeAmount?: string | null
 }
@@ -132,6 +133,20 @@ const resolvedBeforeAmount = computed(() => {
   if (c.before_amount) return c.before_amount
   if (c.rate060) return `${c.rate060}원`
   return '0원'
+})
+
+// 060 전화번호 (등급에 따라 결정)
+const phoneNumber060 = computed(() => {
+  const c: any = props.counselor as any
+  const grade = (c.grade || '').toUpperCase()
+  return grade === 'GOLD' ? '060-800-1500' : '060-800-1300'
+})
+
+// 060 상담료 (등급에 따라 결정)
+const consultFee060 = computed(() => {
+  const c: any = props.counselor as any
+  const grade = (c.grade || '').toUpperCase()
+  return grade === 'GOLD' ? '1500원' : '1300원'
 })
 
 const emit = defineEmits<{
