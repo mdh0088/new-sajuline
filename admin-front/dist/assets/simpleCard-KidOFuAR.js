@@ -1,1 +1,0 @@
-import{_ as e}from"./index-BKdYZkMI.js";const r={};function s(a,n){return" dashboard2 "}const c=e(r,[["render",s],["__file","C:/Users/poyi1/mdh/project/new-sajuline/admin-front/src/views/pages/dashboard/components/simpleCard.vue"]]);export{c as default};

@@ -295,6 +295,7 @@ class CounselorApplicationService:
             "is_show": True,
             "is_out": False,
             "created_at": datetime.utcnow(),
+            "approved_at": datetime.utcnow(),  # 상담사 전환 승인 시간
         }
 
         # 4. tm60_members 데이터 매핑 (한글 필드는 euc-kr 인코딩)
