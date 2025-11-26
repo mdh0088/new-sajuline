@@ -207,7 +207,6 @@ set -e
 
 # 변수 설정
 APP_DIR="/data/www/new-sajuline/backend"
-VENV_DIR="$APP_DIR/.venv"
 LOG_FILE="$APP_DIR/logs/deploy.log"
 
 # 로그 함수
@@ -225,10 +224,9 @@ git fetch origin
 git reset --hard origin/main
 log "Git pull 완료"
 
-# Python 가상환경 활성화
-log "Python 의존성 설치..."
-source "$VENV_DIR/bin/activate"
-pip install -e "." --quiet --disable-pip-version-check
+# uv로 의존성 설치
+log "Python 의존성 설치 (uv)..."
+uv sync --frozen
 log "의존성 설치 완료"
 
 # 데이터베이스 마이그레이션 (필요시 주석 해제)
