@@ -27,7 +27,36 @@ jobs:
 
       - name: Build Nuxt
         working-directory: frontend
-        run: npm run build
+        timeout-minutes: 10
+        env:
+          CI: true
+          NUXT_TELEMETRY_DISABLED: 1
+        run: |
+          npm run build &
+          BUILD_PID=$!
+
+          # .output/server/index.mjs 생성 대기 (최대 10분)
+          for i in {1..120}; do
+            if [ -f ".output/server/index.mjs" ]; then
+              echo "Build complete, killing background process"
+              kill $BUILD_PID 2>/dev/null || true
+              exit 0
+            fi
+            sleep 5
+          done
+
+          echo "Build timeout"
+          kill $BUILD_PID 2>/dev/null || true
+          exit 1
+
+      - name: Verify build output
+        working-directory: frontend
+        run: |
+          if [ ! -f ".output/server/index.mjs" ]; then
+            echo "Build failed: .output/server/index.mjs not found"
+            exit 1
+          fi
+          echo "Build verified successfully"
 
       - name: Compress build output
         working-directory: frontend
