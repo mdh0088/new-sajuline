@@ -63,9 +63,24 @@ yarn-error.log*
 
 # 빌드 출력
 dist/
+**/dist/
 .nuxt/
+.output/
 build/
 *.egg-info/
+
+# Admin Frontend 빌드 결과물
+admin-front/dist/
+
+# Frontend 빌드 결과물
+frontend/.output/
+frontend/.nuxt/
+
+# 자동 생성 파일
+components.d.ts
+**/components.d.ts
+auto-imports.d.ts
+**/auto-imports.d.ts
 
 # Docker
 .dockerignore

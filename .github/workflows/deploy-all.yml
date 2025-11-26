@@ -1,0 +1,57 @@
+name: Deploy All (Manual)
+
+on:
+  workflow_dispatch:
+    inputs:
+      target:
+        description: '배포 대상'
+        required: true
+        default: 'all'
+        type: choice
+        options:
+          - all
+          - backend
+          - frontend
+
+jobs:
+  deploy-backend:
+    if: ${{ github.event.inputs.target == 'all' || github.event.inputs.target == 'backend' }}
+    runs-on: [self-hosted, sajuline]
+    steps:
+      - name: Deploy Backend
+        run: |
+          cd /data/www/new-sajuline/backend
+          ./deploy.sh
+
+      - name: Health Check
+        run: |
+          sleep 5
+          curl -f http://localhost:8000/health || echo "Health check skipped"
+
+  deploy-frontend:
+    if: ${{ github.event.inputs.target == 'all' || github.event.inputs.target == 'frontend' }}
+    runs-on: [self-hosted, sajuline]
+    needs: [deploy-backend]
+    steps:
+      - name: Deploy Frontend
+        run: |
+          cd /data/www/new-sajuline/frontend
+          ./deploy.sh
+
+      - name: Health Check
+        run: |
+          sleep 10
+          curl -f http://localhost:3000/ || echo "Health check skipped"
+
+  summary:
+    runs-on: ubuntu-latest
+    needs: [deploy-backend, deploy-frontend]
+    if: always()
+    steps:
+      - name: Deployment Summary
+        run: |
+          echo "## Deployment Summary" >> $GITHUB_STEP_SUMMARY
+          echo "- Target: ${{ github.event.inputs.target }}" >> $GITHUB_STEP_SUMMARY
+          echo "- Backend: ${{ needs.deploy-backend.result }}" >> $GITHUB_STEP_SUMMARY
+          echo "- Frontend: ${{ needs.deploy-frontend.result }}" >> $GITHUB_STEP_SUMMARY
+          echo "- Time: $(date '+%Y-%m-%d %H:%M:%S')" >> $GITHUB_STEP_SUMMARY

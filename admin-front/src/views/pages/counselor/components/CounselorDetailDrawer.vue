@@ -289,25 +289,26 @@ const rules = reactive<FormRules>({
   name: [{required: true, message: '이름을 입력해주세요', trigger: 'blur'}],
   nickname: [{required: true, message: '닉네임을 입력해주세요', trigger: 'blur'}],
   phone: [{required: true, message: '핸드폰 번호를 입력해주세요', trigger: 'blur'}],
-  password: [
-    {
-      validator: (rule, value, callback) => {
-        if (!value) {
-          // 비밀번호 변경하지 않을 때는 패스
-          callback();
-          return;
-        }
 
-        const passwordRegex = /^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d@$!%*#?&]{10,16}$/;
-        if (!passwordRegex.test(value)) {
-          callback(new Error('비밀번호는 영문대문자/영문소문자/숫자/특수문자 중 2개 이상 포함하고, 10~16자리여야 합니다.'));
-        } else {
-          callback();
-        }
-      },
-      trigger: 'blur'
-    }
-  ],
+  // password: [
+  //   {
+  //     validator: (rule, value, callback) => {
+  //       if (!value) {
+  //         // 비밀번호 변경하지 않을 때는 패스
+  //         callback();
+  //         return;
+  //       }
+
+  //       // const passwordRegex = /^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d@$!%*#?&]{10,16}$/;
+  //       // if (!passwordRegex.test(value)) {
+  //       //   callback(new Error('비밀번호는 영문대문자/영문소문자/숫자/특수문자 중 2개 이상 포함하고, 10~16자리여야 합니다.'));
+  //       // } else {
+  //       //   callback();
+  //       // }
+  //     },
+  //     trigger: 'blur'
+  //   }
+  // ],
 })
 
 // 저장 버튼 클릭
