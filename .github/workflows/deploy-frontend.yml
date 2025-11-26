@@ -9,7 +9,7 @@ on:
   workflow_dispatch:
 
 jobs:
-  lint:
+  build:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -25,18 +25,51 @@ jobs:
         working-directory: frontend
         run: npm ci
 
-      - name: Type check
+      - name: Build Nuxt
         working-directory: frontend
-        run: npm run type-check
+        run: npm run build
+
+      - name: Compress build output
+        working-directory: frontend
+        run: tar -czf nuxt-output.tar.gz .output
+
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: nuxt-build
+          path: frontend/nuxt-output.tar.gz
+          retention-days: 1
 
   deploy:
-    needs: lint
+    needs: build
     runs-on: [self-hosted, sajuline]
     steps:
+      - name: Download build artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: nuxt-build
+          path: /tmp/nuxt-build
+
       - name: Deploy Frontend
         run: |
           cd /data/www/new-sajuline/frontend
-          ./deploy.sh
+
+          # Git pull (코드만)
+          git fetch origin
+          git reset --hard origin/main
+
+          # 빌드 결과물 배포
+          rm -rf .output
+          tar -xzf /tmp/nuxt-build/nuxt-output.tar.gz
+          rm -rf /tmp/nuxt-build
+
+          # PM2 재시작
+          if pm2 describe nuxt-sajuline > /dev/null 2>&1; then
+              pm2 reload ecosystem.config.cjs --env production
+          else
+              pm2 start ecosystem.config.cjs --env production
+          fi
+          pm2 save
 
       - name: Health Check
         run: |
