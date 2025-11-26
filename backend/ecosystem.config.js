@@ -1,8 +1,8 @@
 module.exports = {
   apps: [{
     name: 'fastapi-sajuline',
-    script: '/data/www/new-sajuline/backend/.venv/bin/gunicorn',
-    args: 'src.main:app -w 2 -k uvicorn.workers.UvicornWorker --bind 0.0.0.0:8000 --timeout 120 --graceful-timeout 30 --keep-alive 5 --access-logfile - --error-logfile -',
+    script: 'uv',
+    args: 'run gunicorn src.main:app -w 2 -k uvicorn.workers.UvicornWorker --bind 0.0.0.0:8000 --timeout 120 --graceful-timeout 30 --keep-alive 5 --access-logfile - --error-logfile -',
     cwd: '/data/www/new-sajuline/backend',
     interpreter: 'none',
     exec_mode: 'fork',
