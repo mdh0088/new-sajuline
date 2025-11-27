@@ -226,7 +226,7 @@ log "Git pull 완료"
 
 # uv로 의존성 설치
 log "Python 의존성 설치 (uv)..."
-uv sync --frozen
+uv sync
 log "의존성 설치 완료"
 
 # 데이터베이스 마이그레이션 (필요시 주석 해제)
