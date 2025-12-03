@@ -59,7 +59,7 @@ if pm2 describe fastapi-sajuline > /dev/null 2>&1; then
 fi
 
 log "프로세스 시작 (Development)..."
-pm2 start ecosystem.config.development.js --only fastapi-sajuline
+pm2 start ecosystem.development.config.js
 
 # PM2 설정 저장 (서버 재부팅 시 자동 시작)
 pm2 save
