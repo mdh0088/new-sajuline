@@ -69,11 +69,12 @@ class LoggingMiddleware(BaseHTTPMiddleware):
         request.state.user_agent_info = user_agent_info
         
         log = get_logger_with_request_id()
-        log.info("Request started", 
+        log.info("Request started",
                 method=request.method,
                 path=request.url.path,
                 query_params=str(request.query_params) if request.query_params else None,
                 client_ip=client_ip,
+                host_header=request.headers.get("host", ""),  # Host 헤더 로깅
                 user_agent=user_agent,
                 device=user_agent_info["device"],
                 browser=user_agent_info["browser"],
