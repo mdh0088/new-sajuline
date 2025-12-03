@@ -204,7 +204,7 @@ jobs:
           if pm2 describe nuxt-sajuline > /dev/null 2>&1; then
               pm2 delete nuxt-sajuline
           fi
-          pm2 start ecosystem.config.production.cjs
+          pm2 start ecosystem.config.production.cjs --only nuxt-sajuline
           pm2 save
 
       - name: Health Check
@@ -241,7 +241,7 @@ jobs:
           if pm2 describe nuxt-sajuline > /dev/null 2>&1; then
               pm2 delete nuxt-sajuline
           fi
-          pm2 start ecosystem.config.development.cjs
+          pm2 start ecosystem.config.development.cjs --only nuxt-sajuline
           pm2 save
 
       - name: Health Check
