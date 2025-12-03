@@ -16,14 +16,6 @@ module.exports = {
     env: {
       APP_ENV: 'production',
       ENVIRONMENT: 'production'
-    },
-    env_production: {
-      APP_ENV: 'production',
-      ENVIRONMENT: 'production'
-    },
-    env_development: {
-      APP_ENV: 'development',
-      ENVIRONMENT: 'development'
     }
   }]
 }
