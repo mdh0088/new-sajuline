@@ -14,14 +14,6 @@ module.exports = {
     out_file: './logs/pm2-out.log',
     log_date_format: 'YYYY-MM-DD HH:mm:ss',
     env: {
-      APP_ENV: 'production',
-      ENVIRONMENT: 'production'
-    },
-    env_production: {
-      APP_ENV: 'production',
-      ENVIRONMENT: 'production'
-    },
-    env_development: {
       APP_ENV: 'development',
       ENVIRONMENT: 'development'
     }
