@@ -718,7 +718,6 @@ CREATE TABLE t_event_participation_log (
     reward_value INT(11) DEFAULT NULL COMMENT '보상 값',
     created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     PRIMARY KEY (log_id),
-    UNIQUE KEY uk_event_user (event_id, user_id),
     KEY idx_user_id (user_id),
     KEY idx_created_at (created_at)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci COMMENT='이벤트 참여 로그';
