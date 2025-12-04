@@ -67,6 +67,18 @@ jobs:
         working-directory: frontend
         run: npm ci
 
+      - name: Load environment variables
+        working-directory: frontend
+        run: |
+          # .env.production 파일을 환경 변수로 export
+          if [ -f .env.production ]; then
+            export $(grep -v '^#' .env.production | xargs)
+            # GitHub Actions 환경 변수로 등록
+            grep -v '^#' .env.production | while IFS='=' read -r key value; do
+              echo "$key=$value" >> $GITHUB_ENV
+            done
+          fi
+
       - name: Build Nuxt (Production)
         working-directory: frontend
         timeout-minutes: 10
@@ -129,6 +141,17 @@ jobs:
       - name: Install dependencies
         working-directory: frontend
         run: npm ci
+
+      - name: Load environment variables
+        working-directory: frontend
+        run: |
+          # .env.development 파일을 환경 변수로 export (있는 경우)
+          if [ -f .env.development ]; then
+            export $(grep -v '^#' .env.development | xargs)
+            grep -v '^#' .env.development | while IFS='=' read -r key value; do
+              echo "$key=$value" >> $GITHUB_ENV
+            done
+          fi
 
       - name: Build Nuxt (Development)
         working-directory: frontend
