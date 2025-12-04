@@ -98,7 +98,7 @@ definePageMeta({
 
 <script setup lang="ts">
 import { ref, onMounted, computed, watch } from 'vue'
-import { useHead, useRoute } from 'nuxt/app'
+import { useHead, useRoute, useSeoMeta } from 'nuxt/app'
 import { useNotify } from '~/composables/utils/useNotify'
 import MainBannerCarousel from '~/components/home/MainBannerCarousel.vue'
 import CounselorCardCompact from '~/components/counselor/CounselorCardCompact.vue'
