@@ -119,12 +119,13 @@ aws ec2 describe-instances \
   --query 'Reservations[0].Instances[0].[InstanceId,InstanceType,SubnetId,PrivateIpAddress,PublicIpAddress,State.Name]' \
   --output table
 
-# 출력 예시:
-# i-0abc123def456     t3.small    subnet-abc123    10.0.1.50    54.180.x.x    running
+# 출력:
+# i-05c1c07c661b3b062     t2.micro    subnet-097ea43e77c598d23    10.0.8.141    54.180.225.150    running
 
 # 환경변수 저장 (다음 단계에서 사용)
-export BASTION_INSTANCE_ID="i-0abc123def456"  # 실제 ID로 변경
-export BASTION_PRIVATE_IP="10.0.1.50"         # 실제 IP로 변경
+export BASTION_INSTANCE_ID="i-05c1c07c661b3b062"
+export BASTION_PRIVATE_IP="10.0.8.141"
+export BASTION_PUBLIC_IP="54.180.225.150"
 ```
 
 ### 2.2 Bastion에 NAT 기능 추가
@@ -132,8 +133,8 @@ export BASTION_PRIVATE_IP="10.0.1.50"         # 실제 IP로 변경
 #### Step 1: Bastion 서버 접속
 
 ```bash
-# SSH 접속 (키 파일 경로는 실제 경로로 변경)
-ssh -i ~/.ssh/sajuline-key.pem ec2-user@<BASTION_PUBLIC_IP>
+# SSH 접속
+ssh -i ~/.ssh/sajuline-key.pem ec2-user@54.180.225.150
 ```
 
 #### Step 2: NAT 기능 활성화
@@ -151,8 +152,8 @@ sysctl net.ipv4.ip_forward
 
 # 4. 네트워크 인터페이스 확인
 ip addr show
-# eth0, ens5, enX0 등의 인터페이스 확인 (보통 eth0)
-export NET_INTERFACE="eth0"  # 실제 인터페이스명으로 변경
+# 인터페이스 확인 결과: enX0
+export NET_INTERFACE="enX0"
 
 # 5. iptables NAT 마스커레이딩 설정
 sudo iptables -t nat -A POSTROUTING -o $NET_INTERFACE -j MASQUERADE
@@ -173,7 +174,7 @@ sudo service iptables save
 # 8. 재부팅 시 자동 적용 (rc.local)
 sudo bash -c "cat > /etc/rc.d/rc.local << 'EOF'
 #!/bin/bash
-iptables -t nat -A POSTROUTING -o eth0 -j MASQUERADE
+iptables -t nat -A POSTROUTING -o enX0 -j MASQUERADE
 exit 0
 EOF"
 
@@ -196,12 +197,12 @@ exit
 ```bash
 # Source/Destination Check 비활성화
 aws ec2 modify-instance-attribute \
-  --instance-id $BASTION_INSTANCE_ID \
+  --instance-id i-05c1c07c661b3b062 \
   --no-source-dest-check
 
 # 확인
 aws ec2 describe-instance-attribute \
-  --instance-id $BASTION_INSTANCE_ID \
+  --instance-id i-05c1c07c661b3b062 \
   --attribute sourceDestCheck
 # 출력: "Value": false (비활성화 확인)
 ```
@@ -236,42 +237,50 @@ aws ec2 describe-instance-attribute \
 #### CLI 방식
 
 ```bash
-# 1. Private Subnet ID 확인 (Lambda가 배치될 Subnet)
-aws ec2 describe-subnets \
-  --filters "Name=tag:Name,Values=*private*" \
-  --query 'Subnets[].[SubnetId,AvailabilityZone,CidrBlock,Tags[?Key==`Name`].Value|[0]]' \
-  --output table
+# Private Subnet 및 Route Table 정보 (확인됨)
+# - subnet-0254be391c6d2f5fc (private1, 2a) → rtb-0739cad699995ec34
+# - subnet-0bf1e5f36932f2aad (private2, 2b) → rtb-09b9b6773ac3467fa
+# - subnet-0c4481fb2bcaa0525 (private3, 2c) → rtb-01c6e948217535e55
 
-export PRIVATE_SUBNET_ID="subnet-xxxxx"  # 실제 Subnet ID
+# 각 Private Subnet의 Route Table에서 NAT Gateway → Bastion으로 변경
+# ⚠️ 3개의 Route Table 모두 변경 필요!
 
-# 2. Private Subnet의 Route Table ID 찾기
-export ROUTE_TABLE_ID=$(aws ec2 describe-route-tables \
-  --filters "Name=association.subnet-id,Values=$PRIVATE_SUBNET_ID" \
-  --query 'RouteTables[0].RouteTableId' \
-  --output text)
-
-echo "Route Table ID: $ROUTE_TABLE_ID"
-
-# 3. 기존 라우트 확인
-aws ec2 describe-route-tables \
-  --route-table-ids $ROUTE_TABLE_ID \
-  --query 'RouteTables[0].Routes'
-
-# 4. 기존 NAT Gateway 라우트 삭제 (있는 경우)
+# === Private Subnet 1 (ap-northeast-2a) ===
+# 1. 기존 NAT Gateway 라우트 삭제
 aws ec2 delete-route \
-  --route-table-id $ROUTE_TABLE_ID \
+  --route-table-id rtb-0739cad699995ec34 \
   --destination-cidr-block 0.0.0.0/0
 
-# 5. Bastion (NAT Instance) 라우트 추가
+# 2. Bastion (NAT Instance) 라우트 추가
 aws ec2 create-route \
-  --route-table-id $ROUTE_TABLE_ID \
+  --route-table-id rtb-0739cad699995ec34 \
   --destination-cidr-block 0.0.0.0/0 \
-  --instance-id $BASTION_INSTANCE_ID
+  --instance-id i-05c1c07c661b3b062
 
-# 6. 변경 확인
+# === Private Subnet 2 (ap-northeast-2b) ===
+aws ec2 delete-route \
+  --route-table-id rtb-09b9b6773ac3467fa \
+  --destination-cidr-block 0.0.0.0/0
+
+aws ec2 create-route \
+  --route-table-id rtb-09b9b6773ac3467fa \
+  --destination-cidr-block 0.0.0.0/0 \
+  --instance-id i-05c1c07c661b3b062
+
+# === Private Subnet 3 (ap-northeast-2c) ===
+aws ec2 delete-route \
+  --route-table-id rtb-01c6e948217535e55 \
+  --destination-cidr-block 0.0.0.0/0
+
+aws ec2 create-route \
+  --route-table-id rtb-01c6e948217535e55 \
+  --destination-cidr-block 0.0.0.0/0 \
+  --instance-id i-05c1c07c661b3b062
+
+# 변경 확인
 aws ec2 describe-route-tables \
-  --route-table-ids $ROUTE_TABLE_ID \
-  --query 'RouteTables[0].Routes' \
+  --route-table-ids rtb-0739cad699995ec34 rtb-09b9b6773ac3467fa rtb-01c6e948217535e55 \
+  --query 'RouteTables[].[RouteTableId,Routes[?DestinationCidrBlock==`0.0.0.0/0`]]' \
   --output table
 ```
 
@@ -281,7 +290,8 @@ aws ec2 describe-route-tables \
 
 ```bash
 # Private Subnet의 EC2에 접속 (Bastion을 경유)
-ssh -J ec2-user@<BASTION_PUBLIC_IP> ec2-user@<PRIVATE_EC2_PRIVATE_IP>
+# 예: Private 서버 IP가 10.0.133.87인 경우
+ssh -J ec2-user@54.180.225.150 ec2-user@10.0.133.87
 
 # 인터넷 연결 테스트
 curl -I https://www.google.com
@@ -295,10 +305,10 @@ ping -c 3 8.8.8.8
 
 ```bash
 # Bastion SSH 접속
-ssh -i ~/.ssh/sajuline-key.pem ec2-user@<BASTION_PUBLIC_IP>
+ssh -i ~/.ssh/sajuline-key.pem ec2-user@54.180.225.150
 
-# NAT 트래픽 실시간 모니터링
-sudo tcpdump -i eth0 -n | grep -E "443|80"
+# NAT 트래픽 실시간 모니터링 (인터페이스: enX0)
+sudo tcpdump -i enX0 -n | grep -E "443|80"
 # Private Subnet에서 오는 트래픽 확인 가능
 
 # iptables NAT 통계 확인
@@ -334,34 +344,29 @@ sudo iptables -t nat -L -n -v
 #### CLI 방식
 
 ```bash
-# 1. NAT Gateway ID 확인
-NAT_GW_ID=$(aws ec2 describe-nat-gateways \
-  --filter "Name=state,Values=available" \
-  --query 'NatGateways[0].NatGatewayId' \
-  --output text)
+# NAT Gateway 정보 (확인됨)
+# NAT Gateway ID: nat-090db9c6382eb482a
 
-echo "NAT Gateway ID: $NAT_GW_ID"
-
-# NAT Gateway의 EIP 기록 (나중에 해제)
+# 1. NAT Gateway의 EIP 확인 (나중에 해제)
 NAT_EIP_ALLOCATION=$(aws ec2 describe-nat-gateways \
-  --nat-gateway-ids $NAT_GW_ID \
+  --nat-gateway-ids nat-090db9c6382eb482a \
   --query 'NatGateways[0].NatGatewayAddresses[0].AllocationId' \
   --output text)
 
 echo "NAT EIP Allocation ID: $NAT_EIP_ALLOCATION"
 
 # 2. NAT Gateway 삭제
-aws ec2 delete-nat-gateway --nat-gateway-id $NAT_GW_ID
+aws ec2 delete-nat-gateway --nat-gateway-id nat-090db9c6382eb482a
 
 # 3. 삭제 대기 (5-10분)
 aws ec2 describe-nat-gateways \
-  --nat-gateway-ids $NAT_GW_ID \
+  --nat-gateway-ids nat-090db9c6382eb482a \
   --query 'NatGateways[0].State' \
   --output text
 
 # State가 "deleted"가 될 때까지 대기
 
-# 4. Elastic IP 해제
+# 4. Elastic IP 해제 (삭제 완료 후)
 aws ec2 release-address --allocation-id $NAT_EIP_ALLOCATION
 
 # 5. 확인
@@ -390,21 +395,20 @@ aws ec2 describe-addresses --allocation-ids $NAT_EIP_ALLOCATION
 
 **CLI**:
 ```bash
-# Private Subnet ID 확인 (최소 2개, 다른 AZ)
-aws ec2 describe-subnets \
-  --filters "Name=tag:Name,Values=*private*" \
-  --query 'Subnets[].[SubnetId,AvailabilityZone,Tags[?Key==`Name`].Value|[0]]' \
-  --output table
+# Private Subnet ID (확인됨 - 3개, 서로 다른 AZ)
+# - subnet-0254be391c6d2f5fc (ap-northeast-2a)
+# - subnet-0bf1e5f36932f2aad (ap-northeast-2b)
+# - subnet-0c4481fb2bcaa0525 (ap-northeast-2c)
 
-export VPC_SUBNET_IDS="subnet-abc123,subnet-def456"
+export VPC_SUBNET_IDS="subnet-0254be391c6d2f5fc,subnet-0bf1e5f36932f2aad,subnet-0c4481fb2bcaa0525"
 
-# Security Group ID 확인
+# Security Group ID 확인 (DB 접근 가능한 SG 필요)
 aws ec2 describe-security-groups \
-  --filters "Name=tag:Name,Values=*database*,*rds*" \
+  --filters "Name=tag:Name,Values=*database*,*rds*,*db*" \
   --query 'SecurityGroups[].[GroupId,GroupName,Description]' \
   --output table
 
-export VPC_SECURITY_GROUP_IDS="sg-xxxxx"
+export VPC_SECURITY_GROUP_IDS="sg-xxxxx"  # 실제 SG ID로 변경
 ```
 
 ### 3.2 IAM Role 생성
@@ -1347,13 +1351,13 @@ aws cloudwatch get-metric-statistics \
 
 ```bash
 # Bastion SSH 접속
-ssh -i ~/.ssh/sajuline-key.pem ec2-user@<BASTION_PUBLIC_IP>
+ssh -i ~/.ssh/sajuline-key.pem ec2-user@54.180.225.150
 
 # NAT 트래픽 통계
 sudo iptables -t nat -L -n -v
 
-# 실시간 트래픽 모니터링
-sudo tcpdump -i eth0 -n | grep -E "443|80"
+# 실시간 트래픽 모니터링 (인터페이스: enX0)
+sudo tcpdump -i enX0 -n | grep -E "443|80"
 
 # 네트워크 연결 상태
 netstat -an | grep ESTABLISHED | wc -l
@@ -1386,7 +1390,7 @@ aws cloudwatch put-metric-alarm \
   --evaluation-periods 2 \
   --threshold 80 \
   --comparison-operator GreaterThanThreshold \
-  --dimensions Name=InstanceId,Value=$BASTION_INSTANCE_ID
+  --dimensions Name=InstanceId,Value=i-05c1c07c661b3b062
 ```
 
 ---
@@ -1470,7 +1474,7 @@ aws lambda update-function-configuration \
 aws cloudwatch get-metric-statistics \
   --namespace AWS/EC2 \
   --metric-name CPUUtilization \
-  --dimensions Name=InstanceId,Value=$BASTION_INSTANCE_ID \
+  --dimensions Name=InstanceId,Value=i-05c1c07c661b3b062 \
   --start-time $(date -u -d '1 hour ago' +%Y-%m-%dT%H:%M:%S) \
   --end-time $(date -u +%Y-%m-%dT%H:%M:%S) \
   --period 300 \
@@ -1480,10 +1484,13 @@ aws cloudwatch get-metric-statistics \
 **해결방법**:
 1. **Instance Type 업그레이드**
 ```bash
-# t3.small → t3.medium
+# t2.micro → t3.small (현재 t2.micro 사용 중)
+# 인스턴스 중지 후 타입 변경 필요
+aws ec2 stop-instances --instance-ids i-05c1c07c661b3b062
 aws ec2 modify-instance-attribute \
-  --instance-id $BASTION_INSTANCE_ID \
-  --instance-type t3.medium
+  --instance-id i-05c1c07c661b3b062 \
+  --instance-type '{"Value": "t3.small"}'
+aws ec2 start-instances --instance-ids i-05c1c07c661b3b062
 ```
 
 2. **Multi-AZ Bastion** (고가용성)
@@ -1626,7 +1633,7 @@ aws cloudfront create-invalidation \
   --paths "/*"
 
 # Bastion NAT 트래픽 확인
-ssh ec2-user@<BASTION_IP> "sudo iptables -t nat -L -n -v"
+ssh ec2-user@54.180.225.150 "sudo iptables -t nat -L -n -v"
 
 # Lambda 환경변수 업데이트
 aws lambda update-function-configuration \

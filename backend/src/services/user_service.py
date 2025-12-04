@@ -96,34 +96,50 @@ class UserService:
             log.info("Regular signup detected", user_id=signup_data.user_id)
         
         # 2. 필수 약관 동의는 프론트엔드에서 검증하므로 서버에서는 생략
-        
-        # 3. 중복 검증
+
+        # 3. 탈퇴 후 재가입 제한 검사 (2개월)
+        withdrawal_result = await self.user_repo.get_recent_withdrawal_by_phone(
+            phone=signup_data.phone,
+            months=2
+        )
+        if withdrawal_result:
+            user_out, remaining_days = withdrawal_result
+            log.warning("Signup blocked - recent withdrawal",
+                       phone=signup_data.phone,
+                       withdrawal_date=user_out.created_at,
+                       remaining_days=remaining_days)
+            raise ValidationError(
+                f"탈퇴 후 2개월 이내에는 재가입이 불가능합니다. "
+                f"약 {remaining_days}일 후에 가입이 가능합니다."
+            )
+
+        # 4. 중복 검증
         if await self.user_repo.exists_by_user_id(signup_data.user_id):
             log.warning("User ID already exists", user_id=signup_data.user_id)
             raise DuplicateError("이미 존재하는 사용자 ID입니다.")
-        
+
         if await self.user_repo.exists_by_email(signup_data.email):
             log.warning("Email already exists", email=signup_data.email)
             raise DuplicateError("이미 존재하는 이메일입니다.")
-        
+
         if await self.user_repo.exists_by_phone(signup_data.phone):
             log.warning("Phone already exists", phone=signup_data.phone)
             raise DuplicateError("이미 존재하는 전화번호입니다.")
-        
-        # 4. 비밀번호 해싱 (일반 가입시에만)
+
+        # 5. 비밀번호 해싱 (일반 가입시에만)
         password_hash = None
         if signup_data.password and join_type == JoinType.COMMON:
             password_hash = self.auth_service.hash_password(signup_data.password)
-        
-        # 5. 단순한 이중 DB 저장 (MariaDB 먼저 커밋 → MSSQL 저장 → 실패시 보상)
+
+        # 6. 단순한 이중 DB 저장 (MariaDB 먼저 커밋 → MSSQL 저장 → 실패시 보상)
         user = None
         try:
-            # 5-1. MariaDB에 사용자 생성 및 즉시 커밋
+            # 6-1. MariaDB에 사용자 생성 및 즉시 커밋
             user = await self.user_repo.create_from_signup(signup_data, password_hash, join_type)
             await self.user_repo.db.commit()
             log.info("MariaDB user created and committed", user_id=user.user_id)
-            
-            # 5-2. MSSQL(TM60)에 사용자 생성 시도 (주입된 서비스 사용)
+
+            # 6-2. MSSQL(TM60)에 사용자 생성 시도 (주입된 서비스 사용)
             if not self.tm60_users_service:
                 raise ValidationError("외부 시스템 연동 서비스가 초기화되지 않았습니다.")
             tm60_success = await self.tm60_users_service.create_user(
@@ -132,13 +148,13 @@ class UserService:
                 nickname=user.nickname
             )
             if not tm60_success:
-                # 5-3. MSSQL 실패시 MariaDB에서 사용자 완전 삭제 (보상 트랜잭션)
+                # 6-3. MSSQL 실패시 MariaDB에서 사용자 완전 삭제 (보상 트랜잭션)
                 await self.user_repo.delete_by_user_id(user.user_id)
                 log.warning("TM60 user creation failed, deleted MariaDB user", user_id=user.user_id)
                 raise ValidationError("외부 시스템 연동 오류로 회원가입에 실패했습니다.")
-            
+
             log.info("Both databases updated successfully", user_id=user.user_id)
-            
+
         except ValidationError:
             # ValidationError는 그대로 재발생
             raise
@@ -148,33 +164,33 @@ class UserService:
                 await self.user_repo.delete_by_user_id(user.user_id)
                 log.warning("User creation failed, deleted MariaDB user", user_id=user.user_id, error=str(e))
             raise ValidationError(f"회원가입 처리 중 오류가 발생했습니다: {str(e)}")
-        
-        log.info("Signup completed successfully", 
-                user_id=user.user_id, 
-                email=user.email, 
+
+        log.info("Signup completed successfully",
+                user_id=user.user_id,
+                email=user.email,
                 join_type=join_type.value,
                 is_social=is_social)
-        
-        # 6. 회원가입 이벤트 포인트 지급 처리 (실패해도 회원가입은 성공)
+
+        # 7. 회원가입 이벤트 포인트 지급 처리 (실패해도 회원가입은 성공)
         signup_reward = None
         if self.event_service:
             try:
                 signup_reward = await self.event_service.process_signup_reward(user.user_id)
                 if signup_reward:
-                    log.info("Signup reward granted successfully", 
+                    log.info("Signup reward granted successfully",
                            user_id=user.user_id,
                            reward_value=signup_reward.reward_value,
                            balance_after=signup_reward.balance_after)
             except Exception as e:
                 # 포인트 지급 실패해도 회원가입은 성공으로 처리
-                log.warning("Signup reward failed but signup succeeded", 
-                          user_id=user.user_id, 
+                log.warning("Signup reward failed but signup succeeded",
+                          user_id=user.user_id,
                           error=str(e))
-        
-        # 7. 응답 생성 (포인트 지급 정보 포함)
+
+        # 8. 응답 생성 (포인트 지급 정보 포함)
         user_response = UserResponse.model_validate(user)
         user_response.signup_reward = signup_reward
-        
+
         return user_response
     
 # TODO: 사용자 목록 조회 - 추후 참고용
@@ -744,10 +760,26 @@ class UserService:
                     user_id=user_id,
                     join_type=user.join_type)
 
-        # 3. 탈퇴 처리 (MariaDB → MSSQL 순서, 실패시 보상 트랜잭션)
+        # 3. 탈퇴 처리 (MSSQL 먼저 삭제 → MariaDB 처리, 실패시 보상 트랜잭션)
+        # 전략: MSSQL 삭제가 반드시 성공해야 MariaDB 탈퇴 처리 진행
         user_out = None
+        tm60_delete_success = False  # 보상 트랜잭션 판단용
+
         try:
-            # 3-1. t_user_out에 탈퇴 정보 기록
+            # 3-1. MSSQL(tm60_users) 먼저 삭제 시도
+            if not self.tm60_users_service:
+                raise ValidationError("외부 시스템 연동 서비스가 초기화되지 않았습니다.")
+
+            tm60_delete_success = await self.tm60_users_service.delete_user_by_phone(user.phone)
+            if not tm60_delete_success:
+                log.error("TM60 user deletion failed, withdrawal aborted",
+                         user_id=user_id,
+                         phone=user.phone)
+                raise ValidationError("외부 시스템 연동 오류로 회원 탈퇴에 실패했습니다. 잠시 후 다시 시도해주세요.")
+
+            log.info("TM60 user deleted successfully", user_id=user_id, phone=user.phone)
+
+            # 3-2. t_user_out에 탈퇴 정보 기록
             user_out = await self.user_repo.create_user_out(
                 user_id=user.user_id,
                 nickname=user.nickname,
@@ -756,31 +788,19 @@ class UserService:
             )
             log.info("User out record created", user_id=user_id, out_idx=user_out.out_idx)
 
-            # 3-2. t_user 상태를 WITHDRAWN으로 변경
+            # 3-3. t_user 상태를 WITHDRAWN으로 변경
             update_success = await self.user_repo.update_user_status_to_withdrawn(user_id)
             if not update_success:
                 log.error("Failed to update user status to WITHDRAWN", user_id=user_id)
+                # MariaDB 실패 시 MSSQL 복구 시도 (보상 트랜잭션)
+                await self._rollback_tm60_user_deletion(user)
                 raise ValidationError("회원 탈퇴 처리 중 오류가 발생했습니다.")
 
             log.info("User status updated to WITHDRAWN", user_id=user_id)
 
-            # 3-3. MariaDB 커밋
+            # 3-4. MariaDB 커밋
             await self.user_repo.db.commit()
-            log.info("MariaDB withdrawal completed and committed", user_id=user_id)
-
-            # 3-4. tm60_users에서 전화번호로 삭제 (MSSQL)
-            if not self.tm60_users_service:
-                raise ValidationError("외부 시스템 연동 서비스가 초기화되지 않았습니다.")
-
-            tm60_delete_success = await self.tm60_users_service.delete_user_by_phone(user.phone)
-            if not tm60_delete_success:
-                log.warning("TM60 user deletion failed, but MariaDB withdrawal succeeded",
-                          user_id=user_id,
-                          phone=user.phone)
-                # MSSQL 삭제 실패해도 MariaDB 탈퇴는 성공으로 처리 (보상 트랜잭션 없음)
-                # 이유: 사용자는 이미 탈퇴 처리됨, MSSQL은 별도 정리 가능
-            else:
-                log.info("TM60 user deleted successfully", user_id=user_id, phone=user.phone)
+            log.info("Both databases updated successfully for withdrawal", user_id=user_id)
 
         except (NotFoundError, AuthenticationError, ValidationError):
             # 이미 알려진 예외는 그대로 재발생
@@ -789,6 +809,9 @@ class UserService:
         except Exception as e:
             # 기타 예외시 롤백
             await self.user_repo.db.rollback()
+            # MSSQL이 이미 삭제된 경우 복구 시도
+            if tm60_delete_success:
+                await self._rollback_tm60_user_deletion(user)
             log.error("User withdrawal failed", user_id=user_id, error=str(e))
             raise ValidationError(f"회원 탈퇴 처리 중 오류가 발생했습니다: {str(e)}")
 
@@ -797,3 +820,43 @@ class UserService:
                 out_idx=user_out.out_idx)
 
         return UserOutResponse.model_validate(user_out)
+
+    async def _rollback_tm60_user_deletion(self, user: User) -> None:
+        """
+        MSSQL(tm60_users) 삭제 후 MariaDB 처리 실패 시 보상 트랜잭션
+        삭제된 tm60_users 데이터를 다시 생성하여 복구
+
+        Args:
+            user: 복구할 사용자 정보
+
+        Note:
+            이 메서드는 최선의 노력(best-effort)으로 복구를 시도합니다.
+            복구 실패 시에도 예외를 발생시키지 않고 경고 로그만 기록합니다.
+            (이미 주요 예외가 발생한 상황이므로)
+        """
+        log = get_logger_with_request_id()
+        log.warning("Attempting to rollback TM60 user deletion",
+                   user_id=user.user_id,
+                   phone=user.phone)
+
+        try:
+            if self.tm60_users_service:
+                rollback_success = await self.tm60_users_service.create_user(
+                    user_id=user.user_id,
+                    phone=user.phone,
+                    nickname=user.nickname
+                )
+                if rollback_success:
+                    log.info("TM60 user rollback successful", user_id=user.user_id)
+                else:
+                    log.error("TM60 user rollback failed - create returned False",
+                             user_id=user.user_id,
+                             phone=user.phone)
+            else:
+                log.error("TM60 user rollback failed - service not available",
+                         user_id=user.user_id)
+        except Exception as rollback_error:
+            # 복구 실패해도 원래 예외를 우선시
+            log.error("TM60 user rollback exception",
+                     user_id=user.user_id,
+                     error=str(rollback_error))
