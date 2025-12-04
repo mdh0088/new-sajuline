@@ -70,13 +70,19 @@ jobs:
       - name: Load environment variables
         working-directory: frontend
         run: |
-          # .env.production 파일을 환경 변수로 export
+          # .env.production 파일을 GitHub Actions 환경 변수로 등록
           if [ -f .env.production ]; then
-            export $(grep -v '^#' .env.production | xargs)
-            # GitHub Actions 환경 변수로 등록
-            grep -v '^#' .env.production | while IFS='=' read -r key value; do
+            while IFS='=' read -r key value; do
+              # 빈 줄, 주석, 키가 없는 라인 무시
+              if [ -z "$key" ] || [[ "$key" =~ ^[[:space:]]*# ]] || [ -z "$value" ]; then
+                continue
+              fi
+              # 공백 제거 및 따옴표 제거
+              key=$(echo "$key" | xargs)
+              value=$(echo "$value" | xargs)
+              # GitHub Actions 환경 변수로 등록
               echo "$key=$value" >> $GITHUB_ENV
-            done
+            done < .env.production
           fi
 
       - name: Build Nuxt (Production)
@@ -145,12 +151,19 @@ jobs:
       - name: Load environment variables
         working-directory: frontend
         run: |
-          # .env.development 파일을 환경 변수로 export (있는 경우)
+          # .env.development 파일을 GitHub Actions 환경 변수로 등록
           if [ -f .env.development ]; then
-            export $(grep -v '^#' .env.development | xargs)
-            grep -v '^#' .env.development | while IFS='=' read -r key value; do
+            while IFS='=' read -r key value; do
+              # 빈 줄, 주석, 키가 없는 라인 무시
+              if [ -z "$key" ] || [[ "$key" =~ ^[[:space:]]*# ]] || [ -z "$value" ]; then
+                continue
+              fi
+              # 공백 제거 및 따옴표 제거
+              key=$(echo "$key" | xargs)
+              value=$(echo "$value" | xargs)
+              # GitHub Actions 환경 변수로 등록
               echo "$key=$value" >> $GITHUB_ENV
-            done
+            done < .env.development
           fi
 
       - name: Build Nuxt (Development)
