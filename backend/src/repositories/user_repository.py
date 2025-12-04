@@ -2,8 +2,8 @@
 사용자 Repository 클래스
 데이터 액세스 레이어 - 순수한 CRUD 작업만 담당
 """
-from typing import Optional, List
-from datetime import datetime
+from typing import Optional, List, Tuple
+from datetime import datetime, timedelta
 
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, update, delete, and_
@@ -310,4 +310,56 @@ class UserRepository:
 
         log.info("User status updated to WITHDRAWN", user_id=user_id, updated=updated)
         return updated
+
+    @logger.catch(reraise=True)
+    async def get_recent_withdrawal_by_phone(
+        self,
+        phone: str,
+        months: int = 2
+    ) -> Optional[Tuple[UserOut, int]]:
+        """
+        전화번호로 최근 탈퇴 이력 조회 (재가입 제한 검사용)
+
+        Args:
+            phone: 검사할 전화번호
+            months: 제한 기간 (기본 2개월)
+
+        Returns:
+            Tuple[UserOut, int] | None: (탈퇴 정보, 남은 일수) 또는 None (제한 없음)
+        """
+        log = get_logger_with_request_id()
+        log.info("Checking recent withdrawal by phone", phone=phone, months=months)
+
+        # 제한 기간 계산 (현재 시점 기준 N개월 전)
+        cutoff_date = datetime.utcnow() - timedelta(days=months * 30)
+
+        # 해당 전화번호로 제한 기간 내 탈퇴 이력 조회 (가장 최근 탈퇴)
+        stmt = (
+            select(UserOut)
+            .where(
+                and_(
+                    UserOut.phone == phone,
+                    UserOut.created_at >= cutoff_date
+                )
+            )
+            .order_by(UserOut.created_at.desc())
+            .limit(1)
+        )
+        result = await self.db.execute(stmt)
+        user_out = result.scalar_one_or_none()
+
+        if user_out:
+            # 재가입 가능 일자 계산
+            rejoin_available_date = user_out.created_at + timedelta(days=months * 30)
+            remaining_days = (rejoin_available_date - datetime.utcnow()).days
+            remaining_days = max(0, remaining_days)  # 음수 방지
+
+            log.info("Recent withdrawal found",
+                    phone=phone,
+                    withdrawal_date=user_out.created_at,
+                    remaining_days=remaining_days)
+            return user_out, remaining_days
+
+        log.info("No recent withdrawal found", phone=phone)
+        return None
 
