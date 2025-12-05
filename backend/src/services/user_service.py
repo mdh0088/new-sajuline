@@ -165,13 +165,30 @@ class UserService:
                 log.warning("User creation failed, deleted MariaDB user", user_id=user.user_id, error=str(e))
             raise ValidationError(f"회원가입 처리 중 오류가 발생했습니다: {str(e)}")
 
+        # 7. t_user_out 레코드 정리 (해당 전화번호의 탈퇴 이력 삭제)
+        # - 회원가입 성공 시 기존 탈퇴 이력을 삭제하여 중복 데이터 방지
+        # - 실패해도 회원가입은 이미 성공한 상태이므로 경고만 로깅
+        try:
+            deleted_count = await self.user_repo.delete_user_out_by_phone(signup_data.phone)
+            if deleted_count > 0:
+                await self.user_repo.db.commit()
+                log.info("Cleaned up user_out records after signup",
+                        user_id=user.user_id,
+                        phone=signup_data.phone,
+                        deleted_count=deleted_count)
+        except Exception as cleanup_error:
+            log.warning("Failed to cleanup user_out records (signup succeeded)",
+                       user_id=user.user_id,
+                       phone=signup_data.phone,
+                       error=str(cleanup_error))
+
         log.info("Signup completed successfully",
                 user_id=user.user_id,
                 email=user.email,
                 join_type=join_type.value,
                 is_social=is_social)
 
-        # 7. 회원가입 이벤트 포인트 지급 처리 (실패해도 회원가입은 성공)
+        # 8. 회원가입 이벤트 포인트 지급 처리 (실패해도 회원가입은 성공)
         signup_reward = None
         if self.event_service:
             try:
@@ -187,7 +204,7 @@ class UserService:
                           user_id=user.user_id,
                           error=str(e))
 
-        # 8. 응답 생성 (포인트 지급 정보 포함)
+        # 9. 응답 생성 (포인트 지급 정보 포함)
         user_response = UserResponse.model_validate(user)
         user_response.signup_reward = signup_reward
 
