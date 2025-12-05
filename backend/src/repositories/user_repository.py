@@ -363,3 +363,24 @@ class UserRepository:
         log.info("No recent withdrawal found", phone=phone)
         return None
 
+    @logger.catch(reraise=True)
+    async def delete_user_out_by_phone(self, phone: str) -> int:
+        """
+        전화번호로 t_user_out 레코드 삭제 (재가입 성공 시 정리용)
+
+        Args:
+            phone: 삭제할 전화번호
+
+        Returns:
+            int: 삭제된 레코드 수
+        """
+        log = get_logger_with_request_id()
+        log.info("Deleting user out records by phone", phone=phone)
+
+        stmt = delete(UserOut).where(UserOut.phone == phone)
+        result = await self.db.execute(stmt)
+        deleted_count = result.rowcount
+
+        log.info("User out records deleted", phone=phone, deleted_count=deleted_count)
+        return deleted_count
+
