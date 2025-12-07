@@ -75,10 +75,15 @@ class UserService:
         """
         log = get_logger_with_request_id()
         log.info("Starting signup process", user_id=signup_data.user_id, email=signup_data.email)
-        
-        # 1. 가입 유형 판별
+
+        # 1. withdrawal_ 접두사 검증 (탈퇴 회원용 ID는 회원가입에 사용 불가)
+        if signup_data.user_id.startswith("withdrawal_"):
+            log.warning("Withdrawal prefix not allowed for signup", user_id=signup_data.user_id)
+            raise ValidationError("'withdrawal_'로 시작하는 아이디는 사용할 수 없습니다.")
+
+        # 2. 가입 유형 판별
         is_social = bool(signup_data.social_provider and signup_data.social_id)
-        
+
         if is_social:
             # 소셜 가입: social_provider를 JoinType으로 변환
             try:
@@ -94,10 +99,10 @@ class UserService:
                 raise ValidationError("일반 회원가입은 비밀번호가 필수입니다.")
             join_type = JoinType.COMMON
             log.info("Regular signup detected", user_id=signup_data.user_id)
-        
-        # 2. 필수 약관 동의는 프론트엔드에서 검증하므로 서버에서는 생략
 
-        # 3. 탈퇴 후 재가입 제한 검사 (2개월)
+        # 3. 필수 약관 동의는 프론트엔드에서 검증하므로 서버에서는 생략
+
+        # 4. 탈퇴 후 재가입 제한 검사 (2개월)
         withdrawal_result = await self.user_repo.get_recent_withdrawal_by_phone(
             phone=signup_data.phone,
             months=2
@@ -165,22 +170,8 @@ class UserService:
                 log.warning("User creation failed, deleted MariaDB user", user_id=user.user_id, error=str(e))
             raise ValidationError(f"회원가입 처리 중 오류가 발생했습니다: {str(e)}")
 
-        # 7. t_user_out 레코드 정리 (해당 전화번호의 탈퇴 이력 삭제)
-        # - 회원가입 성공 시 기존 탈퇴 이력을 삭제하여 중복 데이터 방지
-        # - 실패해도 회원가입은 이미 성공한 상태이므로 경고만 로깅
-        try:
-            deleted_count = await self.user_repo.delete_user_out_by_phone(signup_data.phone)
-            if deleted_count > 0:
-                await self.user_repo.db.commit()
-                log.info("Cleaned up user_out records after signup",
-                        user_id=user.user_id,
-                        phone=signup_data.phone,
-                        deleted_count=deleted_count)
-        except Exception as cleanup_error:
-            log.warning("Failed to cleanup user_out records (signup succeeded)",
-                       user_id=user.user_id,
-                       phone=signup_data.phone,
-                       error=str(cleanup_error))
+        # Note: t_user_out 레코드는 탈퇴 이력 추적을 위해 유지됨
+        # 재가입 제한은 phone 기준 가장 최근 탈퇴 정보의 created_at으로 판단 (위 4번 참조)
 
         log.info("Signup completed successfully",
                 user_id=user.user_id,
@@ -731,13 +722,15 @@ class UserService:
         프로세스:
         1. 사용자 존재 및 상태 확인
         2. 비밀번호 검증 (일반 가입자만)
-        3. t_user_out 테이블에 탈퇴 정보 기록
-        4. t_user 상태를 WITHDRAWN으로 변경
-        5. tm60_users에서 전화번호로 삭제
+        3. withdrawal_id 생성 (withdrawal_ + count)
+        4. t_user_out 테이블에 탈퇴 정보 기록 (원본 정보 보존)
+        5. t_user의 user_id를 withdrawal_id로 변경, email/nickname/phone을 NULL 처리
+        6. 연관 테이블의 user_id를 withdrawal_id로 마이그레이션
+        7. tm60_users에서 전화번호로 삭제
 
         Args:
             user_id: 탈퇴 요청 사용자 ID (TokenPayload에서 추출)
-            request: 탈퇴 요청 데이터 (비밀번호 포함, 소셜 로그인은 null)
+            request: 탈퇴 요청 데이터 (비밀번호, 탈퇴 사유 포함)
 
         Returns:
             UserOutResponse: 탈퇴 정보
@@ -778,9 +771,9 @@ class UserService:
                     join_type=user.join_type)
 
         # 3. 탈퇴 처리 (MSSQL 먼저 삭제 → MariaDB 처리, 실패시 보상 트랜잭션)
-        # 전략: MSSQL 삭제가 반드시 성공해야 MariaDB 탈퇴 처리 진행
         user_out = None
-        tm60_delete_success = False  # 보상 트랜잭션 판단용
+        tm60_delete_success = False
+        withdrawal_id = None
 
         try:
             # 3-1. MSSQL(tm60_users) 먼저 삭제 시도
@@ -796,47 +789,116 @@ class UserService:
 
             log.info("TM60 user deleted successfully", user_id=user_id, phone=user.phone)
 
-            # 3-2. t_user_out에 탈퇴 정보 기록
+            # 3-2. withdrawal_id 생성 (withdrawal_ + count)
+            withdrawal_count = await self.user_repo.get_withdrawal_count()
+            withdrawal_id = f"withdrawal_{withdrawal_count}"
+            log.info("Generated withdrawal_id", user_id=user_id, withdrawal_id=withdrawal_id)
+
+            # 3-3. t_user_out에 탈퇴 정보 기록 (원본 정보 보존)
             user_out = await self.user_repo.create_user_out(
                 user_id=user.user_id,
+                withdrawal_id=withdrawal_id,
                 nickname=user.nickname,
                 phone=user.phone,
-                email=user.email
+                email=user.email,
+                reason=request.reason
             )
-            log.info("User out record created", user_id=user_id, out_idx=user_out.out_idx)
+            log.info("User out record created",
+                    user_id=user_id,
+                    withdrawal_id=withdrawal_id,
+                    out_idx=user_out.out_idx)
 
-            # 3-3. t_user 상태를 WITHDRAWN으로 변경
-            update_success = await self.user_repo.update_user_status_to_withdrawn(user_id)
+            # 3-4. t_user 업데이트 (user_id → withdrawal_id, email/nickname/phone → NULL)
+            update_success = await self.user_repo.update_user_for_withdrawal(user_id, withdrawal_id)
             if not update_success:
-                log.error("Failed to update user status to WITHDRAWN", user_id=user_id)
-                # MariaDB 실패 시 MSSQL 복구 시도 (보상 트랜잭션)
+                log.error("Failed to update user for withdrawal", user_id=user_id)
                 await self._rollback_tm60_user_deletion(user)
                 raise ValidationError("회원 탈퇴 처리 중 오류가 발생했습니다.")
 
-            log.info("User status updated to WITHDRAWN", user_id=user_id)
+            log.info("User updated for withdrawal",
+                    original_user_id=user_id,
+                    withdrawal_id=withdrawal_id)
 
-            # 3-4. MariaDB 커밋
+            # 3-5. 연관 테이블 user_id 마이그레이션 (withdrawal_id로 변경)
+            await self._migrate_user_id_in_related_tables(user_id, withdrawal_id)
+            log.info("Related tables user_id migrated",
+                    original_user_id=user_id,
+                    withdrawal_id=withdrawal_id)
+
+            # 3-6. MariaDB 커밋
             await self.user_repo.db.commit()
-            log.info("Both databases updated successfully for withdrawal", user_id=user_id)
+            log.info("Both databases updated successfully for withdrawal",
+                    original_user_id=user_id,
+                    withdrawal_id=withdrawal_id)
 
         except (NotFoundError, AuthenticationError, ValidationError):
-            # 이미 알려진 예외는 그대로 재발생
             await self.user_repo.db.rollback()
             raise
         except Exception as e:
-            # 기타 예외시 롤백
             await self.user_repo.db.rollback()
-            # MSSQL이 이미 삭제된 경우 복구 시도
             if tm60_delete_success:
                 await self._rollback_tm60_user_deletion(user)
             log.error("User withdrawal failed", user_id=user_id, error=str(e))
             raise ValidationError(f"회원 탈퇴 처리 중 오류가 발생했습니다: {str(e)}")
 
         log.info("User withdrawal completed successfully",
-                user_id=user_id,
+                original_user_id=user_id,
+                withdrawal_id=withdrawal_id,
                 out_idx=user_out.out_idx)
 
         return UserOutResponse.model_validate(user_out)
+
+    async def _migrate_user_id_in_related_tables(self, old_user_id: str, new_user_id: str) -> None:
+        """
+        연관 테이블의 user_id를 새로운 ID로 마이그레이션
+
+        Args:
+            old_user_id: 기존 사용자 ID
+            new_user_id: 새로운 사용자 ID (withdrawal_id)
+
+        Note:
+            이 메서드는 트랜잭션 내에서 호출되어야 합니다.
+            실패 시 상위에서 롤백됩니다.
+        """
+        log = get_logger_with_request_id()
+        log.info("Migrating user_id in related tables",
+                old_user_id=old_user_id,
+                new_user_id=new_user_id)
+
+        # 마이그레이션 대상 테이블들에 대해 직접 UPDATE 수행
+        # user_repository의 db 세션을 활용하여 raw SQL 실행
+        from sqlalchemy import text
+
+        migration_tables = [
+            "t_payment",
+            "t_consultation_review",
+            "t_inquiry",
+            "t_point_transaction",
+            "t_user_bookmark",
+            "t_notification",
+            "t_user_activity_log"
+        ]
+
+        for table_name in migration_tables:
+            try:
+                stmt = text(f"UPDATE {table_name} SET user_id = :new_user_id WHERE user_id = :old_user_id")
+                result = await self.user_repo.db.execute(
+                    stmt,
+                    {"new_user_id": new_user_id, "old_user_id": old_user_id}
+                )
+                if result.rowcount > 0:
+                    log.info(f"Migrated {result.rowcount} rows in {table_name}",
+                            table=table_name,
+                            rows_updated=result.rowcount)
+            except Exception as e:
+                # 테이블이 없거나 user_id 컬럼이 없는 경우 무시
+                log.warning(f"Migration skipped for {table_name}",
+                           table=table_name,
+                           error=str(e))
+
+        log.info("User_id migration completed",
+                old_user_id=old_user_id,
+                new_user_id=new_user_id)
 
     async def _rollback_tm60_user_deletion(self, user: User) -> None:
         """

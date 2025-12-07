@@ -2,7 +2,7 @@
 1:1 문의 서비스 클래스
 비즈니스 로직과 트랜잭션 관리
 """
-from typing import List, Tuple
+from typing import List, Tuple, Optional
 
 from src.exceptions.custom_exceptions import NotFoundError, ValidationError
 from src.common.logging import logger, get_logger_with_request_id
@@ -10,13 +10,25 @@ from src.common.logging import logger, get_logger_with_request_id
 from src.models.inquiry_model import Inquiry
 from src.schemas.inquiry_schema import InquirySummary, UserInquiryCreateRequest, InquiryResponse, UserAdminInquiryCreateRequest
 from src.repositories.inquiry_repository import InquiryRepository
+from src.repositories.counselor_repository import CounselorRepository
+from src.repositories.user_repository import UserRepository
+from src.services.notification_service import NotificationService
 
 
 class InquiryService:
     """1:1 문의 비즈니스 로직 서비스"""
-    
-    def __init__(self, inquiry_repo: InquiryRepository):
+
+    def __init__(
+        self,
+        inquiry_repo: InquiryRepository,
+        counselor_repo: Optional[CounselorRepository] = None,
+        user_repo: Optional[UserRepository] = None,
+        notification_service: Optional[NotificationService] = None
+    ):
         self.inquiry_repo = inquiry_repo
+        self.counselor_repo = counselor_repo
+        self.user_repo = user_repo
+        self.notification_service = notification_service
     
     async def get_counselor_user_inquiries(
         self,
@@ -160,6 +172,20 @@ class InquiryService:
             category=payload.category,
             title=payload.title
         )
+
+        # 상담사에게 알림톡 발송 (실패해도 문의 등록은 성공)
+        if self.counselor_repo and self.notification_service:
+            try:
+                counselor = await self.counselor_repo.get_by_id(payload.counselor_id)
+                if counselor and counselor.phone:
+                    await self.notification_service.cs_faq_alert(phone=counselor.phone)
+                    log.info("Counselor FAQ AlimTalk sent successfully",
+                            counselor_id=payload.counselor_id,
+                            inquiry_id=inquiry.inquiry_id)
+            except Exception as e:
+                log.warning("Failed to send counselor FAQ AlimTalk",
+                           counselor_id=payload.counselor_id,
+                           error=str(e))
 
         response = InquiryResponse.model_validate(inquiry)
         return response
@@ -311,6 +337,26 @@ class InquiryService:
             counselor_id=counselor_id,
             reply_content=reply_content
         )
+
+        # 사용자에게 알림톡 발송 (실패해도 답변 등록은 성공)
+        # inquiry.inquirer_id = user_id (inquirer_type이 USER인 경우)
+        if self.user_repo and self.notification_service and inquiry.inquirer_id:
+            try:
+                user = await self.user_repo.get_by_id(inquiry.inquirer_id)
+                if user and user.phone:
+                    user_nickname = user.nickname or "고객"
+                    await self.notification_service.user_faq_alert(
+                        phone=user.phone,
+                        user_nick_name=user_nickname
+                    )
+                    log.info("User FAQ reply AlimTalk sent successfully",
+                            user_id=inquiry.inquirer_id,
+                            inquiry_id=inquiry_id)
+            except Exception as e:
+                log.warning("Failed to send user FAQ reply AlimTalk",
+                           user_id=inquiry.inquirer_id,
+                           inquiry_id=inquiry_id,
+                           error=str(e))
 
         # 응답 데이터 변환
         response = InquiryResponse.model_validate(inquiry)

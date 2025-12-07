@@ -12,15 +12,18 @@ from src.common.middleware.rate_limit import limiter
 from src.core.database import get_db_maria, get_db_mssql
 from src.core.redis import get_redis
 from src.repositories.counselor_repository import CounselorRepository
+from src.repositories.user_repository import UserRepository
 from src.repositories.user_activity_log_repository import UserActivityLogRepository
 from src.repositories.consultation_review_repository import ConsultationReviewRepository
 from src.repositories.inquiry_repository import InquiryRepository
+from src.repositories.notification_repository import NotificationRepository
 from src.repositories.ars.tm60_member_repository import Tm60MemberRepository
 from src.services.counselor_service import CounselorService
 from src.services.auth_service import AuthService, get_current_user, TokenPayload, KST
 from src.services.user_activity_log_service import UserActivityLogService
 from src.services.consultation_review_service import ConsultationReviewService
 from src.services.inquiry_service import InquiryService
+from src.services.notification_service import NotificationService
 from src.services.ars.tm60_member_service import Tm60MemberService
 from src.services.ars.tm60_chatlog_service import Tm60ChatlogService
 from src.schemas.auth_schema import LoginRequest, LoginResponse
@@ -75,11 +78,28 @@ def get_inquiry_repository(db: AsyncSession = Depends(get_db_maria)) -> InquiryR
     return InquiryRepository(db)
 
 
+def get_user_repository(db: AsyncSession = Depends(get_db_maria)) -> UserRepository:
+    """사용자 리포지토리 의존성 주입"""
+    return UserRepository(db)
+
+
+def get_notification_repository(db: AsyncSession = Depends(get_db_maria)) -> NotificationRepository:
+    """알림 리포지토리 의존성 주입"""
+    return NotificationRepository(db)
+
+
 def get_inquiry_service(
-    inquiry_repo: InquiryRepository = Depends(get_inquiry_repository)
+    inquiry_repo: InquiryRepository = Depends(get_inquiry_repository),
+    user_repo: UserRepository = Depends(get_user_repository),
+    notification_repo: NotificationRepository = Depends(get_notification_repository)
 ) -> InquiryService:
     """1:1 문의 서비스 의존성 주입"""
-    return InquiryService(inquiry_repo)
+    notification_service = NotificationService(notification_repo)
+    return InquiryService(
+        inquiry_repo=inquiry_repo,
+        user_repo=user_repo,
+        notification_service=notification_service
+    )
 
 
 def get_tm60_member_service(mssql = Depends(get_db_mssql)) -> Tm60MemberService:

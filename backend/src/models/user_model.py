@@ -42,27 +42,24 @@ class User(Base):
         primary_key=True, 
         comment="사용자 ID (로그인 ID)"
     )
-    email: Mapped[str] = mapped_column(
-        String(100), 
-        unique=True, 
-        nullable=False,
+    email: Mapped[Optional[str]] = mapped_column(
+        String(100),
+        nullable=True,
         comment="이메일"
     )
     password_hash: Mapped[Optional[str]] = mapped_column(
-        String(255), 
+        String(255),
         nullable=True,
         comment="비밀번호 해시 (소셜로그인은 NULL)"
     )
-    nickname: Mapped[str] = mapped_column(
-        String(100), 
-        unique=True, 
-        nullable=False,
+    nickname: Mapped[Optional[str]] = mapped_column(
+        String(100),
+        nullable=True,
         comment="닉네임"
     )
-    phone: Mapped[str] = mapped_column(
-        String(15), 
-        unique=True, 
-        nullable=False,
+    phone: Mapped[Optional[str]] = mapped_column(
+        String(15),
+        nullable=True,
         comment="전화번호"
     )
     
@@ -204,7 +201,12 @@ class UserOut(Base):
     user_id: Mapped[Optional[str]] = mapped_column(
         String(100),
         nullable=True,
-        comment="탈퇴한 사용자 ID"
+        comment="탈퇴한 사용자 원본 ID"
+    )
+    withdrawal_id: Mapped[Optional[str]] = mapped_column(
+        String(100),
+        nullable=True,
+        comment="탈퇴 ID (withdrawal_0, withdrawal_1, ...)"
     )
     nickname: Mapped[Optional[str]] = mapped_column(
         String(100),
@@ -221,6 +223,11 @@ class UserOut(Base):
         nullable=True,
         comment="탈퇴한 사용자 이메일"
     )
+    reason: Mapped[Optional[str]] = mapped_column(
+        String(1000),
+        nullable=True,
+        comment="탈퇴 사유"
+    )
 
     # 타임스탬프
     created_at: Mapped[datetime] = mapped_column(
@@ -233,10 +240,11 @@ class UserOut(Base):
     # 인덱스 정의
     __table_args__ = (
         Index('idx_user_out_user_id', 'user_id'),
+        Index('idx_user_out_withdrawal_id', 'withdrawal_id'),
         Index('idx_user_out_phone', 'phone'),
         Index('idx_user_out_created_at', 'created_at'),
         {'comment': '회원 탈퇴 유저'}
     )
 
     def __repr__(self) -> str:
-        return f"<UserOut(out_idx={self.out_idx}, user_id={self.user_id})>"
+        return f"<UserOut(out_idx={self.out_idx}, user_id={self.user_id}, withdrawal_id={self.withdrawal_id})>"

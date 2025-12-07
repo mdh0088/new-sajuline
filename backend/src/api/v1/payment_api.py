@@ -38,6 +38,8 @@ from src.services.user_service import UserService
 from src.services.auth_service import AuthService
 from src.services.ars.tm60_users_service import Tm60UsersService
 from src.services.point_transaction_service import PointTransactionService
+from src.services.notification_service import NotificationService
+from src.repositories.notification_repository import NotificationRepository
 from src.schemas.payment_schema import PaymentCreate
 from src.models.point_transaction_model import TransactionType, CurrencyType, ReferenceType
 from decimal import Decimal
@@ -91,6 +93,16 @@ def get_point_transaction_repository(db: AsyncSession = Depends(get_db_maria)) -
 
 def get_user_repository(db: AsyncSession = Depends(get_db_maria)) -> UserRepository:
     return UserRepository(db)
+
+
+def get_notification_repository(db: AsyncSession = Depends(get_db_maria)) -> NotificationRepository:
+    return NotificationRepository(db)
+
+
+def get_notification_service(
+    notification_repo: NotificationRepository = Depends(get_notification_repository)
+) -> NotificationService:
+    return NotificationService(notification_repo)
 
 
 def get_point_transaction_service(
@@ -276,6 +288,9 @@ async def payment_callback(
     payment_service: PaymentService = Depends(get_payment_service),
     tm60_users_service: Tm60UsersService = Depends(get_tm60_users_service),
     point_transaction_service: PointTransactionService = Depends(get_point_transaction_service),
+    user_repo: UserRepository = Depends(get_user_repository),
+    product_repo: PointProductRepository = Depends(get_point_product_repository),
+    notification_service: NotificationService = Depends(get_notification_service),
 ):
     """
     Payletter Callback URL (Server-to-Server)
@@ -422,6 +437,31 @@ async def payment_callback(
         except Exception as e:
             # 마일리지 적립 실패해도 결제는 성공으로 처리 (포인트는 이미 충전됨)
             log.error("Mileage earning failed", user_id=body.user_id, error=str(e))
+
+    # 결제 완료 알림톡 발송 (실패해도 결제는 성공으로 처리)
+    try:
+        user = await user_repo.get_by_id(body.user_id)
+        product = await product_repo.get_by_id(product_id) if product_id else None
+
+        if user and user.phone:
+            user_nickname = user.nickname or "고객"
+            product_name = product.product_name if product else "포인트 상품"
+            await notification_service.user_charge_confirm_alert(
+                phone=user.phone,
+                user_nick_name=user_nickname,
+                order_no=order_no,
+                product_name=product_name,
+                amount=int(body.amount) if body.amount else 0,
+                point=point_amount
+            )
+            log.info("Payment completion AlimTalk sent successfully",
+                    user_id=body.user_id,
+                    order_no=order_no)
+    except Exception as e:
+        log.warning("Failed to send payment completion AlimTalk",
+                   user_id=body.user_id,
+                   order_no=order_no,
+                   error=str(e))
 
     # 성공 응답
     return {"code": 0, "message": "success"}

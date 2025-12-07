@@ -6,7 +6,7 @@ from typing import Optional, List, Tuple
 from datetime import datetime, timedelta
 
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, update, delete, and_
+from sqlalchemy import select, update, delete, and_, func
 from sqlalchemy.engine import Result
 
 from src.models.user_model import User, UserOut, JoinType, UserStatus
@@ -264,30 +264,112 @@ class UserRepository:
         return updated
 
     @logger.catch(reraise=True)
+    async def get_withdrawal_count(self) -> int:
+        """
+        현재 탈퇴 회원 수 조회 (withdrawal_id 생성용)
+
+        Returns:
+            int: 현재 탈퇴 회원 수
+        """
+        log = get_logger_with_request_id()
+        log.info("Getting withdrawal count for new withdrawal_id")
+
+        stmt = select(func.count()).select_from(UserOut)
+        result = await self.db.execute(stmt)
+        count = result.scalar() or 0
+
+        log.info("Current withdrawal count", count=count)
+        return count
+
+    @logger.catch(reraise=True)
     async def create_user_out(
         self,
         user_id: str,
+        withdrawal_id: str,
         nickname: str,
         phone: str,
-        email: str
+        email: str,
+        reason: Optional[str] = None
     ) -> UserOut:
-        """회원 탈퇴 정보 기록"""
+        """
+        회원 탈퇴 정보 기록
+
+        Args:
+            user_id: 탈퇴한 사용자 원본 ID
+            withdrawal_id: 탈퇴 ID (withdrawal_0, withdrawal_1, ...)
+            nickname: 탈퇴한 사용자 닉네임
+            phone: 탈퇴한 사용자 전화번호
+            email: 탈퇴한 사용자 이메일
+            reason: 탈퇴 사유 (선택)
+        """
         log = get_logger_with_request_id()
-        log.info("Creating user out record", user_id=user_id)
+        log.info("Creating user out record", user_id=user_id, withdrawal_id=withdrawal_id)
 
         user_out = UserOut(
             user_id=user_id,
+            withdrawal_id=withdrawal_id,
             nickname=nickname,
             phone=phone,
-            email=email
+            email=email,
+            reason=reason
         )
 
         self.db.add(user_out)
         await self.db.flush()
         await self.db.refresh(user_out)
 
-        log.info("User out record created", user_id=user_id, out_idx=user_out.out_idx)
+        log.info("User out record created",
+                user_id=user_id,
+                withdrawal_id=withdrawal_id,
+                out_idx=user_out.out_idx)
         return user_out
+
+    @logger.catch(reraise=True)
+    async def update_user_for_withdrawal(
+        self,
+        user_id: str,
+        withdrawal_id: str
+    ) -> bool:
+        """
+        탈퇴 처리 시 사용자 정보 업데이트
+        - user_id를 withdrawal_id로 변경
+        - email, nickname, phone을 NULL로 변경
+        - 상태를 WITHDRAWN으로 변경
+
+        Args:
+            user_id: 원본 사용자 ID
+            withdrawal_id: 새로운 탈퇴 ID (withdrawal_0, withdrawal_1, ...)
+
+        Returns:
+            bool: 업데이트 성공 여부
+        """
+        log = get_logger_with_request_id()
+        log.info("Updating user for withdrawal",
+                user_id=user_id,
+                withdrawal_id=withdrawal_id)
+
+        stmt = (
+            update(User)
+            .where(User.user_id == user_id)
+            .values(
+                user_id=withdrawal_id,
+                email=None,
+                nickname=None,
+                phone=None,
+                user_status=UserStatus.WITHDRAWN,
+                withdrawn_at=datetime.utcnow(),
+                updated_at=datetime.utcnow()
+            )
+            .execution_options(synchronize_session="evaluate")
+        )
+        result = await self.db.execute(stmt)
+        updated = result.rowcount > 0
+
+        log.info("User updated for withdrawal",
+                user_id=user_id,
+                withdrawal_id=withdrawal_id,
+                updated=updated)
+        return updated
 
     @logger.catch(reraise=True)
     async def update_user_status_to_withdrawn(self, user_id: str) -> bool:
