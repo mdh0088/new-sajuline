@@ -99,8 +99,8 @@ class NotificationService:
             response_data = response.json()
             code = response_data.get("code", "")
 
-            # Success check (code == "0")
-            is_success = (code == "0")
+            # Success check (code == 0 or code == "0")
+            is_success = (code == 0 or code == "0")
 
             result = {
                 "is_success": is_success,
