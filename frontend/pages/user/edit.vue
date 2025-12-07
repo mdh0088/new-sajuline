@@ -180,6 +180,19 @@
             </div>
           </div>
 
+          <!-- 탈퇴 사유 입력 -->
+          <div class="form-group">
+            <label class="form-label">탈퇴 사유 (선택)</label>
+            <textarea
+              v-model="withdrawalReason"
+              class="form-textarea"
+              placeholder="탈퇴 사유를 입력해주세요 (선택사항)"
+              maxlength="1000"
+              rows="3"
+            ></textarea>
+            <p class="form-hint">{{ withdrawalReason.length }}/1000자</p>
+          </div>
+
           <!-- 유의사항 -->
           <div class="withdrawal-warnings">
             <h4 class="warnings-title">⚠️ 탈퇴 시 유의사항</h4>
@@ -308,6 +321,7 @@ const newPasswordConfirm = ref('')
 
 // 회원탈퇴 관련 상태
 const withdrawalPassword = ref('')
+const withdrawalReason = ref('')
 const agreedToTerms = ref(false)
 const showPassword = ref(false)
 
@@ -384,6 +398,7 @@ const openWithdrawalModal = () => {
   document.body.style.overflow = 'hidden'
   // 초기화
   withdrawalPassword.value = ''
+  withdrawalReason.value = ''
   agreedToTerms.value = false
   showPassword.value = false
 }
@@ -393,6 +408,7 @@ const closeWithdrawalModal = () => {
   document.body.style.overflow = 'auto'
   // 초기화
   withdrawalPassword.value = ''
+  withdrawalReason.value = ''
   agreedToTerms.value = false
   showPassword.value = false
 }
@@ -418,7 +434,8 @@ const handleWithdrawal = async () => {
     // 회원탈퇴 API 호출
     // SNS 가입자는 비밀번호 불필요, 일반 가입자는 비밀번호 필수
     const password = isSocialUser.value ? undefined : (withdrawalPassword.value || undefined)
-    const result = await withdrawUser(password)
+    const reason = withdrawalReason.value.trim() || undefined
+    const result = await withdrawUser({ password, reason })
 
     // 모달 닫기
     showFinalConfirmModal.value = false

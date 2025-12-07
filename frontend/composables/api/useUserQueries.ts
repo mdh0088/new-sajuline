@@ -371,25 +371,32 @@ const userApi = {
   },
 
   // 회원 탈퇴
-  async withdrawUser(password?: string): Promise<{
+  async withdrawUser(params: { password?: string; reason?: string }): Promise<{
     out_idx: number
     user_id: string | null
+    withdrawal_id: string | null
     nickname: string | null
     phone: string | null
     email: string | null
+    reason: string | null
     created_at: string
   }> {
     const { $api } = useNuxtApp()
     const response = await $api<APIResponse<{
       out_idx: number
       user_id: string | null
+      withdrawal_id: string | null
       nickname: string | null
       phone: string | null
       email: string | null
+      reason: string | null
       created_at: string
     }>>('/api/v1/users/withdraw', {
       method: 'POST',
-      body: { password: password || null }
+      body: {
+        password: params.password || null,
+        reason: params.reason || null
+      }
     })
 
     if (!response.success || !response.data) {
@@ -756,11 +763,13 @@ export const useUserQueries = () => {
     options?: UseMutationOptions<{
       out_idx: number
       user_id: string | null
+      withdrawal_id: string | null
       nickname: string | null
       phone: string | null
       email: string | null
+      reason: string | null
       created_at: string
-    }, APIError, string | undefined>
+    }, APIError, { password?: string; reason?: string }>
   ) => {
     return useMutation({
       mutationFn: userApi.withdrawUser,

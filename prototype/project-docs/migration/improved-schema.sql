@@ -16,10 +16,10 @@
 -- 1.1 사용자 정보 (인증 정보 통합)
 CREATE TABLE t_user (
     user_id VARCHAR(100) NOT NULL COMMENT '사용자 ID (로그인 ID)',
-    email VARCHAR(100) NOT NULL COMMENT '이메일',
+    email VARCHAR(100) DEFAULT NULL COMMENT '이메일',
     password_hash VARCHAR(255) DEFAULT NULL COMMENT '비밀번호 해시 (소셜로그인은 NULL)',
-    nickname VARCHAR(100) NOT NULL COMMENT '닉네임',
-    phone VARCHAR(15) NOT NULL COMMENT '전화번호',
+    nickname VARCHAR(100) DEFAULT NULL COMMENT '닉네임',
+    phone VARCHAR(15) DEFAULT NULL COMMENT '전화번호',
     join_type VARCHAR(20) NOT NULL DEFAULT 'COMMON' COMMENT '가입유형: COMMON, KAKAO, NAVER',
     social_provider VARCHAR(20) DEFAULT NULL COMMENT '소셜 제공자: KAKAO, NAVER',
     social_id VARCHAR(255) DEFAULT NULL COMMENT '소셜 고유 ID',
@@ -875,9 +875,11 @@ CREATE TABLE `t_mileage_product` (
 CREATE TABLE `t_user_out` (
   `out_idx` int(11) NOT NULL AUTO_INCREMENT,
   `user_id` varchar(100) DEFAULT NULL,
+  `withdrawal_id` varchar(100) DEFAULT NULL COMMENT '탈퇴 id',
   `nickname` varchar(100) DEFAULT NULL,
   `phone` varchar(15) DEFAULT NULL,
   `email` varchar(100) DEFAULT NULL,
+  `reason` text DEFAULT NULL,
   `created_at` datetime NOT NULL DEFAULT current_timestamp(),
   PRIMARY KEY (`out_idx`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci COMMENT='회원 탈퇴 유저';
+) ENGINE=InnoDB AUTO_INCREMENT=131 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci COMMENT='회원 탈퇴 유저';

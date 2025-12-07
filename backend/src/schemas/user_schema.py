@@ -48,10 +48,15 @@ class UserResponse(UserBase):
     created_at: datetime = Field(..., description="생성일시")
     updated_at: Optional[datetime] = Field(None, description="수정일시")
     last_login_at: Optional[datetime] = Field(None, description="마지막 로그인")
-    
+
+    # 탈퇴한 사용자는 이 필드들이 NULL일 수 있음 (UserBase 필수 필드 override)
+    email: Optional[str] = Field(None, description="이메일")
+    nickname: Optional[str] = Field(None, description="닉네임")
+    phone: Optional[str] = Field(None, description="전화번호")
+
     # 회원가입 시 포인트 지급 정보 (선택적)
     signup_reward: Optional["SignupRewardInfo"] = Field(None, description="회원가입 보상 정보")
-    
+
     model_config = ConfigDict(from_attributes=True)
 
 
@@ -190,6 +195,7 @@ class PasswordChangeResponse(BaseModel):
 class WithdrawRequest(BaseModel):
     """회원탈퇴 요청 스키마"""
     password: Optional[str] = Field(None, description="비밀번호 확인 (소셜 로그인 사용자는 null)")
+    reason: Optional[str] = Field(None, max_length=1000, description="탈퇴 사유")
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -197,10 +203,12 @@ class WithdrawRequest(BaseModel):
 class UserOutResponse(BaseModel):
     """회원탈퇴 응답 스키마"""
     out_idx: int = Field(..., description="탈퇴 고유 식별자")
-    user_id: Optional[str] = Field(None, description="탈퇴한 사용자 ID")
+    user_id: Optional[str] = Field(None, description="탈퇴한 사용자 원본 ID")
+    withdrawal_id: Optional[str] = Field(None, description="탈퇴 ID (withdrawal_0, withdrawal_1, ...)")
     nickname: Optional[str] = Field(None, description="탈퇴한 사용자 닉네임")
     phone: Optional[str] = Field(None, description="탈퇴한 사용자 전화번호")
     email: Optional[str] = Field(None, description="탈퇴한 사용자 이메일")
+    reason: Optional[str] = Field(None, description="탈퇴 사유")
     created_at: datetime = Field(..., description="탈퇴 일시")
 
     model_config = ConfigDict(from_attributes=True)

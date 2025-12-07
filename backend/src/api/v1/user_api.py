@@ -152,10 +152,29 @@ def get_inquiry_repository(db: AsyncSession = Depends(get_db_maria)) -> InquiryR
     return InquiryRepository(db)
 
 
+def get_notification_repository(db: AsyncSession = Depends(get_db_maria)) -> NotificationRepository:
+    """알림 리포지토리 의존성 주입"""
+    return NotificationRepository(db)
+
+
+def get_notification_service(
+    notification_repo: NotificationRepository = Depends(get_notification_repository)
+) -> NotificationService:
+    """알림 서비스 의존성 주입"""
+    return NotificationService(notification_repo)
+
+
 def get_inquiry_service(
-    inquiry_repo: InquiryRepository = Depends(get_inquiry_repository)
+    inquiry_repo: InquiryRepository = Depends(get_inquiry_repository),
+    counselor_repo: CounselorRepository = Depends(get_counselor_repository),
+    notification_repo: NotificationRepository = Depends(get_notification_repository)
 ) -> InquiryService:
-    return InquiryService(inquiry_repo)
+    notification_service = NotificationService(notification_repo)
+    return InquiryService(
+        inquiry_repo=inquiry_repo,
+        counselor_repo=counselor_repo,
+        notification_service=notification_service
+    )
 
 
 def get_payment_repository(db: AsyncSession = Depends(get_db_maria)) -> PaymentRepository:
@@ -211,18 +230,6 @@ def get_tm60_chatlog_service() -> Tm60ChatlogService:
 def get_tm60_chatlog_repository():
     for mssql_session in get_db_mssql():
         return Tm60ChatlogRepository(mssql_session)
-
-
-def get_notification_repository(db: AsyncSession = Depends(get_db_maria)) -> NotificationRepository:
-    """알림 리포지토리 의존성 주입"""
-    return NotificationRepository(db)
-
-
-def get_notification_service(
-    notification_repo: NotificationRepository = Depends(get_notification_repository)
-) -> NotificationService:
-    """알림 서비스 의존성 주입"""
-    return NotificationService(notification_repo)
 
 
 @router.get(
