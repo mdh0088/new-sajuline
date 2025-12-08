@@ -178,21 +178,31 @@ class Settings(BaseSettings):
     def redis_host(self) -> str:
         """Redis URL에서 host 추출"""
         # redis://redis:6379/0 -> redis
+        # redis://user:pass@host:6379/0 -> host
+        # redis://user@host:6379/0 -> host
         if "://" in self.redis_url:
-            host_port = self.redis_url.split("://")[1].split("/")[0]
-            if ":" in host_port:
-                return host_port.split(":")[0]
-            return host_port
+            url_part = self.redis_url.split("://")[1].split("/")[0]
+            # @ 기호가 있으면 인증 정보 제거
+            if "@" in url_part:
+                url_part = url_part.split("@")[1]  # host:port 부분만
+            if ":" in url_part:
+                return url_part.split(":")[0]
+            return url_part
         return "localhost"  # fallback
-    
+
     @property
     def redis_port(self) -> int:
-        """Redis URL에서 port 추출"""  
+        """Redis URL에서 port 추출"""
         # redis://redis:6379/0 -> 6379
+        # redis://user:pass@host:6379/0 -> 6379
+        # redis://user@host:6379/0 -> 6379
         if "://" in self.redis_url:
-            host_port = self.redis_url.split("://")[1].split("/")[0]
-            if ":" in host_port:
-                return int(host_port.split(":")[1])
+            url_part = self.redis_url.split("://")[1].split("/")[0]
+            # @ 기호가 있으면 인증 정보 제거
+            if "@" in url_part:
+                url_part = url_part.split("@")[1]  # host:port 부분만
+            if ":" in url_part:
+                return int(url_part.split(":")[1])
         return 6379  # default Redis port
 
 
