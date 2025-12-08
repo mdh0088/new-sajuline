@@ -109,6 +109,8 @@ import type { CounselorSearchItem } from '~/types/counselor/search'
 import { useCdn } from '~/composables/utils/useCdn'
 import { useAuth } from '~/composables/auth/useAuth'
 import { useUserPoints } from '~/composables/user/useUserPoints'
+import { useNotify } from '~/composables/utils/useNotify'
+import { useNotificationWaitQueries } from '~/composables/api/useNotificationWaitQueries'
 
 interface Props {
   // API 검색 결과 아이템 그대로 사용
@@ -120,6 +122,9 @@ const router = useRouter()
 const { cdnUrl } = useCdn()
 const { isUser } = useAuth()
 const { points: storePoints } = useUserPoints()
+const { notifySuccess, notifyError, notifyWarning } = useNotify()
+const { useRegisterNotificationWait } = useNotificationWaitQueries()
+const registerMutation = useRegisterNotificationWait()
 
 // 모달 상태
 const showPhoneModal = ref(false)
@@ -241,10 +246,21 @@ const closeNotificationModal = () => {
   showNotificationModal.value = false
 }
 
-const handleSetNotification = () => {
-  console.log('알림 설정:', props.counselor.counselor_code)
-  // TODO: 알림 설정 API 호출
-  closeNotificationModal()
+const handleSetNotification = async () => {
+  if (!isUser.value) {
+    notifyWarning('로그인이 필요합니다.')
+    closeNotificationModal()
+    return
+  }
+
+  try {
+    await registerMutation.mutateAsync(props.counselor.counselor_id)
+    notifySuccess('알림 신청이 등록되었습니다.')
+  } catch (error: any) {
+    notifyError(error.message || '알림 신청에 실패했습니다.')
+  } finally {
+    closeNotificationModal()
+  }
 }
 
 const handlePointConsult = (counselorId: string) => {

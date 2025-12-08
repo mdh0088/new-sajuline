@@ -883,3 +883,13 @@ CREATE TABLE `t_user_out` (
   `created_at` datetime NOT NULL DEFAULT current_timestamp(),
   PRIMARY KEY (`out_idx`)
 ) ENGINE=InnoDB AUTO_INCREMENT=131 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci COMMENT='회원 탈퇴 유저';
+
+
+CREATE TABLE `t_notification_wait` (
+  `wait_idx` int(11) NOT NULL AUTO_INCREMENT,
+  `user_id` varchar(100) NOT NULL,
+  `counselor_id` varchar(100) DEFAULT NULL,
+  `created_at` datetime NOT NULL DEFAULT current_timestamp(),
+  `is_send` tinyint(4) NOT NULL DEFAULT 0 COMMENT '발송유무',
+  PRIMARY KEY (`wait_idx`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci COMMENT='알림톡 발송 대기 리스트';
