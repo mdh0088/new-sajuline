@@ -27,9 +27,14 @@ def get_client_identifier(request: Request) -> str:
     return get_remote_address(request)
 
 
+# Redis URL에서 DB 번호만 변경 (인증 정보 유지)
+# redis://:password@host:port/0 -> redis://:password@host:port/2
+_base_redis_url = settings.redis_url.rsplit("/", 1)[0]  # DB 번호 제거
+_rate_limit_redis_url = f"{_base_redis_url}/2"  # DB 2번 사용
+
 # 글로벌 리미터 인스턴스
 limiter = Limiter(
     key_func=get_client_identifier,
-    storage_uri=f"redis://{settings.redis_host}:{settings.redis_port}/2",  # DB 2번 사용
+    storage_uri=_rate_limit_redis_url,
     default_limits=["1000/hour"]  # 기본값: 시간당 1000회 (매우 관대)
 )
