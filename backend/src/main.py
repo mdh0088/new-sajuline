@@ -30,6 +30,7 @@ from src.api.v1.banner_api import router as banner_router
 from src.api.v1.payment_api import router as payment_router
 from src.api.v1.phone_verification_api import router as phone_verification_router
 from src.api.v1.counselor_application_api import router as counselor_application_router
+from src.api.v1.notification_wait_api import router as notification_wait_router
 from src.common.response import fail
 from src.exceptions.custom_exceptions import BaseAppException
 from src.common.logging.config import setup_logging
@@ -231,6 +232,7 @@ app.include_router(payment_router, prefix="/api/v1")
 app.include_router(banner_router, prefix="/api/v1")
 app.include_router(phone_verification_router, prefix="/api/v1")
 app.include_router(counselor_application_router, prefix="/api/v1")
+app.include_router(notification_wait_router, prefix="/api/v1")
 
 
 class HealthResponse(BaseModel):
