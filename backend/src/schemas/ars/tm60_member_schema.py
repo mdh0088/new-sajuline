@@ -93,3 +93,9 @@ class Tm60MemberStats(BaseModel):
     on_turn_members: int = Field(..., description="순번 활성 멤버 수")
     by_grade: dict[str, int] = Field(..., description="등급별 멤버 수")
     by_chat_level: dict[str, int] = Field(..., description="채팅 레벨별 멤버 수")
+
+
+class Tm60MemberStateItem(BaseModel):
+    """상담사 상태 동기화용 간소화 스키마"""
+    m_code: str = Field(..., description="멤버 코드")
+    m_state: str = Field(..., description="멤버 상태: 1=대기중, 2=부재중, 3=상담중")

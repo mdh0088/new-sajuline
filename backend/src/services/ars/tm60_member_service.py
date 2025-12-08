@@ -37,4 +37,8 @@ class Tm60MemberService:
         """m_code 목록에 대한 상태 매핑 조회 (선택적으로 상태 필터)"""
         return await self.repo.get_state_map_by_codes(m_codes, m_state=m_state)
 
+    async def get_all_members_state(self) -> list[dict[str, str]]:
+        """전체 tm60_member 상태 목록 조회"""
+        return await self.repo.get_all_members_state()
+
 

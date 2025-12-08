@@ -231,3 +231,111 @@ class CounselorService:
         if not counselor:
             raise NotFoundError("상담사를 찾을 수 없습니다")
         return CounselorResponse.model_validate(counselor)
+
+    async def sync_all_counselor_status(self, notification_wait_service) -> dict:
+        """
+        전체 상담사 상태 동기화 (tm60_member → t_counselor)
+        1. tm60_member에서 전체 m_code, m_state 조회
+        2. 각 m_code로 t_counselor.counselor_code 매칭
+        3. counselor_status 업데이트 (m_state: 1=WAITING, 2=ABSENT, 3=CONSULTING)
+        4. WAITING으로 변경된 상담사에 대해 알림 발송 처리
+        """
+        log = get_logger_with_request_id()
+        log.info("Starting counselor status sync")
+
+        result = {
+            "total_members": 0,
+            "updated_count": 0,
+            "notification_sent_count": 0,
+            "errors": []
+        }
+
+        if not self.tm60_member_service:
+            log.warning("tm60_member_service is not available")
+            return result
+
+        # 1. MSSQL에서 전체 tm60_member 상태 조회
+        members = await self.tm60_member_service.get_all_members_state()
+        result["total_members"] = len(members)
+
+        if not members:
+            log.info("No tm60_members found")
+            return result
+
+        # 2. 각 멤버에 대해 상태 동기화
+        for member in members:
+            m_code = member.get("m_code")
+            m_state = member.get("m_state")
+
+            if not m_code or not m_state:
+                continue
+
+            # m_state → counselor_status 매핑
+            if m_state == "1":
+                new_status = "WAITING"
+            elif m_state == "2":
+                new_status = "ABSENT"
+            elif m_state == "3":
+                new_status = "CONSULTING"
+            else:
+                log.warning("Unknown m_state value", m_code=m_code, m_state=m_state)
+                continue
+
+            try:
+                # 상태 업데이트 (이전 상태도 반환)
+                success, old_status = await self.counselor_repo.update_status_by_code(
+                    counselor_code=m_code,
+                    new_status=new_status
+                )
+
+                if not success:
+                    continue
+
+                # 실제 변경이 있는 경우만 카운트
+                if old_status != new_status:
+                    result["updated_count"] += 1
+                    log.info(
+                        "Counselor status updated",
+                        m_code=m_code,
+                        old_status=old_status,
+                        new_status=new_status
+                    )
+
+                    # 3. WAITING으로 변경된 경우 알림 발송 처리 (별도 try-except로 분리)
+                    if new_status == "WAITING" and old_status in ("ABSENT", "CONSULTING"):
+                        try:
+                            counselor_id = await self.counselor_repo.get_counselor_id_by_code(m_code)
+                            if counselor_id:
+                                sent_count = await notification_wait_service.send_notifications_for_counselor(
+                                    counselor_id
+                                )
+                                result["notification_sent_count"] += sent_count
+                                log.info(
+                                    "Notifications sent for counselor",
+                                    counselor_id=counselor_id,
+                                    sent_count=sent_count
+                                )
+                        except Exception as notify_err:
+                            log.warning(
+                                "Failed to send notifications but status update succeeded",
+                                m_code=m_code,
+                                error=str(notify_err)
+                            )
+
+            except Exception as e:
+                error_msg = f"Failed to sync status for m_code={m_code}: {str(e)}"
+                result["errors"].append(error_msg)
+                log.error(error_msg)
+
+        # 커밋
+        await self.counselor_repo.db.commit()
+
+        log.info(
+            "Counselor status sync completed",
+            total_members=result["total_members"],
+            updated_count=result["updated_count"],
+            notification_sent_count=result["notification_sent_count"],
+            error_count=len(result["errors"])
+        )
+
+        return result

@@ -144,6 +144,55 @@ class CounselorRepository:
         return {c.counselor_code: c for c in counselors}
 
     @logger.catch(reraise=True)
+    async def update_status_by_code(
+        self,
+        counselor_code: str,
+        new_status: str
+    ) -> tuple[bool, str | None]:
+        """
+        counselor_code로 상담사 상태 업데이트
+        Returns: (성공여부, 이전 상태값)
+        """
+        log = get_logger_with_request_id()
+        log.info("Updating counselor status by code", counselor_code=counselor_code, new_status=new_status)
+
+        # 현재 상태 조회
+        stmt = select(Counselor.counselor_id, Counselor.counselor_status).where(
+            Counselor.counselor_code == counselor_code
+        )
+        result = await self.db.execute(stmt)
+        row = result.one_or_none()
+
+        if not row:
+            log.warning("Counselor not found by code", counselor_code=counselor_code)
+            return False, None
+
+        counselor_id, old_status = row
+
+        # 상태가 동일하면 업데이트 불필요
+        if old_status == new_status:
+            return True, old_status
+
+        # 업데이트 실행
+        update_stmt = (
+            update(Counselor)
+            .where(Counselor.counselor_code == counselor_code)
+            .values(counselor_status=new_status)
+            .execution_options(synchronize_session="evaluate")
+        )
+        await self.db.execute(update_stmt)
+
+        log.info("Counselor status updated", counselor_code=counselor_code, old_status=old_status, new_status=new_status)
+        return True, old_status
+
+    @logger.catch(reraise=True)
+    async def get_counselor_id_by_code(self, counselor_code: str) -> str | None:
+        """counselor_code로 counselor_id 조회"""
+        stmt = select(Counselor.counselor_id).where(Counselor.counselor_code == counselor_code)
+        result = await self.db.execute(stmt)
+        return result.scalar_one_or_none()
+
+    @logger.catch(reraise=True)
     async def find_codes_by_filters(
         self,
         *,

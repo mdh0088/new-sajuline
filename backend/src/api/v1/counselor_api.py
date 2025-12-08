@@ -26,6 +26,8 @@ from src.services.inquiry_service import InquiryService
 from src.services.notification_service import NotificationService
 from src.services.ars.tm60_member_service import Tm60MemberService
 from src.services.ars.tm60_chatlog_service import Tm60ChatlogService
+from src.repositories.notification_wait_repository import NotificationWaitRepository
+from src.services.notification_wait_service import NotificationWaitService
 from src.schemas.auth_schema import LoginRequest, LoginResponse
 from src.schemas.counselor_schema import CounselorResponse, CounselorMypageUpdate, CounselorSearchItem
 from src.schemas.user_activity_log_schema import UserType, DeviceType
@@ -109,6 +111,20 @@ def get_tm60_member_service(mssql = Depends(get_db_mssql)) -> Tm60MemberService:
 def get_tm60_chatlog_service() -> Tm60ChatlogService:
     for mssql in get_db_mssql():
         return Tm60ChatlogService(mssql)
+
+
+def get_notification_wait_repository(
+    db: AsyncSession = Depends(get_db_maria)
+) -> NotificationWaitRepository:
+    """알림 대기 리포지토리 의존성 주입"""
+    return NotificationWaitRepository(db)
+
+
+def get_notification_wait_service(
+    repo: NotificationWaitRepository = Depends(get_notification_wait_repository)
+) -> NotificationWaitService:
+    """알림 대기 서비스 의존성 주입"""
+    return NotificationWaitService(repo)
 
 
 def get_counselor_service(
@@ -890,3 +906,34 @@ async def get_public_counselor_user_inquiries(
         total=total,
         message="상담사 공개 문의 목록 조회 성공",
     )
+
+
+@router.post(
+    "/sync-status",
+    response_model=APIResponse,
+    summary="상담사 상태 동기화",
+    description="tm60_member에서 전체 상담사 상태를 조회하여 t_counselor.counselor_status를 동기화합니다. WAITING으로 변경된 상담사에 대해 알림을 발송합니다."
+)
+async def sync_counselor_status(
+    counselor_service: CounselorService = Depends(get_counselor_service),
+    notification_wait_service: NotificationWaitService = Depends(get_notification_wait_service)
+) -> APIResponse:
+    """
+    상담사 상태 동기화 API
+    - tm60_member.m_state → t_counselor.counselor_status 매핑
+    - m_state: 1=WAITING, 2=ABSENT, 3=CONSULTING
+    - WAITING으로 변경된 상담사에 대해 t_notification_wait 기반 알림 발송
+    """
+    log = get_logger_with_request_id()
+    log.info("API: Syncing counselor status")
+
+    result = await counselor_service.sync_all_counselor_status(notification_wait_service)
+
+    log.info(
+        "API: Counselor status sync completed",
+        total_members=result["total_members"],
+        updated_count=result["updated_count"],
+        notification_sent_count=result["notification_sent_count"]
+    )
+
+    return ok(data=result, message="상담사 상태 동기화 완료")

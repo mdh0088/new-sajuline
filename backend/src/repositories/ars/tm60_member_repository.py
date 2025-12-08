@@ -85,4 +85,36 @@ class Tm60MemberRepository:
 
         return await asyncio.to_thread(_sync_get_map)
 
+    @logger.catch(reraise=True)
+    async def get_all_members_state(self) -> list[dict[str, str]]:
+        """
+        전체 tm60_member 조회하여 m_code, m_state 목록 반환
+        - 중복 m_code가 있을 경우 최신 m_fdate 우선
+        Returns: [{"m_code": "001", "m_state": "1"}, ...]
+        """
+        log = get_logger_with_request_id()
+        log.info("Fetching all tm60_members state")
+
+        def _sync_get_all() -> list[dict[str, str]]:
+            try:
+                from datetime import datetime
+                rows = (
+                    self.mssql_session.query(Tm60Member.m_code, Tm60Member.m_state, Tm60Member.m_fdate)
+                    .all()
+                )
+                # 중복 m_code 처리: 최신 m_fdate 우선
+                result: dict[str, tuple[str, Optional[datetime]]] = {}
+                for code, state, fdate in rows:
+                    prev = result.get(code)
+                    if prev is None or (fdate and prev[1] and fdate > prev[1]):
+                        result[code] = (state, fdate)
+                items = [{"m_code": k, "m_state": v[0]} for k, v in result.items()]
+                log.info("All tm60_members state fetched", count=len(items))
+                return items
+            except Exception as e:
+                log.warning("Failed to fetch all tm60_members state", error=str(e))
+                return []
+
+        return await asyncio.to_thread(_sync_get_all)
+
 
