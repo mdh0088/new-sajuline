@@ -217,7 +217,6 @@ async def _kcp_callback_handler(
 
     except (ValidationError, Exception) as e:
         log.error("KCP callback failed",
-                 session_id=ordr_idxx,
                  error=str(e),
                  exc_info=True)
 
