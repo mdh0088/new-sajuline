@@ -72,7 +72,10 @@ class PhoneVerificationService:
         # KCP 게이트웨이 파라미터 생성
         site_cd = get_kcp_site_cd()
         web_siteid = get_kcp_web_siteid()
-        callback_url = get_kcp_callback_url()
+        base_callback_url = get_kcp_callback_url()
+
+        # Ret_URL에 session_id 포함 (GET 리다이렉트 시에도 세션 식별 가능)
+        callback_url = f"{base_callback_url}?session_id={session_id}"
 
         # 인증 데이터 해시 생성 (cert_able_yn="Y" 모드 - 사용자가 KCP 모달에서 직접 입력)
         # 프로토타입 참조: site_cd + ordr_idxx + web_siteid + "" + "00" + "00" + "00" + "" + ""
@@ -143,7 +146,10 @@ class PhoneVerificationService:
         # KCP 게이트웨이 파라미터 생성
         site_cd = get_kcp_site_cd()
         web_siteid = get_kcp_web_siteid()
-        callback_url = get_kcp_callback_url()
+        base_callback_url = get_kcp_callback_url()
+
+        # Ret_URL에 session_id 포함 (GET 리다이렉트 시에도 세션 식별 가능)
+        callback_url = f"{base_callback_url}?session_id={session_id}"
 
         # 인증 데이터 해시 생성
         cert_data = f"{site_cd}{session_id}{web_siteid}000000"
@@ -215,7 +221,10 @@ class PhoneVerificationService:
         # KCP 게이트웨이 파라미터 생성
         site_cd = get_kcp_site_cd()
         web_siteid = get_kcp_web_siteid()
-        callback_url = get_kcp_callback_url()
+        base_callback_url = get_kcp_callback_url()
+
+        # Ret_URL에 session_id 포함 (GET 리다이렉트 시에도 세션 식별 가능)
+        callback_url = f"{base_callback_url}?session_id={session_id}"
 
         # 인증 데이터 해시 생성
         cert_data = f"{site_cd}{session_id}{web_siteid}000000"
@@ -449,11 +458,12 @@ class PhoneVerificationService:
         key = f"phone_verification:{session_id}"
         await self.redis.setex(key, ttl, json.dumps(data))
 
-    async def _get_session(self, session_id: str) -> Optional[Dict]:
-        """Redis에서 세션 조회 (조회 후 자동 삭제)
+    async def _get_session(self, session_id: str, delete_after: bool = False) -> Optional[Dict]:
+        """Redis에서 세션 조회
 
         Args:
             session_id: 세션 ID
+            delete_after: True면 조회 후 삭제 (기본값: False)
 
         Returns:
             Optional[Dict]: 세션 데이터 또는 None
@@ -468,12 +478,24 @@ class PhoneVerificationService:
                 return None
 
             try:
-                return json.loads(data)
+                result = json.loads(data)
+                # 조회 후 삭제 옵션
+                if delete_after:
+                    await self.redis.delete(key)
+                return result
             except json.JSONDecodeError:
                 return None
-        finally:
-            # 조회 후 즉시 삭제 (일회용)
-            await self.redis.delete(key)
+        except Exception:
+            return None
+
+    async def _delete_session(self, session_id: str) -> None:
+        """Redis에서 세션 삭제
+
+        Args:
+            session_id: 세션 ID
+        """
+        key = f"phone_verification:{session_id}"
+        await self.redis.delete(key)
 
 
 # 의존성 함수 (프로젝트 규격 준수)
