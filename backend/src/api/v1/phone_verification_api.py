@@ -280,9 +280,73 @@ async def kcp_callback(
         # GET/POST 모두 지원
         if request.method == "GET":
             form_dict = dict(request.query_params)
+
+            # GET 요청에 파라미터가 없는 경우 (브라우저 새로고침 등)
+            # 사용자 친화적인 안내 페이지 반환
+            if not form_dict:
+                log.info("KCP callback - Empty GET request (likely browser refresh)")
+                html_response = f"""
+                <!DOCTYPE html>
+                <html>
+                <head>
+                    <meta charset="utf-8">
+                    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                    <title>본인인증</title>
+                    <style>
+                        body {{
+                            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+                            display: flex;
+                            justify-content: center;
+                            align-items: center;
+                            min-height: 100vh;
+                            margin: 0;
+                            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                            color: white;
+                            text-align: center;
+                            padding: 20px;
+                        }}
+                        .container {{
+                            max-width: 400px;
+                        }}
+                        h2 {{ margin-bottom: 16px; }}
+                        p {{ margin-bottom: 24px; opacity: 0.9; }}
+                        a {{
+                            display: inline-block;
+                            padding: 12px 24px;
+                            background: white;
+                            color: #764ba2;
+                            text-decoration: none;
+                            border-radius: 8px;
+                            font-weight: 500;
+                        }}
+                    </style>
+                </head>
+                <body>
+                    <div class="container">
+                        <h2>본인인증 페이지</h2>
+                        <p>이 페이지는 직접 접근할 수 없습니다.<br>회원가입 페이지에서 본인인증을 진행해주세요.</p>
+                        <a href="{settings.frontend_url}">홈으로 돌아가기</a>
+                    </div>
+                </body>
+                </html>
+                """
+                return HTMLResponse(content=html_response, status_code=200)
         else:
-            # 미들웨어에서 이미 파싱한 request body 가져오기 (스트림 소진 방지)
+            # POST 요청: Form 데이터 직접 파싱
+            # 미들웨어에서 파싱한 데이터가 있으면 사용, 없으면 직접 파싱
             form_dict = getattr(request.state, "request_body", {})
+
+            # request_body가 비어있거나 메타데이터만 있는 경우 직접 파싱
+            if not form_dict or "content_type" in form_dict:
+                try:
+                    form_data = await request.form()
+                    form_dict = dict(form_data)
+                    log.info("KCP callback - Form data parsed directly",
+                            form_keys=list(form_dict.keys()))
+                except Exception as e:
+                    log.warning("KCP callback - Failed to parse form data",
+                               error=str(e))
+                    form_dict = {}
 
         # 필수 파라미터 추출
         site_cd = form_dict.get("site_cd", "")
@@ -295,7 +359,8 @@ async def kcp_callback(
 
         log.info("KCP callback received",
                 session_id=ordr_idxx,
-                res_cd=res_cd)
+                res_cd=res_cd,
+                method=request.method)
 
         # 필수 파라미터 검증
         if not all([site_cd, ordr_idxx, cert_no, enc_cert_data2, dn_hash, res_cd]):
@@ -308,7 +373,8 @@ async def kcp_callback(
             if not res_cd: missing.append("res_cd")
 
             log.error("KCP callback - Missing required parameters",
-                     missing_params=missing)
+                     missing_params=missing,
+                     method=request.method)
             raise ValidationError(f"필수 파라미터 누락: {', '.join(missing)}")
 
         result = await phone_service.process_callback(
