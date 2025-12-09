@@ -262,22 +262,27 @@ async def _kcp_callback_handler(
         return response
 
 
-@router.post(
+@router.api_route(
     "/callback",
+    methods=["GET", "POST"],
     response_class=HTMLResponse,
     summary="KCP 콜백 처리",
-    description="KCP 인증 완료 후 콜백을 처리합니다 (POST Form)"
+    description="KCP 인증 완료 후 콜백을 처리합니다 (GET/POST)"
 )
 async def kcp_callback(
     request: Request,
     phone_service: PhoneVerificationService = Depends(get_phone_verification_service)
 ):
-    """KCP 콜백 처리 - POST Form 데이터 파싱"""
+    """KCP 콜백 처리 - GET Query 또는 POST Form 데이터 파싱"""
     log = get_logger_with_request_id()
 
     try:
-        # 미들웨어에서 이미 파싱한 request body 가져오기 (스트림 소진 방지)
-        form_dict = getattr(request.state, "request_body", {})
+        # GET/POST 모두 지원
+        if request.method == "GET":
+            form_dict = dict(request.query_params)
+        else:
+            # 미들웨어에서 이미 파싱한 request body 가져오기 (스트림 소진 방지)
+            form_dict = getattr(request.state, "request_body", {})
 
         # 필수 파라미터 추출
         site_cd = form_dict.get("site_cd", "")
