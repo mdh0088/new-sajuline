@@ -143,11 +143,21 @@ watch(() => props.modelValue, (newVal) => {
 watch(phoneNumber, (newVal, oldVal) => {
   emit('update:modelValue', newVal)
 
-  // 인증 완료 상태에서 전화번호가 변경되면 인증 초기화
-  if (isVerified.value && verifiedPhoneNumber.value && newVal !== verifiedPhoneNumber.value) {
-    isVerified.value = false
-    emit('update:phoneChk', false)
-    errorMessage.value = '전화번호가 변경되었습니다. 다시 인증해주세요.'
+  // 전화번호가 변경되면 localStorage 정리 및 인증 상태 초기화
+  if (oldVal && newVal !== oldVal) {
+    // localStorage 정리
+    localStorage.removeItem('kcp_session_id')
+    localStorage.removeItem('kcp_phone_number')
+
+    // 인증 진행 중이면 중단
+    isVerifying.value = false
+
+    // 인증 완료 상태였으면 초기화
+    if (isVerified.value && verifiedPhoneNumber.value && newVal !== verifiedPhoneNumber.value) {
+      isVerified.value = false
+      emit('update:phoneChk', false)
+      errorMessage.value = '전화번호가 변경되었습니다. 다시 인증해주세요.'
+    }
   }
 })
 
