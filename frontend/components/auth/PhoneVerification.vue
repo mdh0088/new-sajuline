@@ -473,7 +473,7 @@ const closeVerificationModal = () => {
   }
 }
 
-// 모바일 _self 방식에서 돌아왔을 때 세션 확인
+// 모바일 _self 방식에서 돌아왔을 때 세션 확인 (폴링 방식)
 onMounted(async () => {
   // localStorage에서 KCP 세션 정보 확인
   const savedSessionId = localStorage.getItem('kcp_session_id')
@@ -482,19 +482,45 @@ onMounted(async () => {
   if (savedSessionId && savedPhoneNumber) {
     console.log('[KCP] Found saved session, checking status...', savedSessionId)
 
-    // localStorage 정리 (한 번만 확인)
-    localStorage.removeItem('kcp_session_id')
-    localStorage.removeItem('kcp_phone_number')
-
     // 세션 상태 확인
     isVerifying.value = true
     phoneNumber.value = savedPhoneNumber
 
-    const result = await checkVerificationStatus(savedSessionId)
-    console.log('[KCP] Session status result:', result)
+    // 폴링으로 인증 완료 대기 (최대 30초, 2초 간격)
+    const maxAttempts = 15
+    let attempts = 0
 
-    // 결과 처리
-    handleVerificationComplete(result)
+    const pollStatus = async (): Promise<void> => {
+      attempts++
+      console.log(`[KCP] Polling attempt ${attempts}/${maxAttempts}`)
+
+      const result = await checkVerificationStatus(savedSessionId)
+      console.log('[KCP] Session status result:', result)
+
+      if (result.success) {
+        // 인증 완료
+        localStorage.removeItem('kcp_session_id')
+        localStorage.removeItem('kcp_phone_number')
+        handleVerificationComplete(result)
+      } else if (result.error === '인증이 아직 완료되지 않았습니다' && attempts < maxAttempts) {
+        // 아직 인증 중 - 2초 후 재시도
+        setTimeout(pollStatus, 2000)
+      } else {
+        // 최대 시도 횟수 초과 또는 다른 에러
+        localStorage.removeItem('kcp_session_id')
+        localStorage.removeItem('kcp_phone_number')
+        isVerifying.value = false
+        if (attempts >= maxAttempts) {
+          errorMessage.value = '인증 시간이 초과되었습니다. 다시 시도해주세요.'
+          toast.error(errorMessage.value)
+        } else {
+          handleVerificationComplete(result)
+        }
+      }
+    }
+
+    // 폴링 시작
+    await pollStatus()
   }
 })
 
