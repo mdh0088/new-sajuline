@@ -112,6 +112,7 @@ const showVerificationModal = ref(false)
 const gatewayUrl = ref('')
 let closePopup: (() => void) | null = null
 let cleanupListener: (() => void) | null = null
+let preOpenedPopup: Window | null = null // 미리 열어둔 팝업 참조
 
 // 휴대폰 중복 검사
 const phoneAvailabilityQuery = usePhoneAvailability(computed(() => phoneNumber.value || ''), {
@@ -158,7 +159,7 @@ const verificationMutation = useInitiateVerification({
     // postMessage 리스너 설정
     cleanupListener = setupPostMessageListener(handleVerificationComplete)
 
-    // 인증창 열기
+    // 인증창에 폼 제출
     if (props.useModal) {
       // 모달 사용 (Form POST 방식)
       showVerificationModal.value = true
@@ -167,13 +168,22 @@ const verificationMutation = useInitiateVerification({
         submitFormToModal(data.gateway_url, data.form_data)
       })
     } else {
-      // 팝업 사용 (Form POST 방식)
+      // 팝업 사용 - 미리 열어둔 팝업에 폼 제출
       try {
-        const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)
-        closePopup = openVerificationWindow(data.gateway_url, data.form_data, isMobile)
+        if (preOpenedPopup && !preOpenedPopup.closed) {
+          submitFormToPopup(data.gateway_url, data.form_data, preOpenedPopup)
+        } else {
+          // 팝업이 닫혔거나 없는 경우 에러
+          throw new Error('인증창이 닫혔습니다. 다시 시도해주세요.')
+        }
       } catch (error: any) {
         toast.error(error.message || '인증창을 열 수 없습니다')
         isVerifying.value = false
+        // 팝업 정리
+        if (preOpenedPopup && !preOpenedPopup.closed) {
+          preOpenedPopup.close()
+        }
+        preOpenedPopup = null
       }
     }
   },
@@ -181,6 +191,11 @@ const verificationMutation = useInitiateVerification({
     isVerifying.value = false
     errorMessage.value = error?.message || '인증 시작에 실패했습니다'
     toast.error(errorMessage.value)
+    // 팝업 정리
+    if (preOpenedPopup && !preOpenedPopup.closed) {
+      preOpenedPopup.close()
+    }
+    preOpenedPopup = null
   }
 })
 
@@ -218,6 +233,59 @@ const submitFormToModal = (gatewayUrl: string, formData: Record<string, string>)
   form.submit()
 }
 
+const submitFormToPopup = (gatewayUrl: string, formData: Record<string, string>, popup: Window) => {
+  console.log('[KCP] submitFormToPopup called', { gatewayUrl, formData })
+
+  const windowName = 'kcp_auth_popup'
+
+  // 기존 form 제거 (중복 방지)
+  const existingForm = document.getElementById('kcp_cert_form')
+  if (existingForm) {
+    existingForm.remove()
+  }
+
+  // Form 요소 생성
+  const form = document.createElement('form')
+  form.id = 'kcp_cert_form'
+  form.method = 'POST'
+  form.action = gatewayUrl
+  form.target = windowName
+  form.style.display = 'none'
+
+  // Form 데이터 추가
+  Object.entries(formData).forEach(([key, value]) => {
+    const input = document.createElement('input')
+    input.type = 'hidden'
+    input.name = key
+    input.value = value
+    form.appendChild(input)
+  })
+
+  // 팝업 window에 name 설정
+  try {
+    popup.name = windowName
+  } catch (e) {
+    console.warn('[KCP] Could not set window name:', e)
+  }
+
+  // Form을 body에 추가하고 제출
+  document.body.appendChild(form)
+  console.log('[KCP] Submitting form to popup:', windowName)
+  form.submit()
+
+  // closePopup 함수 설정
+  closePopup = () => {
+    if (popup && !popup.closed) {
+      popup.close()
+    }
+    const formEl = document.getElementById('kcp_cert_form')
+    if (formEl) {
+      formEl.remove()
+    }
+    preOpenedPopup = null
+  }
+}
+
 const handlePhoneInput = (event: Event) => {
   const target = event.target as HTMLInputElement
   let value = target.value.replace(/[^0-9]/g, '')
@@ -235,6 +303,75 @@ const startVerification = async () => {
 
   isVerifying.value = true
   errorMessage.value = ''
+
+  // 팝업 모드일 경우: 사용자 클릭 이벤트에서 즉시 팝업을 먼저 열기 (차단 방지)
+  // 브라우저는 사용자 클릭과 팝업 열기 사이에 시간 지연이 있으면 팝업을 차단함
+  if (!props.useModal) {
+    const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)
+    const windowName = 'kcp_auth_popup'
+
+    try {
+      if (isMobile) {
+        // 모바일: 새 탭으로 열기
+        preOpenedPopup = window.open('about:blank', windowName)
+      } else {
+        // PC: 팝업 창으로 열기
+        preOpenedPopup = window.open('about:blank', windowName, 'width=600,height=700,scrollbars=yes,resizable=yes')
+      }
+
+      if (!preOpenedPopup || preOpenedPopup.closed) {
+        throw new Error('인증창을 열 수 없습니다. 팝업 차단을 해제해주세요.')
+      }
+
+      // 로딩 중 메시지 표시
+      preOpenedPopup.document.write(`
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <meta charset="utf-8">
+          <meta name="viewport" content="width=device-width, initial-scale=1.0">
+          <title>본인인증</title>
+          <style>
+            body {
+              font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+              display: flex;
+              justify-content: center;
+              align-items: center;
+              min-height: 100vh;
+              margin: 0;
+              background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+              color: white;
+              text-align: center;
+            }
+            .loader {
+              border: 4px solid rgba(255,255,255,0.3);
+              border-top: 4px solid white;
+              border-radius: 50%;
+              width: 40px;
+              height: 40px;
+              animation: spin 1s linear infinite;
+              margin: 0 auto 20px;
+            }
+            @keyframes spin {
+              0% { transform: rotate(0deg); }
+              100% { transform: rotate(360deg); }
+            }
+          </style>
+        </head>
+        <body>
+          <div>
+            <div class="loader"></div>
+            <p>인증 페이지를 불러오는 중...</p>
+          </div>
+        </body>
+        </html>
+      `)
+    } catch (error: any) {
+      toast.error(error.message || '인증창을 열 수 없습니다. 팝업 차단을 해제해주세요.')
+      isVerifying.value = false
+      return
+    }
+  }
 
   // step2에서 입력한 번호로 세션 생성 (return_url 포함 - Fallback 리다이렉트용)
   await verificationMutation.mutateAsync({
