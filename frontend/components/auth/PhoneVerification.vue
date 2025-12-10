@@ -355,6 +355,10 @@ const startVerification = async () => {
   isVerifying.value = true
   errorMessage.value = ''
 
+  // 이전 세션 데이터 정리 (새 인증 시작 전 항상 정리)
+  localStorage.removeItem('kcp_session_id')
+  localStorage.removeItem('kcp_phone_number')
+
   const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)
 
   // PC에서만 팝업 미리 열기 (모바일은 _self 방식 사용)

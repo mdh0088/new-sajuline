@@ -40,10 +40,20 @@ export interface PhoneVerificationResult {
 }
 
 /**
- * 인증 상태 조회 응답
+ * 인증 상태 조회 응답 - Backend Redis 세션 데이터와 일치
  */
 export interface PhoneVerificationStatusResponse {
+  // 필수 필드
   status: 'initiated' | 'verified' | 'expired'
+
+  // 세션 생성 시 저장되는 필드
+  phone_number?: string
+  return_url?: string
+  created_at?: string
+  purpose?: string
+  user_id?: string
+
+  // 인증 완료 후 저장되는 필드
   phone?: string
   phone_chk?: string
   ci?: string
@@ -51,7 +61,7 @@ export interface PhoneVerificationStatusResponse {
   verified_name?: string
   verified_birth_date?: string
   verified_gender?: string
-  phone_number?: string
+  verified_at?: string
 }
 
 const phoneVerificationApi = {

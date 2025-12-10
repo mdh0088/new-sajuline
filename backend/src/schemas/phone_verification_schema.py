@@ -50,10 +50,24 @@ class PhoneVerificationCallbackResponse(BaseModel):
 
 
 class PhoneVerificationStatusResponse(BaseModel):
-    """본인인증 상태 조회 응답"""
+    """본인인증 상태 조회 응답 - Redis 세션 데이터와 일치"""
 
+    # 필수 필드
     status: str = Field(..., description="인증 상태 (initiated, verified)")
-    name: Optional[str] = Field(None, description="사용자 이름")
-    phone_number: Optional[str] = Field(None, description="휴대폰 번호")
-    carrier: Optional[str] = Field(None, description="통신사")
+
+    # 세션 생성 시 저장되는 필드
+    phone_number: Optional[str] = Field(None, description="입력한 휴대폰 번호")
+    return_url: Optional[str] = Field(None, description="리다이렉트 URL")
+    created_at: Optional[str] = Field(None, description="세션 생성 시간")
+    purpose: Optional[str] = Field(None, description="인증 용도 (find_id, find_password)")
+    user_id: Optional[str] = Field(None, description="사용자 ID (비밀번호 찾기용)")
+
+    # 인증 완료 후 저장되는 필드
+    phone: Optional[str] = Field(None, description="인증된 휴대폰 번호")
+    phone_chk: Optional[str] = Field(None, description="휴대폰 인증 토큰")
+    ci: Optional[str] = Field(None, description="연계정보 (CI)")
+    di: Optional[str] = Field(None, description="중복가입확인정보 (DI)")
+    verified_name: Optional[str] = Field(None, description="인증된 이름")
+    verified_birth_date: Optional[str] = Field(None, description="인증된 생년월일")
+    verified_gender: Optional[str] = Field(None, description="인증된 성별")
     verified_at: Optional[str] = Field(None, description="인증 완료 시간")
