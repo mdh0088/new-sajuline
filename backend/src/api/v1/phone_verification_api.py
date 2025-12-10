@@ -379,10 +379,12 @@ async def kcp_callback(
             }
             return await _kcp_callback_handler(result)
         elif session_status == "initiated":
-            # 인증 대기 중 → 대기 페이지 표시
-            return _render_info_page("인증 처리 중",
-                                    "본인인증을 처리하고 있습니다.<br>잠시만 기다려주세요...",
-                                    auto_refresh=True)
+            # 인증 대기 중 → 프론트엔드로 바로 리다이렉트 (모바일 _self 방식)
+            # 프론트엔드에서 localStorage의 session_id로 상태 확인
+            log.info("KCP callback - Session initiated, redirecting to frontend",
+                    session_id=session_id,
+                    return_url=return_url)
+            return _render_redirect_page(return_url)
         else:
             # 알 수 없는 상태
             return _render_info_page("인증 오류",
@@ -448,6 +450,42 @@ def _render_info_page(title: str, message: str, auto_refresh: bool = False) -> H
             <p>{message}</p>
             <a href="{settings.frontend_url}">홈으로 돌아가기</a>
         </div>
+    </body>
+    </html>
+    """
+    return HTMLResponse(content=html, status_code=200)
+
+
+def _render_redirect_page(return_url: str) -> HTMLResponse:
+    """프론트엔드로 즉시 리다이렉트하는 페이지 (모바일 _self 방식)"""
+    redirect_url = f"{settings.frontend_url}{return_url}"
+    html = f"""
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <meta http-equiv="refresh" content="0;url={redirect_url}">
+        <title>리다이렉트 중...</title>
+        <script>
+            window.location.href = '{redirect_url}';
+        </script>
+        <style>
+            body {{
+                font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                min-height: 100vh;
+                margin: 0;
+                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                color: white;
+                text-align: center;
+            }}
+        </style>
+    </head>
+    <body>
+        <p>페이지로 이동 중...</p>
     </body>
     </html>
     """
