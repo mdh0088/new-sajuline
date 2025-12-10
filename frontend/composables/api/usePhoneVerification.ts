@@ -39,6 +39,21 @@ export interface PhoneVerificationResult {
   error?: string
 }
 
+/**
+ * 인증 상태 조회 응답
+ */
+export interface PhoneVerificationStatusResponse {
+  status: 'initiated' | 'verified' | 'expired'
+  phone?: string
+  phone_chk?: string
+  ci?: string
+  di?: string
+  verified_name?: string
+  verified_birth_date?: string
+  verified_gender?: string
+  phone_number?: string
+}
+
 const phoneVerificationApi = {
   /**
    * 본인인증 시작
@@ -57,6 +72,27 @@ const phoneVerificationApi = {
 
     if (!response.success || !response.data) {
       throw new Error(response.error?.message || '본인인증 시작 실패')
+    }
+
+    return response.data
+  },
+
+  /**
+   * 인증 상태 조회 (모바일 _self 방식에서 사용)
+   */
+  async getVerificationStatus(
+    sessionId: string
+  ): Promise<PhoneVerificationStatusResponse> {
+    const response = await $fetch<APIResponse<PhoneVerificationStatusResponse>>(
+      `/api/v1/phone-verification/status/${sessionId}`,
+      {
+        method: 'GET',
+        credentials: 'include'
+      }
+    )
+
+    if (!response.success || !response.data) {
+      throw new Error(response.error?.message || '인증 상태 조회 실패')
     }
 
     return response.data
@@ -211,9 +247,50 @@ export const usePhoneVerification = () => {
     }
   }
 
+  /**
+   * 인증 상태 조회 (모바일 _self 방식에서 돌아왔을 때 사용)
+   */
+  const checkVerificationStatus = async (
+    sessionId: string
+  ): Promise<PhoneVerificationResult> => {
+    try {
+      const status = await phoneVerificationApi.getVerificationStatus(sessionId)
+
+      if (status.status === 'verified') {
+        return {
+          success: true,
+          phone: status.phone,
+          phone_chk: status.phone_chk,
+          is_phone_matched: status.phone === status.phone_number,
+          ci: status.ci,
+          di: status.di,
+          name: status.verified_name,
+          birth_date: status.verified_birth_date,
+          gender: status.verified_gender
+        }
+      } else if (status.status === 'initiated') {
+        return {
+          success: false,
+          error: '인증이 아직 완료되지 않았습니다'
+        }
+      } else {
+        return {
+          success: false,
+          error: '인증 세션이 만료되었습니다'
+        }
+      }
+    } catch (error: any) {
+      return {
+        success: false,
+        error: error?.message || '인증 상태 조회 실패'
+      }
+    }
+  }
+
   return {
     useInitiateVerification,
     setupPostMessageListener,
-    openVerificationWindow
+    openVerificationWindow,
+    checkVerificationStatus
   }
 }

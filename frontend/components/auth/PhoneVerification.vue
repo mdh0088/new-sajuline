@@ -99,7 +99,7 @@ const emit = defineEmits<{
 
 // Composables
 const toast = useToast()
-const { useInitiateVerification, setupPostMessageListener, openVerificationWindow } = usePhoneVerification()
+const { useInitiateVerification, setupPostMessageListener, openVerificationWindow, checkVerificationStatus } = usePhoneVerification()
 const { usePhoneAvailability } = useUserQueries()
 
 // State
@@ -156,19 +156,28 @@ const verificationMutation = useInitiateVerification({
   onSuccess: (data) => {
     gatewayUrl.value = data.gateway_url
 
-    // postMessage 리스너 설정
-    cleanupListener = setupPostMessageListener(handleVerificationComplete)
+    const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)
 
     // 인증창에 폼 제출
     if (props.useModal) {
       // 모달 사용 (Form POST 방식)
+      // postMessage 리스너 설정
+      cleanupListener = setupPostMessageListener(handleVerificationComplete)
       showVerificationModal.value = true
       // 모달이 열린 후 Form 제출 (nextTick 사용)
       nextTick(() => {
         submitFormToModal(data.gateway_url, data.form_data)
       })
+    } else if (isMobile) {
+      // 모바일: _self 방식으로 현재 페이지에서 이동
+      // 세션 ID를 localStorage에 저장 (돌아왔을 때 확인용)
+      localStorage.setItem('kcp_session_id', data.session_id)
+      localStorage.setItem('kcp_phone_number', phoneNumber.value)
+      submitFormToSelf(data.gateway_url, data.form_data)
     } else {
-      // 팝업 사용 - 미리 열어둔 팝업에 폼 제출
+      // PC: 팝업 사용 - 미리 열어둔 팝업에 폼 제출
+      // postMessage 리스너 설정
+      cleanupListener = setupPostMessageListener(handleVerificationComplete)
       try {
         if (preOpenedPopup && !preOpenedPopup.closed) {
           submitFormToPopup(data.gateway_url, data.form_data, preOpenedPopup)
@@ -230,6 +239,38 @@ const submitFormToModal = (gatewayUrl: string, formData: Record<string, string>)
   // Form을 body에 추가하고 제출
   document.body.appendChild(form)
   console.log('[KCP] Form submitted to iframe')
+  form.submit()
+}
+
+const submitFormToSelf = (gatewayUrl: string, formData: Record<string, string>) => {
+  console.log('[KCP] submitFormToSelf called (mobile)', { gatewayUrl, formData })
+
+  // 기존 form 제거 (중복 방지)
+  const existingForm = document.getElementById('kcp_cert_form')
+  if (existingForm) {
+    existingForm.remove()
+  }
+
+  // Form 요소 생성
+  const form = document.createElement('form')
+  form.id = 'kcp_cert_form'
+  form.method = 'POST'
+  form.action = gatewayUrl
+  form.target = '_self' // 현재 페이지에서 이동
+  form.style.display = 'none'
+
+  // Form 데이터 추가
+  Object.entries(formData).forEach(([key, value]) => {
+    const input = document.createElement('input')
+    input.type = 'hidden'
+    input.name = key
+    input.value = value
+    form.appendChild(input)
+  })
+
+  // Form을 body에 추가하고 제출
+  document.body.appendChild(form)
+  console.log('[KCP] Submitting form to _self (mobile redirect)')
   form.submit()
 }
 
@@ -304,20 +345,15 @@ const startVerification = async () => {
   isVerifying.value = true
   errorMessage.value = ''
 
-  // 팝업 모드일 경우: 사용자 클릭 이벤트에서 즉시 팝업을 먼저 열기 (차단 방지)
-  // 브라우저는 사용자 클릭과 팝업 열기 사이에 시간 지연이 있으면 팝업을 차단함
-  if (!props.useModal) {
-    const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)
+  const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)
+
+  // PC에서만 팝업 미리 열기 (모바일은 _self 방식 사용)
+  if (!props.useModal && !isMobile) {
     const windowName = 'kcp_auth_popup'
 
     try {
-      if (isMobile) {
-        // 모바일: 새 탭으로 열기
-        preOpenedPopup = window.open('about:blank', windowName)
-      } else {
-        // PC: 팝업 창으로 열기
-        preOpenedPopup = window.open('about:blank', windowName, 'width=600,height=700,scrollbars=yes,resizable=yes')
-      }
+      // PC: 팝업 창으로 열기
+      preOpenedPopup = window.open('about:blank', windowName, 'width=600,height=700,scrollbars=yes,resizable=yes')
 
       if (!preOpenedPopup || preOpenedPopup.closed) {
         throw new Error('인증창을 열 수 없습니다. 팝업 차단을 해제해주세요.')
@@ -436,6 +472,31 @@ const closeVerificationModal = () => {
     modalForm.remove()
   }
 }
+
+// 모바일 _self 방식에서 돌아왔을 때 세션 확인
+onMounted(async () => {
+  // localStorage에서 KCP 세션 정보 확인
+  const savedSessionId = localStorage.getItem('kcp_session_id')
+  const savedPhoneNumber = localStorage.getItem('kcp_phone_number')
+
+  if (savedSessionId && savedPhoneNumber) {
+    console.log('[KCP] Found saved session, checking status...', savedSessionId)
+
+    // localStorage 정리 (한 번만 확인)
+    localStorage.removeItem('kcp_session_id')
+    localStorage.removeItem('kcp_phone_number')
+
+    // 세션 상태 확인
+    isVerifying.value = true
+    phoneNumber.value = savedPhoneNumber
+
+    const result = await checkVerificationStatus(savedSessionId)
+    console.log('[KCP] Session status result:', result)
+
+    // 결과 처리
+    handleVerificationComplete(result)
+  }
+})
 
 // Cleanup
 onUnmounted(() => {
