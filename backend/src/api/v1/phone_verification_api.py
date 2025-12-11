@@ -156,11 +156,11 @@ async def _kcp_callback_handler(
                         console.error('[KCP] Failed to send to opener:', e);
                     }}
 
-                    // 2. opener가 없으면 parent 시도 (iframe case - 현재 미사용)
+                    // 2. opener가 없으면 parent 시도 (iframe case - 모바일)
                     if (!sent) {{
                         try {{
                             if (window.parent && window.parent !== window) {{
-                                console.log('[KCP] Sending postMessage to parent');
+                                console.log('[KCP] Sending postMessage to parent (iframe mode)');
                                 window.parent.postMessage(messageData, '*');
                                 sent = true;
                             }}
@@ -190,10 +190,10 @@ async def _kcp_callback_handler(
                         // Redirect to page with KCP result (환경변수 기반 URL)
                         window.location.href = `{settings.frontend_url}{result.get("return_url", "/signup")}?${{params.toString()}}`;
                     }} else {{
-                        // Success - close popup after delay
+                        // Success - close popup/iframe after delay (모바일에서 postMessage 전달 시간 확보)
                         setTimeout(function() {{
                             try {{ window.close(); }} catch(e) {{}}
-                        }}, 200);
+                        }}, 500);
                     }}
                 }}
             </script>
@@ -534,6 +534,140 @@ def _render_error_page(error_message: str) -> HTMLResponse:
     </html>
     """
     return HTMLResponse(content=html, status_code=200)
+
+
+@router.get(
+    "/gateway/{session_id}",
+    response_class=HTMLResponse,
+    summary="KCP 게이트웨이 리다이렉트 페이지",
+    description="iframe/popup에서 KCP 게이트웨이로 폼을 제출하는 중간 페이지"
+)
+async def kcp_gateway_redirect(
+    session_id: str,
+    phone_service: PhoneVerificationService = Depends(get_phone_verification_service)
+):
+    """KCP 게이트웨이 폼 제출 페이지 (iframe/popup용)
+
+    프론트엔드에서 직접 KCP 게이트웨이로 폼을 제출하면 CORS/X-Frame-Options 이슈가 발생할 수 있음.
+    이 엔드포인트는 백엔드에서 폼을 렌더링하고 KCP 게이트웨이로 자동 제출합니다.
+
+    Args:
+        session_id: 세션 ID
+
+    Returns:
+        HTMLResponse: KCP 게이트웨이 폼 자동 제출 페이지
+    """
+    log = get_logger_with_request_id()
+    log.info("KCP gateway redirect page requested", session_id=session_id)
+
+    # 세션 데이터 조회
+    session_data = await phone_service.get_verification_status(session_id)
+
+    if not session_data:
+        log.warning("Session not found for gateway redirect", session_id=session_id)
+        return _render_info_page("세션 만료",
+                                "인증 세션이 만료되었습니다.<br>다시 인증을 진행해주세요.")
+
+    # 세션 상태 확인
+    if session_data.get("status") == "verified":
+        log.info("Session already verified", session_id=session_id)
+        return _render_info_page("인증 완료",
+                                "이미 인증이 완료되었습니다.")
+
+    # KCP 폼 데이터 재생성
+    from src.common.utils.kcp_utils import (
+        get_kcp_gateway_url,
+        get_kcp_callback_url,
+        get_kcp_site_cd,
+        get_kcp_web_siteid,
+        make_hash_data
+    )
+
+    site_cd = get_kcp_site_cd()
+    web_siteid = get_kcp_web_siteid()
+    gateway_url = get_kcp_gateway_url()
+    base_callback_url = get_kcp_callback_url()
+    callback_url = f"{base_callback_url}?session_id={session_id}"
+
+    # 해시 데이터 생성
+    cert_data = f"{site_cd}{session_id}{web_siteid}000000"
+    hash_data = make_hash_data(cert_data)
+
+    # KCP 폼 HTML 생성 및 자동 제출
+    html = f"""
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>본인인증</title>
+        <style>
+            body {{
+                font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                min-height: 100vh;
+                margin: 0;
+                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                color: white;
+                text-align: center;
+            }}
+            .loader {{
+                border: 4px solid rgba(255,255,255,0.3);
+                border-top: 4px solid white;
+                border-radius: 50%;
+                width: 40px;
+                height: 40px;
+                animation: spin 1s linear infinite;
+                margin: 0 auto 20px;
+            }}
+            @keyframes spin {{
+                0% {{ transform: rotate(0deg); }}
+                100% {{ transform: rotate(360deg); }}
+            }}
+        </style>
+        <script>
+            window.onload = function() {{
+                document.getElementById('kcp_form').submit();
+            }}
+        </script>
+    </head>
+    <body>
+        <div>
+            <div class="loader"></div>
+            <p>인증 페이지로 이동 중...</p>
+        </div>
+        <form id="kcp_form" method="POST" action="{gateway_url}" style="display:none;">
+            <input type="hidden" name="site_cd" value="{site_cd}" />
+            <input type="hidden" name="ordr_idxx" value="{session_id}" />
+            <input type="hidden" name="Ret_URL" value="{callback_url}" />
+            <input type="hidden" name="req_tx" value="cert" />
+            <input type="hidden" name="cert_method" value="01" />
+            <input type="hidden" name="web_siteid" value="{web_siteid}" />
+            <input type="hidden" name="web_siteid_hashYN" value="Y" />
+            <input type="hidden" name="cert_able_yn" value="Y" />
+            <input type="hidden" name="up_hash" value="{hash_data}" />
+            <input type="hidden" name="cert_otp_use" value="Y" />
+            <input type="hidden" name="cert_enc_use_ext" value="Y" />
+            <input type="hidden" name="param_opt_1" value="" />
+            <input type="hidden" name="param_opt_2" value="" />
+            <input type="hidden" name="param_opt_3" value="" />
+        </form>
+    </body>
+    </html>
+    """
+
+    response = HTMLResponse(content=html)
+    # X-Frame-Options 없이, iframe에서 열릴 수 있도록 설정
+    response.headers["Content-Security-Policy"] = (
+        "default-src 'self' https:; "
+        "script-src 'self' 'unsafe-inline' https:; "
+        "style-src 'self' 'unsafe-inline' https:; "
+        "form-action https:; "  # KCP 게이트웨이로 폼 제출 허용
+        "frame-ancestors *;"
+    )
+    return response
 
 
 @router.get(
