@@ -181,12 +181,6 @@ const getSocialInfo = (): SocialInfo | null => {
 
 const socialInfo = ref<SocialInfo | null>(getSocialInfo())
 
-// 유효성 검사 (KCP Fallback 복원 후에도 유효해야 함)
-if (!socialInfo.value && !fromKcp) {
-  toast.error('잘못된 접근입니다.')
-  router.push('/login')
-}
-
 // 반응형 데이터
 const currentStep = ref(1)
 const totalSteps = ref(3) // Step1 스킵으로 총 3단계
@@ -232,6 +226,27 @@ watch(signupFormData, (newData) => {
 onMounted(async () => {
   // 클라이언트 체크
   if (!process.client) return
+
+  // 유효성 검사 (클라이언트에서만 실행)
+  // KCP Fallback이 아닌데 소셜 정보가 없으면 잘못된 접근
+  if (!socialInfo.value && fromKcp !== 'true') {
+    // localStorage에서 복원 시도
+    const storedSocialInfo = localStorage.getItem(SOCIAL_INFO_KEY)
+    if (storedSocialInfo) {
+      try {
+        socialInfo.value = JSON.parse(storedSocialInfo)
+      } catch (e) {
+        console.error('[Social Signup] Failed to parse social info:', e)
+      }
+    }
+
+    // 복원 후에도 없으면 리다이렉트
+    if (!socialInfo.value) {
+      toast.error('잘못된 접근입니다.')
+      router.push('/login')
+      return
+    }
+  }
 
   // KCP Fallback에서 돌아온 경우 처리
   if (fromKcp === 'true') {
