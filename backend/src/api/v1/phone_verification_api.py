@@ -285,10 +285,17 @@ async def kcp_callback(
     if not session_id:
         session_id = request.query_params.get("session_id", "")
 
-    log.info("KCP callback received",
+    # 전체 요청 데이터 로깅 (디버깅용)
+    all_query_params = dict(request.query_params)
+    log.info("KCP callback received - FULL DEBUG",
             method=request.method,
             session_id=session_id,
-            query_params=dict(request.query_params))
+            all_query_params=all_query_params,
+            query_param_keys=list(all_query_params.keys()),
+            has_cert_no="cert_no" in all_query_params,
+            has_enc_cert_data2="enc_cert_data2" in all_query_params,
+            has_site_cd="site_cd" in all_query_params,
+            has_res_cd="res_cd" in all_query_params)
 
     try:
         # POST 요청: KCP에서 인증 결과와 함께 호출
