@@ -229,12 +229,11 @@ const submitFormToModal = (gatewayUrl: string, formData: Record<string, string>,
   // 프론트엔드에서 직접 KCP 게이트웨이로 제출하면 X-Frame-Options 이슈 발생 가능
   // 대신 백엔드의 /gateway/{session_id} 페이지를 iframe에서 열어서
   // 백엔드가 KCP 게이트웨이로 폼을 제출하도록 함
-  const config = useRuntimeConfig()
-  const apiBaseUrl = config.public.apiBase || ''
 
   // session_id가 있으면 백엔드 gateway 페이지 사용
+  // apiBase가 /api이므로 /api/v1/... 형태로 구성
   if (sessionId) {
-    const gatewayPageUrl = `${apiBaseUrl}/api/v1/phone-verification/gateway/${sessionId}`
+    const gatewayPageUrl = `/api/v1/phone-verification/gateway/${sessionId}`
     console.log('[KCP] Using backend gateway page:', gatewayPageUrl)
 
     // iframe의 src를 직접 설정
@@ -246,7 +245,7 @@ const submitFormToModal = (gatewayUrl: string, formData: Record<string, string>,
   }
 
   // Fallback: 직접 폼 제출 (sessionId가 없는 경우)
-  console.log('[KCP] Fallback: Direct form submission')
+  console.log('[KCP] Fallback: Direct form submission to', gatewayUrl)
 
   // 기존 form 제거 (중복 방지)
   const existingForm = document.getElementById('kcp_modal_form')
