@@ -166,31 +166,20 @@ const verificationMutation = useInitiateVerification({
   onSuccess: (data) => {
     gatewayUrl.value = data.gateway_url
 
-    const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)
-
     // postMessage 리스너 설정 (모든 방식에서 공통)
     cleanupListener = setupPostMessageListener(handleVerificationComplete)
 
     // 인증창에 폼 제출
-    if (isMobile) {
-      // 모바일: 모달+iframe 사용 (KCP는 iframe 내에서 POST로 결과 전달)
-      // _self 방식은 KCP POST를 받을 수 없으므로 iframe 필수
-      console.log('[KCP] Mobile detected, using modal+iframe')
-      showVerificationModal.value = true
-      // 모달이 열린 후 백엔드 gateway 페이지를 iframe에서 열기
-      nextTick(() => {
-        submitFormToModal(data.gateway_url, data.form_data, data.session_id)
-      })
-    } else if (props.useModal) {
-      // PC + 모달 모드 명시적 요청
-      console.log('[KCP] PC with modal mode')
+    if (props.useModal) {
+      // 모달 모드 명시적 요청 (PC/모바일 모두)
+      console.log('[KCP] Using modal+iframe mode')
       showVerificationModal.value = true
       nextTick(() => {
         submitFormToModal(data.gateway_url, data.form_data, data.session_id)
       })
     } else {
-      // PC: 팝업 사용 - 미리 열어둔 팝업에 폼 제출
-      console.log('[KCP] PC using popup')
+      // 팝업/새탭 사용 - 미리 열어둔 창에 폼 제출
+      console.log('[KCP] Using popup/new-tab mode')
       try {
         if (preOpenedPopup && !preOpenedPopup.closed) {
           submitFormToPopup(data.gateway_url, data.form_data, preOpenedPopup)
@@ -357,13 +346,19 @@ const startVerification = async () => {
 
   const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)
 
-  // PC에서만 팝업 미리 열기 (모바일은 모달+iframe 사용)
-  if (!props.useModal && !isMobile) {
+  // 팝업/새탭 미리 열기 (사용자 클릭 이벤트 내에서 열어야 팝업 차단 방지)
+  // 모달 모드가 아닌 경우에만 (모달 모드는 iframe 사용)
+  if (!props.useModal) {
     const windowName = 'kcp_auth_popup'
 
     try {
-      // PC: 팝업 창으로 열기
-      preOpenedPopup = window.open('about:blank', windowName, 'width=600,height=700,scrollbars=yes,resizable=yes')
+      if (isMobile) {
+        // 모바일: 새 탭으로 열기 (팝업 옵션 없이)
+        preOpenedPopup = window.open('about:blank', windowName)
+      } else {
+        // PC: 팝업 창으로 열기
+        preOpenedPopup = window.open('about:blank', windowName, 'width=600,height=700,scrollbars=yes,resizable=yes')
+      }
 
       if (!preOpenedPopup || preOpenedPopup.closed) {
         throw new Error('인증창을 열 수 없습니다. 팝업 차단을 해제해주세요.')
