@@ -93,19 +93,25 @@ const phoneVerificationApi = {
   async getVerificationStatus(
     sessionId: string
   ): Promise<PhoneVerificationStatusResponse> {
-    const response = await $fetch<APIResponse<PhoneVerificationStatusResponse>>(
-      `/api/v1/phone-verification/status/${sessionId}`,
-      {
-        method: 'GET',
-        credentials: 'include'
+    try {
+      const response = await $fetch<APIResponse<PhoneVerificationStatusResponse>>(
+        `/api/v1/phone-verification/status/${sessionId}`,
+        {
+          method: 'GET',
+          credentials: 'include'
+        }
+      )
+
+      if (!response.success || !response.data) {
+        throw new Error(response.error?.message || '인증 상태 조회 실패')
       }
-    )
 
-    if (!response.success || !response.data) {
-      throw new Error(response.error?.message || '인증 상태 조회 실패')
+      return response.data
+    } catch (error: any) {
+      // $fetch는 4xx/5xx 에러 시 예외를 throw함
+      const message = error?.data?.message || error?.message || '인증 상태 조회 실패'
+      throw new Error(message)
     }
-
-    return response.data
   }
 }
 
