@@ -222,6 +222,10 @@ async def request_payment(
         "Authorization": f"PLKEY {settings.payment_gateway_key}",
     }
 
+    log.info("PAYMENT URL ", settings.payment_gateway_url)
+    log.info("PAYMENT KEY ", settings.payment_gateway_key)
+    log.info("PAYMENT CLIENT ID ", settings.payment_client_id)
+
     # Payletter 결제 요청
     try:
         async with httpx.AsyncClient(timeout=20.0) as client:
