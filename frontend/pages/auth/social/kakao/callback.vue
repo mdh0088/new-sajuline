@@ -76,9 +76,10 @@ const callbackMutation = useHandleSocialCallback({
       router.push('/user/mypage')
     }
   },
-  onError: (err: any) => {
-    error.value = err?.message || '카카오 로그인에 실패했습니다.'
-    toast.error(error.value)
+  onError: () => {
+    // 브라우저 뒤로가기 등으로 이미 사용된 코드로 재요청 시
+    // 에러 표시 없이 로그인 페이지로 완전히 새로고침하여 이동
+    window.location.href = '/login'
   }
 })
 

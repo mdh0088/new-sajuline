@@ -218,8 +218,8 @@ const paymentMethods = ref([
     image: '/images/credit.png',
     name: '신용/체크카드',
     description: '모든 카드 결제 가능',
-    //code: 'allthegate'
-    code: 'creditcard'
+    code: 'allthegate'
+    //code: 'creditcard'
   },
   {
     icon: '🏦',
