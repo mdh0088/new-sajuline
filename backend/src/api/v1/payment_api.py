@@ -138,6 +138,13 @@ async def request_payment(
     - PENDING 상태로 payment 생성하여 order_no 추적 보장
     - Payletter 공식 권장: callback/return 순서 무관하게 조회 가능하도록
     """
+
+    
+    log.info("PAYMENT URL ", settings.payment_gateway_url)
+    log.info("PAYMENT KEY ", settings.payment_gateway_key)
+    log.info("PAYMENT CLIENT ID ", settings.payment_client_id)
+
+
     log = get_logger_with_request_id()
     verify_user_role(current_user)
 
@@ -221,6 +228,10 @@ async def request_payment(
         "Content-Type": "application/json",
         "Authorization": f"PLKEY {settings.payment_gateway_key}",
     }
+
+    log.info("PAYMENT URL ", settings.payment_gateway_url)
+    log.info("PAYMENT KEY ", settings.payment_gateway_key)
+    log.info("PAYMENT CLIENT ID ", settings.payment_client_id)
 
     # Payletter 결제 요청
     try:
