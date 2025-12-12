@@ -76,7 +76,7 @@ jobs:
 
       - name: Install dependencies
         working-directory: frontend
-        run: npm ci
+        run: npm ci --prefer-offline --no-audit --no-fund
 
       - name: Load environment variables
         working-directory: frontend
@@ -103,23 +103,8 @@ jobs:
           CI: true
           NUXT_TELEMETRY_DISABLED: 1
           NODE_ENV: production
-        run: |
-          npm run build &
-          BUILD_PID=$!
-
-          # .output/server/index.mjs 생성 대기 (최대 10분)
-          for i in {1..120}; do
-            if [ -f ".output/server/index.mjs" ]; then
-              echo "Build complete, killing background process"
-              kill $BUILD_PID 2>/dev/null || true
-              exit 0
-            fi
-            sleep 5
-          done
-
-          echo "Build timeout"
-          kill $BUILD_PID 2>/dev/null || true
-          exit 1
+          NODE_OPTIONS: '--max-old-space-size=4096'
+        run: npm run build
 
       - name: Verify build output
         working-directory: frontend
@@ -129,6 +114,7 @@ jobs:
             exit 1
           fi
           echo "Build verified successfully"
+          ls -la .output/
 
       - name: Compress build output
         working-directory: frontend
@@ -168,7 +154,7 @@ jobs:
 
       - name: Install dependencies
         working-directory: frontend
-        run: npm ci
+        run: npm ci --prefer-offline --no-audit --no-fund
 
       - name: Load environment variables
         working-directory: frontend
@@ -194,24 +180,9 @@ jobs:
         env:
           CI: true
           NUXT_TELEMETRY_DISABLED: 1
-          NODE_ENV: development
-        run: |
-          npm run build &
-          BUILD_PID=$!
-
-          # .output/server/index.mjs 생성 대기 (최대 10분)
-          for i in {1..120}; do
-            if [ -f ".output/server/index.mjs" ]; then
-              echo "Build complete, killing background process"
-              kill $BUILD_PID 2>/dev/null || true
-              exit 0
-            fi
-            sleep 5
-          done
-
-          echo "Build timeout"
-          kill $BUILD_PID 2>/dev/null || true
-          exit 1
+          NODE_ENV: production
+          NODE_OPTIONS: '--max-old-space-size=4096'
+        run: npm run build
 
       - name: Verify build output
         working-directory: frontend
@@ -221,6 +192,7 @@ jobs:
             exit 1
           fi
           echo "Build verified successfully"
+          ls -la .output/
 
       - name: Compress build output
         working-directory: frontend
