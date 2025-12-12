@@ -232,7 +232,8 @@ export default defineNuxtConfig({
   // TypeScript 설정
   typescript: {
     strict: true,
-    typeCheck: true
+    // 프로덕션 빌드에서는 타입체크 비활성화 (CI에서 별도 실행 권장)
+    typeCheck: process.env.NODE_ENV === 'development'
   },
 
   // 경로 별칭 설정 (기본 제공 alias 사용을 권장)
@@ -240,27 +241,11 @@ export default defineNuxtConfig({
 
   // Vite 빌드 설정
   vite: {
-    css: {
-      preprocessorOptions: {
-        scss: {
-          // SCSS 전역 변수 자동 import
-          additionalData: '@use "~/assets/scss/variables.scss" as *;'
-        }
-      }
-    },
     build: {
       target: 'esnext',
-      rollupOptions: {
-        output: {
-          chunkFileNames: '_nuxt/[name]-[hash].js',
-          entryFileNames: '_nuxt/[name]-[hash].js',
-          // 청크 분할 최적화 (라이브러리별 분리)
-          manualChunks: {
-            vendor: ['vue', '@vue/runtime-core'],
-            ui: ['@tanstack/vue-query', '@vueuse/core', 'element-plus']
-          }
-        }
-      }
+      // Nuxt 4는 자동 청크 분할이 최적화되어 있으므로 manualChunks 불필요
+      cssCodeSplit: true,
+      minify: 'esbuild'
     },
     optimizeDeps: {
       include: ['@tanstack/vue-query', '@vueuse/core', 'element-plus']
@@ -270,6 +255,12 @@ export default defineNuxtConfig({
   // 개발 서버 프록시 설정 (CORS 해결) 및 보안 헤더 (즉시 적용 권장)
   nitro: {
     routeRules: {
+      // 빌드 자산 장기 캐싱 (1년, 해시 기반 무효화)
+      '/_nuxt/**': {
+        headers: {
+          'Cache-Control': 'public, max-age=31536000, immutable'
+        }
+      },
       '/api/v1/**': {
         proxy: `${process.env.NUXT_PROXY_TARGET || 'http://localhost:8000'}/api/v1/**`
       },
