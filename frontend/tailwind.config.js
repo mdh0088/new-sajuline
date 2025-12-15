@@ -5,7 +5,6 @@ export default {
     "./layouts/**/*.vue",
     "./pages/**/*.vue",
     "./plugins/**/*.{js,ts}",
-    "./composables/**/*.ts",
     "./app.vue",
     "./error.vue"
   ],
