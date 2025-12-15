@@ -9,8 +9,8 @@ instance.defaults.headers.common['Access-Control-Allow-Origin'] = '*';
 instance.defaults.timeout = 120000;
 instance.defaults.headers.post['Content-Type'] = 'application/json';
 instance.defaults.headers.put['Content-Type'] = 'application/json';
-// PATCH는 FormData도 사용하므로 기본값 설정하지 않음 (axios가 자동 감지)
-// instance.defaults.headers.patch['Content-Type'] = 'application/json';
+// PATCH에도 Content-Type 설정 (FormData 사용 시 요청별로 override)
+instance.defaults.headers.patch['Content-Type'] = 'application/json';
 // instance.defaults.headers.post['Content-Type'] =
 //     'application/x-www-form-urlencoded';
 
