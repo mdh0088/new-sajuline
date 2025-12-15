@@ -32,7 +32,7 @@ from src.schemas.auth_schema import LoginRequest, LoginResponse
 from src.schemas.counselor_schema import CounselorResponse, CounselorMypageUpdate, CounselorSearchItem
 from src.schemas.user_activity_log_schema import UserType, DeviceType
 from src.common.response import APIResponse, APIResponseBuilder, ok, fail
-from src.common.logging import logger, get_logger_with_request_id
+from src.common.logging import logger, get_logger_with_request_id, get_scheduler_logger, scheduler_logging_context
 from src.common.utils.client_info import extract_client_info
 from src.common.utils.auth_utils import verify_counselor_role
 from src.exceptions.custom_exceptions import BaseAppException
@@ -120,11 +120,26 @@ def get_notification_wait_repository(
     return NotificationWaitRepository(db)
 
 
+def get_notification_service(
+    notification_repo: NotificationRepository = Depends(get_notification_repository)
+) -> NotificationService:
+    """알림 서비스 의존성 주입"""
+    return NotificationService(notification_repo)
+
+
 def get_notification_wait_service(
-    repo: NotificationWaitRepository = Depends(get_notification_wait_repository)
+    repo: NotificationWaitRepository = Depends(get_notification_wait_repository),
+    user_repo: UserRepository = Depends(get_user_repository),
+    counselor_repo: CounselorRepository = Depends(get_counselor_repository),
+    notification_service: NotificationService = Depends(get_notification_service)
 ) -> NotificationWaitService:
     """알림 대기 서비스 의존성 주입"""
-    return NotificationWaitService(repo)
+    return NotificationWaitService(
+        notification_wait_repo=repo,
+        user_repo=user_repo,
+        counselor_repo=counselor_repo,
+        notification_service=notification_service
+    )
 
 
 def get_counselor_service(
@@ -919,21 +934,24 @@ async def sync_counselor_status(
     notification_wait_service: NotificationWaitService = Depends(get_notification_wait_service)
 ) -> APIResponse:
     """
-    상담사 상태 동기화 API
+    상담사 상태 동기화 API (스케줄러용)
     - tm60_member.m_state → t_counselor.counselor_status 매핑
     - m_state: 1=WAITING, 2=ABSENT, 3=CONSULTING
     - WAITING으로 변경된 상담사에 대해 t_notification_wait 기반 알림 발송
+    - 로그는 scheduler.log에 별도 기록 (app.log 제외)
     """
-    log = get_logger_with_request_id()
-    log.info("API: Syncing counselor status")
+    # 스케줄러 컨텍스트 설정 - scheduler.log에만 기록
+    with scheduler_logging_context():
+        log = get_scheduler_logger()
+        log.info("API: Syncing counselor status")
 
-    result = await counselor_service.sync_all_counselor_status(notification_wait_service)
+        result = await counselor_service.sync_all_counselor_status(notification_wait_service)
 
-    log.info(
-        "API: Counselor status sync completed",
-        total_members=result["total_members"],
-        updated_count=result["updated_count"],
-        notification_sent_count=result["notification_sent_count"]
-    )
+        log.info(
+            "API: Counselor status sync completed",
+            total_members=result["total_members"],
+            updated_count=result["updated_count"],
+            notification_sent_count=result["notification_sent_count"]
+        )
 
-    return ok(data=result, message="상담사 상태 동기화 완료")
+        return ok(data=result, message="상담사 상태 동기화 완료")

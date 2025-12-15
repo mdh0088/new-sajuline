@@ -218,12 +218,12 @@ class NotificationService:
         self,
         phone: str,
         user_nick_name: str,
-        cs_idx: int
+        counselor_code: str
     ) -> Dict[str, Any]:
         """상담사 접속 알림"""
-        msg = f"#{user_nick_name} 선생님 현재 상담가능 합니다.\n\n접속 알림을 해둔 다른 고객님이 계시므로\n상담을 원하시면 서둘러주세요.\n*해당 알림은 1회성 알림으로\n다시 접속알림이 필요하신 분은 재설정 해주세요."
-        pc_link = f"https://sajutarot.com/app/cs/cs_detail?idx={cs_idx}"
-        mo_link = f"https://sajutarot.com/app/cs/cs_detail?idx={cs_idx}"
+        msg = f"#{{사주로 상담사 접속 알림 안내}}\n\n{user_nick_name} 선생님 현재 상담가능 합니다.\n\n접속 알림을 해둔 다른 고객님이 계시므로\n상담을 원하시면 서둘러주세요.\n*해당 알림은 1회성 알림으로\n다시 접속알림이 필요하신 분은 재설정 해주세요."
+        pc_link = f"https://www.sajuline.com/counselor/{counselor_code}"
+        mo_link = f"https://www.sajuline.com/counselor/{counselor_code}"
         template_id = "50047"
 
         return await self._create_and_send(

@@ -28,6 +28,10 @@ jobs:
           chmod +x deploy.production.sh
           ./deploy.production.sh
 
+      - name: Setup Cron Scripts
+        run: |
+          chmod +x /data/www/new-sajuline/backend/scripts/cron/*.sh 2>/dev/null || true
+
       - name: Health Check
         run: |
           sleep 5
@@ -43,6 +47,10 @@ jobs:
           cd /data/www/new-sajuline/backend
           chmod +x deploy.development.sh
           ./deploy.development.sh
+
+      - name: Setup Cron Scripts
+        run: |
+          chmod +x /data/www/new-sajuline/backend/scripts/cron/*.sh 2>/dev/null || true
 
       - name: Health Check
         run: |
