@@ -97,7 +97,8 @@ def _create_mssql_engine():
 
     connect_args = {}
     if settings.mssql_driver.lower() == "pymssql":
-        connect_args = {"tds_version": "7.1", "login_timeout": 30, "timeout": settings.mssql_timeout}
+        tds_version = "7.0" if settings.is_production else "7.1"
+        connect_args = {"tds_version": tds_version, "login_timeout": 30, "timeout": settings.mssql_timeout}
 
     return create_engine(
         url,
