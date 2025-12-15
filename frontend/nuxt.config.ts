@@ -47,21 +47,35 @@ export default defineNuxtConfig({
       meta: [
         { charset: 'utf-8' },
         { name: 'viewport', content: 'width=device-width, initial-scale=1' },
-        { name: 'description', content: 'AI와 전문가의 하이브리드 사주 상담 플랫폼' },
+        // 네이버 서치어드바이저 사이트 소유권 인증
+        { name: 'naver-site-verification', content: '926ee2395de890ac6fdfbe5aed3c24022fa01f8a' },
+        // SEO 기본 메타태그 (네이버 권장: description 80-110자)
+        { name: 'description', content: '사주라인은 AI와 전문가의 하이브리드 사주 상담 플랫폼입니다. 타로, 사주, 신점 전문 상담사와 실시간 채팅 상담을 경험하세요. 정확한 운세 분석과 맞춤형 상담 서비스를 제공합니다.' },
+        { name: 'keywords', content: '사주, 타로, 신점, 운세, AI운세, 사주상담, 타로상담, 신점상담, 전문가상담, 실시간상담, 온라인점집, 사주라인' },
+        { name: 'author', content: '사주라인' },
+        { name: 'robots', content: 'index, follow' },
         { name: 'format-detection', content: 'telephone=no' },
         // PWA 호환 메타 (경고 제거)
         { name: 'mobile-web-app-capable', content: 'yes' },
 
-        // Open Graph 메타 태그 (소셜 미디어 공유 최적화)
+        // Open Graph 메타 태그 (네이버/카카오/페이스북 공유 최적화)
         { property: 'og:type', content: 'website' },
         { property: 'og:site_name', content: '사주라인' },
+        { property: 'og:title', content: '사주라인 - AI와 전문가의 사주 상담 플랫폼' },
+        { property: 'og:description', content: '타로, 사주, 신점 전문 상담사와 실시간 채팅 상담. 정확한 운세 분석과 맞춤형 상담 서비스.' },
+        { property: 'og:url', content: 'https://sajuline.com' },
+        { property: 'og:image', content: 'https://sajuline.com/images/og-image.jpg' },
         { property: 'og:locale', content: 'ko_KR' },
         { property: 'og:image:width', content: '1200' },
         { property: 'og:image:height', content: '630' },
+        { property: 'og:image:alt', content: '사주라인 - AI와 전문가의 사주 상담 플랫폼' },
 
         // Twitter Card 메타 태그
         { name: 'twitter:card', content: 'summary_large_image' },
         { name: 'twitter:site', content: '@sajuline' },
+        { name: 'twitter:title', content: '사주라인 - AI와 전문가의 사주 상담 플랫폼' },
+        { name: 'twitter:description', content: '타로, 사주, 신점 전문 상담사와 실시간 채팅 상담' },
+        { name: 'twitter:image', content: 'https://sajuline.com/images/og-image.jpg' },
 
         // 모바일 앱 메타 태그 (PWA 준비)
         { name: 'theme-color', content: '#1a1a1a' },
@@ -76,6 +90,15 @@ export default defineNuxtConfig({
         { rel: 'icon', type: 'image/png', sizes: '16x16', href: '/favicon-16x16.png' },
         { rel: 'manifest', href: '/site.webmanifest' }
       ]
+    }
+  },
+
+  // Google Analytics (@nuxt/scripts 활용)
+  scripts: {
+    registry: {
+      googleAnalytics: {
+        id: 'G-CH4RCKR1PP'
+      }
     }
   },
 

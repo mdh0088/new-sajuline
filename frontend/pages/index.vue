@@ -2,6 +2,9 @@
   <div class="min-h-screen bg-slate-950 text-white">
     <!-- 메인 콘텐츠 -->
     <main class="main-content">
+      <!-- SEO H1 태그 (시각적으로 숨김, 검색엔진용) -->
+      <h1 class="sr-only">사주라인 - AI와 전문가의 사주, 타로, 신점 상담 플랫폼</h1>
+
       <!-- 히어로 배너 -->
       <MainBannerCarousel />
 
