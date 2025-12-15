@@ -8,7 +8,7 @@ export default defineNuxtConfig({
   ssr: true,
   // 페이지 기반 라우팅 활성화 (명시)
   pages: true,
-  
+
   // 하이브리드 렌더링 전략 (즉시 적용 권장)
   routeRules: {
     // 정적 페이지는 빌드 시점에 프리렌더링 (개발 환경에서는 비활성화)
@@ -17,25 +17,25 @@ export default defineNuxtConfig({
       '/privacy': { prerender: true },
       '/provision': { prerender: true },
     } : {}),
-    
+
     // 동적 콘텐츠는 SWR(Stale-While-Revalidate) 캐싱
-    '/horoscope/**': { 
-      headers: { 
+    '/horoscope/**': {
+      headers: {
         'Cache-Control': 'max-age=3600' // 1시간 캐시
       },
       swr: 3600 // 1시간 스테일 허용
     },
-    '/chat/**': { 
+    '/chat/**': {
       headers: {
         'Cache-Control': 'no-cache' // 채팅은 실시간성 중요
       }
     },
-    
+
     // 사용자 프로필은 클라이언트 사이드 렌더링
     '/profile/**': { ssr: false },
     '/settings/**': { ssr: false }
   },
-  
+
   // 앱 전역 설정
   app: {
     head: {
@@ -51,18 +51,18 @@ export default defineNuxtConfig({
         { name: 'format-detection', content: 'telephone=no' },
         // PWA 호환 메타 (경고 제거)
         { name: 'mobile-web-app-capable', content: 'yes' },
-        
+
         // Open Graph 메타 태그 (소셜 미디어 공유 최적화)
         { property: 'og:type', content: 'website' },
         { property: 'og:site_name', content: '사주라인' },
         { property: 'og:locale', content: 'ko_KR' },
         { property: 'og:image:width', content: '1200' },
         { property: 'og:image:height', content: '630' },
-        
+
         // Twitter Card 메타 태그
         { name: 'twitter:card', content: 'summary_large_image' },
         { name: 'twitter:site', content: '@sajuline' },
-        
+
         // 모바일 앱 메타 태그 (PWA 준비)
         { name: 'theme-color', content: '#1a1a1a' },
         { name: 'apple-mobile-web-app-capable', content: 'yes' },
@@ -84,7 +84,7 @@ export default defineNuxtConfig({
     'notivue/notification.css',     // 기본 알림 스타일
     'notivue/animations.css'        // 알림 애니메이션
   ],
-  
+
   // 컴포넌트 자동 import 설정
   components: [
     {
@@ -217,7 +217,7 @@ export default defineNuxtConfig({
     // 서버 전용 (민감한 정보)
     apiSecret: process.env.API_SECRET,
     proxyTarget: process.env.NUXT_PROXY_TARGET,
-    
+
     // 클라이언트 공개 (브라우저에서 접근 가능)
     public: {
       apiBase: process.env.NUXT_PUBLIC_API_BASE,
@@ -225,7 +225,7 @@ export default defineNuxtConfig({
       naverClientId: process.env.NUXT_PUBLIC_NAVER_CLIENT_ID,
       siteUrl: process.env.NUXT_PUBLIC_SITE_URL,
       sentryDsn: process.env.NUXT_PUBLIC_SENTRY_DSN,
-      cdnBase: process.env.NUXT_PUBLIC_CDN_BASE 
+      cdnBase: process.env.NUXT_PUBLIC_CDN_BASE
     }
   },
 
@@ -256,11 +256,11 @@ export default defineNuxtConfig({
   nitro: {
     routeRules: {
       // 빌드 자산 장기 캐싱 (1년, 해시 기반 무효화)
-      '/_nuxt/**': {
-        headers: {
-          'Cache-Control': 'public, max-age=31536000, immutable'
-        }
-      },
+      // '/_nuxt/**': {
+      //   headers: {
+      //     'Cache-Control': 'public, max-age=31536000, immutable'
+      //   }
+      // },
       '/api/v1/**': {
         proxy: `${process.env.NUXT_PROXY_TARGET || 'http://localhost:8000'}/api/v1/**`
       },

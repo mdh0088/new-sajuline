@@ -7,8 +7,7 @@
     "dev": "nuxt dev",
     "generate": "nuxt generate",
     "preview": "nuxt preview",
-    "postinstall": "nuxt prepare",
-    "type-check": "vue-tsc --noEmit"
+    "postinstall": "nuxt prepare"
   },
   "dependencies": {
     "@element-plus/nuxt": "^1.1.4",
