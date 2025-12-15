@@ -25,6 +25,8 @@ jobs:
       - name: Deploy Admin Backend (Production)
         run: |
           cd /data/www/new-sajuline/admin-backend
+          git fetch origin
+          git reset --hard origin/main
           chmod +x deploy.production.sh
           ./deploy.production.sh
 
@@ -41,6 +43,8 @@ jobs:
       - name: Deploy Admin Backend (Development)
         run: |
           cd /data/www/new-sajuline/admin-backend
+          git fetch origin
+          git reset --hard origin/main
           chmod +x deploy.development.sh
           ./deploy.development.sh
 
