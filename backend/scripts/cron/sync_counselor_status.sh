@@ -10,7 +10,7 @@ SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 BACKEND_DIR="$(cd "$SCRIPT_DIR/../.." && pwd)"
 LOG_DIR="$BACKEND_DIR/logs"
 LOG_FILE="$LOG_DIR/cs_status_scheduler.log"
-API_URL="https://www.sajuline.com/api/v1/counselor/sync-status"
+API_URL="https://www.sajuline.com/api/v1/counselors/sync-status"
 MAX_LOG_SIZE=10485760  # 10MB
 
 # 로그 디렉토리 생성
