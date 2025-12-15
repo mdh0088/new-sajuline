@@ -237,9 +237,23 @@ async def request_payment(
             if not endpoint.endswith("/v1.0/payments/request"):
                 endpoint = f"{endpoint}/v1.0/payments/request"
             resp = await client.post(endpoint, json=body, headers=headers)
+
+            # Payletter 응답 로깅
+            log.info("Payletter API response",
+                     status_code=resp.status_code,
+                     response_body=resp.text,
+                     response_headers=dict(resp.headers),
+                     request_endpoint=endpoint,
+                     order_no=order_no)
+
             if resp.status_code != 200:
                 # PG 요청 실패시 payment 상태를 FAIL로 업데이트
                 from src.schemas.payment_schema import PaymentUpdate
+                log.error("Payletter API request failed",
+                         status_code=resp.status_code,
+                         response_body=resp.text,
+                         request_body=body,
+                         order_no=order_no)
                 try:
                     await payment_service.update_payment(
                         created_payment.payment_id,
