@@ -10,7 +10,7 @@ SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 BACKEND_DIR="$(cd "$SCRIPT_DIR/../.." && pwd)"
 LOG_DIR="$BACKEND_DIR/logs"
 LOG_FILE="$LOG_DIR/cs_status_scheduler.log"
-API_HOST="${API_HOST:-http://localhost:8000}"
+API_URL="http://127.0.0.1/api/v1/counselor/sync-status"
 MAX_LOG_SIZE=10485760  # 10MB
 
 # 로그 디렉토리 생성
@@ -27,8 +27,8 @@ fi
 # 타임스탬프
 TIMESTAMP=$(date "+%Y-%m-%d %H:%M:%S")
 
-# API 호출
-RESPONSE=$(curl -X POST "$API_HOST/api/v1/counselor/sync-status" \
+# API 호출 (nginx proxy 경유)
+RESPONSE=$(curl -X POST "$API_URL" \
   -H "Content-Type: application/json" \
   --max-time 30 \
   -s -w "\nHTTP_CODE:%{http_code}" 2>&1)
