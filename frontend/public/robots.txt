@@ -1,43 +1,62 @@
 # 사주라인 robots.txt
+# 최종 수정: 2025-12-15
 
-# 모든 검색엔진 크롤러 기본 규칙
-User-Agent: *
-
-# 인증 및 회원 전용 페이지 차단
+# =============================================
+# 네이버 검색로봇 (Yeti, Naverbot) - 명시적 허용
+# =============================================
+User-Agent: Yeti
+Allow: /
 Disallow: /login
 Disallow: /signup/
 Disallow: /auth/
 Disallow: /user/
 Disallow: /counselor/mypage
-
-# 문의 작성 페이지 차단
 Disallow: /cs/write
 Disallow: /cs/inquiries/
-
-# API 엔드포인트 차단
 Disallow: /api/
-
-# 관리자 페이지 차단
 Disallow: /admin/
 
-# 허용할 공개 페이지
+User-Agent: Naverbot
 Allow: /
-Allow: /categories
-Allow: /counselor/
-Allow: /events
-Allow: /point
-Allow: /point/guide
-Allow: /mileageshop
-Allow: /reviews
-Allow: /notices
-Allow: /apply
-Allow: /search
-Allow: /membership/
-Allow: /privacy
-Allow: /provision
+Disallow: /login
+Disallow: /signup/
+Disallow: /auth/
+Disallow: /user/
+Disallow: /counselor/mypage
+Disallow: /cs/write
+Disallow: /cs/inquiries/
+Disallow: /api/
+Disallow: /admin/
+
+# =============================================
+# 구글 검색로봇 (Googlebot)
+# =============================================
+User-Agent: Googlebot
+Allow: /
+Disallow: /login
+Disallow: /signup/
+Disallow: /auth/
+Disallow: /user/
+Disallow: /counselor/mypage
+Disallow: /cs/write
+Disallow: /cs/inquiries/
+Disallow: /api/
+Disallow: /admin/
+
+# =============================================
+# 기타 모든 검색엔진 크롤러
+# =============================================
+User-Agent: *
+Allow: /
+Disallow: /login
+Disallow: /signup/
+Disallow: /auth/
+Disallow: /user/
+Disallow: /counselor/mypage
+Disallow: /cs/write
+Disallow: /cs/inquiries/
+Disallow: /api/
+Disallow: /admin/
 
 # 사이트맵 위치
 Sitemap: https://sajuline.com/sitemap.xml
-
-# 크롤링 속도 제한 (선택적, 서버 부하 관리)
-Crawl-delay: 1
