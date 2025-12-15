@@ -140,9 +140,10 @@ async def request_payment(
     """
     log = get_logger_with_request_id()
 
-    log.info("PAYMENT URL ", settings.payment_gateway_url)
-    log.info("PAYMENT KEY ", settings.payment_gateway_key)
-    log.info("PAYMENT CLIENT ID ", settings.payment_client_id)
+    log.info("PAYMENT CONFIG",
+             payment_url=settings.payment_gateway_url,
+             payment_key=settings.payment_gateway_key,
+             client_id=settings.payment_client_id)
 
     verify_user_role(current_user)
 
@@ -226,10 +227,6 @@ async def request_payment(
         "Content-Type": "application/json",
         "Authorization": f"PLKEY {settings.payment_gateway_key}",
     }
-
-    log.info("PAYMENT URL ", settings.payment_gateway_url)
-    log.info("PAYMENT KEY ", settings.payment_gateway_key)
-    log.info("PAYMENT CLIENT ID ", settings.payment_client_id)
 
     # Payletter 결제 요청
     try:
