@@ -74,6 +74,8 @@ instance.interceptors.request.use(
                 // FormData인 경우 JSON 변환하지 않음
                 if (config.data instanceof FormData) {
                     config.data.append('managerId', managerId);
+                    // FormData 전송 시 Content-Type 헤더 삭제 (axios가 자동으로 multipart/form-data 설정)
+                    delete config.headers['Content-Type'];
                 } else {
                     if (typeof config.data === 'string') {
                         config.data = JSON.parse(config.data); // JSON 문자열인 경우 객체로 변환
