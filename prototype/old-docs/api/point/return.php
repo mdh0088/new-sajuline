@@ -89,7 +89,7 @@ if($objJsonData->pgcode != 'virtualaccount'){
     if ($objJsonData->pay_type == "SUCCESS"){
         $ars -> charge_point($chk_data);
 
-        /*
+        
         $chk_data = array("IDX" => $objJsonData->custom_parameter);
         $user_info= $utilities->readOne('TBL_USER',$chk_data);
 
@@ -126,7 +126,7 @@ if($objJsonData->pgcode != 'virtualaccount'){
                 "RESULT_CODE"=>$result['code']
             );
             $sms->add_history($obj);
-        }*/
+        }
     }
 
     header('Location: /app/charge/return?charge_type=card&amount='.$u_point);

@@ -332,6 +332,8 @@ class NotificationService:
         """결제 완료"""
         msg = f"{user_nick_name} 고객님의 소중한 주문 안내드립니다.\n주문번호 : {order_no}\n주문상품 : {product_name}\n금액 : {amount}원\n포인트 : {point}"
         template_id = "50042"
+        pc_link = "https://www.sajuline.com/user/pointlog"
+        mo_link = "https://www.sajuline.com/user/pointlog"
 
         return await self._create_and_send(
             recipient_type=RecipientType.USER,
@@ -339,8 +341,8 @@ class NotificationService:
             phone=phone,
             template_id=template_id,
             msg_content=msg,
-            pc_link="",
-            mo_link=""
+            pc_link=pc_link,
+            mo_link=mo_link
         )
 
     async def user_join_alert(
