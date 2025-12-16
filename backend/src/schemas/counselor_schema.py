@@ -56,7 +56,8 @@ class CounselorResponse(CounselorBase):
     updated_at: Optional[datetime] = Field(None, description="수정 일시")
     last_login_at: Optional[datetime] = Field(None, description="마지막 로그인")
     withdrawn_at: Optional[datetime] = Field(None, description="탈퇴일시")
-    
+    m_state: Optional[str] = Field(None, description="TM60 멤버 상태 (1=대기중, 2=상담중, 3=부재중)")
+
     model_config = ConfigDict(from_attributes=True)
     
     @field_validator('specialty_types', mode='before')

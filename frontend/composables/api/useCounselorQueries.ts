@@ -156,7 +156,7 @@ const counselorApi = {
     if (params.is_important !== undefined) query.set('is_important', String(params.is_important))
     if (params.search) query.set('search', params.search)
 
-    const response = await $api<APIResponse<NoticeListItem[]>>(`/api/v1/notices?${query.toString()}`, { method: 'GET' })
+    const response = await $api<APIResponse<NoticeListItem[]>>(`/api/v1/notices/?${query.toString()}`, { method: 'GET' })
     if (!response.success) {
       throw new Error(response.error?.message || '공지사항을 불러오지 못했습니다.')
     }

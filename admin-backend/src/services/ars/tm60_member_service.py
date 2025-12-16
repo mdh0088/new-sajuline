@@ -22,4 +22,10 @@ class Tm60MemberService:
             return False
         return self.repo.update_state_by_code(m_code=m_code, m_state=m_state)
 
+    def update_tel_by_code(self, *, m_code: str, u_tel: str) -> bool:
+        """m_code로 tm60_member.u_tel 값을 갱신"""
+        if not m_code or not u_tel:
+            return False
+        return self.repo.update_tel_by_code(m_code=m_code, u_tel=u_tel)
+
 

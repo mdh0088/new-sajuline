@@ -43,7 +43,7 @@
           <textarea
             v-model="content"
             class="textarea"
-            placeholder="다른 회원님들께 도움이 될 수 있도록 솔직한 후기를 남겨주세요. (최소 20자)"
+            placeholder="다른 회원님들께 도움이 될 수 있도록 솔직한 후기를 남겨주세요."
             maxlength="500"
           ></textarea>
           <div class="char-count">{{ content.length }} / 500</div>
@@ -104,7 +104,7 @@ const availableTags = [
 
 // computed
 const isValidReview = computed(() => {
-  return rating.value > 0 && content.value.length >= 20
+  return rating.value > 0 && content.value.length >= 1
 })
 
 // 초기 데이터 감시

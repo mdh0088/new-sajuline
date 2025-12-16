@@ -60,6 +60,26 @@ class Tm60MemberRepository:
         self.db.rollback()
         return False
 
+    def update_tel_by_code(self, *, m_code: str, u_tel: str) -> bool:
+        """m_code로 tm60_member.u_tel 값을 갱신
+
+        Returns: 업데이트가 1건 이상이면 True
+        """
+        if not m_code or not u_tel:
+            return False
+        stmt = (
+            update(Tm60Member)
+            .where(Tm60Member.m_code == m_code)
+            .values(u_tel=u_tel)
+        )
+        result = self.db.execute(stmt)
+        affected = result.rowcount if hasattr(result, "rowcount") else 0
+        if affected and affected > 0:
+            self.db.commit()
+            return True
+        self.db.rollback()
+        return False
+
     def create(self, member_data: dict) -> Tm60Member:
         """새 tm60_member 생성 (flush만 수행, commit은 외부에서)"""
         member = Tm60Member(**member_data)

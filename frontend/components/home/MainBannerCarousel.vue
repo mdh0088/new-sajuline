@@ -135,7 +135,11 @@ const linkComponent = (item: BannerItem) => {
 }
 const componentHref = (item: BannerItem) => {
   if (!item.link_url) return undefined
-  return isAbsolute(item.link_url) ? item.link_url : undefined
+  // 절대 URL이거나, 상대 URL이지만 BLANK 타겟인 경우 href 반환
+  if (isAbsolute(item.link_url) || item.link_target === 'BLANK') {
+    return item.link_url
+  }
+  return undefined
 }
 const componentTo = (item: BannerItem) => {
   if (!item.link_url) return undefined
@@ -153,6 +157,7 @@ const handleClick = (item: BannerItem) => {
 .banner-track { display: flex; width: 100%; transition: transform 0.4s ease; }
 .banner-slide { flex: 0 0 100%; }
 .banner-link, .banner-slide img { display: block; width: 100%; height: auto; }
+a.banner-link { cursor: pointer; }
 .banner-dots { position: absolute; left: 0; right: 0; bottom: 8px; display: flex; gap: 6px; justify-content: center; }
 .dot { width: 6px; height: 6px; border-radius: 9999px; background: rgba(255,255,255,0.4); border: none; padding: 0; }
 .dot.active { background: rgba(255,255,255,0.95); }

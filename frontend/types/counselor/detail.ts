@@ -14,6 +14,7 @@ export interface CounselorPublic {
   before_amount?: string | null
   rating_avg?: number | null
   consultation_count?: number | null
+  m_state?: string | null // '1' 대기중, '2' 상담중, '3' 부재중
 }
 
 

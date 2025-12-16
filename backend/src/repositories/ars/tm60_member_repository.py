@@ -52,6 +52,38 @@ class Tm60MemberRepository:
         return await asyncio.to_thread(_sync_update)
 
     @logger.catch(reraise=True)
+    async def update_member_state_by_m_code(self, m_code: str, m_state: str) -> bool:
+        """
+        tm60_member.m_code 기준으로 m_state 업데이트
+        - m_code: 상담사 코드 (t_counselor.counselor_code와 매핑)
+        - m_state: '1' | '2' | '3' (1=대기중, 2=상담중, 3=부재중)
+        Returns: 업데이트 성공 여부
+        """
+        log = get_logger_with_request_id()
+        log.info("Updating tm60_member.m_state by m_code", m_code=m_code, m_state=m_state)
+
+        def _sync_update() -> bool:
+            try:
+                affected = (
+                    self.mssql_session.query(Tm60Member)
+                    .filter(Tm60Member.m_code == m_code)
+                    .update({Tm60Member.m_state: m_state}, synchronize_session=False)
+                )
+                if affected == 0:
+                    log.warning("tm60_member not found by m_code", m_code=m_code)
+                    self.mssql_session.rollback()
+                    return False
+                self.mssql_session.commit()
+                log.info("tm60_member.m_state updated by m_code", m_code=m_code, m_state=m_state)
+                return True
+            except Exception as e:
+                self.mssql_session.rollback()
+                log.warning("tm60_member update failed by m_code", m_code=m_code, error=str(e))
+                raise BaseAppException(f"ARS 멤버 상태 업데이트 실패: {str(e)}", status_code=500)
+
+        return await asyncio.to_thread(_sync_update)
+
+    @logger.catch(reraise=True)
     async def get_state_map_by_codes(self, m_codes: list[str], *, m_state: Optional[str] = None) -> dict[str, str]:
         """
         m_code 목록으로 tm60_member 조회하여 { m_code: m_state } 매핑 반환

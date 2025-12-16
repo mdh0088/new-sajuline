@@ -556,11 +556,13 @@ const notifySaved = () => notifySuccess('💾 변경 사항이 저장되었습�
 // 업데이트 뮤테이션 인스턴스
 const { mutateAsync: updateMypage } = useUpdateMypage()
 
-// 초기 상태값 동기화 (백엔드 counselor_status → 프론트 상태 코드)
+// 초기 상태값 동기화 (tm60_member.m_state → 프론트 상태 코드)
+// m_state: 1=대기중, 2=상담중, 3=부재중
 watchEffect(() => {
-  const cs = mypage.value?.counselor_status as string | undefined
-  if (cs === 'WAITING') status.value = 'ready'
-  else if (cs === 'ABSENT') status.value = 'away'
+  const mState = mypage.value?.m_state as string | undefined
+  if (mState === '1') status.value = 'ready'
+  else if (mState === '3') status.value = 'away'
+  // mState === '2' (상담중)은 UI에서 직접 선택 불가
 })
 
 const handleStatusChange = async (newStatus: 'ready' | 'away') => {
