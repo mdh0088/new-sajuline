@@ -10,7 +10,7 @@
           v-model="searchQuery"
           @keyup.enter="addSearchTag"
         >
-        <span class="search-icon"><img src="/images/search.png" alt="검색" width="20" height="20" /></span>
+        <span class="search-icon" @click="addSearchTag"><img src="/images/search.png" alt="검색" width="20" height="20" /></span>
       </div>
     </section>
 

@@ -230,6 +230,12 @@ class CounselorService:
             filename = upload_public_image(subdirectory="cs", content=content, original_name=profile_image.filename or "image.png")
             updates["profile_image_url"] = filename
 
+        # phone 변경 시 tm60_member.u_tel도 동기화
+        if form.phone and self.tm60_member_service is not None:
+            counselor_code = getattr(counselor, "counselor_code", None)
+            if counselor_code:
+                self.tm60_member_service.update_tel_by_code(m_code=counselor_code, u_tel=form.phone)
+
         updated = await self.counselor_repo.partial_update(counselor_id, **updates)
         if not updated:
             # 변경사항 없으면 현재 상태 반환

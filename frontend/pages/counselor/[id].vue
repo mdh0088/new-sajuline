@@ -580,7 +580,8 @@ const submitReview = async (data: { rating: number, tags: string[], content: str
     closeReviewModal()
   } catch (error: any) {
     console.error('후기 작성 실패:', error)
-    notifyError(error?.message || '후기 작성에 실패했습니다. 다시 시도해주세요.')
+    const errorMsg = String(error?.statusMessage || error?.message || error?.data?.message || '후기 작성에 실패했습니다. 다시 시도해주세요.')
+    notifyError(errorMsg)
   } finally {
     reviewSubmitting.value = false
   }
@@ -615,7 +616,9 @@ const submitInquiry = async (data: { content: string }) => {
     closeInquiryModal()
   } catch (error: any) {
     console.error('문의 작성 실패:', error)
-    notifyError(error?.message || '문의 작성에 실패했습니다. 다시 시도해주세요.')
+    // Nuxt createError는 statusMessage 사용, 일반 Error는 message 사용
+    const errorMsg = String(error?.statusMessage || error?.message || error?.data?.message || '문의 작성에 실패했습니다. 다시 시도해주세요.')
+    notifyError(errorMsg)
   } finally {
     inquirySubmitting.value = false
   }

@@ -46,13 +46,14 @@
         <!-- 콘텐츠 -->
         <div class="modal-content">
           <!-- 포인트 상담 버튼 -->
-          <button
+          <a
+            href="tel:0262090808"
             class="point-consult-button"
             @click="startPointConsult"
           >
             <span class="point-icon">P</span>
             <span>포인트 상담 (02-6209-0808)</span>
-          </button>
+          </a>
 
           <p class="point-info">
             포인트상담(선불) <strong>{{ resolvedAfterAmount }}P</strong>(30초)
@@ -91,13 +92,14 @@
 
             <div v-show="showPrepayDetails" class="prepay-details">
               <div class="prepay-content">
-                <button
+                <a
+                  :href="`tel:${phoneNumber060.replace(/-/g, '')}`"
                   class="phone-060-button"
                   @click="start060Consult"
                 >
                   <span class="phone-icon">📞</span>
                   <span>060상담 ({{ phoneNumber060 }})</span>
-                </button>
+                </a>
                 <p class="fee-info">
                   060상담(후불) <strong>{{ consultFee060 }}</strong>(30초)(vat별도)
                 </p>

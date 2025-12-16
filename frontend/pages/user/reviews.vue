@@ -269,7 +269,7 @@ onMounted(async () => {
 })
 
 const isValidReview = computed(() => {
-  return modalData.value.rating > 0 && modalData.value.content.length >= 20
+  return modalData.value.rating > 0 && modalData.value.content.length >= 1
 })
 
 const submitting = ref(false)

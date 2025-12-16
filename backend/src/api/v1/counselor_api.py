@@ -832,13 +832,14 @@ async def get_public_counselor_detail(
     counselor_code: str,
     counselor_repo: CounselorRepository = Depends(get_counselor_repository),
     review_repo: ConsultationReviewRepository = Depends(get_consultation_review_repository),
-    chatlog_service: Tm60ChatlogService = Depends(get_tm60_chatlog_service)
+    chatlog_service: Tm60ChatlogService = Depends(get_tm60_chatlog_service),
+    tm60_member_service: Tm60MemberService = Depends(get_tm60_member_service)
 ):
     """상담사 공개 상세 조회
     - 입력: counselor_code
     - 출력 필드: counselor_id, nickname, profile_image_url, introduction_short, greeting_message,
       career_info, keywords, work_time, specialty_types, after_amount, before_amount,
-      rating_avg(후기 기반), consultation_count(tm60_chatlog 기반)
+      rating_avg(후기 기반), consultation_count(tm60_chatlog 기반), m_state(tm60_member 상태)
     """
     log = get_logger_with_request_id()
     log.info("API: Public counselor detail", counselor_code=counselor_code)
@@ -853,10 +854,14 @@ async def get_public_counselor_detail(
     # 상담건수 (tm60_chatlog: m_code=counselor_code AND usepoint>0)
     consultation_count = await chatlog_service.get_consultation_count_by_m_code(counselor.counselor_code)
 
+    # tm60_member.m_state 조회 (1=대기중, 2=상담중, 3=부재중)
+    m_state = await tm60_member_service.get_state_by_code(counselor_code)
+
     # 응답 변환 및 보강
     resp = CounselorResponse.model_validate(counselor)
     resp.rating_avg = rating_avg
     resp.consultation_count = consultation_count
+    resp.m_state = m_state
 
     return ok(data=resp, message="상담사 공개 상세 조회 성공")
 
@@ -936,7 +941,7 @@ async def sync_counselor_status(
     """
     상담사 상태 동기화 API (스케줄러용)
     - tm60_member.m_state → t_counselor.counselor_status 매핑
-    - m_state: 1=WAITING, 2=ABSENT, 3=CONSULTING
+    - m_state: 1=WAITING(대기중), 2=CONSULTING(상담중), 3=ABSENT(부재중)
     - WAITING으로 변경된 상담사에 대해 t_notification_wait 기반 알림 발송
     - 로그는 scheduler.log에 별도 기록 (app.log 제외)
     """

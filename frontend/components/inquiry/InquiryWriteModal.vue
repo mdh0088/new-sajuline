@@ -11,7 +11,7 @@
           <textarea
             v-model="inquiryContent"
             class="textarea"
-            placeholder="문의하실 내용을 입력해주세요. (최소 10자)"
+            placeholder="문의하실 내용을 입력해주세요."
             maxlength="500"
           ></textarea>
           <div class="char-count">{{ inquiryContent.length }} / 500</div>
@@ -59,7 +59,7 @@ const inquiryContent = ref(props.initialContent)
 
 // computed
 const isValidInquiry = computed(() => {
-  return inquiryContent.value.length >= 10
+  return inquiryContent.value.length >= 1
 })
 
 // 초기 데이터 감시
