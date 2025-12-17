@@ -46,14 +46,14 @@
         <!-- 콘텐츠 -->
         <div class="modal-content">
           <!-- 포인트 상담 버튼 -->
-          <a
-            href="tel:0262090808"
+          <button
+            type="button"
             class="point-consult-button"
             @click="startPointConsult"
           >
             <span class="point-icon">P</span>
             <span>포인트 상담 (02-6209-0808)</span>
-          </a>
+          </button>
 
           <p class="point-info">
             포인트상담(선불) <strong>{{ resolvedAfterAmount }}P</strong>(30초)
@@ -128,6 +128,7 @@
 import { computed, ref, onMounted, onUnmounted } from 'vue'
 import { useCdn } from '~/composables/utils/useCdn'
 import { useUserPoints } from '~/composables/user/useUserPoints'
+import { useCounselorQueries } from '~/composables/api/useCounselorQueries'
 interface Counselor {
   code: string
   nickname: string
@@ -171,6 +172,19 @@ const displayUserPoints = computed(() => {
   if (typeof p === 'number' && p >= 0) return p
   return points.value
 })
+
+// 포인트 전화 상담 기록 API
+const { useCallByPoint } = useCounselorQueries()
+const callByPointMutation = useCallByPoint()
+
+// 플랫폼 타입 감지 (1=Mobile web, 2=Android, 3=iOS)
+const detectPlatformType = (): string => {
+  if (typeof navigator === 'undefined') return '1'
+  const ua = navigator.userAgent
+  if (ua.includes('Android')) return '2'
+  if (ua.includes('iPhone') || ua.includes('iPad') || ua.includes('iPod')) return '3'
+  return '1'
+}
 
 const resolvedCode = computed(() => {
   const c: any = props.counselor as any
@@ -221,8 +235,30 @@ const togglePrepayDetails = () => {
   showPrepayDetails.value = !showPrepayDetails.value
 }
 
-const startPointConsult = () => {
-  emit('startPointConsult', resolvedCode.value)
+const startPointConsult = async () => {
+  // 포인트 전화 상담 기록 API 호출 (전처리)
+  // API 성공 시에만 전화 연결 (레거시 call_by_point.php 로직과 동일)
+  try {
+    const platform = detectPlatformType()
+    const result = await callByPointMutation.mutateAsync({
+      counselor_code: resolvedCode.value,
+      platform
+    })
+
+    if (result.success) {
+      console.log('[PhoneConsultModal] Call by point record created successfully')
+      // API 성공 시에만 전화 연결
+      window.location.href = 'tel:0262090808'
+      emit('startPointConsult', resolvedCode.value)
+    } else {
+      console.warn('[PhoneConsultModal] Call by point API returned failure:', result.message)
+      alert('전화 연결 준비 중 오류가 발생했습니다. 다시 시도해주세요.')
+    }
+  } catch (error) {
+    // API 호출 실패 시 전화 연결하지 않음
+    console.error('[PhoneConsultModal] Failed to record call by point:', error)
+    alert('전화 연결 준비 중 오류가 발생했습니다. 다시 시도해주세요.')
+  }
 }
 
 const start060Consult = () => {
