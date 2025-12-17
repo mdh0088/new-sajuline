@@ -143,7 +143,9 @@ const componentHref = (item: BannerItem) => {
 }
 const componentTo = (item: BannerItem) => {
   if (!item.link_url) return undefined
-  return isAbsolute(item.link_url) ? undefined : item.link_url
+  // 절대 URL이거나 BLANK 타겟인 경우 'a' 태그를 사용하므로 to는 불필요
+  if (isAbsolute(item.link_url) || item.link_target === 'BLANK') return undefined
+  return item.link_url
 }
 
 const handleClick = (item: BannerItem) => {
