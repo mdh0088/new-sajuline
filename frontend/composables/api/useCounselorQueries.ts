@@ -214,7 +214,7 @@ const counselorApi = {
   // 사용자 → 상담사 문의 생성 (로그인 사용자)
   async createUserInquiry(payload: { counselor_id: string; content: string; category?: string; title?: string }) {
     const { $api } = useNuxtApp()
-    const response = await $api<APIResponse<any>>(`/api/v1/users/inquiries`, {
+    const response = await $api<APIResponse<any>>(`/api/v1/users/inquiries/counselor`, {
       method: 'POST',
       body: {
         counselor_id: payload.counselor_id,
