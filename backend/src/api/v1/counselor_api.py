@@ -146,10 +146,11 @@ def get_counselor_service(
     counselor_repo: CounselorRepository = Depends(get_counselor_repository),
     auth_service: AuthService = Depends(get_auth_service),
     tm60_member_service: Tm60MemberService = Depends(get_tm60_member_service),
-    review_repo: ConsultationReviewRepository = Depends(get_consultation_review_repository)
+    review_repo: ConsultationReviewRepository = Depends(get_consultation_review_repository),
+    notification_wait_service: NotificationWaitService = Depends(get_notification_wait_service)
 ) -> CounselorService:
     """상담사 서비스 의존성 주입"""
-    return CounselorService(counselor_repo, auth_service, tm60_member_service, review_repo)
+    return CounselorService(counselor_repo, auth_service, tm60_member_service, review_repo, notification_wait_service)
 
 
 @router.post(
