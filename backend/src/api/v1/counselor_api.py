@@ -18,6 +18,7 @@ from src.repositories.consultation_review_repository import ConsultationReviewRe
 from src.repositories.inquiry_repository import InquiryRepository
 from src.repositories.notification_repository import NotificationRepository
 from src.repositories.ars.tm60_member_repository import Tm60MemberRepository
+from src.repositories.ars.tm60_mobile_repository import Tm60MobileRepository
 from src.services.counselor_service import CounselorService
 from src.services.auth_service import AuthService, get_current_user, TokenPayload, KST
 from src.services.user_activity_log_service import UserActivityLogService
@@ -26,10 +27,12 @@ from src.services.inquiry_service import InquiryService
 from src.services.notification_service import NotificationService
 from src.services.ars.tm60_member_service import Tm60MemberService
 from src.services.ars.tm60_chatlog_service import Tm60ChatlogService
+from src.services.ars.tm60_mobile_service import Tm60MobileService
 from src.repositories.notification_wait_repository import NotificationWaitRepository
 from src.services.notification_wait_service import NotificationWaitService
 from src.schemas.auth_schema import LoginRequest, LoginResponse
 from src.schemas.counselor_schema import CounselorResponse, CounselorMypageUpdate, CounselorSearchItem
+from src.schemas.ars.tm60_mobile_schema import CallByPointRequest, CallByPointResponse
 from src.schemas.user_activity_log_schema import UserType, DeviceType
 from src.common.response import APIResponse, APIResponseBuilder, ok, fail
 from src.common.logging import logger, get_logger_with_request_id, get_scheduler_logger, scheduler_logging_context
@@ -111,6 +114,12 @@ def get_tm60_member_service(mssql = Depends(get_db_mssql)) -> Tm60MemberService:
 def get_tm60_chatlog_service() -> Tm60ChatlogService:
     for mssql in get_db_mssql():
         return Tm60ChatlogService(mssql)
+
+
+def get_tm60_mobile_service(mssql = Depends(get_db_mssql)) -> Tm60MobileService:
+    """TM60 Mobile 서비스 의존성 주입"""
+    repo = Tm60MobileRepository(mssql)
+    return Tm60MobileService(repo)
 
 
 def get_notification_wait_repository(
@@ -754,6 +763,84 @@ async def get_monthly_consultation_stats(
         "sum_usepoint": sum_usepoint
     }
     return ok(data=data, message="상담시간/포인트 합계 조회 성공")
+
+
+# =====================
+# 포인트 전화 상담 (ARS)
+# =====================
+
+@router.post(
+    "/call-by-point",
+    response_model=APIResponse[CallByPointResponse],
+    summary="포인트 전화 상담 기록",
+    description="포인트 전화 상담 시 통화 기록을 tm60_mobile 테이블에 저장합니다."
+)
+async def call_by_point(
+    request: Request,
+    payload: CallByPointRequest,
+    current_user: TokenPayload = Depends(get_current_user),
+    tm60_mobile_service: Tm60MobileService = Depends(get_tm60_mobile_service)
+) -> APIResponse[CallByPointResponse]:
+    """
+    포인트 전화 상담 전처리 API (레거시 call_by_point.php 대체)
+    - 사용자가 상담사에게 전화 연결 버튼을 클릭할 때 호출
+    - tm60_mobile 테이블에 통화 기록 INSERT
+    - platform: 1=Mobile web, 2=Android, 3=iOS
+    """
+    log = get_logger_with_request_id()
+    user_id = current_user.sub
+
+    log.info(
+        "API: Call by point initiated",
+        user_id=user_id,
+        counselor_code=payload.counselor_code,
+        platform=payload.platform
+    )
+
+    try:
+        # ARS 시스템에 통화 기록 저장
+        success = await tm60_mobile_service.register_call(
+            user_id=user_id,
+            counselor_code=payload.counselor_code,
+            platform=payload.platform
+        )
+
+        if success:
+            log.info(
+                "API: Call by point record created successfully",
+                user_id=user_id,
+                counselor_code=payload.counselor_code
+            )
+            response = CallByPointResponse(success=True, message="통화 기록이 저장되었습니다")
+            return ok(data=response, message="포인트 전화 상담 기록 성공")
+        else:
+            log.warning(
+                "API: Call by point record creation failed",
+                user_id=user_id,
+                counselor_code=payload.counselor_code
+            )
+            response = CallByPointResponse(success=False, message="통화 기록 저장에 실패했습니다")
+            return fail(message="포인트 전화 상담 기록 실패")
+
+    except BaseAppException as e:
+        log.error(
+            "API: Call by point error",
+            user_id=user_id,
+            counselor_code=payload.counselor_code,
+            error=str(e)
+        )
+        raise
+    except Exception as e:
+        log.error(
+            "API: Unexpected error during call by point",
+            user_id=user_id,
+            counselor_code=payload.counselor_code,
+            error=str(e)
+        )
+        raise BaseAppException(
+            f"포인트 전화 상담 기록 중 오류가 발생했습니다: {str(e)}",
+            status_code=500
+        )
 
 
 # =====================
