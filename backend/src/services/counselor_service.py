@@ -19,12 +19,20 @@ from src.repositories.consultation_review_repository import ConsultationReviewRe
 
 class CounselorService:
     """상담사 비즈니스 로직 서비스"""
-    
-    def __init__(self, counselor_repo: CounselorRepository, auth_service: AuthService, tm60_member_service: Tm60MemberService | None = None, review_repo: ConsultationReviewRepository | None = None):
+
+    def __init__(
+        self,
+        counselor_repo: CounselorRepository,
+        auth_service: AuthService,
+        tm60_member_service: Tm60MemberService | None = None,
+        review_repo: ConsultationReviewRepository | None = None,
+        notification_wait_service = None
+    ):
         self.counselor_repo = counselor_repo
         self.auth_service = auth_service
         self.tm60_member_service = tm60_member_service
         self.review_repo = review_repo
+        self.notification_wait_service = notification_wait_service
     
     async def authenticate_counselor(self, nickname: str, password: str) -> CounselorResponse:
         """
@@ -207,9 +215,17 @@ class CounselorService:
     async def update_mypage(self,
                             counselor_id: str,
                             updates: CounselorMypageUpdate) -> CounselorResponse:
-        """마이페이지 부분 업데이트 + 필요 시 MSSQL m_state 동기화"""
+        """마이페이지 부분 업데이트 + 필요 시 MSSQL m_state 동기화 + 부재중→대기중 변경 시 알림 발송"""
         log = get_logger_with_request_id()
         log.info("Updating counselor mypage", counselor_id=counselor_id, updates=updates.model_dump(exclude_none=True))
+
+        # 상태 변경 시 이전 상태 저장 (알림 발송 여부 판단용)
+        old_status = None
+        if updates.counselor_status is not None:
+            current_counselor = await self.counselor_repo.get_by_id(counselor_id)
+            if current_counselor:
+                # old_status가 enum 또는 문자열일 수 있으므로 문자열로 통일
+                old_status = current_counselor.counselor_status.value if hasattr(current_counselor.counselor_status, 'value') else current_counselor.counselor_status
 
         # MariaDB 부분 업데이트
         updated = await self.counselor_repo.partial_update(
@@ -240,10 +256,31 @@ class CounselorService:
 
         # 상태가 변경된 경우 MSSQL tm60_member.m_state 동기화 (counselor_code = m_code)
         if updates.counselor_status is not None:
+            new_status = updates.counselor_status.value
+
             if self.tm60_member_service is not None and counselor.counselor_code:
                 await self.tm60_member_service.sync_state_from_counselor_status(
-                    counselor.counselor_code, updates.counselor_status.value
+                    counselor.counselor_code, new_status
                 )
+
+            # 부재중 → 대기중 변경 시 알림 발송
+            if new_status == "WAITING" and old_status == "ABSENT":
+                if self.notification_wait_service:
+                    try:
+                        sent_count = await self.notification_wait_service.send_notifications_for_counselor(
+                            counselor_id
+                        )
+                        log.info(
+                            "Notifications sent for counselor status change (ABSENT -> WAITING)",
+                            counselor_id=counselor_id,
+                            sent_count=sent_count
+                        )
+                    except Exception as notify_err:
+                        log.warning(
+                            "Failed to send notifications but status update succeeded",
+                            counselor_id=counselor_id,
+                            error=str(notify_err)
+                        )
 
         response = CounselorResponse.model_validate(counselor)
         # m_state 조회
