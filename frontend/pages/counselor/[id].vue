@@ -235,9 +235,12 @@
           <span>채팅 상담</span>
         </button>
         -->
-        <button class="cta-button cta-primary" @click="openPhoneModal">
+        <button
+          :class="['cta-button', ctaButtonClass]"
+          @click="handleConsultClick"
+        >
           <span>📞</span>
-          <span>전화 상담</span>
+          <span>{{ ctaButtonText }}</span>
         </button>
       </div>
     </div>
@@ -281,6 +284,26 @@
       @close="closeInquiryModal"
       @submit="submitInquiry"
     />
+
+    <!-- 접속 알림 설정 모달 -->
+    <Teleport to="body">
+      <div v-if="showNotificationModal" class="notification-modal-backdrop" @click.self="closeNotificationModal">
+        <div class="notification-modal" @click.stop>
+          <div class="notification-modal-content">
+            <h3 class="notification-modal-title">{{ notificationModalTitle }}</h3>
+            <p class="notification-modal-desc" v-html="notificationModalDesc.replace('\n', '<br>')"></p>
+            <div class="notification-modal-buttons">
+              <button class="notification-button notification-button-primary" @click.stop="handleSetNotification">
+                🔔 알림 설정
+              </button>
+              <button class="notification-button notification-button-secondary" @click.stop="closeNotificationModal">
+                닫기
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </Teleport>
   </div>
 </template>
 
@@ -296,6 +319,7 @@ definePageMeta({
 import { useUserPoints } from '~/composables/user/useUserPoints'
 import { useNotify } from '~/composables/utils/useNotify'
 import { useCounselorQueries } from '~/composables/api/useCounselorQueries'
+import { useNotificationWaitQueries } from '~/composables/api/useNotificationWaitQueries'
 import { useBookmarkQueries } from '~/composables/api/useBookmarkQueries'
 import { useAuth } from '~/composables/auth/useAuth'
 import { useCdn } from '~/composables/utils/useCdn'
@@ -421,7 +445,12 @@ const showInquiryModal = ref(false)
 const inquirySubmitting = ref(false)
 
 // Notivue 알림
-const { notifySuccess, notifyError } = useNotify()
+const { notifySuccess, notifyError, notifyWarning } = useNotify()
+
+// 알림 설정 관련
+const { useRegisterNotificationWait } = useNotificationWaitQueries()
+const registerNotificationMutation = useRegisterNotificationWait()
+const showNotificationModal = ref(false)
 
 // PhoneConsultModal에 전달할 데이터 형식 변환
 const modalCounselorData = computed(() => {
@@ -436,6 +465,78 @@ const modalCounselorData = computed(() => {
     beforeAmount: (counselor.value as any).before_amount ?? null
   }
 })
+
+// 상담사 상태에 따른 버튼 처리
+// m_state: 1=대기중, 2=상담중, 3=부재중
+const counselorMState = computed(() => {
+  return ((counselor.value as any)?.m_state || '').trim()
+})
+
+const ctaButtonText = computed(() => {
+  const m = counselorMState.value
+  if (m === '1') return '전화 상담'
+  if (m === '2') return '상담중'
+  if (m === '3') return '부재중'
+  return '전화 상담'
+})
+
+const ctaButtonClass = computed(() => {
+  const m = counselorMState.value
+  if (m === '2') return 'cta-busy'
+  if (m === '3') return 'cta-away'
+  return 'cta-primary'
+})
+
+// 알림 모달 제목 (상담중/부재중 구분)
+const notificationModalTitle = computed(() => {
+  const m = counselorMState.value
+  if (m === '2') {
+    return `${counselor.value?.nickname} 선생님은 현재 상담중입니다`
+  }
+  return `${counselor.value?.nickname} 선생님은 현재 부재중입니다`
+})
+
+// 알림 모달 설명 (상담중/부재중 구분)
+const notificationModalDesc = computed(() => {
+  const m = counselorMState.value
+  if (m === '2') {
+    return '상담사 접속 알림을 설정하시면,\n상담 종료 후 카톡 알림톡을 통하여 안내드립니다.'
+  }
+  return '상담사 접속 알림을 설정하시면,\n상담 가능시 카톡 알림톡을 통하여 안내드립니다.'
+})
+
+// 상담 버튼 클릭 핸들러
+const handleConsultClick = () => {
+  const m = counselorMState.value
+  // 상담중 또는 부재중일 때는 알림 설정 모달 표시
+  if (m === '2' || m === '3') {
+    showNotificationModal.value = true
+    return
+  }
+  // 대기중일 때는 전화 상담 모달 표시
+  showPhoneModal.value = true
+}
+
+const closeNotificationModal = () => {
+  showNotificationModal.value = false
+}
+
+const handleSetNotification = async () => {
+  if (!isUser.value) {
+    notifyWarning('로그인이 필요합니다.')
+    closeNotificationModal()
+    return
+  }
+
+  try {
+    await registerNotificationMutation.mutateAsync(counselor.value!.counselor_id)
+    notifySuccess('알림 신청이 등록되었습니다.')
+  } catch (error: any) {
+    notifyError(error.message || '알림 신청에 실패했습니다.')
+  } finally {
+    closeNotificationModal()
+  }
+}
 
 // 메서드들
 const openPhoneModal = () => {
