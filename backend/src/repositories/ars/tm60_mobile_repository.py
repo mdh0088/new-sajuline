@@ -3,8 +3,11 @@ TM60 Mobile Repository 클래스
 ARS 시스템 연동 - MSSQL tm60_mobile 테이블 전용
 """
 import asyncio
-from datetime import datetime
+from datetime import datetime, timezone, timedelta
 from typing import Optional
+
+# 한국 표준시 (KST = UTC+9)
+KST = timezone(timedelta(hours=9))
 
 from sqlalchemy.orm import Session
 from sqlalchemy import text
@@ -50,7 +53,7 @@ class Tm60MobileRepository:
                     mb_id=mb_id,
                     mb_code=mb_code,
                     mb_platform=mb_platform,
-                    regdate=datetime.utcnow()
+                    regdate=datetime.now(KST)
                 )
 
                 self.mssql_session.add(tm60_mobile)
