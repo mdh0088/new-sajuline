@@ -49,11 +49,13 @@ class Tm60MobileRepository:
         def _sync_create_tm60_mobile() -> bool:
             """동기 MSSQL 작업"""
             try:
+                # MSSQL datetime은 timezone-naive만 지원하므로 tzinfo 제거
+                kst_now = datetime.now(KST).replace(tzinfo=None)
                 tm60_mobile = Tm60Mobile(
                     mb_id=mb_id,
                     mb_code=mb_code,
                     mb_platform=mb_platform,
-                    regdate=datetime.now(KST)
+                    regdate=kst_now
                 )
 
                 self.mssql_session.add(tm60_mobile)
