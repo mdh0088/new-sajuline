@@ -4,8 +4,11 @@ ConsultationReviewService - 비즈니스 로직
 from __future__ import annotations
 
 from datetime import datetime
+from zoneinfo import ZoneInfo
 
 from src.repositories.consultation_review_repository import ConsultationReviewRepository
+
+KST = ZoneInfo("Asia/Seoul")
 from src.schemas.consultation_review_schema import (
     ConsultationReviewItem,
     ConsultationReviewListParams,
@@ -64,7 +67,7 @@ class ConsultationReviewService:
             review.counselor_reply = payload.counselor_reply
             # 답변을 처음 작성하는 경우 counselor_replied_at 설정
             if review.counselor_replied_at is None and payload.counselor_reply:
-                review.counselor_replied_at = datetime.utcnow()
+                review.counselor_replied_at = datetime.now(KST)
 
         # is_visible 수정
         if payload.is_visible is not None:

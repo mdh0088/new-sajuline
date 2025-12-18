@@ -4,8 +4,11 @@ Data access logic for notification templates and logs
 """
 from typing import Optional
 from datetime import datetime
+from zoneinfo import ZoneInfo
 
 from sqlalchemy.ext.asyncio import AsyncSession
+
+KST = ZoneInfo("Asia/Seoul")
 from sqlalchemy import select, update
 
 from src.models.notification_template_model import NotificationTemplate
@@ -93,7 +96,7 @@ class NotificationRepository:
 
         # Set sent_at on success
         if send_status == SendStatus.SUCCESS:
-            update_dict["sent_at"] = datetime.utcnow()
+            update_dict["sent_at"] = datetime.now(KST)
 
         # Set failed_reason on failure
         if send_status == SendStatus.FAILED and failed_reason:

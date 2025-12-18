@@ -4,6 +4,9 @@
 from enum import Enum
 from datetime import datetime
 from typing import Optional
+from zoneinfo import ZoneInfo
+
+KST = ZoneInfo("Asia/Seoul")
 
 from sqlalchemy import String, DateTime, Integer, Text, Boolean, CheckConstraint, Index
 from sqlalchemy.orm import Mapped, mapped_column
@@ -118,13 +121,13 @@ class Banner(Base):
     created_at: Mapped[datetime] = mapped_column(
         DateTime,
         nullable=False,
-        default=datetime.utcnow,
+        default=lambda: datetime.now(KST),
         comment="생성일시",
     )
     updated_at: Mapped[Optional[datetime]] = mapped_column(
         DateTime,
         nullable=True,
-        onupdate=datetime.utcnow,
+        onupdate=lambda: datetime.now(KST),
         comment="수정일시",
     )
 

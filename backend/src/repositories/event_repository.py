@@ -3,10 +3,14 @@
 """
 from typing import Optional, Tuple, List
 from datetime import datetime
+from zoneinfo import ZoneInfo
+
 from sqlalchemy import select, and_, desc
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.common.logging import logger, get_logger_with_request_id
+
+KST = ZoneInfo("Asia/Seoul")
 from src.models.event_model import Event
 from src.models.event_participation_model import EventParticipationLog
 
@@ -28,7 +32,7 @@ class EventRepository:
         log = get_logger_with_request_id()
         log.info("Looking up active signup event EVT_1")
         
-        now = datetime.utcnow()
+        now = datetime.now(KST)
         stmt = select(Event).where(
             Event.event_code == "EVT_1",
             Event.is_active == True,
@@ -183,7 +187,7 @@ class EventRepository:
             reward_type=reward_type,
             reward_value=reward_value,
             participation_data=participation_data or {},
-            created_at=datetime.utcnow()
+            created_at=datetime.now(KST)
         )
         
         self.db.add(participation_log)

@@ -4,9 +4,12 @@ Kakao AlimTalk sending logic migrated from PHP
 """
 from typing import Optional, Dict, Any
 from datetime import datetime
+from zoneinfo import ZoneInfo
 import httpx
 
 from src.repositories.notification_repository import NotificationRepository
+
+KST = ZoneInfo("Asia/Seoul")
 from src.models.notification_log_model import RecipientType, SendStatus
 from src.models.notification_template_model import NotificationChannel
 from src.config.settings import settings
@@ -60,7 +63,7 @@ class NotificationService:
             raise ValidationError("Kakao AlimTalk configuration missing")
 
         # Generate message number (timestamp)
-        current_time = datetime.now().strftime("%Y%m%d%H%M%S")
+        current_time = datetime.now(KST).strftime("%Y%m%d%H%M%S")
         no = current_time
 
         # Prepare request data

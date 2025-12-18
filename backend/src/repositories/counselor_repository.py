@@ -3,10 +3,15 @@
 데이터 액세스 레이어 - 순수한 CRUD 작업만 담당
 """
 from typing import Optional, List, Dict
+from datetime import datetime
+from zoneinfo import ZoneInfo
+
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, update, and_, or_, func
 
 from src.models.counselor_model import Counselor
+
+KST = ZoneInfo("Asia/Seoul")
 from src.common.logging import logger, get_logger_with_request_id
 
 
@@ -66,15 +71,12 @@ class CounselorRepository:
     @logger.catch(reraise=True)
     async def update_last_login(self, counselor_id: str) -> bool:
         """마지막 로그인 시간 업데이트"""
-        from sqlalchemy import update
-        from datetime import datetime
-        
         stmt = (
             update(Counselor)
             .where(Counselor.counselor_id == counselor_id)
             .values(
-                last_login_at=datetime.utcnow(),
-                updated_at=datetime.utcnow()
+                last_login_at=datetime.now(KST),
+                updated_at=datetime.now(KST)
             )
             .execution_options(synchronize_session="evaluate")
         )

@@ -3,11 +3,14 @@
 상담사 접속 알림을 설정한 사용자 목록 관리
 """
 from datetime import datetime
+from zoneinfo import ZoneInfo
 
 from sqlalchemy import String, DateTime, Integer, Boolean, Index
 from sqlalchemy.orm import Mapped, mapped_column
 
 from src.core.database import Base
+
+KST = ZoneInfo("Asia/Seoul")
 
 
 class NotificationWait(Base):
@@ -49,7 +52,7 @@ class NotificationWait(Base):
     created_at: Mapped[datetime] = mapped_column(
         DateTime,
         nullable=False,
-        default=datetime.utcnow,
+        default=lambda: datetime.now(KST),
         comment="등록일"
     )
 

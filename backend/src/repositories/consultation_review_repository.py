@@ -5,8 +5,11 @@
 from typing import Optional, List
 import json
 from datetime import datetime
+from zoneinfo import ZoneInfo
 
 from sqlalchemy.ext.asyncio import AsyncSession
+
+KST = ZoneInfo("Asia/Seoul")
 from sqlalchemy import select, update, delete, and_, func
 from sqlalchemy.engine import Result
 
@@ -245,7 +248,7 @@ class ConsultationReviewRepository:
             log.warning("No fields to update", review_id=review_id)
             return False
         
-        update_values["updated_at"] = datetime.utcnow()
+        update_values["updated_at"] = datetime.now(KST)
         
         stmt = (
             update(ConsultationReview)
@@ -283,7 +286,7 @@ class ConsultationReviewRepository:
             log.warning("No fields to update (by session_id)")
             return False
 
-        update_values["updated_at"] = datetime.utcnow()
+        update_values["updated_at"] = datetime.now(KST)
 
         stmt = (
             update(ConsultationReview)
@@ -312,8 +315,8 @@ class ConsultationReviewRepository:
             .where(ConsultationReview.review_id == review_id)
             .values(
                 counselor_reply=counselor_reply,
-                counselor_replied_at=datetime.utcnow(),
-                updated_at=datetime.utcnow()
+                counselor_replied_at=datetime.now(KST),
+                updated_at=datetime.now(KST)
             )
             .execution_options(synchronize_session="evaluate")
         )
@@ -335,7 +338,7 @@ class ConsultationReviewRepository:
             .where(ConsultationReview.review_id == review_id)
             .values(
                 is_best=is_best,
-                updated_at=datetime.utcnow()
+                updated_at=datetime.now(KST)
             )
             .execution_options(synchronize_session="evaluate")
         )
@@ -354,7 +357,7 @@ class ConsultationReviewRepository:
             .where(ConsultationReview.review_id == review_id)
             .values(
                 like_count=ConsultationReview.like_count + 1,
-                updated_at=datetime.utcnow()
+                updated_at=datetime.now(KST)
             )
             .execution_options(synchronize_session="evaluate")
         )
@@ -373,7 +376,7 @@ class ConsultationReviewRepository:
             ))
             .values(
                 like_count=ConsultationReview.like_count - 1,
-                updated_at=datetime.utcnow()
+                updated_at=datetime.now(KST)
             )
             .execution_options(synchronize_session="evaluate")
         )
@@ -403,7 +406,7 @@ class ConsultationReviewRepository:
         stmt = (
             update(ConsultationReview)
             .where(ConsultationReview.review_id == review_id)
-            .values(is_visible=False, updated_at=datetime.utcnow())
+            .values(is_visible=False, updated_at=datetime.now(KST))
             .execution_options(synchronize_session="evaluate")
         )
         result = await self.db.execute(stmt)

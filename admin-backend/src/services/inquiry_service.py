@@ -5,8 +5,11 @@ from __future__ import annotations
 
 from typing import List
 from datetime import datetime
+from zoneinfo import ZoneInfo
 
 from src.repositories.inquiry_repository import InquiryRepository
+
+KST = ZoneInfo("Asia/Seoul")
 from src.schemas.inquiry_schema import (
     InquiryListParams,
     InquiryListResponse,
@@ -80,7 +83,7 @@ class InquiryService:
 
     async def update_counselor_inquiry_reply(self, payload: InquiryReplyUpdateRequest, *, admin_id: str | None = None) -> InquiryDetailResponse:
         # 답변 내용 업데이트 (+ answered_at 설정)
-        await self.repo.update_reply(payload.inquiry_id, payload.reply_content, answered_at=datetime.utcnow())
+        await self.repo.update_reply(payload.inquiry_id, payload.reply_content, answered_at=datetime.now(KST))
         return await self.get_counselor_inquiry_detail(payload.inquiry_id)
 
     async def update_counselor_inquiry(self, payload: InquiryUpdateRequest, *, admin_id: str | None = None) -> InquiryDetailResponse:
@@ -92,7 +95,7 @@ class InquiryService:
             values['content'] = payload.content
         if payload.reply_content is not None:
             values['reply_content'] = payload.reply_content
-            values['answered_at'] = datetime.utcnow()
+            values['answered_at'] = datetime.now(KST)
             # replied_by는 DB에 컬럼이 없으므로 제거
 
         if values:
@@ -153,7 +156,7 @@ class InquiryService:
         return InquiryUserDetailResponse(inquiry=inquiry_dict, user=user_dict)
 
     async def update_user_inquiry_reply(self, payload: InquiryReplyUpdateRequest, *, admin_id: str | None = None) -> InquiryUserDetailResponse:
-        await self.repo.update_reply(payload.inquiry_id, payload.reply_content, answered_at=datetime.utcnow())
+        await self.repo.update_reply(payload.inquiry_id, payload.reply_content, answered_at=datetime.now(KST))
         return await self.get_user_inquiry_detail(payload.inquiry_id)
 
     async def update_user_inquiry(self, payload: InquiryUpdateRequest, *, admin_id: str | None = None) -> InquiryUserDetailResponse:
@@ -164,7 +167,7 @@ class InquiryService:
             values['content'] = payload.content
         if payload.reply_content is not None:
             values['reply_content'] = payload.reply_content
-            values['answered_at'] = datetime.utcnow()
+            values['answered_at'] = datetime.now(KST)
             # replied_by는 DB에 컬럼이 없으므로 제거
 
         if values:
@@ -228,7 +231,7 @@ class InquiryService:
         return UserToCsDetailResponse(inquiry=inquiry_dict, user=user_dict, counselor=counselor_dict)
 
     async def update_user_to_cs_reply(self, payload: InquiryReplyUpdateRequest, *, admin_id: str | None = None) -> UserToCsDetailResponse:
-        await self.repo.update_reply(payload.inquiry_id, payload.reply_content, answered_at=datetime.utcnow())
+        await self.repo.update_reply(payload.inquiry_id, payload.reply_content, answered_at=datetime.now(KST))
         return await self.get_user_to_cs_detail(payload.inquiry_id)
 
     async def update_user_to_cs_inquiry(self, payload: InquiryUpdateRequest, *, admin_id: str | None = None) -> UserToCsDetailResponse:
@@ -239,7 +242,7 @@ class InquiryService:
             values['content'] = payload.content
         if payload.reply_content is not None:
             values['reply_content'] = payload.reply_content
-            values['answered_at'] = datetime.utcnow()
+            values['answered_at'] = datetime.now(KST)
             # replied_by는 DB에 컬럼이 없으므로 제거
 
         if values:

@@ -3,11 +3,14 @@
 """
 from datetime import datetime
 from typing import Optional
+from zoneinfo import ZoneInfo
 
 from sqlalchemy import String, DateTime, Integer, JSON, Index, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column
 
 from src.core.database import Base
+
+KST = ZoneInfo("Asia/Seoul")
 
 
 class EventParticipationLog(Base):
@@ -55,9 +58,9 @@ class EventParticipationLog(Base):
     
     # 타임스탬프
     created_at: Mapped[datetime] = mapped_column(
-        DateTime, 
-        nullable=False, 
-        default=datetime.utcnow, 
+        DateTime,
+        nullable=False,
+        default=lambda: datetime.now(KST),
         comment="참여 일시"
     )
     

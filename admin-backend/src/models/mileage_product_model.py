@@ -5,11 +5,14 @@ from __future__ import annotations
 
 from datetime import datetime
 from typing import Optional
+from zoneinfo import ZoneInfo
 
 from sqlalchemy import Boolean, DateTime, Index, Integer, String, Text
 from sqlalchemy.orm import Mapped, mapped_column
 
 from src.core.database import Base
+
+KST = ZoneInfo("Asia/Seoul")
 
 
 class MileageProduct(Base):
@@ -41,8 +44,8 @@ class MileageProduct(Base):
     description: Mapped[Optional[str]] = mapped_column(Text, nullable=True, comment="상품 설명")
 
     # 타임스탬프
-    created_at: Mapped[datetime] = mapped_column(DateTime, nullable=False, default=datetime.utcnow, comment="생성일시")
-    updated_at: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True, onupdate=datetime.utcnow, comment="수정일시")
+    created_at: Mapped[datetime] = mapped_column(DateTime, nullable=False, default=lambda: datetime.now(KST), comment="생성일시")
+    updated_at: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True, onupdate=lambda: datetime.now(KST), comment="수정일시")
 
     __table_args__ = (
         Index("idx_is_active_ord", "is_active", "ord"),

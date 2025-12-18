@@ -5,10 +5,13 @@ from __future__ import annotations
 
 from typing import List, Tuple, Optional
 from datetime import datetime
+from zoneinfo import ZoneInfo
 import httpx
 from sqlalchemy.orm import Session
 
 from src.repositories.payment_repository import PaymentRepository
+
+KST = ZoneInfo("Asia/Seoul")
 from src.repositories.ars.tm60_users_repository import Tm60UsersRepository
 from src.schemas.payment_schema import (
     PaymentListParams,
@@ -159,7 +162,7 @@ class PaymentService:
                 # 3. 응답 처리 - cancel_date가 있으면 성공
                 if "cancel_date" in response_data and response_data.get("cancel_date"):
                     # 취소 성공
-                    cancelled_at = datetime.utcnow()
+                    cancelled_at = datetime.now(KST)
                     updated_payment = await self.payment_repo.update_cancel_info(
                         payment_id=payment_id,
                         cancel_amount=payment.amount,

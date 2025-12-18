@@ -1,16 +1,17 @@
 """
 사용자 관련 Pydantic 스키마
 """
-from datetime import datetime, date, timedelta, timezone
+from datetime import datetime, date
 from typing import Optional, List, Literal
 from decimal import Decimal
+from zoneinfo import ZoneInfo
 from pydantic import BaseModel, EmailStr, Field, ConfigDict
 
 from src.models.user_model import JoinType, UserStatus, Gender
 from src.schemas.grade_schema import NextGradeInfo
 
-# 한국 시간대 (UTC+9) 정의
-KST = timezone(timedelta(hours=9))
+# 한국 표준시 (KST = UTC+9)
+KST = ZoneInfo("Asia/Seoul")
 
 
 class UserBase(BaseModel):
@@ -93,7 +94,7 @@ class UserMypageResponse(BaseModel):
     monthly_payment_total: Decimal = Field(..., ge=0, description="이번 달 결제 총액 (t_payment)")
     
     # 통계 요약 정보
-    data_updated_at: datetime = Field(default_factory=datetime.utcnow, description="데이터 조회 시점")
+    data_updated_at: datetime = Field(default_factory=lambda: datetime.now(KST), description="데이터 조회 시점")
 
 
 # 포인트 내역 스키마 (사용자 도메인 귀속)

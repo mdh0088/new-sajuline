@@ -2,12 +2,15 @@
 상담사 Repository - t_counselor 접근 (관리자 백엔드)
 """
 from typing import Optional, List, Tuple
+from datetime import datetime
+from zoneinfo import ZoneInfo
 
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, update, and_, or_, func, desc
-from datetime import datetime
 
 from src.models.counselor_model import Counselor
+
+KST = ZoneInfo("Asia/Seoul")
 
 
 class CounselorRepository:
@@ -53,7 +56,7 @@ class CounselorRepository:
         stmt = (
             update(Counselor)
             .where(Counselor.counselor_id == counselor_id)
-            .values(last_login_at=datetime.utcnow(), updated_at=datetime.utcnow())
+            .values(last_login_at=datetime.now(KST), updated_at=datetime.now(KST))
             .execution_options(synchronize_session="evaluate")
         )
         result = await self.db.execute(stmt)
@@ -76,7 +79,7 @@ class CounselorRepository:
         updates = {k: v for k, v in fields.items() if v is not None}
         if not updates:
             return False
-        updates["updated_at"] = datetime.utcnow()
+        updates["updated_at"] = datetime.now(KST)
         stmt = (
             update(Counselor)
             .where(Counselor.counselor_id == counselor_id)

@@ -4,11 +4,14 @@
 from datetime import datetime
 from typing import Optional, List, Dict, Any
 from enum import Enum
+from zoneinfo import ZoneInfo
 
 from sqlalchemy import String, DateTime, Integer, Boolean, Text, JSON, Index, CheckConstraint, ForeignKey
 from sqlalchemy.orm import Mapped, mapped_column
 
 from src.core.database import Base
+
+KST = ZoneInfo("Asia/Seoul")
 
 
 class NoticeType(str, Enum):
@@ -111,13 +114,13 @@ class Notice(Base):
     created_at: Mapped[datetime] = mapped_column(
         DateTime,
         nullable=False,
-        default=datetime.utcnow,
+        default=lambda: datetime.now(KST),
         comment="생성일시"
     )
     updated_at: Mapped[Optional[datetime]] = mapped_column(
         DateTime,
         nullable=True,
-        onupdate=datetime.utcnow,
+        onupdate=lambda: datetime.now(KST),
         comment="수정일시"
     )
     

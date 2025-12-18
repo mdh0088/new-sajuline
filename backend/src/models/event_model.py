@@ -4,11 +4,14 @@
 from enum import Enum
 from datetime import datetime
 from typing import Optional
+from zoneinfo import ZoneInfo
 
 from sqlalchemy import String, DateTime, Integer, Text, Boolean, CheckConstraint, Index, JSON
 from sqlalchemy.orm import Mapped, mapped_column
 
 from src.core.database import Base
+
+KST = ZoneInfo("Asia/Seoul")
 
 
 class EventType(str, Enum):
@@ -126,15 +129,15 @@ class Event(Base):
     
     # 타임스탬프
     created_at: Mapped[datetime] = mapped_column(
-        DateTime, 
-        nullable=False, 
-        default=datetime.utcnow, 
+        DateTime,
+        nullable=False,
+        default=lambda: datetime.now(KST),
         comment="생성 일시"
     )
     updated_at: Mapped[Optional[datetime]] = mapped_column(
-        DateTime, 
-        nullable=True, 
-        onupdate=datetime.utcnow, 
+        DateTime,
+        nullable=True,
+        onupdate=lambda: datetime.now(KST),
         comment="수정 일시"
     )
     
