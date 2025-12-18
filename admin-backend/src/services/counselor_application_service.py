@@ -2,8 +2,11 @@
 관리자 백엔드 상담사 신청 서비스: 목록 조회/상세 수정(+S3 업로드)/상담사 전환
 """
 from typing import Tuple, List, Optional
-from datetime import datetime
+from datetime import datetime, timezone, timedelta
 from json import loads
+
+# 한국 표준시 (KST = UTC+9)
+KST = timezone(timedelta(hours=9))
 
 from fastapi import UploadFile
 from sqlalchemy.orm import Session
@@ -306,6 +309,8 @@ class CounselorApplicationService:
             except Exception:
                 return text.encode('utf-8')
 
+        # MSSQL datetime은 timezone-naive만 지원하므로 tzinfo 제거
+        kst_now = datetime.now(KST).replace(tzinfo=None)
         tm60_data = {
             "m_code": request.counselor_code,  # counselor_code -> m_code
             "m_name": encode_euckr(request.name),  # name -> m_name (euc-kr 바이트)
@@ -317,6 +322,7 @@ class CounselorApplicationService:
             "m_id": request.email,  # email -> m_id
             "m_state": "3",  # 디폴트 상태값
             "m_prate": 800,  # 디폴트 요율
+            "m_fdate": kst_now,  # 가입일 (KST)
         }
 
         counselor = None

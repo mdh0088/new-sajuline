@@ -4,7 +4,10 @@ ARS 시스템 연동 - MSSQL tm60_users 테이블 전용
 """
 import asyncio
 from typing import Optional
-from datetime import datetime
+from datetime import datetime, timezone, timedelta
+
+# 한국 표준시 (KST = UTC+9)
+KST = timezone(timedelta(hours=9))
 
 from sqlalchemy.orm import Session
 
@@ -32,13 +35,15 @@ class Tm60UsersRepository:
         def _sync_create_tm60() -> bool:
             """동기 MSSQL 작업"""
             try:
+                # MSSQL datetime은 timezone-naive만 지원하므로 tzinfo 제거
+                kst_now = datetime.now(KST).replace(tzinfo=None)
                 tm60_user = Tm60Users(
                     u_id=user_id,
                     u_tel=phone or "",
                     u_kname=nickname or "",  # 빈 문자열로 처리
                     u_passwd="",  # 빈 문자열 (프로토타입 로직 따름)
-                    regdate=datetime.utcnow(),
-                    u_fdate=datetime.utcnow(),
+                    regdate=kst_now,
+                    u_fdate=kst_now,
                     # 기본값들은 모델에서 자동 설정됨
                 )
                 
