@@ -5,12 +5,15 @@ from enum import Enum
 from datetime import datetime
 from typing import Optional
 from decimal import Decimal
+from zoneinfo import ZoneInfo
 
 from sqlalchemy import String, DateTime, Boolean, Integer, Text, DECIMAL, CheckConstraint, Index
 from sqlalchemy.dialects.mysql import LONGTEXT
 from sqlalchemy.orm import Mapped, mapped_column
 
 from src.core.database import Base
+
+KST = ZoneInfo("Asia/Seoul")
 
 
 class CounselorStatus(str, Enum):
@@ -73,8 +76,8 @@ class Counselor(Base):
     approved_at: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True, comment="승인일시")
 
     # 타임스탬프
-    created_at: Mapped[datetime] = mapped_column(DateTime, nullable=False, default=datetime.utcnow, comment="생성 일시")
-    updated_at: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True, onupdate=datetime.utcnow, comment="수정 일시")
+    created_at: Mapped[datetime] = mapped_column(DateTime, nullable=False, default=lambda: datetime.now(KST), comment="생성 일시")
+    updated_at: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True, onupdate=lambda: datetime.now(KST), comment="수정 일시")
     last_login_at: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True, comment="마지막 로그인 일시")
     withdrawn_at: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True, comment="탈퇴일시")
 

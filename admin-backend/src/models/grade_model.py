@@ -4,6 +4,7 @@
 from datetime import datetime
 from typing import Optional, Dict, Any
 from decimal import Decimal
+from zoneinfo import ZoneInfo
 
 from sqlalchemy import (
     String,
@@ -19,6 +20,8 @@ from sqlalchemy.orm import Mapped, mapped_column
 from sqlalchemy.types import JSON
 
 from src.core.database import Base
+
+KST = ZoneInfo("Asia/Seoul")
 
 
 class Grade(Base):
@@ -54,8 +57,8 @@ class Grade(Base):
     is_active: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True, comment="활성화 여부")
 
     # 타임스탬프
-    created_at: Mapped[datetime] = mapped_column(DateTime, nullable=False, default=datetime.utcnow, comment="생성일시")
-    updated_at: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True, onupdate=datetime.utcnow, comment="수정일시")
+    created_at: Mapped[datetime] = mapped_column(DateTime, nullable=False, default=lambda: datetime.now(KST), comment="생성일시")
+    updated_at: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True, onupdate=lambda: datetime.now(KST), comment="수정일시")
 
     __table_args__ = (
         Index("uk_grade_level", "grade_level", unique=True),

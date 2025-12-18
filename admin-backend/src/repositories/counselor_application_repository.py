@@ -3,11 +3,14 @@
 """
 from typing import Optional, List, Tuple
 from datetime import datetime
+from zoneinfo import ZoneInfo
 
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, update, and_, or_, func, desc
 
 from src.models.counselor_application_model import CounselorApplication
+
+KST = ZoneInfo("Asia/Seoul")
 
 
 class CounselorApplicationRepository:
@@ -49,7 +52,7 @@ class CounselorApplicationRepository:
         updates = {k: v for k, v in fields.items() if v is not None}
         if not updates:
             return False
-        updates["updated_at"] = datetime.utcnow()
+        updates["updated_at"] = datetime.now(KST)
         stmt = (
             update(CounselorApplication)
             .where(CounselorApplication.application_id == application_id)

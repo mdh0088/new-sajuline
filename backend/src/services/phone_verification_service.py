@@ -7,6 +7,7 @@ import uuid
 import redis.asyncio as redis
 from typing import Optional, Dict
 from datetime import datetime, timedelta
+from zoneinfo import ZoneInfo
 
 from src.common.utils.kcp_utils import (
     make_hash_data,
@@ -21,6 +22,8 @@ from src.common.utils.kcp_utils import (
     normalize_phone_number
 )
 from src.common.logging import get_logger_with_request_id
+
+KST = ZoneInfo("Asia/Seoul")
 from src.exceptions.custom_exceptions import ValidationError
 
 
@@ -64,7 +67,7 @@ class PhoneVerificationService:
             "phone_number": phone_number,
             "status": "initiated",
             "return_url": return_url,  # Fallback 리다이렉트용 URL 저장
-            "created_at": datetime.utcnow().isoformat()
+            "created_at": datetime.now(KST).isoformat()
         }
 
         await self._save_session(session_id, session_data, ttl=900)
@@ -135,7 +138,7 @@ class PhoneVerificationService:
             "status": "initiated",
             "purpose": "find_id",  # ID 찾기 용도 표시
             "return_url": return_url,
-            "created_at": datetime.utcnow().isoformat()
+            "created_at": datetime.now(KST).isoformat()
         }
 
         await self._save_session(session_id, session_data, ttl=900)
@@ -207,7 +210,7 @@ class PhoneVerificationService:
             "purpose": "find_password",  # 비밀번호 찾기 용도 표시
             "user_id": user_id,  # 사용자 ID 저장
             "return_url": return_url,
-            "created_at": datetime.utcnow().isoformat()
+            "created_at": datetime.now(KST).isoformat()
         }
 
         await self._save_session(session_id, session_data, ttl=900)
@@ -326,7 +329,7 @@ class PhoneVerificationService:
         di = decrypted_data.get('di_no', '')
 
         # 6. 인증 플래그 생성 (XOR 암호화)
-        phone_chk = xor_encrypt(f"{phone}_{ci}_{datetime.utcnow().timestamp()}")
+        phone_chk = xor_encrypt(f"{phone}_{ci}_{datetime.now(KST).timestamp()}")
 
         # 7. 세션 업데이트 (검증 완료 상태로)
         session_data.update({
@@ -338,7 +341,7 @@ class PhoneVerificationService:
             "verified_name": name,
             "verified_birth_date": birth_date,
             "verified_gender": gender,
-            "verified_at": datetime.utcnow().isoformat()
+            "verified_at": datetime.now(KST).isoformat()
         })
 
         await self._save_session(ordr_idxx, session_data, ttl=1800)  # 30분 연장
@@ -403,7 +406,7 @@ class PhoneVerificationService:
 
             # 유효기간 확인 (30분)
             token_time = datetime.fromtimestamp(timestamp)
-            if datetime.utcnow() - token_time > timedelta(minutes=30):
+            if datetime.now(KST) - token_time > timedelta(minutes=30):
                 log.warning("phone_chk expired")
                 return False
 

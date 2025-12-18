@@ -4,8 +4,11 @@
 """
 from typing import Optional, List, Tuple
 from datetime import datetime, timedelta
+from zoneinfo import ZoneInfo
 
 from sqlalchemy.ext.asyncio import AsyncSession
+
+KST = ZoneInfo("Asia/Seoul")
 from sqlalchemy import select, update, delete, and_, func
 from sqlalchemy.engine import Result
 
@@ -175,7 +178,7 @@ class UserRepository:
             .where(User.user_id == user_id)
             .values(
                 failed_login_count=User.failed_login_count + 1,
-                updated_at=datetime.utcnow()
+                updated_at=datetime.now(KST)
             )
             .execution_options(synchronize_session="evaluate")
         )
@@ -191,7 +194,7 @@ class UserRepository:
             .values(
                 failed_login_count=0,
                 locked_until=None,
-                updated_at=datetime.utcnow()
+                updated_at=datetime.now(KST)
             )
             .execution_options(synchronize_session="evaluate")
         )
@@ -205,8 +208,8 @@ class UserRepository:
             update(User)
             .where(User.user_id == user_id)
             .values(
-                last_login_at=datetime.utcnow(),
-                updated_at=datetime.utcnow()
+                last_login_at=datetime.now(KST),
+                updated_at=datetime.now(KST)
             )
             .execution_options(synchronize_session="evaluate")
         )
@@ -224,8 +227,8 @@ class UserRepository:
             .where(User.user_id == user_id)
             .values(
                 password_hash=password_hash,
-                password_changed_at=datetime.utcnow(),
-                updated_at=datetime.utcnow()
+                password_changed_at=datetime.now(KST),
+                updated_at=datetime.now(KST)
             )
             .execution_options(synchronize_session="evaluate")
         )
@@ -253,7 +256,7 @@ class UserRepository:
             .where(User.user_id == user_id)
             .values(
                 mileage_point=new_mileage_point,
-                updated_at=datetime.utcnow()
+                updated_at=datetime.now(KST)
             )
             .execution_options(synchronize_session="evaluate")
         )
@@ -357,8 +360,8 @@ class UserRepository:
                 nickname=None,
                 phone=None,
                 user_status=UserStatus.WITHDRAWN,
-                withdrawn_at=datetime.utcnow(),
-                updated_at=datetime.utcnow()
+                withdrawn_at=datetime.now(KST),
+                updated_at=datetime.now(KST)
             )
             .execution_options(synchronize_session="evaluate")
         )
@@ -382,8 +385,8 @@ class UserRepository:
             .where(User.user_id == user_id)
             .values(
                 user_status=UserStatus.WITHDRAWN,
-                withdrawn_at=datetime.utcnow(),
-                updated_at=datetime.utcnow()
+                withdrawn_at=datetime.now(KST),
+                updated_at=datetime.now(KST)
             )
             .execution_options(synchronize_session="evaluate")
         )
@@ -413,7 +416,7 @@ class UserRepository:
         log.info("Checking recent withdrawal by phone", phone=phone, months=months)
 
         # 제한 기간 계산 (현재 시점 기준 N개월 전)
-        cutoff_date = datetime.utcnow() - timedelta(days=months * 30)
+        cutoff_date = datetime.now(KST) - timedelta(days=months * 30)
 
         # 해당 전화번호로 제한 기간 내 탈퇴 이력 조회 (가장 최근 탈퇴)
         stmt = (
@@ -433,7 +436,7 @@ class UserRepository:
         if user_out:
             # 재가입 가능 일자 계산
             rejoin_available_date = user_out.created_at + timedelta(days=months * 30)
-            remaining_days = (rejoin_available_date - datetime.utcnow()).days
+            remaining_days = (rejoin_available_date - datetime.now(KST)).days
             remaining_days = max(0, remaining_days)  # 음수 방지
 
             log.info("Recent withdrawal found",

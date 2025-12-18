@@ -5,11 +5,14 @@ from enum import Enum
 from datetime import datetime
 from typing import Optional
 from decimal import Decimal
+from zoneinfo import ZoneInfo
 
 from sqlalchemy import String, DateTime, Integer, Text, DECIMAL, Index, BigInteger
 from sqlalchemy.orm import Mapped, mapped_column
 
 from src.core.database import Base
+
+KST = ZoneInfo("Asia/Seoul")
 
 
 class TransactionType(str, Enum):
@@ -111,9 +114,9 @@ class PointTransaction(Base):
     
     # 타임스탬프
     created_at: Mapped[datetime] = mapped_column(
-        DateTime, 
-        nullable=False, 
-        default=datetime.utcnow, 
+        DateTime,
+        nullable=False,
+        default=lambda: datetime.now(KST),
         comment="거래 일시"
     )
     

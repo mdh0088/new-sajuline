@@ -3,12 +3,15 @@
 """
 from datetime import datetime
 from typing import Optional, Any
+from zoneinfo import ZoneInfo
 
 from sqlalchemy import String, DateTime, Boolean, Integer, Text
 from sqlalchemy.orm import Mapped, mapped_column
 from sqlalchemy.types import JSON
 
 from src.core.database import Base
+
+KST = ZoneInfo("Asia/Seoul")
 
 
 class Event(Base):
@@ -40,7 +43,7 @@ class Event(Base):
     # 컬럼명은 metadata 이지만, SQLAlchemy Base.metadata 충돌을 피하기 위해 속성명은 metadata_json으로 사용
     metadata_json: Mapped[Optional[Any]] = mapped_column("metadata", JSON, nullable=True, comment="추가 데이터")
 
-    created_at: Mapped[datetime] = mapped_column(DateTime, nullable=False, default=datetime.utcnow)
-    updated_at: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True, onupdate=datetime.utcnow)
+    created_at: Mapped[datetime] = mapped_column(DateTime, nullable=False, default=lambda: datetime.now(KST))
+    updated_at: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True, onupdate=lambda: datetime.now(KST))
 
 

@@ -3,11 +3,14 @@
 """
 from datetime import datetime
 from typing import Optional
+from zoneinfo import ZoneInfo
 
 from sqlalchemy import String, DateTime, Boolean, Integer, CheckConstraint, Index
 from sqlalchemy.orm import Mapped, mapped_column
 
 from src.core.database import Base
+
+KST = ZoneInfo("Asia/Seoul")
 
 
 class User(Base):
@@ -46,8 +49,8 @@ class User(Base):
     locked_until: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True, comment="계정 잠금 해제 시간")
 
     # 타임스탬프
-    created_at: Mapped[datetime] = mapped_column(DateTime, nullable=False, default=datetime.utcnow, comment="생성일시")
-    updated_at: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True, onupdate=datetime.utcnow, comment="수정일시")
+    created_at: Mapped[datetime] = mapped_column(DateTime, nullable=False, default=lambda: datetime.now(KST), comment="생성일시")
+    updated_at: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True, onupdate=lambda: datetime.now(KST), comment="수정일시")
     last_login_at: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True, comment="마지막 로그인")
     withdrawn_at: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True, comment="탈퇴일시")
 

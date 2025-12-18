@@ -3,7 +3,11 @@
 """
 from typing import Optional
 from datetime import datetime
+from zoneinfo import ZoneInfo
+
 from sqlalchemy.ext.asyncio import AsyncSession
+
+KST = ZoneInfo("Asia/Seoul")
 from sqlalchemy import select, desc, func
 
 from src.common.logging import logger, get_logger_with_request_id
@@ -56,7 +60,7 @@ class PointTransactionRepository:
             description=description,
             earn_rate=earn_rate,
             expires_at=expires_at,
-            created_at=datetime.utcnow()
+            created_at=datetime.now(KST)
         )
         
         self.db.add(transaction)

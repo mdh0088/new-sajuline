@@ -3,8 +3,11 @@
 """
 from typing import Optional, Tuple, List
 from datetime import datetime
+from zoneinfo import ZoneInfo
 
 from src.repositories.event_repository import EventRepository
+
+KST = ZoneInfo("Asia/Seoul")
 from src.repositories.point_transaction_repository import PointTransactionRepository
 from src.repositories.ars.tm60_users_repository import Tm60UsersRepository
 from src.services.ars.tm60_users_service import Tm60UsersService
@@ -104,7 +107,7 @@ class EventService:
                 reward_type=event.reward_type,
                 reward_value=event.reward_value,
                 participation_data={
-                    "signup_date": datetime.utcnow().isoformat(),
+                    "signup_date": datetime.now(KST).isoformat(),
                     "point_balance_after": new_balance
                 }
             )

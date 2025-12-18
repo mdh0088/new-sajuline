@@ -5,8 +5,11 @@
 from typing import Optional, List, Tuple
 from datetime import datetime, timedelta
 from decimal import Decimal
+from zoneinfo import ZoneInfo
 
 from sqlalchemy.ext.asyncio import AsyncSession
+
+KST = ZoneInfo("Asia/Seoul")
 from sqlalchemy import select, update, delete, and_, or_, func
 from sqlalchemy.engine import Result
 
@@ -154,7 +157,7 @@ class PaymentRepository:
         log.info("Getting this month total payment amount by user ID", user_id=user_id)
         
         # 이번 달 시작일과 끝일 계산
-        now = datetime.utcnow()
+        now = datetime.now(KST)
         start_of_month = datetime(now.year, now.month, 1)
         if now.month == 12:
             end_of_month = datetime(now.year + 1, 1, 1)
@@ -301,7 +304,7 @@ class PaymentRepository:
             log.warning("No fields to update", payment_id=payment_id)
             return False
 
-        update_values["updated_at"] = datetime.utcnow()
+        update_values["updated_at"] = datetime.now(KST)
         
         stmt = (
             update(Payment)
@@ -324,7 +327,7 @@ class PaymentRepository:
         
         update_values = {
             "payment_status": payment_status,
-            "updated_at": datetime.utcnow()
+            "updated_at": datetime.now(KST)
         }
         
         if pg_tid:
@@ -332,10 +335,10 @@ class PaymentRepository:
         
         # 결제 완료 시 paid_at 설정
         if payment_status == "SUCCESS":
-            update_values["paid_at"] = datetime.utcnow()
+            update_values["paid_at"] = datetime.now(KST)
         # 취소 시 cancelled_at 설정
         elif payment_status == "CANCELLED":
-            update_values["cancelled_at"] = datetime.utcnow()
+            update_values["cancelled_at"] = datetime.now(KST)
         
         stmt = (
             update(Payment)
@@ -358,10 +361,10 @@ class PaymentRepository:
         
         update_values = {
             "payment_status": "CANCELLED",
-            "cancelled_at": datetime.utcnow(),
+            "cancelled_at": datetime.now(KST),
             # 모델 컬럼명에 맞춰 사유는 result_message 에 저장
             "result_message": cancel_reason,
-            "updated_at": datetime.utcnow()
+            "updated_at": datetime.now(KST)
         }
         
         if refund_amount is not None:

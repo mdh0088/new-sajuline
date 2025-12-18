@@ -4,10 +4,13 @@
 """
 from typing import Optional, List, Tuple
 from datetime import datetime
+from zoneinfo import ZoneInfo
 import secrets
 import string
 
 from sqlalchemy.ext.asyncio import AsyncSession
+
+KST = ZoneInfo("Asia/Seoul")
 from src.exceptions.custom_exceptions import NotFoundError, DuplicateError, AuthenticationError, ValidationError
 from src.common.logging import logger, get_logger_with_request_id
 
@@ -262,7 +265,7 @@ class UserService:
             raise AuthenticationError("아이디 또는 비밀번호가 올바르지 않습니다")
         
         # 계정 잠금 확인
-        if user.locked_until and user.locked_until > datetime.utcnow():
+        if user.locked_until and user.locked_until > datetime.now(KST):
             raise AuthenticationError(f"계정이 {user.locked_until}까지 잠겨있습니다.")
         
         # 비밀번호 검증
@@ -711,7 +714,7 @@ class UserService:
         # 6. 응답 생성
         return PasswordChangeResponse(
             user_id=user_id,
-            password_changed_at=datetime.utcnow(),
+            password_changed_at=datetime.now(KST),
             message="비밀번호가 성공적으로 변경되었습니다."
         )
 
