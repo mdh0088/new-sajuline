@@ -3,7 +3,11 @@
 """
 from typing import Tuple, List, Optional
 from datetime import datetime
+from zoneinfo import ZoneInfo
 from json import loads
+
+# 한국 표준시 (KST = UTC+9)
+KST = ZoneInfo("Asia/Seoul")
 
 from fastapi import UploadFile
 from sqlalchemy.orm import Session
@@ -133,7 +137,7 @@ class CounselorApplicationService:
 
         updates = {
             "application_status": application_status,
-            "reviewed_at": datetime.utcnow(),
+            "reviewed_at": datetime.now(KST),
         }
         if admin_note is not None:
             updates["admin_note"] = admin_note
@@ -188,7 +192,7 @@ class CounselorApplicationService:
 
         # 상태 변경 시 reviewed_at 자동 설정
         if form.application_status and form.application_status != application.application_status:
-            updates["reviewed_at"] = datetime.utcnow()
+            updates["reviewed_at"] = datetime.now(KST)
 
         # 이미지 업로드
         if selected_image is not None:
@@ -294,8 +298,8 @@ class CounselorApplicationService:
             "profile_image_url": request.upload_image1,  # upload_image1 -> profile_image_url
             "is_show": True,
             "is_out": False,
-            "created_at": datetime.utcnow(),
-            "approved_at": datetime.utcnow(),  # 상담사 전환 승인 시간
+            "created_at": datetime.now(KST),
+            "approved_at": datetime.now(KST),  # 상담사 전환 승인 시간
         }
 
         # 4. tm60_members 데이터 매핑 (한글 필드는 euc-kr 인코딩)
@@ -306,6 +310,8 @@ class CounselorApplicationService:
             except Exception:
                 return text.encode('utf-8')
 
+        # MSSQL datetime은 timezone-naive만 지원하므로 tzinfo 제거
+        kst_now = datetime.now(KST).replace(tzinfo=None)
         tm60_data = {
             "m_code": request.counselor_code,  # counselor_code -> m_code
             "m_name": encode_euckr(request.name),  # name -> m_name (euc-kr 바이트)
@@ -317,6 +323,7 @@ class CounselorApplicationService:
             "m_id": request.email,  # email -> m_id
             "m_state": "3",  # 디폴트 상태값
             "m_prate": 800,  # 디폴트 요율
+            "m_fdate": kst_now,  # 가입일 (KST)
         }
 
         counselor = None
@@ -334,7 +341,7 @@ class CounselorApplicationService:
                 await self.application_repo.partial_update(
                     application.application_id,
                     application_status="APPROVED",
-                    reviewed_at=datetime.utcnow(),
+                    reviewed_at=datetime.now(KST),
                 )
 
             # 8. 두 DB 모두 성공 시 commit (FastAPI 의존성이 자동 처리)

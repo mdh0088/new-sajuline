@@ -114,19 +114,37 @@ export default defineNuxtPlugin(() => {
 
       // 인증 에러 처리 (401) - 토큰 만료 또는 유효하지 않음 (자동 리프레시/리디렉션 금지)
       if (response.status === 401) {
-        const isLoginRequest = request.toString().includes('/login')
+        const requestUrl = request.toString()
+        const isLoginRequest = requestUrl.includes('/login')
+
+        // 재시도하면 안 되는 API 경로 (결제 등 중요 트랜잭션)
+        const noRetryPaths = ['/payment/', '/order/']
+        const isNoRetryRequest = noRetryPaths.some(path => requestUrl.includes(path))
+
         // 로그인 API 호출인 경우 토큰 갱신 시도하지 않고 바로 에러 메시지 반환
         if (isLoginRequest) {
           const errorData = response._data
           const errorMessage = errorData?.message || errorData?.error?.message || '아이디 또는 비밀번호가 올바르지 않습니다.'
-          
+
           throw createError({
             statusCode: response.status,
             statusMessage: errorMessage,
             data: errorData
           })
         }
-        
+
+        // 결제/주문 등 중요 API는 재시도하지 않음 (중복 트랜잭션 방지)
+        if (isNoRetryRequest) {
+          const errorData = response._data
+          const errorMessage = errorData?.message || errorData?.detail || '결제 처리 중 오류가 발생했습니다.'
+
+          throw createError({
+            statusCode: response.status,
+            statusMessage: errorMessage,
+            data: errorData
+          })
+        }
+
         // 단일 비행 리프레시 후 원요청 1회 재시도
         // @ts-expect-error: 내부 재시도 플래그
         if (!options._retry) {

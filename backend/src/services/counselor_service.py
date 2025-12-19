@@ -4,7 +4,6 @@
 """
 from typing import Tuple, Optional, List
 from datetime import datetime
-import random
 
 from src.exceptions.custom_exceptions import NotFoundError, DuplicateError, AuthenticationError, ValidationError
 from src.common.logging import logger, get_logger_with_request_id
@@ -20,12 +19,20 @@ from src.repositories.consultation_review_repository import ConsultationReviewRe
 
 class CounselorService:
     """상담사 비즈니스 로직 서비스"""
-    
-    def __init__(self, counselor_repo: CounselorRepository, auth_service: AuthService, tm60_member_service: Tm60MemberService | None = None, review_repo: ConsultationReviewRepository | None = None):
+
+    def __init__(
+        self,
+        counselor_repo: CounselorRepository,
+        auth_service: AuthService,
+        tm60_member_service: Tm60MemberService | None = None,
+        review_repo: ConsultationReviewRepository | None = None,
+        notification_wait_service = None
+    ):
         self.counselor_repo = counselor_repo
         self.auth_service = auth_service
         self.tm60_member_service = tm60_member_service
         self.review_repo = review_repo
+        self.notification_wait_service = notification_wait_service
     
     async def authenticate_counselor(self, nickname: str, password: str) -> CounselorResponse:
         """
@@ -103,8 +110,9 @@ class CounselorService:
         if not filtered_codes:
             return [], 0
 
-        # 랜덤 셔플: 매 호출마다 다른 순서로 노출 (필터 내에서만 랜덤)
-        random.shuffle(filtered_codes)
+        # 상태별 정렬: 상담중(2) → 대기중(1) → 부재중(3) 순서
+        status_priority = {'2': 0, '1': 1, '3': 2}
+        filtered_codes.sort(key=lambda c: status_priority.get(state_map.get(c, '3'), 3))
 
         total = len(filtered_codes)
         start = max(0, (page - 1) * limit)
@@ -183,6 +191,7 @@ class CounselorService:
         """
         상담사 마이페이지 정보 조회
         - 단일 행 조회 (t_counselor)
+        - tm60_member.m_state 조회 (counselor_code = m_code)
         - 제공 필드: 요청 명세에 따른 요약정보
         """
         log = get_logger_with_request_id()
@@ -193,15 +202,30 @@ class CounselorService:
             raise NotFoundError("상담사를 찾을 수 없습니다")
 
         response = CounselorResponse.model_validate(counselor)
+
+        # tm60_member.m_state 조회 (counselor_code = m_code)
+        if self.tm60_member_service and counselor.counselor_code:
+            m_state = await self.tm60_member_service.get_state_by_code(counselor.counselor_code)
+            response.m_state = m_state
+            log.info("tm60_member m_state retrieved", counselor_code=counselor.counselor_code, m_state=m_state)
+
         log.info("Counselor mypage info retrieved", counselor_id=counselor_id)
         return response
 
     async def update_mypage(self,
                             counselor_id: str,
                             updates: CounselorMypageUpdate) -> CounselorResponse:
-        """마이페이지 부분 업데이트 + 필요 시 MSSQL m_state 동기화"""
+        """마이페이지 부분 업데이트 + 필요 시 MSSQL m_state 동기화 + 부재중→대기중 변경 시 알림 발송"""
         log = get_logger_with_request_id()
         log.info("Updating counselor mypage", counselor_id=counselor_id, updates=updates.model_dump(exclude_none=True))
+
+        # 상태 변경 시 이전 상태 저장 (알림 발송 여부 판단용)
+        old_status = None
+        if updates.counselor_status is not None:
+            current_counselor = await self.counselor_repo.get_by_id(counselor_id)
+            if current_counselor:
+                # old_status가 enum 또는 문자열일 수 있으므로 문자열로 통일
+                old_status = current_counselor.counselor_status.value if hasattr(current_counselor.counselor_status, 'value') else current_counselor.counselor_status
 
         # MariaDB 부분 업데이트
         updated = await self.counselor_repo.partial_update(
@@ -219,25 +243,57 @@ class CounselorService:
             counselor = await self.counselor_repo.get_by_id(counselor_id)
             if not counselor:
                 raise NotFoundError("상담사를 찾을 수 없습니다")
-            return CounselorResponse.model_validate(counselor)
-
-        # 상태가 변경된 경우 MSSQL tm60_member.m_state 동기화 (주입된 서비스 사용)
-        if updates.counselor_status is not None:
-            if self.tm60_member_service is not None:
-                await self.tm60_member_service.sync_state_from_counselor_status(counselor_id, updates.counselor_status.value)
+            response = CounselorResponse.model_validate(counselor)
+            # m_state 조회
+            if self.tm60_member_service and counselor.counselor_code:
+                response.m_state = await self.tm60_member_service.get_state_by_code(counselor.counselor_code)
+            return response
 
         # 최신 데이터 반환
         counselor = await self.counselor_repo.get_by_id(counselor_id)
         if not counselor:
             raise NotFoundError("상담사를 찾을 수 없습니다")
-        return CounselorResponse.model_validate(counselor)
+
+        # 상태가 변경된 경우 MSSQL tm60_member.m_state 동기화 (counselor_code = m_code)
+        if updates.counselor_status is not None:
+            new_status = updates.counselor_status.value
+
+            if self.tm60_member_service is not None and counselor.counselor_code:
+                await self.tm60_member_service.sync_state_from_counselor_status(
+                    counselor.counselor_code, new_status
+                )
+
+            # 부재중 → 대기중 변경 시 알림 발송
+            if new_status == "WAITING" and old_status == "ABSENT":
+                if self.notification_wait_service:
+                    try:
+                        sent_count = await self.notification_wait_service.send_notifications_for_counselor(
+                            counselor_id
+                        )
+                        log.info(
+                            "Notifications sent for counselor status change (ABSENT -> WAITING)",
+                            counselor_id=counselor_id,
+                            sent_count=sent_count
+                        )
+                    except Exception as notify_err:
+                        log.warning(
+                            "Failed to send notifications but status update succeeded",
+                            counselor_id=counselor_id,
+                            error=str(notify_err)
+                        )
+
+        response = CounselorResponse.model_validate(counselor)
+        # m_state 조회
+        if self.tm60_member_service and counselor.counselor_code:
+            response.m_state = await self.tm60_member_service.get_state_by_code(counselor.counselor_code)
+        return response
 
     async def sync_all_counselor_status(self, notification_wait_service) -> dict:
         """
         전체 상담사 상태 동기화 (tm60_member → t_counselor)
         1. tm60_member에서 전체 m_code, m_state 조회
         2. 각 m_code로 t_counselor.counselor_code 매칭
-        3. counselor_status 업데이트 (m_state: 1=WAITING, 2=ABSENT, 3=CONSULTING)
+        3. counselor_status 업데이트 (m_state: 1=WAITING, 2=CONSULTING, 3=ABSENT)
         4. WAITING으로 변경된 상담사에 대해 알림 발송 처리
         """
         log = get_logger_with_request_id()
@@ -271,12 +327,13 @@ class CounselorService:
                 continue
 
             # m_state → counselor_status 매핑
+            # m_state: 1=대기중(WAITING), 2=상담중(CONSULTING), 3=부재중(ABSENT)
             if m_state == "1":
                 new_status = "WAITING"
             elif m_state == "2":
-                new_status = "ABSENT"
-            elif m_state == "3":
                 new_status = "CONSULTING"
+            elif m_state == "3":
+                new_status = "ABSENT"
             else:
                 log.warning("Unknown m_state value", m_code=m_code, m_state=m_state)
                 continue

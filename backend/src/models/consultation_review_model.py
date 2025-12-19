@@ -3,11 +3,14 @@
 """
 from datetime import datetime
 from typing import Optional
+from zoneinfo import ZoneInfo
 
 from sqlalchemy import String, DateTime, Text, Integer, Boolean, Index, CheckConstraint
 from sqlalchemy.orm import Mapped, mapped_column
 
 from src.core.database import Base
+
+KST = ZoneInfo("Asia/Seoul")
 
 
 class ConsultationReview(Base):
@@ -89,13 +92,13 @@ class ConsultationReview(Base):
     created_at: Mapped[datetime] = mapped_column(
         DateTime,
         nullable=False,
-        default=datetime.utcnow,
+        default=lambda: datetime.now(KST),
         comment="생성일시"
     )
     updated_at: Mapped[Optional[datetime]] = mapped_column(
         DateTime,
         nullable=True,
-        onupdate=datetime.utcnow,
+        onupdate=lambda: datetime.now(KST),
         comment="수정일시"
     )
     counselor_replied_at: Mapped[Optional[datetime]] = mapped_column(

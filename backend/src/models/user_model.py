@@ -4,11 +4,14 @@
 from datetime import datetime, date
 from typing import Optional
 from enum import Enum
+from zoneinfo import ZoneInfo
 
 from sqlalchemy import String, DateTime, Date, Boolean, Integer, CheckConstraint, Index
 from sqlalchemy.orm import Mapped, mapped_column
 
 from src.core.database import Base
+
+KST = ZoneInfo("Asia/Seoul")
 
 
 class JoinType(str, Enum):
@@ -141,15 +144,15 @@ class User(Base):
     
     # 타임스탬프
     created_at: Mapped[datetime] = mapped_column(
-        DateTime, 
+        DateTime,
         nullable=False,
-        default=datetime.utcnow,
+        default=lambda: datetime.now(KST),
         comment="생성일시"
     )
     updated_at: Mapped[Optional[datetime]] = mapped_column(
-        DateTime, 
+        DateTime,
         nullable=True,
-        onupdate=datetime.utcnow,
+        onupdate=lambda: datetime.now(KST),
         comment="수정일시"
     )
     last_login_at: Mapped[Optional[datetime]] = mapped_column(
@@ -233,7 +236,7 @@ class UserOut(Base):
     created_at: Mapped[datetime] = mapped_column(
         DateTime,
         nullable=False,
-        default=datetime.utcnow,
+        default=lambda: datetime.now(KST),
         comment="탈퇴 일시"
     )
 

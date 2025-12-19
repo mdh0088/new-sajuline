@@ -87,13 +87,13 @@
               :class="['tab-button', { active: activeTab === 'reviews' }]"
               @click="activeTab = 'reviews'"
             >
-              상담 후기
+              상담 후기 ({{ reviewTotal.toLocaleString() }})
             </button>
             <button
               :class="['tab-button', { active: activeTab === 'inquiries' }]"
               @click="activeTab = 'inquiries'"
             >
-              상담 문의
+              상담 문의 ({{ inquiryTotal.toLocaleString() }})
             </button>
           </div>
 
@@ -235,9 +235,12 @@
           <span>채팅 상담</span>
         </button>
         -->
-        <button class="cta-button cta-primary" @click="openPhoneModal">
+        <button
+          :class="['cta-button', ctaButtonClass]"
+          @click="handleConsultClick"
+        >
           <span>📞</span>
-          <span>전화 상담</span>
+          <span>{{ ctaButtonText }}</span>
         </button>
       </div>
     </div>
@@ -281,6 +284,26 @@
       @close="closeInquiryModal"
       @submit="submitInquiry"
     />
+
+    <!-- 접속 알림 설정 모달 -->
+    <Teleport to="body">
+      <div v-if="showNotificationModal" class="notification-modal-backdrop" @click.self="closeNotificationModal">
+        <div class="notification-modal" @click.stop>
+          <div class="notification-modal-content">
+            <h3 class="notification-modal-title">{{ notificationModalTitle }}</h3>
+            <p class="notification-modal-desc" v-html="notificationModalDesc.replace('\n', '<br>')"></p>
+            <div class="notification-modal-buttons">
+              <button class="notification-button notification-button-primary" @click.stop="handleSetNotification">
+                🔔 알림 설정
+              </button>
+              <button class="notification-button notification-button-secondary" @click.stop="closeNotificationModal">
+                닫기
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </Teleport>
   </div>
 </template>
 
@@ -296,6 +319,7 @@ definePageMeta({
 import { useUserPoints } from '~/composables/user/useUserPoints'
 import { useNotify } from '~/composables/utils/useNotify'
 import { useCounselorQueries } from '~/composables/api/useCounselorQueries'
+import { useNotificationWaitQueries } from '~/composables/api/useNotificationWaitQueries'
 import { useBookmarkQueries } from '~/composables/api/useBookmarkQueries'
 import { useAuth } from '~/composables/auth/useAuth'
 import { useCdn } from '~/composables/utils/useCdn'
@@ -360,6 +384,7 @@ const inquiryItems = ref<InquirySummary[]>([])
 // 페이징/무한스크롤 상태 (후기)
 const reviewPage = ref(1)
 const reviewTotalPages = ref(1)
+const reviewTotal = ref(0)
 const reviewHasMore = computed(() => reviewPage.value < reviewTotalPages.value)
 const isLoadingMoreReviews = ref(false)
 const reviewSentinel = ref<HTMLElement | null>(null)
@@ -369,6 +394,7 @@ let reviewObserver: IntersectionObserver | null = null
 // 페이징/무한스크롤 상태 (문의)
 const inquiryPage = ref(1)
 const inquiryTotalPages = ref(1)
+const inquiryTotal = ref(0)
 const inquiryHasMore = computed(() => inquiryPage.value < inquiryTotalPages.value)
 const isLoadingMoreInquiries = ref(false)
 const inquirySentinel = ref<HTMLElement | null>(null)
@@ -421,7 +447,12 @@ const showInquiryModal = ref(false)
 const inquirySubmitting = ref(false)
 
 // Notivue 알림
-const { notifySuccess, notifyError } = useNotify()
+const { notifySuccess, notifyError, notifyWarning } = useNotify()
+
+// 알림 설정 관련
+const { useRegisterNotificationWait } = useNotificationWaitQueries()
+const registerNotificationMutation = useRegisterNotificationWait()
+const showNotificationModal = ref(false)
 
 // PhoneConsultModal에 전달할 데이터 형식 변환
 const modalCounselorData = computed(() => {
@@ -436,6 +467,78 @@ const modalCounselorData = computed(() => {
     beforeAmount: (counselor.value as any).before_amount ?? null
   }
 })
+
+// 상담사 상태에 따른 버튼 처리
+// m_state: 1=대기중, 2=상담중, 3=부재중
+const counselorMState = computed(() => {
+  return ((counselor.value as any)?.m_state || '').trim()
+})
+
+const ctaButtonText = computed(() => {
+  const m = counselorMState.value
+  if (m === '1') return '전화 상담'
+  if (m === '2') return '상담중'
+  if (m === '3') return '부재중'
+  return '전화 상담'
+})
+
+const ctaButtonClass = computed(() => {
+  const m = counselorMState.value
+  if (m === '2') return 'cta-busy'
+  if (m === '3') return 'cta-away'
+  return 'cta-primary'
+})
+
+// 알림 모달 제목 (상담중/부재중 구분)
+const notificationModalTitle = computed(() => {
+  const m = counselorMState.value
+  if (m === '2') {
+    return `${counselor.value?.nickname} 선생님은 현재 상담중입니다`
+  }
+  return `${counselor.value?.nickname} 선생님은 현재 부재중입니다`
+})
+
+// 알림 모달 설명 (상담중/부재중 구분)
+const notificationModalDesc = computed(() => {
+  const m = counselorMState.value
+  if (m === '2') {
+    return '상담사 접속 알림을 설정하시면,\n상담 종료 후 카톡 알림톡을 통하여 안내드립니다.'
+  }
+  return '상담사 접속 알림을 설정하시면,\n상담 가능시 카톡 알림톡을 통하여 안내드립니다.'
+})
+
+// 상담 버튼 클릭 핸들러
+const handleConsultClick = () => {
+  const m = counselorMState.value
+  // 상담중 또는 부재중일 때는 알림 설정 모달 표시
+  if (m === '2' || m === '3') {
+    showNotificationModal.value = true
+    return
+  }
+  // 대기중일 때는 전화 상담 모달 표시
+  showPhoneModal.value = true
+}
+
+const closeNotificationModal = () => {
+  showNotificationModal.value = false
+}
+
+const handleSetNotification = async () => {
+  if (!isUser.value) {
+    notifyWarning('로그인이 필요합니다.')
+    closeNotificationModal()
+    return
+  }
+
+  try {
+    await registerNotificationMutation.mutateAsync(counselor.value!.counselor_id)
+    notifySuccess('알림 신청이 등록되었습니다.')
+  } catch (error: any) {
+    notifyError(error.message || '알림 신청에 실패했습니다.')
+  } finally {
+    closeNotificationModal()
+  }
+}
 
 // 메서드들
 const openPhoneModal = () => {
@@ -580,7 +683,8 @@ const submitReview = async (data: { rating: number, tags: string[], content: str
     closeReviewModal()
   } catch (error: any) {
     console.error('후기 작성 실패:', error)
-    notifyError(error?.message || '후기 작성에 실패했습니다. 다시 시도해주세요.')
+    const errorMsg = String(error?.statusMessage || error?.message || error?.data?.message || '후기 작성에 실패했습니다. 다시 시도해주세요.')
+    notifyError(errorMsg)
   } finally {
     reviewSubmitting.value = false
   }
@@ -615,7 +719,9 @@ const submitInquiry = async (data: { content: string }) => {
     closeInquiryModal()
   } catch (error: any) {
     console.error('문의 작성 실패:', error)
-    notifyError(error?.message || '문의 작성에 실패했습니다. 다시 시도해주세요.')
+    // Nuxt createError는 statusMessage 사용, 일반 Error는 message 사용
+    const errorMsg = String(error?.statusMessage || error?.message || error?.data?.message || '문의 작성에 실패했습니다. 다시 시도해주세요.')
+    notifyError(errorMsg)
   } finally {
     inquirySubmitting.value = false
   }
@@ -811,6 +917,7 @@ const fetchReviews = async (page = 1, append = false) => {
   }
   reviewPage.value = res.page
   reviewTotalPages.value = res.total_pages
+  reviewTotal.value = res.total || 0
 }
 
 const fetchInquiries = async (page = 1, append = false) => {
@@ -822,6 +929,7 @@ const fetchInquiries = async (page = 1, append = false) => {
   }
   inquiryPage.value = res.page
   inquiryTotalPages.value = res.total_pages
+  inquiryTotal.value = res.total || 0
 }
 
 // IntersectionObserver 설정 (후기)
@@ -843,7 +951,7 @@ const setupReviewObserver = () => {
     } finally {
       isLoadingMoreReviews.value = false
     }
-  }, { root: reviewScrollEl.value, threshold: 0.1 })
+  }, { root: null, rootMargin: '100px', threshold: 0.1 })
   reviewObserver.observe(reviewSentinel.value)
 }
 
@@ -866,7 +974,7 @@ const setupInquiryObserver = () => {
     } finally {
       isLoadingMoreInquiries.value = false
     }
-  }, { root: inquiryScrollEl.value, threshold: 0.1 })
+  }, { root: null, rootMargin: '100px', threshold: 0.1 })
   inquiryObserver.observe(inquirySentinel.value)
 }
 
@@ -883,6 +991,15 @@ onMounted(async () => {
         inquiryTotalPages.value = 1
         inquiryItems.value = []
         await Promise.all([fetchReviews(1, false), fetchInquiries(1, false)])
+
+        // DOM 렌더링 완료 후 옵저버 설정
+        await nextTick()
+        if (activeTab.value === 'reviews') {
+          setupReviewObserver()
+        } else {
+          setupInquiryObserver()
+        }
+
         // 즐겨찾기 초기 상태 로딩
         showFavorite.value = isUser.value
         if (isUser.value) {
@@ -902,16 +1019,11 @@ onMounted(async () => {
       }
     }
   )
-  // 탭별 옵저버 초기화
-  if (activeTab.value === 'reviews') {
-    setupReviewObserver()
-  } else {
-    setupInquiryObserver()
-  }
 })
 
 // 탭 전환 시 옵저버 재설정
-watch(activeTab, (tab) => {
+watch(activeTab, async (tab) => {
+  await nextTick()
   if (tab === 'reviews') {
     if (inquiryObserver) inquiryObserver.disconnect()
     setupReviewObserver()

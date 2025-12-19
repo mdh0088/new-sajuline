@@ -16,12 +16,16 @@ class Tm60MemberService:
     def __init__(self, repo: Tm60MemberRepository):
         self.repo = repo
 
-    async def sync_state_from_counselor_status(self, counselor_id: str, counselor_status: str) -> bool:
+    async def sync_state_from_counselor_status(self, counselor_code: str, counselor_status: str) -> bool:
         """
         상담사 상태 → TM60 멤버 m_state 매핑 및 동기화
-        매핑: 1=WAITING, 2=CONSULTING, 3=ABSENT
+        - counselor_code: t_counselor.counselor_code = tm60_member.m_code
+        - 매핑: 1=WAITING, 2=CONSULTING, 3=ABSENT
         """
         log = get_logger_with_request_id()
+        if not counselor_code:
+            log.warning("counselor_code is empty, skipping sync")
+            return False
         status_map = {
             'WAITING': '1',
             'CONSULTING': '2',
@@ -31,7 +35,7 @@ class Tm60MemberService:
         if not m_state:
             log.warning("Unknown counselor_status for mapping", counselor_status=counselor_status)
             return False
-        return await self.repo.update_member_state_by_m_id(counselor_id, m_state)
+        return await self.repo.update_member_state_by_m_code(counselor_code, m_state)
 
     async def get_state_map_by_codes(self, m_codes: list[str], m_state: Optional[str] = None) -> dict[str, str]:
         """m_code 목록에 대한 상태 매핑 조회 (선택적으로 상태 필터)"""
@@ -40,5 +44,12 @@ class Tm60MemberService:
     async def get_all_members_state(self) -> list[dict[str, str]]:
         """전체 tm60_member 상태 목록 조회"""
         return await self.repo.get_all_members_state()
+
+    async def get_state_by_code(self, m_code: str) -> Optional[str]:
+        """단일 m_code로 m_state 조회"""
+        if not m_code:
+            return None
+        state_map = await self.repo.get_state_map_by_codes([m_code])
+        return state_map.get(m_code)
 
 

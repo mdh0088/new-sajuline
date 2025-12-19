@@ -23,6 +23,12 @@ from .tm60_chatlog_schema import (
     Tm60ChatlogDaily,
     Tm60ChatlogSummary
 )
+from .tm60_mobile_schema import (
+    Tm60MobileCreate,
+    Tm60MobileResponse,
+    CallByPointRequest,
+    CallByPointResponse
+)
 
 __all__ = [
     "Tm60UsersBase",
@@ -40,5 +46,9 @@ __all__ = [
     "Tm60ChatlogSearch",
     "Tm60ChatlogStats",
     "Tm60ChatlogDaily",
-    "Tm60ChatlogSummary"
+    "Tm60ChatlogSummary",
+    "Tm60MobileCreate",
+    "Tm60MobileResponse",
+    "CallByPointRequest",
+    "CallByPointResponse"
 ]

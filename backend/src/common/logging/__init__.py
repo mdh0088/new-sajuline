@@ -4,6 +4,7 @@
 from loguru import logger
 import sys
 import os
+from contextlib import contextmanager
 
 # 기본 핸들러 제거
 logger.remove()
@@ -30,10 +31,42 @@ logger.add(
     encoding="utf-8"
 )
 
+
 def get_logger_with_request_id():
     """Request ID가 포함된 로거 반환"""
     from .config import get_request_id
     return logger.bind(request_id=get_request_id() or "no-request-id")
 
+
+def get_scheduler_logger():
+    """스케줄러 전용 로거 반환 (scheduler.log에만 기록)"""
+    from .config import get_request_id
+    return logger.bind(request_id=get_request_id() or "scheduler")
+
+
+@contextmanager
+def scheduler_logging_context():
+    """스케줄러 로깅 컨텍스트 매니저
+
+    사용 예시:
+        with scheduler_logging_context():
+            log = get_scheduler_logger()
+            log.info("스케줄러 작업 시작")
+            # ... 스케줄러 로직 ...
+            log.info("스케줄러 작업 완료")
+    """
+    from .config import set_scheduler_context
+    set_scheduler_context(True)
+    try:
+        yield
+    finally:
+        set_scheduler_context(False)
+
+
 # 편의를 위한 export
-__all__ = ["logger", "get_logger_with_request_id"]
+__all__ = [
+    "logger",
+    "get_logger_with_request_id",
+    "get_scheduler_logger",
+    "scheduler_logging_context",
+]

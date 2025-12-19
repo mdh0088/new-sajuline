@@ -63,13 +63,14 @@
           </button>
 
           <!-- 060 후불 상담 옵션 -->
-          <button
+          <a
+            :href="`tel:${phoneNumber060.replace(/-/g, '')}`"
             class="phone-060-button"
             @click="start060Consult"
           >
             <span class="phone-icon">📞</span>
             <span>060상담 ({{ phoneNumber060 }})</span>
-          </button>
+          </a>
 
           <p class="fee-info">
             060상담(후불) <strong>{{ consultFee060 }}</strong>(30초)(vat별도)

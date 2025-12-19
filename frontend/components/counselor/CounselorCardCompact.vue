@@ -60,11 +60,8 @@
       <div v-if="showNotificationModal" class="notification-modal-backdrop" @click.self="closeNotificationModal">
         <div class="notification-modal" @click.stop>
           <div class="notification-modal-content">
-            <h3 class="notification-modal-title">{{ counselor.nickname }} 선생님은 현재 부재중입니다</h3>
-            <p class="notification-modal-desc">
-              상담사 접속 알림을 설정하시면,<br>
-              상담 가능시 카톡 알림톡을 통하여 안내드립니다.
-            </p>
+            <h3 class="notification-modal-title">{{ notificationModalTitle }}</h3>
+            <p class="notification-modal-desc" v-html="notificationModalDesc.replace('\n', '<br>')"></p>
             <div class="notification-modal-buttons">
               <button class="notification-button notification-button-primary" @click.stop="handleSetNotification">
                 🔔 알림 설정
@@ -200,10 +197,27 @@ const consultButtonClass = computed(() => {
   return ''
 })
 
-// 상담 버튼 비활성화 여부
+// 상담 버튼 비활성화 여부 - 모든 상태에서 클릭 가능
 const isConsultDisabled = computed(() => {
+  return false
+})
+
+// 알림 모달 제목 (상담중/부재중 구분)
+const notificationModalTitle = computed(() => {
   const m = (props.counselor.m_state || '').trim()
-  return m === '2' // 상담중일 때만 비활성화
+  if (m === '2') {
+    return `${props.counselor.nickname} 선생님은 현재 상담중입니다`
+  }
+  return `${props.counselor.nickname} 선생님은 현재 부재중입니다`
+})
+
+// 알림 모달 설명 (상담중/부재중 구분)
+const notificationModalDesc = computed(() => {
+  const m = (props.counselor.m_state || '').trim()
+  if (m === '2') {
+    return '상담사 접속 알림을 설정하시면,\n상담 종료 후 카톡 알림톡을 통하여 안내드립니다.'
+  }
+  return '상담사 접속 알림을 설정하시면,\n상담 가능시 카톡 알림톡을 통하여 안내드립니다.'
 })
 
 // PhoneConsultModal에 전달할 데이터 형식 변환
@@ -225,11 +239,8 @@ const handleClick = () => {
 const handleConsultClick = () => {
   const m = (props.counselor.m_state || '').trim()
 
-  // 상담중일 때는 아무 동작 안함
-  if (m === '2') return
-
-  // 부재중일 때는 알림 설정 모달 표시
-  if (m === '3') {
+  // 상담중 또는 부재중일 때는 알림 설정 모달 표시
+  if (m === '2' || m === '3') {
     showNotificationModal.value = true
     return
   }
@@ -400,7 +411,7 @@ onMounted(() => {
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 9999;
+  z-index: 9000;
   padding: 20px;
 }
 

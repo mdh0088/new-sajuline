@@ -4,6 +4,7 @@ Notification Template Model
 from datetime import datetime
 from typing import Optional
 from enum import Enum
+from zoneinfo import ZoneInfo
 
 from sqlalchemy import (
     Integer, String, Text, Boolean, DateTime, JSON
@@ -11,6 +12,8 @@ from sqlalchemy import (
 from sqlalchemy.orm import Mapped, mapped_column
 
 from src.core.database import Base
+
+KST = ZoneInfo("Asia/Seoul")
 
 
 class NotificationChannel(str, Enum):
@@ -33,5 +36,5 @@ class NotificationTemplate(Base):
     variables: Mapped[Optional[dict]] = mapped_column(JSON, nullable=True)
     button_info: Mapped[Optional[dict]] = mapped_column(JSON, nullable=True)
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)
-    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, nullable=False)
-    updated_at: Mapped[Optional[datetime]] = mapped_column(DateTime, onupdate=datetime.utcnow, nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=lambda: datetime.now(KST), nullable=False)
+    updated_at: Mapped[Optional[datetime]] = mapped_column(DateTime, onupdate=lambda: datetime.now(KST), nullable=True)

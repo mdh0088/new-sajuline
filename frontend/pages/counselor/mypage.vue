@@ -28,7 +28,12 @@
           </div>
 
           <div class="flex items-center gap-3">
-            <div class="inline-flex p-1 rounded-full border border-white/10 bg-white/5">
+            <!-- 상담중일 때는 상담중 표시 및 변경 불가 -->
+            <div v-if="isConsulting" class="inline-flex p-1 rounded-full border border-green-500/30 bg-green-500/10">
+              <span class="px-4 py-1 rounded-full text-sm font-semibold bg-green-600/40 text-green-100">상담중</span>
+            </div>
+            <!-- 상담중이 아닐 때만 대기/부재중 변경 가능 -->
+            <div v-else class="inline-flex p-1 rounded-full border border-white/10 bg-white/5">
               <button :class="['px-4 py-1 rounded-full text-sm font-semibold', status==='ready' ? 'bg-purple-600/40 text-purple-100' : 'text-white/70']" @click="handleStatusChange('ready')">대기</button>
               <button :class="['px-4 py-1 rounded-full text-sm font-semibold', status==='away' ? 'bg-purple-600/40 text-purple-100' : 'text-white/70']" @click="handleStatusChange('away')">부재중</button>
             </div>
@@ -481,7 +486,7 @@ watchEffect(() => {
     workTime.value = mypage.value.work_time
   }
 })
-const status = ref<'ready' | 'away'>('away')
+const status = ref<'ready' | 'away' | 'consulting'>('away')
 const tab = ref<'notice' | 'review' | 'inquiry' | 'admin'>('notice')
 
 // 월별 상담시간 네비게이션
@@ -556,14 +561,20 @@ const notifySaved = () => notifySuccess('💾 변경 사항이 저장되었습�
 // 업데이트 뮤테이션 인스턴스
 const { mutateAsync: updateMypage } = useUpdateMypage()
 
-// 초기 상태값 동기화 (백엔드 counselor_status → 프론트 상태 코드)
+// 초기 상태값 동기화 (tm60_member.m_state → 프론트 상태 코드)
+// m_state: 1=대기중, 2=상담중, 3=부재중
 watchEffect(() => {
-  const cs = mypage.value?.counselor_status as string | undefined
-  if (cs === 'WAITING') status.value = 'ready'
-  else if (cs === 'ABSENT') status.value = 'away'
+  const mState = mypage.value?.m_state as string | undefined
+  if (mState === '1') status.value = 'ready'
+  else if (mState === '3') status.value = 'away'
+  else if (mState) status.value = 'consulting' // 1, 3 이외의 값은 상담중으로 처리
 })
 
+// 상담중 여부 (상담중일 때는 상태 변경 불가)
+const isConsulting = computed(() => status.value === 'consulting')
+
 const handleStatusChange = async (newStatus: 'ready' | 'away') => {
+  if (isConsulting.value) return // 상담중일 때는 상태 변경 불가
   if (status.value === newStatus) return // 동일한 상태면 아무것도 하지 않음
   
   const statusText = newStatus === 'ready' ? '대기' : '부재중'

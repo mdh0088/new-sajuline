@@ -2,18 +2,14 @@
   <section class="hero-banner">
     <div class="banner-swiper" ref="containerRef">
       <div class="banner-track" :style="trackStyle">
-        <div v-for="item in banners" :key="item.banner_id" class="banner-slide">
-          <component
-            :is="linkComponent(item)"
-            :to="componentTo(item)"
-            :href="componentHref(item)"
-            :target="item.link_target === 'BLANK' ? '_blank' : undefined"
-            :rel="item.link_target === 'BLANK' ? 'noopener noreferrer' : undefined"
-            class="banner-link"
-            @click="handleClick(item)"
-          >
-            <img :src="resolveImage(item.image_url)" :alt="item.banner_name" loading="lazy" />
-          </component>
+        <div
+          v-for="item in banners"
+          :key="item.banner_id"
+          class="banner-slide"
+          :class="{ clickable: !!item.link_url }"
+          @click="handleClick(item)"
+        >
+          <img :src="resolveImage(item.image_url)" :alt="item.banner_name" loading="lazy" />
         </div>
       </div>
 
@@ -126,25 +122,30 @@ watch(banners, () => {
   start()
 })
 
-// 링크 컴포넌트 선택 (SELF: NuxtLink, BLANK: a)
+// 절대 URL 여부 확인
 const isAbsolute = (url: string) => /^https?:\/\//i.test(url)
-const linkComponent = (item: BannerItem) => {
-  if (!item.link_url) return 'div'
-  if (isAbsolute(item.link_url)) return 'a'
-  return item.link_target === 'BLANK' ? 'a' : 'NuxtLink'
-}
-const componentHref = (item: BannerItem) => {
-  if (!item.link_url) return undefined
-  return isAbsolute(item.link_url) ? item.link_url : undefined
-}
-const componentTo = (item: BannerItem) => {
-  if (!item.link_url) return undefined
-  return isAbsolute(item.link_url) ? undefined : item.link_url
-}
 
+// 배너 클릭 시 통계 기록 + 페이지 이동
 const handleClick = (item: BannerItem) => {
-  if (!item?.banner_id) return
-  clickBanner(item.banner_id)
+  // 클릭 통계 기록
+  if (item?.banner_id) {
+    clickBanner(item.banner_id)
+  }
+
+  // link_url이 없으면 이동하지 않음
+  if (!item.link_url) return
+
+  // link_target에 따라 이동 처리
+  if (item.link_target === 'BLANK') {
+    // 새 탭에서 열기
+    window.open(item.link_url, '_blank', 'noopener,noreferrer')
+  } else if (isAbsolute(item.link_url)) {
+    // 외부 URL은 현재 탭에서 이동
+    window.location.href = item.link_url
+  } else {
+    // 내부 URL은 Nuxt 라우터 사용
+    navigateTo(item.link_url)
+  }
 }
 </script>
 
@@ -152,7 +153,8 @@ const handleClick = (item: BannerItem) => {
 .banner-swiper { position: relative; width: 100%; overflow: hidden; }
 .banner-track { display: flex; width: 100%; transition: transform 0.4s ease; }
 .banner-slide { flex: 0 0 100%; }
-.banner-link, .banner-slide img { display: block; width: 100%; height: auto; }
+.banner-slide.clickable { cursor: pointer; }
+.banner-slide img { display: block; width: 100%; height: auto; }
 .banner-dots { position: absolute; left: 0; right: 0; bottom: 8px; display: flex; gap: 6px; justify-content: center; }
 .dot { width: 6px; height: 6px; border-radius: 9999px; background: rgba(255,255,255,0.4); border: none; padding: 0; }
 .dot.active { background: rgba(255,255,255,0.95); }

@@ -2,11 +2,14 @@
 사용자 북마크 모델 (t_user_bookmark 테이블)
 """
 from datetime import datetime
+from zoneinfo import ZoneInfo
 
 from sqlalchemy import String, DateTime, Integer, Index
 from sqlalchemy.orm import Mapped, mapped_column
 
 from src.core.database import Base
+
+KST = ZoneInfo("Asia/Seoul")
 
 
 class UserBookmark(Base):
@@ -38,9 +41,9 @@ class UserBookmark(Base):
     
     # 타임스탬프
     created_at: Mapped[datetime] = mapped_column(
-        DateTime, 
-        nullable=False, 
-        default=datetime.utcnow, 
+        DateTime,
+        nullable=False,
+        default=lambda: datetime.now(KST),
         comment="등록일"
     )
     

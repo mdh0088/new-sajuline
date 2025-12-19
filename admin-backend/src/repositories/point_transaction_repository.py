@@ -3,11 +3,14 @@
 """
 from typing import Optional, List
 from datetime import datetime
+from zoneinfo import ZoneInfo
 
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, desc, func
 
 from src.models.point_transaction_model import PointTransaction
+
+KST = ZoneInfo("Asia/Seoul")
 
 
 class PointTransactionRepository:
@@ -35,7 +38,7 @@ class PointTransactionRepository:
             reference_type=reference_type,
             reference_id=reference_id,
             description=description,
-            created_at=datetime.utcnow(),
+            created_at=datetime.now(KST),
         )
         self.db.add(tx)
         await self.db.flush()

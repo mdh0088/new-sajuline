@@ -7,8 +7,22 @@ import json
 from pathlib import Path
 from typing import Dict, Any
 from loguru import logger
+from contextvars import ContextVar
 
 from src.config.settings import settings
+
+# 스케줄러 컨텍스트 변수 (스케줄러 로그 분리용)
+scheduler_context_var: ContextVar[bool] = ContextVar('is_scheduler', default=False)
+
+
+def set_scheduler_context(is_scheduler: bool) -> None:
+    """스케줄러 컨텍스트 설정"""
+    scheduler_context_var.set(is_scheduler)
+
+
+def get_scheduler_context() -> bool:
+    """스케줄러 컨텍스트 반환"""
+    return scheduler_context_var.get()
 
 
 class LoguruConfig:
@@ -46,7 +60,7 @@ class LoguruConfig:
                 filter=RequestContextFilter()
             )
         
-        # 파일 핸들러 추가 (간결한 형태)
+        # 파일 핸들러 추가 (간결한 형태) - 스케줄러 로그 제외
         logger.add(
             self.log_dir / "app.log",
             level="INFO",
@@ -55,7 +69,7 @@ class LoguruConfig:
             retention="7 days",
             compression="gz",
             serialize=False,  # JSON 형태 비활성화
-            filter=RequestContextFilter()
+            filter=SchedulerContextFilter(scheduler_only=False)  # 스케줄러 로그 제외
         )
         
         # 에러 파일 핸들러 (간결한 형태)
@@ -63,13 +77,25 @@ class LoguruConfig:
             self.log_dir / "error.log",
             level="ERROR",
             format=self._get_file_format(),
-            rotation="10 MB", 
+            rotation="10 MB",
             retention="30 days",
             compression="gz",
             serialize=False,  # JSON 형태 비활성화
             filter=RequestContextFilter()
         )
-        
+
+        # 스케줄러 전용 파일 핸들러 (scheduler.log)
+        logger.add(
+            self.log_dir / "scheduler.log",
+            level="INFO",
+            format=self._get_scheduler_format(),
+            rotation="10 MB",
+            retention="7 days",
+            compression="gz",
+            serialize=False,
+            filter=SchedulerContextFilter(scheduler_only=True)
+        )
+
         logger.info("Logging system initialized", extra={
             "log_level": self.log_level,
             "environment": "development" if self.is_development else "production"
@@ -104,6 +130,15 @@ class LoguruConfig:
             "{extra}"
         )
 
+    def _get_scheduler_format(self) -> str:
+        """스케줄러 전용 간결한 포맷"""
+        return (
+            "{time:YYYY-MM-DD HH:mm:ss.SSS} | "
+            "{level: <8} | "
+            "{message} | "
+            "{extra}"
+        )
+
 
 def setup_logging() -> None:
     """로깅 시스템 설정"""
@@ -133,7 +168,29 @@ def set_request_id(request_id: str) -> None:
 
 class RequestContextFilter:
     """Request ID를 로그에 추가하는 필터"""
-    
+
     def __call__(self, record: Dict[str, Any]) -> bool:
         record["extra"]["request_id"] = get_request_id()
         return True
+
+
+class SchedulerContextFilter:
+    """스케줄러 로그 분리를 위한 필터
+
+    - scheduler_only=True: 스케줄러 로그만 통과 (scheduler.log용)
+    - scheduler_only=False: 스케줄러 로그 제외 (app.log용)
+    """
+
+    def __init__(self, scheduler_only: bool = False):
+        self.scheduler_only = scheduler_only
+
+    def __call__(self, record: Dict[str, Any]) -> bool:
+        record["extra"]["request_id"] = get_request_id()
+        is_scheduler = get_scheduler_context()
+
+        if self.scheduler_only:
+            # scheduler.log: 스케줄러 로그만 기록
+            return is_scheduler
+        else:
+            # app.log: 스케줄러 로그 제외
+            return not is_scheduler

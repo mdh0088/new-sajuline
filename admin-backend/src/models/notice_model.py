@@ -3,12 +3,15 @@
 """
 from datetime import datetime
 from typing import Optional, Any
+from zoneinfo import ZoneInfo
 
 from sqlalchemy import String, DateTime, Boolean, Integer, Text, Index
 from sqlalchemy.orm import Mapped, mapped_column
 from sqlalchemy.types import JSON
 
 from src.core.database import Base
+
+KST = ZoneInfo("Asia/Seoul")
 
 
 class Notice(Base):
@@ -42,8 +45,8 @@ class Notice(Base):
     created_by: Mapped[int] = mapped_column(Integer, nullable=False, comment="작성자 관리자 ID")
 
     # 타임스탬프
-    created_at: Mapped[datetime] = mapped_column(DateTime, nullable=False, default=datetime.utcnow, comment="등록일시")
-    updated_at: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True, onupdate=datetime.utcnow, comment="수정일시")
+    created_at: Mapped[datetime] = mapped_column(DateTime, nullable=False, default=lambda: datetime.now(KST), comment="등록일시")
+    updated_at: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True, onupdate=lambda: datetime.now(KST), comment="수정일시")
 
     __table_args__ = (
         Index("idx_type_active", "notice_type", "is_active"),

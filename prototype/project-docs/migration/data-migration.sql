@@ -1263,3 +1263,35 @@ select
 	EMAIL,
 	REGIST_DATE 
 from TBL_USER_EX;
+
+-- 2025-12-19 더미 강제 주입
+
+INSERT INTO t_consultation_review (
+    session_id,
+    user_id,  -- USER의 USER_ID로 참조
+    counselor_id,  -- COUNSELOR의 EMAIL로 참조
+    rating,
+    content,
+    counselor_reply,
+    is_best,
+    is_visible,
+    like_count,
+    created_at,
+    updated_at,
+    counselor_replied_at
+)
+SELECT 
+    0,
+    USER_ID,
+    (SELECT EMAIL FROM TBL_CS WHERE IDX = d.CS_IDX),  -- EMAIL로 매핑
+    5,
+    REPLACE(USER_CONT,'&nbsp;','') ,
+    REPLACE(d.CS_CONT,'&nbsp;','') ,
+    0,
+    1,
+    0,
+    IFNULL(d.USER_REGIST_DATE, d.REGIST_DATE),
+    null,
+    IFNULL(d.REGIST_DATE, d.REGIST_DATE)
+FROM TBL_CS_REVIEW_DUMY d
+WHERE EXISTS (SELECT 1 FROM TBL_CS WHERE IDX = d.CS_IDX)  AND USER_REGIST_DATE < '2025-12-19';

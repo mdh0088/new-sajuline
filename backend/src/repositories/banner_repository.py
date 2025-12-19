@@ -4,8 +4,11 @@
 """
 from datetime import datetime
 from typing import Optional
+from zoneinfo import ZoneInfo
 
 from sqlalchemy import select, and_, asc, update
+
+KST = ZoneInfo("Asia/Seoul")
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.common.logging import logger, get_logger_with_request_id
@@ -30,7 +33,7 @@ class BannerRepository:
         log = get_logger_with_request_id()
         log.info("Listing public MAIN banners")
 
-        now = datetime.utcnow()
+        now = datetime.now(KST)
         stmt = (
             select(Banner)
             .where(

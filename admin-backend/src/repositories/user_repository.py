@@ -3,11 +3,14 @@
 """
 from typing import Optional, List, Tuple
 from datetime import datetime
+from zoneinfo import ZoneInfo
 
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, and_, or_, func, desc, update
 
 from src.models.user_model import User
+
+KST = ZoneInfo("Asia/Seoul")
 
 
 class UserRepository:
@@ -91,7 +94,7 @@ class UserRepository:
         updates = {k: v for k, v in fields.items() if v is not None}
         if not updates:
             return False
-        updates["updated_at"] = datetime.utcnow()
+        updates["updated_at"] = datetime.now(KST)
         stmt = (
             update(User)
             .where(User.user_id == user_id)

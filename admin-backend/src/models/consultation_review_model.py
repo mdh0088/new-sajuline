@@ -5,11 +5,14 @@ from __future__ import annotations
 
 from datetime import datetime
 from typing import Optional
+from zoneinfo import ZoneInfo
 
 from sqlalchemy import Boolean, DateTime, Integer, String, Text, SMALLINT, Index
 from sqlalchemy.orm import Mapped, mapped_column
 
 from src.core.database import Base
+
+KST = ZoneInfo("Asia/Seoul")
 
 
 class ConsultationReview(Base):
@@ -37,8 +40,8 @@ class ConsultationReview(Base):
     like_count: Mapped[int] = mapped_column(Integer, nullable=False, default=0, comment="좋아요 수")
 
     # 타임스탬프
-    created_at: Mapped[datetime] = mapped_column(DateTime, nullable=False, default=datetime.utcnow, comment="생성일시")
-    updated_at: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True, onupdate=datetime.utcnow, comment="수정일시")
+    created_at: Mapped[datetime] = mapped_column(DateTime, nullable=False, default=lambda: datetime.now(KST), comment="생성일시")
+    updated_at: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True, onupdate=lambda: datetime.now(KST), comment="수정일시")
     counselor_replied_at: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True, comment="상담사 답변일시")
 
     __table_args__ = (

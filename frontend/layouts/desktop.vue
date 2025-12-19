@@ -3,7 +3,7 @@
     <!-- 좌측 광고 영역 -->
     <aside class="desktop-sidebar">
       <div class="sidebar-header">
-        <h2 class="sidebar-title">사주라인</h2>
+        <img src="/logo.png" alt="사주라인" class="sidebar-logo" />
         <p class="sidebar-subtitle">당신의 운명을 밝히는 빛</p>
       </div>
 
@@ -106,14 +106,12 @@ const handleAdClick = (ad) => {
     border-bottom: 1px solid rgba(255, 255, 255, 0.1);
   }
 
-  .sidebar-title {
-    font-size: 28px;
-    font-weight: 800;
-    background: linear-gradient(135deg, #B794F6 0%, #9F7AEA 50%, #805AD5 100%);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-    margin: 0 0 8px 0;
+  .sidebar-logo {
+    width: 180px;
+    height: auto;
+    object-fit: contain;
+    display: block;
+    margin: 0 auto 8px auto;
   }
 
   .sidebar-subtitle {

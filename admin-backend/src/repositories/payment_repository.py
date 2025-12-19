@@ -5,8 +5,11 @@ from __future__ import annotations
 
 from typing import Optional, List, Tuple, Dict, Any
 from datetime import datetime
+from zoneinfo import ZoneInfo
 
 from sqlalchemy.ext.asyncio import AsyncSession
+
+KST = ZoneInfo("Asia/Seoul")
 from sqlalchemy import select, and_, or_, func, desc
 from sqlalchemy.orm import aliased
 
@@ -133,7 +136,7 @@ class PaymentRepository:
         payment.cancel_amount = cancel_amount
         payment.cancelled_at = cancelled_at
         payment.payment_status = payment_status
-        payment.updated_at = datetime.utcnow()
+        payment.updated_at = datetime.now(KST)
 
         await self.db.commit()
         await self.db.refresh(payment)

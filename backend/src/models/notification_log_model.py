@@ -4,6 +4,7 @@ Notification Log Model
 from datetime import datetime
 from typing import Optional
 from enum import Enum
+from zoneinfo import ZoneInfo
 
 from sqlalchemy import (
     BigInteger, Integer, String, Text, DateTime, JSON, ForeignKey
@@ -11,6 +12,8 @@ from sqlalchemy import (
 from sqlalchemy.orm import Mapped, mapped_column
 
 from src.core.database import Base
+
+KST = ZoneInfo("Asia/Seoul")
 
 
 class RecipientType(str, Enum):
@@ -48,4 +51,4 @@ class NotificationLog(Base):
     read_at: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
     failed_reason: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
     retry_count: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
-    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=lambda: datetime.now(KST), nullable=False)

@@ -3,11 +3,14 @@
 """
 from datetime import datetime
 from typing import Optional
+from zoneinfo import ZoneInfo
 
 from sqlalchemy import String, DateTime, Integer, Text, Index, BigInteger, JSON
 from sqlalchemy.orm import Mapped, mapped_column
 
 from src.core.database import Base
+
+KST = ZoneInfo("Asia/Seoul")
 
 
 class NotificationLog(Base):
@@ -27,7 +30,7 @@ class NotificationLog(Base):
     read_at: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True, comment="읽은 시간")
     failed_reason: Mapped[Optional[str]] = mapped_column(Text, nullable=True, comment="실패 사유")
     retry_count: Mapped[int] = mapped_column(Integer, nullable=False, default=0, comment="재시도 횟수")
-    created_at: Mapped[datetime] = mapped_column(DateTime, nullable=False, default=datetime.utcnow)
+    created_at: Mapped[datetime] = mapped_column(DateTime, nullable=False, default=lambda: datetime.now(KST))
 
     __table_args__ = (
         Index("idx_recipient", "recipient_type", "recipient_id"),

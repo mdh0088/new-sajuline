@@ -312,8 +312,8 @@
 }
 
 .scrollable-content {
-  max-height: none;
-  overflow-y: visible;
+  max-height: 500px;
+  overflow-y: auto;
   padding-right: 4px;
 }
 
@@ -996,3 +996,103 @@
 
 
 /* 폰트 크기는 typography.css에서 통합 관리됩니다 */
+
+/* 상담 버튼 상태별 스타일 */
+.cta-busy {
+  background: linear-gradient(135deg, #0076e5 0%, #00b0a1 100%) !important;
+  border-color: transparent !important;
+  color: #fff !important;
+}
+
+.cta-away {
+  background: rgba(156, 163, 175, 0.2) !important;
+  border-color: rgba(156, 163, 175, 0.4) !important;
+  color: rgba(156, 163, 175, 1) !important;
+}
+
+/* 알림 설정 모달 */
+.notification-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+  padding: 20px;
+}
+
+.notification-modal {
+  background: #1e293b;
+  border-radius: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  max-width: 400px;
+  width: 100%;
+  animation: notificationModalSlideUp 0.3s ease-out;
+}
+
+@keyframes notificationModalSlideUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.notification-modal-content {
+  padding: 32px 24px;
+  text-align: center;
+}
+
+.notification-modal-title {
+  font-size: 18px;
+  font-weight: 700;
+  color: #fff;
+  margin-bottom: 12px;
+  line-height: 1.4;
+}
+
+.notification-modal-desc {
+  font-size: 14px;
+  color: rgba(255, 255, 255, 0.7);
+  line-height: 1.6;
+  margin-bottom: 24px;
+}
+
+.notification-modal-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.notification-button {
+  padding: 14px 20px;
+  border-radius: 12px;
+  font-size: 15px;
+  font-weight: 600;
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.notification-button-primary {
+  background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
+  color: #fff;
+}
+
+.notification-button-primary:hover {
+  background: linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%);
+  transform: translateY(-1px);
+}
+
+.notification-button-secondary {
+  background: rgba(255, 255, 255, 0.1);
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.notification-button-secondary:hover {
+  background: rgba(255, 255, 255, 0.15);
+}

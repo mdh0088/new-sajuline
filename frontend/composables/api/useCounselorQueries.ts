@@ -156,7 +156,7 @@ const counselorApi = {
     if (params.is_important !== undefined) query.set('is_important', String(params.is_important))
     if (params.search) query.set('search', params.search)
 
-    const response = await $api<APIResponse<NoticeListItem[]>>(`/api/v1/notices?${query.toString()}`, { method: 'GET' })
+    const response = await $api<APIResponse<NoticeListItem[]>>(`/api/v1/notices/?${query.toString()}`, { method: 'GET' })
     if (!response.success) {
       throw new Error(response.error?.message || '공지사항을 불러오지 못했습니다.')
     }
@@ -214,7 +214,7 @@ const counselorApi = {
   // 사용자 → 상담사 문의 생성 (로그인 사용자)
   async createUserInquiry(payload: { counselor_id: string; content: string; category?: string; title?: string }) {
     const { $api } = useNuxtApp()
-    const response = await $api<APIResponse<any>>(`/api/v1/users/inquiries`, {
+    const response = await $api<APIResponse<any>>(`/api/v1/users/inquiries/counselor`, {
       method: 'POST',
       body: {
         counselor_id: payload.counselor_id,
@@ -358,6 +358,19 @@ const counselorApi = {
     })
     if (!response.success || !response.data) {
       throw new Error(response.error?.message || '관리자 문의 등록에 실패했습니다.')
+    }
+    return response.data
+  },
+
+  // 포인트 전화 상담 기록 (ARS tm60_mobile)
+  async callByPoint(payload: { counselor_code: string; platform: string }): Promise<{ success: boolean; message: string }> {
+    const { $api } = useNuxtApp()
+    const response = await $api<APIResponse<{ success: boolean; message: string }>>('/api/v1/counselors/call-by-point', {
+      method: 'POST',
+      body: payload
+    })
+    if (!response.success || !response.data) {
+      throw new Error(response.error?.message || '통화 기록 저장에 실패했습니다.')
     }
     return response.data
   }
@@ -582,11 +595,22 @@ export const useCounselorQueries = () => {
     })
   }
 
+  // 포인트 전화 상담 기록 뮤테이션
+  const useCallByPoint = (
+    options?: UseMutationOptions<{ success: boolean; message: string }, APIError, { counselor_code: string; platform: string }>
+  ) => {
+    return useMutation({
+      mutationFn: counselorApi.callByPoint,
+      ...options
+    })
+  }
+
   return {
     // Mutations
     useLogin,
     useLogout,
     useUpdateMypage,
+    useCallByPoint,
     // Queries
     useMypage,
     useMonthlyConsultationStats,

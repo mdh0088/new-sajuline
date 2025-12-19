@@ -18,6 +18,7 @@ from src.repositories.consultation_review_repository import ConsultationReviewRe
 from src.repositories.inquiry_repository import InquiryRepository
 from src.repositories.notification_repository import NotificationRepository
 from src.repositories.ars.tm60_member_repository import Tm60MemberRepository
+from src.repositories.ars.tm60_mobile_repository import Tm60MobileRepository
 from src.services.counselor_service import CounselorService
 from src.services.auth_service import AuthService, get_current_user, TokenPayload, KST
 from src.services.user_activity_log_service import UserActivityLogService
@@ -26,13 +27,15 @@ from src.services.inquiry_service import InquiryService
 from src.services.notification_service import NotificationService
 from src.services.ars.tm60_member_service import Tm60MemberService
 from src.services.ars.tm60_chatlog_service import Tm60ChatlogService
+from src.services.ars.tm60_mobile_service import Tm60MobileService
 from src.repositories.notification_wait_repository import NotificationWaitRepository
 from src.services.notification_wait_service import NotificationWaitService
 from src.schemas.auth_schema import LoginRequest, LoginResponse
 from src.schemas.counselor_schema import CounselorResponse, CounselorMypageUpdate, CounselorSearchItem
+from src.schemas.ars.tm60_mobile_schema import CallByPointRequest, CallByPointResponse
 from src.schemas.user_activity_log_schema import UserType, DeviceType
 from src.common.response import APIResponse, APIResponseBuilder, ok, fail
-from src.common.logging import logger, get_logger_with_request_id
+from src.common.logging import logger, get_logger_with_request_id, get_scheduler_logger, scheduler_logging_context
 from src.common.utils.client_info import extract_client_info
 from src.common.utils.auth_utils import verify_counselor_role
 from src.exceptions.custom_exceptions import BaseAppException
@@ -113,6 +116,12 @@ def get_tm60_chatlog_service() -> Tm60ChatlogService:
         return Tm60ChatlogService(mssql)
 
 
+def get_tm60_mobile_service(mssql = Depends(get_db_mssql)) -> Tm60MobileService:
+    """TM60 Mobile 서비스 의존성 주입"""
+    repo = Tm60MobileRepository(mssql)
+    return Tm60MobileService(repo)
+
+
 def get_notification_wait_repository(
     db: AsyncSession = Depends(get_db_maria)
 ) -> NotificationWaitRepository:
@@ -120,21 +129,37 @@ def get_notification_wait_repository(
     return NotificationWaitRepository(db)
 
 
+def get_notification_service(
+    notification_repo: NotificationRepository = Depends(get_notification_repository)
+) -> NotificationService:
+    """알림 서비스 의존성 주입"""
+    return NotificationService(notification_repo)
+
+
 def get_notification_wait_service(
-    repo: NotificationWaitRepository = Depends(get_notification_wait_repository)
+    repo: NotificationWaitRepository = Depends(get_notification_wait_repository),
+    user_repo: UserRepository = Depends(get_user_repository),
+    counselor_repo: CounselorRepository = Depends(get_counselor_repository),
+    notification_service: NotificationService = Depends(get_notification_service)
 ) -> NotificationWaitService:
     """알림 대기 서비스 의존성 주입"""
-    return NotificationWaitService(repo)
+    return NotificationWaitService(
+        notification_wait_repo=repo,
+        user_repo=user_repo,
+        counselor_repo=counselor_repo,
+        notification_service=notification_service
+    )
 
 
 def get_counselor_service(
     counselor_repo: CounselorRepository = Depends(get_counselor_repository),
     auth_service: AuthService = Depends(get_auth_service),
     tm60_member_service: Tm60MemberService = Depends(get_tm60_member_service),
-    review_repo: ConsultationReviewRepository = Depends(get_consultation_review_repository)
+    review_repo: ConsultationReviewRepository = Depends(get_consultation_review_repository),
+    notification_wait_service: NotificationWaitService = Depends(get_notification_wait_service)
 ) -> CounselorService:
     """상담사 서비스 의존성 주입"""
-    return CounselorService(counselor_repo, auth_service, tm60_member_service, review_repo)
+    return CounselorService(counselor_repo, auth_service, tm60_member_service, review_repo, notification_wait_service)
 
 
 @router.post(
@@ -741,6 +766,84 @@ async def get_monthly_consultation_stats(
 
 
 # =====================
+# 포인트 전화 상담 (ARS)
+# =====================
+
+@router.post(
+    "/call-by-point",
+    response_model=APIResponse[CallByPointResponse],
+    summary="포인트 전화 상담 기록",
+    description="포인트 전화 상담 시 통화 기록을 tm60_mobile 테이블에 저장합니다."
+)
+async def call_by_point(
+    request: Request,
+    payload: CallByPointRequest,
+    current_user: TokenPayload = Depends(get_current_user),
+    tm60_mobile_service: Tm60MobileService = Depends(get_tm60_mobile_service)
+) -> APIResponse[CallByPointResponse]:
+    """
+    포인트 전화 상담 전처리 API (레거시 call_by_point.php 대체)
+    - 사용자가 상담사에게 전화 연결 버튼을 클릭할 때 호출
+    - tm60_mobile 테이블에 통화 기록 INSERT
+    - platform: 1=Mobile web, 2=Android, 3=iOS
+    """
+    log = get_logger_with_request_id()
+    user_id = current_user.sub
+
+    log.info(
+        "API: Call by point initiated",
+        user_id=user_id,
+        counselor_code=payload.counselor_code,
+        platform=payload.platform
+    )
+
+    try:
+        # ARS 시스템에 통화 기록 저장
+        success = await tm60_mobile_service.register_call(
+            user_id=user_id,
+            counselor_code=payload.counselor_code,
+            platform=payload.platform
+        )
+
+        if success:
+            log.info(
+                "API: Call by point record created successfully",
+                user_id=user_id,
+                counselor_code=payload.counselor_code
+            )
+            response = CallByPointResponse(success=True, message="통화 기록이 저장되었습니다")
+            return ok(data=response, message="포인트 전화 상담 기록 성공")
+        else:
+            log.warning(
+                "API: Call by point record creation failed",
+                user_id=user_id,
+                counselor_code=payload.counselor_code
+            )
+            response = CallByPointResponse(success=False, message="통화 기록 저장에 실패했습니다")
+            return fail(message="포인트 전화 상담 기록 실패")
+
+    except BaseAppException as e:
+        log.error(
+            "API: Call by point error",
+            user_id=user_id,
+            counselor_code=payload.counselor_code,
+            error=str(e)
+        )
+        raise
+    except Exception as e:
+        log.error(
+            "API: Unexpected error during call by point",
+            user_id=user_id,
+            counselor_code=payload.counselor_code,
+            error=str(e)
+        )
+        raise BaseAppException(
+            f"포인트 전화 상담 기록 중 오류가 발생했습니다: {str(e)}",
+            status_code=500
+        )
+
+
+# =====================
 # 공개(게스트) 엔드포인트
 # =====================
 
@@ -817,13 +920,14 @@ async def get_public_counselor_detail(
     counselor_code: str,
     counselor_repo: CounselorRepository = Depends(get_counselor_repository),
     review_repo: ConsultationReviewRepository = Depends(get_consultation_review_repository),
-    chatlog_service: Tm60ChatlogService = Depends(get_tm60_chatlog_service)
+    chatlog_service: Tm60ChatlogService = Depends(get_tm60_chatlog_service),
+    tm60_member_service: Tm60MemberService = Depends(get_tm60_member_service)
 ):
     """상담사 공개 상세 조회
     - 입력: counselor_code
     - 출력 필드: counselor_id, nickname, profile_image_url, introduction_short, greeting_message,
       career_info, keywords, work_time, specialty_types, after_amount, before_amount,
-      rating_avg(후기 기반), consultation_count(tm60_chatlog 기반)
+      rating_avg(후기 기반), consultation_count(tm60_chatlog 기반), m_state(tm60_member 상태)
     """
     log = get_logger_with_request_id()
     log.info("API: Public counselor detail", counselor_code=counselor_code)
@@ -838,10 +942,14 @@ async def get_public_counselor_detail(
     # 상담건수 (tm60_chatlog: m_code=counselor_code AND usepoint>0)
     consultation_count = await chatlog_service.get_consultation_count_by_m_code(counselor.counselor_code)
 
+    # tm60_member.m_state 조회 (1=대기중, 2=상담중, 3=부재중)
+    m_state = await tm60_member_service.get_state_by_code(counselor_code)
+
     # 응답 변환 및 보강
     resp = CounselorResponse.model_validate(counselor)
     resp.rating_avg = rating_avg
     resp.consultation_count = consultation_count
+    resp.m_state = m_state
 
     return ok(data=resp, message="상담사 공개 상세 조회 성공")
 
@@ -919,21 +1027,24 @@ async def sync_counselor_status(
     notification_wait_service: NotificationWaitService = Depends(get_notification_wait_service)
 ) -> APIResponse:
     """
-    상담사 상태 동기화 API
+    상담사 상태 동기화 API (스케줄러용)
     - tm60_member.m_state → t_counselor.counselor_status 매핑
-    - m_state: 1=WAITING, 2=ABSENT, 3=CONSULTING
+    - m_state: 1=WAITING(대기중), 2=CONSULTING(상담중), 3=ABSENT(부재중)
     - WAITING으로 변경된 상담사에 대해 t_notification_wait 기반 알림 발송
+    - 로그는 scheduler.log에 별도 기록 (app.log 제외)
     """
-    log = get_logger_with_request_id()
-    log.info("API: Syncing counselor status")
+    # 스케줄러 컨텍스트 설정 - scheduler.log에만 기록
+    with scheduler_logging_context():
+        log = get_scheduler_logger()
+        log.info("API: Syncing counselor status")
 
-    result = await counselor_service.sync_all_counselor_status(notification_wait_service)
+        result = await counselor_service.sync_all_counselor_status(notification_wait_service)
 
-    log.info(
-        "API: Counselor status sync completed",
-        total_members=result["total_members"],
-        updated_count=result["updated_count"],
-        notification_sent_count=result["notification_sent_count"]
-    )
+        log.info(
+            "API: Counselor status sync completed",
+            total_members=result["total_members"],
+            updated_count=result["updated_count"],
+            notification_sent_count=result["notification_sent_count"]
+        )
 
-    return ok(data=result, message="상담사 상태 동기화 완료")
+        return ok(data=result, message="상담사 상태 동기화 완료")

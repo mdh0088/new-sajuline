@@ -3,11 +3,14 @@ PointProductRepository - t_point_product 접근 레이어
 """
 from typing import List, Optional, Tuple
 from datetime import datetime
+from zoneinfo import ZoneInfo
 
 from sqlalchemy import select, func, insert, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.models.point_product_model import PointProduct
+
+KST = ZoneInfo("Asia/Seoul")
 
 
 class PointProductRepository:
@@ -41,7 +44,7 @@ class PointProductRepository:
     async def partial_update(self, product_id: int, **fields) -> bool:
         if not fields:
             return False
-        fields["updated_at"] = datetime.utcnow()
+        fields["updated_at"] = datetime.now(KST)
         stmt = (
             update(PointProduct)
             .where(PointProduct.product_id == product_id)

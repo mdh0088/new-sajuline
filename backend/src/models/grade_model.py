@@ -4,12 +4,15 @@
 from datetime import datetime
 from typing import Optional, Dict, Any
 from decimal import Decimal
+from zoneinfo import ZoneInfo
 
 from sqlalchemy import String, DateTime, Integer, Boolean, Text, Index, CheckConstraint, DECIMAL
 from sqlalchemy.orm import Mapped, mapped_column
 from sqlalchemy.types import JSON
 
 from src.core.database import Base
+
+KST = ZoneInfo("Asia/Seoul")
 
 
 class Grade(Base):
@@ -83,15 +86,15 @@ class Grade(Base):
     
     # 타임스탬프
     created_at: Mapped[datetime] = mapped_column(
-        DateTime, 
+        DateTime,
         nullable=False,
-        default=datetime.utcnow,
+        default=lambda: datetime.now(KST),
         comment="생성일시"
     )
     updated_at: Mapped[Optional[datetime]] = mapped_column(
-        DateTime, 
+        DateTime,
         nullable=True,
-        onupdate=datetime.utcnow,
+        onupdate=lambda: datetime.now(KST),
         comment="수정일시"
     )
     

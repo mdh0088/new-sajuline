@@ -138,14 +138,13 @@ async def request_payment(
     - PENDING 상태로 payment 생성하여 order_no 추적 보장
     - Payletter 공식 권장: callback/return 순서 무관하게 조회 가능하도록
     """
-
-    
-    log.info("PAYMENT URL ", settings.payment_gateway_url)
-    log.info("PAYMENT KEY ", settings.payment_gateway_key)
-    log.info("PAYMENT CLIENT ID ", settings.payment_client_id)
-
-
     log = get_logger_with_request_id()
+
+    log.info("PAYMENT CONFIG",
+             payment_url=settings.payment_gateway_url,
+             payment_key=settings.payment_gateway_key,
+             client_id=settings.payment_client_id)
+
     verify_user_role(current_user)
 
     # 상품 조회 (API -> Service -> Repository)
@@ -229,10 +228,6 @@ async def request_payment(
         "Authorization": f"PLKEY {settings.payment_gateway_key}",
     }
 
-    log.info("PAYMENT URL ", settings.payment_gateway_url)
-    log.info("PAYMENT KEY ", settings.payment_gateway_key)
-    log.info("PAYMENT CLIENT ID ", settings.payment_client_id)
-
     # Payletter 결제 요청
     try:
         async with httpx.AsyncClient(timeout=20.0) as client:
@@ -242,9 +237,23 @@ async def request_payment(
             if not endpoint.endswith("/v1.0/payments/request"):
                 endpoint = f"{endpoint}/v1.0/payments/request"
             resp = await client.post(endpoint, json=body, headers=headers)
+
+            # Payletter 응답 로깅
+            log.info("Payletter API response",
+                     status_code=resp.status_code,
+                     response_body=resp.text,
+                     response_headers=dict(resp.headers),
+                     request_endpoint=endpoint,
+                     order_no=order_no)
+
             if resp.status_code != 200:
                 # PG 요청 실패시 payment 상태를 FAIL로 업데이트
                 from src.schemas.payment_schema import PaymentUpdate
+                log.error("Payletter API request failed",
+                         status_code=resp.status_code,
+                         response_body=resp.text,
+                         request_body=body,
+                         order_no=order_no)
                 try:
                     await payment_service.update_payment(
                         created_payment.payment_id,

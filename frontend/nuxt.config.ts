@@ -8,7 +8,7 @@ export default defineNuxtConfig({
   ssr: true,
   // 페이지 기반 라우팅 활성화 (명시)
   pages: true,
-  
+
   // 하이브리드 렌더링 전략 (즉시 적용 권장)
   routeRules: {
     // 정적 페이지는 빌드 시점에 프리렌더링 (개발 환경에서는 비활성화)
@@ -17,25 +17,25 @@ export default defineNuxtConfig({
       '/privacy': { prerender: true },
       '/provision': { prerender: true },
     } : {}),
-    
+
     // 동적 콘텐츠는 SWR(Stale-While-Revalidate) 캐싱
-    '/horoscope/**': { 
-      headers: { 
+    '/horoscope/**': {
+      headers: {
         'Cache-Control': 'max-age=3600' // 1시간 캐시
       },
       swr: 3600 // 1시간 스테일 허용
     },
-    '/chat/**': { 
+    '/chat/**': {
       headers: {
         'Cache-Control': 'no-cache' // 채팅은 실시간성 중요
       }
     },
-    
+
     // 사용자 프로필은 클라이언트 사이드 렌더링
     '/profile/**': { ssr: false },
     '/settings/**': { ssr: false }
   },
-  
+
   // 앱 전역 설정
   app: {
     head: {
@@ -47,22 +47,36 @@ export default defineNuxtConfig({
       meta: [
         { charset: 'utf-8' },
         { name: 'viewport', content: 'width=device-width, initial-scale=1' },
-        { name: 'description', content: 'AI와 전문가의 하이브리드 사주 상담 플랫폼' },
+        // 네이버 서치어드바이저 사이트 소유권 인증
+        { name: 'naver-site-verification', content: '926ee2395de890ac6fdfbe5aed3c24022fa01f8a' },
+        // SEO 기본 메타태그 (네이버 권장: description 80-110자)
+        { name: 'description', content: '사주라인은 AI와 전문가의 하이브리드 사주 상담 플랫폼입니다. 타로, 사주, 신점 전문 상담사와 실시간 채팅 상담을 경험하세요. 정확한 운세 분석과 맞춤형 상담 서비스를 제공합니다.' },
+        { name: 'keywords', content: '사주, 타로, 신점, 운세, AI운세, 사주상담, 타로상담, 신점상담, 전문가상담, 실시간상담, 온라인점집, 사주라인' },
+        { name: 'author', content: '사주라인' },
+        { name: 'robots', content: 'index, follow' },
         { name: 'format-detection', content: 'telephone=no' },
         // PWA 호환 메타 (경고 제거)
         { name: 'mobile-web-app-capable', content: 'yes' },
-        
-        // Open Graph 메타 태그 (소셜 미디어 공유 최적화)
+
+        // Open Graph 메타 태그 (네이버/카카오/페이스북 공유 최적화)
         { property: 'og:type', content: 'website' },
         { property: 'og:site_name', content: '사주라인' },
+        { property: 'og:title', content: '사주라인 - AI와 전문가의 사주 상담 플랫폼' },
+        { property: 'og:description', content: '타로, 사주, 신점 전문 상담사와 실시간 채팅 상담. 정확한 운세 분석과 맞춤형 상담 서비스.' },
+        { property: 'og:url', content: 'https://sajuline.com' },
+        { property: 'og:image', content: 'https://sajuline.com/images/og-image.jpg' },
         { property: 'og:locale', content: 'ko_KR' },
         { property: 'og:image:width', content: '1200' },
         { property: 'og:image:height', content: '630' },
-        
+        { property: 'og:image:alt', content: '사주라인 - AI와 전문가의 사주 상담 플랫폼' },
+
         // Twitter Card 메타 태그
         { name: 'twitter:card', content: 'summary_large_image' },
         { name: 'twitter:site', content: '@sajuline' },
-        
+        { name: 'twitter:title', content: '사주라인 - AI와 전문가의 사주 상담 플랫폼' },
+        { name: 'twitter:description', content: '타로, 사주, 신점 전문 상담사와 실시간 채팅 상담' },
+        { name: 'twitter:image', content: 'https://sajuline.com/images/og-image.jpg' },
+
         // 모바일 앱 메타 태그 (PWA 준비)
         { name: 'theme-color', content: '#1a1a1a' },
         { name: 'apple-mobile-web-app-capable', content: 'yes' },
@@ -71,11 +85,30 @@ export default defineNuxtConfig({
       link: [
         { rel: 'icon', type: 'image/x-icon', href: '/favicon.ico' },
         // 다양한 디바이스 아이콘 추가
-        { rel: 'apple-touch-icon', sizes: '180x180', href: '/apple-touch-icon.png' },
-        { rel: 'icon', type: 'image/png', sizes: '32x32', href: '/favicon-32x32.png' },
-        { rel: 'icon', type: 'image/png', sizes: '16x16', href: '/favicon-16x16.png' },
-        { rel: 'manifest', href: '/site.webmanifest' }
+        { rel: 'apple-touch-icon', sizes: '57x57', href: '/icons/apple-icon-57x57.png' },
+        { rel: 'apple-touch-icon', sizes: '60x60', href: '/icons/apple-icon-60x60.png' },
+        { rel: 'apple-touch-icon', sizes: '72x72', href: '/icons/apple-icon-72x72.png' },
+        { rel: 'apple-touch-icon', sizes: '76x76', href: '/icons/apple-icon-76x76.png' },
+        { rel: 'apple-touch-icon', sizes: '114x114', href: '/icons/apple-icon-114x114.png' },
+        { rel: 'apple-touch-icon', sizes: '120x120', href: '/icons/apple-icon-120x120.png' },
+        { rel: 'apple-touch-icon', sizes: '144x144', href: '/icons/apple-icon-144x144.png' },
+        { rel: 'apple-touch-icon', sizes: '152x152', href: '/icons/apple-icon-152x152.png' },
+        { rel: 'apple-touch-icon', sizes: '180x180', href: '/icons/apple-icon-180x180.png' },
+        { rel: 'icon', type: 'image/png', sizes: '192x192', href: '/icons/android-icon-192x192.png' },
+        { rel: 'icon', type: 'image/png', sizes: '32x32', href: '/icons/favicon-32x32.png' },
+        { rel: 'icon', type: 'image/png', sizes: '96x96', href: '/icons/favicon-96x96.png' },
+        { rel: 'icon', type: 'image/png', sizes: '16x16', href: '/icons/favicon-16x16.png' },
+        { rel: 'manifest', href: '/manifest.json' }
       ]
+    }
+  },
+
+  // Google Analytics (@nuxt/scripts 활용)
+  scripts: {
+    registry: {
+      googleAnalytics: {
+        id: 'G-CH4RCKR1PP'
+      }
     }
   },
 
@@ -84,7 +117,7 @@ export default defineNuxtConfig({
     'notivue/notification.css',     // 기본 알림 스타일
     'notivue/animations.css'        // 알림 애니메이션
   ],
-  
+
   // 컴포넌트 자동 import 설정
   components: [
     {
@@ -114,7 +147,7 @@ export default defineNuxtConfig({
 
   // Notivue 알림 시스템 설정
   notivue: {
-    position: 'top-right',        // 알림 위치: 오른쪽 상단 (top-left, top-center, top-right, bottom-left, bottom-center, bottom-right)
+    position: 'top-center',       // 알림 위치: 상단 중앙 (top-left, top-center, top-right, bottom-left, bottom-center, bottom-right)
     limit: 4,                     // 동시에 표시할 수 있는 최대 알림 개수
     enqueue: true,                // 알림이 많을 때 대기열에 추가 (false면 새 알림이 기존 알림을 밀어냄)
     avoidDuplicates: true,        // 중복 알림 방지 (같은 내용의 알림이 연속으로 나타나는 것을 방지)
@@ -217,7 +250,7 @@ export default defineNuxtConfig({
     // 서버 전용 (민감한 정보)
     apiSecret: process.env.API_SECRET,
     proxyTarget: process.env.NUXT_PROXY_TARGET,
-    
+
     // 클라이언트 공개 (브라우저에서 접근 가능)
     public: {
       apiBase: process.env.NUXT_PUBLIC_API_BASE,
@@ -225,7 +258,7 @@ export default defineNuxtConfig({
       naverClientId: process.env.NUXT_PUBLIC_NAVER_CLIENT_ID,
       siteUrl: process.env.NUXT_PUBLIC_SITE_URL,
       sentryDsn: process.env.NUXT_PUBLIC_SENTRY_DSN,
-      cdnBase: process.env.NUXT_PUBLIC_CDN_BASE 
+      cdnBase: process.env.NUXT_PUBLIC_CDN_BASE
     }
   },
 
@@ -256,11 +289,11 @@ export default defineNuxtConfig({
   nitro: {
     routeRules: {
       // 빌드 자산 장기 캐싱 (1년, 해시 기반 무효화)
-      '/_nuxt/**': {
-        headers: {
-          'Cache-Control': 'public, max-age=31536000, immutable'
-        }
-      },
+      // '/_nuxt/**': {
+      //   headers: {
+      //     'Cache-Control': 'public, max-age=31536000, immutable'
+      //   }
+      // },
       '/api/v1/**': {
         proxy: `${process.env.NUXT_PROXY_TARGET || 'http://localhost:8000'}/api/v1/**`
       },

@@ -4,9 +4,12 @@ Kakao AlimTalk sending logic migrated from PHP
 """
 from typing import Optional, Dict, Any
 from datetime import datetime
+from zoneinfo import ZoneInfo
 import httpx
 
 from src.repositories.notification_repository import NotificationRepository
+
+KST = ZoneInfo("Asia/Seoul")
 from src.models.notification_log_model import RecipientType, SendStatus
 from src.models.notification_template_model import NotificationChannel
 from src.config.settings import settings
@@ -60,7 +63,7 @@ class NotificationService:
             raise ValidationError("Kakao AlimTalk configuration missing")
 
         # Generate message number (timestamp)
-        current_time = datetime.now().strftime("%Y%m%d%H%M%S")
+        current_time = datetime.now(KST).strftime("%Y%m%d%H%M%S")
         no = current_time
 
         # Prepare request data
@@ -218,12 +221,12 @@ class NotificationService:
         self,
         phone: str,
         user_nick_name: str,
-        cs_idx: int
+        counselor_code: str
     ) -> Dict[str, Any]:
         """상담사 접속 알림"""
-        msg = f"#{user_nick_name} 선생님 현재 상담가능 합니다.\n\n접속 알림을 해둔 다른 고객님이 계시므로\n상담을 원하시면 서둘러주세요.\n*해당 알림은 1회성 알림으로\n다시 접속알림이 필요하신 분은 재설정 해주세요."
-        pc_link = f"https://sajutarot.com/app/cs/cs_detail?idx={cs_idx}"
-        mo_link = f"https://sajutarot.com/app/cs/cs_detail?idx={cs_idx}"
+        msg = f"#{{사주로 상담사 접속 알림 안내}}\n\n{user_nick_name} 선생님 현재 상담가능 합니다.\n\n접속 알림을 해둔 다른 고객님이 계시므로\n상담을 원하시면 서둘러주세요.\n*해당 알림은 1회성 알림으로\n다시 접속알림이 필요하신 분은 재설정 해주세요."
+        pc_link = f"https://www.sajuline.com/counselor/{counselor_code}"
+        mo_link = f"https://www.sajuline.com/counselor/{counselor_code}"
         template_id = "50047"
 
         return await self._create_and_send(
@@ -332,6 +335,8 @@ class NotificationService:
         """결제 완료"""
         msg = f"{user_nick_name} 고객님의 소중한 주문 안내드립니다.\n주문번호 : {order_no}\n주문상품 : {product_name}\n금액 : {amount}원\n포인트 : {point}"
         template_id = "50042"
+        pc_link = "https://www.sajuline.com/user/pointlog"
+        mo_link = "https://www.sajuline.com/user/pointlog"
 
         return await self._create_and_send(
             recipient_type=RecipientType.USER,
@@ -339,8 +344,8 @@ class NotificationService:
             phone=phone,
             template_id=template_id,
             msg_content=msg,
-            pc_link="",
-            mo_link=""
+            pc_link=pc_link,
+            mo_link=mo_link
         )
 
     async def user_join_alert(

@@ -2,11 +2,15 @@
 관리자 Repository - t_admin 접근
 """
 from typing import Optional
+from datetime import datetime
+from zoneinfo import ZoneInfo
 
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, update
 
 from src.models.admin_model import Admin
+
+KST = ZoneInfo("Asia/Seoul")
 
 
 class AdminRepository:
@@ -31,7 +35,7 @@ class AdminRepository:
         stmt = (
             update(Admin)
             .where(Admin.admin_id == admin_id)
-            .values(last_login_at=datetime.utcnow(), updated_at=datetime.utcnow())
+            .values(last_login_at=datetime.now(KST), updated_at=datetime.now(KST))
             .execution_options(synchronize_session="evaluate")
         )
         result = await self.db.execute(stmt)

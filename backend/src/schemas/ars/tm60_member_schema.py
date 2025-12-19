@@ -98,4 +98,4 @@ class Tm60MemberStats(BaseModel):
 class Tm60MemberStateItem(BaseModel):
     """상담사 상태 동기화용 간소화 스키마"""
     m_code: str = Field(..., description="멤버 코드")
-    m_state: str = Field(..., description="멤버 상태: 1=대기중, 2=부재중, 3=상담중")
+    m_state: str = Field(..., description="멤버 상태: 1=대기중, 2=상담중, 3=부재중")
