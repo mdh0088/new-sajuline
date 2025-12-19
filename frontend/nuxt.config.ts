@@ -147,7 +147,7 @@ export default defineNuxtConfig({
 
   // Notivue 알림 시스템 설정
   notivue: {
-    position: 'top-right',        // 알림 위치: 오른쪽 상단 (top-left, top-center, top-right, bottom-left, bottom-center, bottom-right)
+    position: 'top-center',       // 알림 위치: 상단 중앙 (top-left, top-center, top-right, bottom-left, bottom-center, bottom-right)
     limit: 4,                     // 동시에 표시할 수 있는 최대 알림 개수
     enqueue: true,                // 알림이 많을 때 대기열에 추가 (false면 새 알림이 기존 알림을 밀어냄)
     avoidDuplicates: true,        // 중복 알림 방지 (같은 내용의 알림이 연속으로 나타나는 것을 방지)

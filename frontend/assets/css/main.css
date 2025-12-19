@@ -2020,3 +2020,140 @@
     font-size: 16px !important;
   }
 }
+
+/* Notivue 알림 z-index 오버라이드 (모든 요소보다 위에 표시) */
+:root {
+  --nv-z: 99999 !important;
+}
+
+.Notivue,
+.Notivue__container,
+[data-notivue-container],
+div[data-notivue-container],
+.notivue-container {
+  --nv-z: 99999 !important;
+  z-index: 99999 !important;
+  position: fixed !important;
+}
+
+.Notivue__notification,
+[data-notivue],
+div[data-notivue],
+.notivue-notification {
+  z-index: 99999 !important;
+  position: relative !important;
+}
+
+/* 모바일에서 토스트 알림을 명확하게 표시 */
+.Notivue,
+.Notivue__container,
+[data-notivue-container],
+div[data-notivue-container] {
+  top: 16px !important;
+  left: 50% !important;
+  transform: translateX(-50%) !important;
+  width: calc(100% - 32px) !important;
+  max-width: 400px !important;
+  pointer-events: none !important;
+}
+
+.Notivue__notification,
+[data-notivue],
+div[data-notivue] {
+  font-size: 14px !important;
+  line-height: 1.4 !important;
+  padding: 12px 16px !important;
+  border-radius: 8px !important;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15), 0 0 0 1px rgba(0, 0, 0, 0.05) !important;
+  backdrop-filter: blur(10px) !important;
+  -webkit-backdrop-filter: blur(10px) !important;
+  min-height: auto !important;
+  max-height: 48px !important;
+  pointer-events: auto !important;
+  display: flex !important;
+  align-items: center !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+  margin-bottom: 8px !important;
+  font-weight: 500 !important;
+}
+
+/* 아이콘 스타일 */
+.Notivue__notification .Notivue__icon,
+[data-notivue] .Notivue__icon {
+  width: 18px !important;
+  height: 18px !important;
+  min-width: 18px !important;
+  margin: 0 8px 0 0 !important;
+}
+
+/* 메시지 컨텐츠 */
+.Notivue__notification .Notivue__content,
+[data-notivue] .Notivue__content {
+  padding: 0 !important;
+  flex: 1 !important;
+  display: flex !important;
+  align-items: center !important;
+}
+
+.Notivue__notification .Notivue__content-message,
+[data-notivue] .Notivue__content-message {
+  margin: 0 !important;
+  padding: 0 !important;
+  line-height: 1.4 !important;
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+}
+
+/* 닫기 버튼 */
+.Notivue__notification .Notivue__close,
+[data-notivue] .Notivue__close {
+  padding: 4px !important;
+  margin: 0 0 0 8px !important;
+  width: 20px !important;
+  height: 20px !important;
+  min-width: 20px !important;
+  opacity: 0.7 !important;
+}
+
+.Notivue__notification .Notivue__close:hover,
+[data-notivue] .Notivue__close:hover {
+  opacity: 1 !important;
+}
+
+/* 성공 알림 */
+.Notivue__notification--success,
+[data-notivue].Notivue__notification--success,
+.notivue-notification.success {
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%) !important;
+  color: white !important;
+  border: 1px solid rgba(255, 255, 255, 0.2) !important;
+}
+
+/* 에러 알림 */
+.Notivue__notification--error,
+[data-notivue].Notivue__notification--error,
+.notivue-notification.error {
+  background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%) !important;
+  color: white !important;
+  border: 1px solid rgba(255, 255, 255, 0.2) !important;
+}
+
+/* 경고 알림 */
+.Notivue__notification--warning,
+[data-notivue].Notivue__notification--warning,
+.notivue-notification.warning {
+  background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%) !important;
+  color: white !important;
+  border: 1px solid rgba(255, 255, 255, 0.2) !important;
+}
+
+/* 정보 알림 */
+.Notivue__notification--info,
+[data-notivue].Notivue__notification--info,
+.notivue-notification.info {
+  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%) !important;
+  color: white !important;
+  border: 1px solid rgba(255, 255, 255, 0.2) !important;
+}

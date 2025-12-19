@@ -1,7 +1,8 @@
 /* 검색 페이지 전용 스타일 */
 
-/* 검색 영역 */
-.search-section {
+/* 검색 영역 - search 페이지에서만 fixed */
+[data-v-search] .search-section,
+.min-h-screen.bg-slate-950 .search-section {
   position: fixed;
   top: 60px;
   left: 0;
@@ -16,7 +17,8 @@
 
 /* 모바일에서도 동일한 위치 고정 */
 @media (max-width: 1023px) {
-  .search-section {
+  [data-v-search] .search-section,
+  .min-h-screen.bg-slate-950 .search-section {
     top: 60px;
   }
 }
@@ -55,8 +57,9 @@
   font-size: 20px;
 }
 
-/* 필터 영역 */
-.filter-section {
+/* 필터 영역 - search 페이지에서만 absolute */
+[data-v-search] .filter-section,
+.min-h-screen.bg-slate-950 .filter-section {
   position: absolute;
   top: 100px;
   left: 0;
@@ -70,7 +73,8 @@
 
 /* 모바일에서도 동일한 위치 고정 */
 @media (max-width: 1023px) {
-  .filter-section {
+  [data-v-search] .filter-section,
+  .min-h-screen.bg-slate-950 .filter-section {
     top: 160px;
   }
 }
