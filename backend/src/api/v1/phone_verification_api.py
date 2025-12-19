@@ -217,7 +217,6 @@ async def _kcp_callback_handler(
 
     except (ValidationError, Exception) as e:
         log.error("KCP callback failed",
-                 session_id=ordr_idxx,
                  error=str(e),
                  exc_info=True)
 
@@ -262,51 +261,65 @@ async def _kcp_callback_handler(
         return response
 
 
-@router.post(
+@router.api_route(
     "/callback",
+    methods=["GET", "POST"],
     response_class=HTMLResponse,
     summary="KCP 콜백 처리",
-    description="KCP 인증 완료 후 콜백을 처리합니다 (POST Form)"
+    description="KCP 인증 완료 후 콜백을 처리합니다 (GET/POST)"
 )
 async def kcp_callback(
     request: Request,
+    session_id: Optional[str] = None,
     phone_service: PhoneVerificationService = Depends(get_phone_verification_service)
 ):
-    """KCP 콜백 처리 - POST Form 데이터 파싱"""
+    """KCP 콜백 처리 - GET/POST 모두 지원
+
+    KCP 인증 완료 후:
+    1. POST: KCP에서 인증 결과와 함께 호출 → 처리 후 프론트엔드로 리다이렉트
+    2. GET: 세션 상태 확인 후 프론트엔드로 리다이렉트 (모바일 fallback)
+    """
     log = get_logger_with_request_id()
 
+    # session_id 추출 (쿼리 파라미터에서)
+    if not session_id:
+        session_id = request.query_params.get("session_id", "")
+
+    log.info("KCP callback received",
+            method=request.method,
+            session_id=session_id,
+            query_params=dict(request.query_params))
+
     try:
-        # 미들웨어에서 이미 파싱한 request body 가져오기 (스트림 소진 방지)
-        form_dict = getattr(request.state, "request_body", {})
+        # POST 요청: KCP에서 인증 결과와 함께 호출
+        if request.method == "POST":
+            # Form 데이터 파싱
+            form_dict = getattr(request.state, "request_body", {})
 
-        # 필수 파라미터 추출
-        site_cd = form_dict.get("site_cd", "")
-        ordr_idxx = form_dict.get("ordr_idxx", "")
-        cert_no = form_dict.get("cert_no", "")
-        enc_cert_data2 = form_dict.get("enc_cert_data2", "")
-        dn_hash = form_dict.get("dn_hash", "")
-        res_cd = form_dict.get("res_cd", "")
-        res_msg = form_dict.get("res_msg", "")
+            # request_body가 비어있거나 메타데이터만 있는 경우 직접 파싱
+            if not form_dict or "content_type" in form_dict:
+                try:
+                    form_data = await request.form()
+                    form_dict = dict(form_data)
+                    log.info("KCP callback - Form data parsed",
+                            form_keys=list(form_dict.keys()))
+                except Exception as e:
+                    log.warning("KCP callback - Failed to parse form data", error=str(e))
+                    form_dict = {}
 
-        log.info("KCP callback received",
-                session_id=ordr_idxx,
-                res_cd=res_cd)
+            # KCP 필수 파라미터 추출
+            site_cd = form_dict.get("site_cd", "")
+            ordr_idxx = form_dict.get("ordr_idxx", "") or session_id
+            cert_no = form_dict.get("cert_no", "")
+            enc_cert_data2 = form_dict.get("enc_cert_data2", "")
+            dn_hash = form_dict.get("dn_hash", "")
+            res_cd = form_dict.get("res_cd", "")
+            res_msg = form_dict.get("res_msg", "")
 
-        # 필수 파라미터 검증
-        if not all([site_cd, ordr_idxx, cert_no, enc_cert_data2, dn_hash, res_cd]):
-            missing = []
-            if not site_cd: missing.append("site_cd")
-            if not ordr_idxx: missing.append("ordr_idxx")
-            if not cert_no: missing.append("cert_no")
-            if not enc_cert_data2: missing.append("enc_cert_data2")
-            if not dn_hash: missing.append("dn_hash")
-            if not res_cd: missing.append("res_cd")
-
-            log.error("KCP callback - Missing required parameters",
-                     missing_params=missing)
-            raise ValidationError(f"필수 파라미터 누락: {', '.join(missing)}")
-
-        result = await phone_service.process_callback(
+            # 필수 파라미터 검증
+            if all([site_cd, ordr_idxx, cert_no, enc_cert_data2, dn_hash, res_cd]):
+                # KCP 결과 처리
+                result = await phone_service.process_callback(
                     site_cd=site_cd,
                     ordr_idxx=ordr_idxx,
                     cert_no=cert_no,
@@ -316,18 +329,166 @@ async def kcp_callback(
                     res_msg=res_msg
                 )
 
-        log.info("KCP callback received",
-                    session_id=ordr_idxx,
-                    res_cd=res_cd)
+                log.info("KCP callback processed successfully",
+                        session_id=ordr_idxx,
+                        phone=result.get("phone", "")[:3] + "****")
 
-        return await _kcp_callback_handler(result)
-    except ValidationError:
-        raise
+                # 성공 시 프론트엔드로 리다이렉트 또는 postMessage
+                return await _kcp_callback_handler(result)
+            else:
+                # POST인데 필수 파라미터 없음 → 세션에서 결과 확인
+                log.warning("KCP callback POST - Missing required parameters, checking session",
+                           session_id=session_id)
+
+        # GET 요청 또는 POST에서 파라미터 없는 경우: 세션 상태 확인
+        if not session_id:
+            log.info("KCP callback - No session_id provided")
+            return _render_info_page("본인인증 페이지",
+                                    "이 페이지는 직접 접근할 수 없습니다.<br>회원가입 페이지에서 본인인증을 진행해주세요.")
+
+        # 세션 상태 확인
+        session_data = await phone_service.get_verification_status(session_id)
+
+        if not session_data:
+            log.warning("KCP callback - Session not found", session_id=session_id)
+            return _render_info_page("세션 만료",
+                                    "인증 세션이 만료되었습니다.<br>다시 인증을 진행해주세요.")
+
+        session_status = session_data.get("status", "")
+        return_url = session_data.get("return_url", "/signup")
+
+        log.info("KCP callback - Session status check",
+                session_id=session_id,
+                status=session_status,
+                return_url=return_url)
+
+        if session_status == "verified":
+            # 이미 인증 완료된 경우 → 프론트엔드로 리다이렉트
+            result = {
+                "success": True,
+                "phone": session_data.get("phone", ""),
+                "phone_chk": session_data.get("phone_chk", ""),
+                "is_phone_matched": session_data.get("phone") == session_data.get("phone_number"),
+                "ci": session_data.get("ci", ""),
+                "di": session_data.get("di", ""),
+                "name": session_data.get("verified_name", ""),
+                "birth_date": session_data.get("verified_birth_date", ""),
+                "gender": session_data.get("verified_gender", ""),
+                "return_url": return_url,
+                "user_id": session_data.get("user_id", "")
+            }
+            return await _kcp_callback_handler(result)
+        elif session_status == "initiated":
+            # 인증 대기 중 → 대기 페이지 표시
+            return _render_info_page("인증 처리 중",
+                                    "본인인증을 처리하고 있습니다.<br>잠시만 기다려주세요...",
+                                    auto_refresh=True)
+        else:
+            # 알 수 없는 상태
+            return _render_info_page("인증 오류",
+                                    "인증 처리 중 오류가 발생했습니다.<br>다시 시도해주세요.")
+
+    except ValidationError as e:
+        log.error("KCP callback validation error", error=str(e))
+        return _render_error_page(str(e))
     except Exception as e:
-        log.error("KCP callback processing failed",
-                 error=str(e),
-                 exc_info=True)
-        raise
+        log.error("KCP callback processing failed", error=str(e), exc_info=True)
+        return _render_error_page("인증 처리 중 오류가 발생했습니다.")
+
+
+def _render_info_page(title: str, message: str, auto_refresh: bool = False) -> HTMLResponse:
+    """안내 페이지 렌더링"""
+    refresh_script = """
+        <script>
+            // 3초 후 새로고침
+            setTimeout(function() {
+                window.location.reload();
+            }, 3000);
+        </script>
+    """ if auto_refresh else ""
+
+    html = f"""
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>{title}</title>
+        {refresh_script}
+        <style>
+            body {{
+                font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                min-height: 100vh;
+                margin: 0;
+                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                color: white;
+                text-align: center;
+                padding: 20px;
+            }}
+            .container {{ max-width: 400px; }}
+            h2 {{ margin-bottom: 16px; }}
+            p {{ margin-bottom: 24px; opacity: 0.9; line-height: 1.6; }}
+            a {{
+                display: inline-block;
+                padding: 12px 24px;
+                background: white;
+                color: #764ba2;
+                text-decoration: none;
+                border-radius: 8px;
+                font-weight: 500;
+            }}
+        </style>
+    </head>
+    <body>
+        <div class="container">
+            <h2>{title}</h2>
+            <p>{message}</p>
+            <a href="{settings.frontend_url}">홈으로 돌아가기</a>
+        </div>
+    </body>
+    </html>
+    """
+    return HTMLResponse(content=html, status_code=200)
+
+
+def _render_error_page(error_message: str) -> HTMLResponse:
+    """에러 페이지 렌더링 (postMessage + 리다이렉트)"""
+    safe_error = error_message.replace("'", "\\'").replace('"', '\\"')
+    html = f"""
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <meta charset="utf-8">
+        <script>
+            window.onload = function() {{
+                const messageData = {{
+                    type: 'kcp_verification_complete',
+                    success: false,
+                    message: '{safe_error}'
+                }};
+                try {{
+                    if (window.opener && !window.opener.closed) {{
+                        window.opener.postMessage(messageData, '*');
+                    }}
+                    if (window.parent && window.parent !== window) {{
+                        window.parent.postMessage(messageData, '*');
+                    }}
+                }} catch(e) {{}}
+                setTimeout(function() {{
+                    try {{ window.close(); }} catch(e) {{
+                        window.location.href = '{settings.frontend_url}';
+                    }}
+                }}, 500);
+            }}
+        </script>
+    </head>
+    <body style="display:none;"></body>
+    </html>
+    """
+    return HTMLResponse(content=html, status_code=200)
 
 
 @router.get(

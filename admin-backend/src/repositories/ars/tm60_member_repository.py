@@ -60,17 +60,17 @@ class Tm60MemberRepository:
         self.db.rollback()
         return False
 
-    def update_tel_by_code(self, *, m_code: str, u_tel: str) -> bool:
-        """m_code로 tm60_member.u_tel 값을 갱신
+    def update_tel_by_code(self, *, m_code: str, m_tel: str) -> bool:
+        """m_code로 tm60_member.m_tel 값을 갱신
 
         Returns: 업데이트가 1건 이상이면 True
         """
-        if not m_code or not u_tel:
+        if not m_code or not m_tel:
             return False
         stmt = (
             update(Tm60Member)
             .where(Tm60Member.m_code == m_code)
-            .values(u_tel=u_tel)
+            .values(m_tel=m_tel)
         )
         result = self.db.execute(stmt)
         affected = result.rowcount if hasattr(result, "rowcount") else 0
