@@ -221,13 +221,13 @@ const paymentMethods = ref([
     code: 'allthegate'
     //code: 'creditcard'
   },
-  {
-    icon: '🏦',
-    image: '/images/bank.png',
-    name: '가상계좌',
-    description: '무통장입금',
-    code: 'virtualaccount'
-  },
+  // {
+  //   icon: '🏦',
+  //   image: '/images/bank.png',
+  //   name: '가상계좌',
+  //   description: '무통장입금',
+  //   code: 'virtualaccount'
+  // },
   {
     icon: '💛',
     image: '/images/kakaopay.png',
