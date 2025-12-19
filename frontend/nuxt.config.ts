@@ -141,6 +141,7 @@ export default defineNuxtConfig({
     limit: 4,                     // 동시에 표시할 수 있는 최대 알림 개수
     enqueue: true,                // 알림이 많을 때 대기열에 추가 (false면 새 알림이 기존 알림을 밀어냄)
     avoidDuplicates: true,        // 중복 알림 방지 (같은 내용의 알림이 연속으로 나타나는 것을 방지)
+    zIndex: 9999,                 // 모달(9000)보다 높게 설정하여 알림이 항상 최상단에 표시
     notifications: {
       global: {
         duration: 4000            // 기본 알림 표시 시간 (밀리초, 4초)
