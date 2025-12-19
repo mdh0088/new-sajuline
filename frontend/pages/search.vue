@@ -167,13 +167,21 @@ const sortOptions = [
 
 // 필터 레이블 computed
 const styleFilterLabel = computed(() => {
+  // 빈 문자열이면 기본 레이블 표시
+  if (!selectedFilters.value.style || selectedFilters.value.style === '') {
+    return '상담 스타일'
+  }
   const option = styleOptions.find(opt => opt.value === selectedFilters.value.style)
-  return option ? option.label : '전체'
+  return option ? option.label : '상담 스타일'
 })
 
 const sortFilterLabel = computed(() => {
+  // 빈 문자열이면 기본 레이블 표시
+  if (!selectedFilters.value.sort || selectedFilters.value.sort === '') {
+    return '정렬'
+  }
   const option = sortOptions.find(opt => opt.value === selectedFilters.value.sort)
-  return option ? option.label : '전체'
+  return option ? option.label : '정렬'
 })
 
 // API 검색 결과
