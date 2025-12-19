@@ -85,10 +85,20 @@ export default defineNuxtConfig({
       link: [
         { rel: 'icon', type: 'image/x-icon', href: '/favicon.ico' },
         // 다양한 디바이스 아이콘 추가
-        { rel: 'apple-touch-icon', sizes: '180x180', href: '/apple-touch-icon.png' },
-        { rel: 'icon', type: 'image/png', sizes: '32x32', href: '/favicon-32x32.png' },
-        { rel: 'icon', type: 'image/png', sizes: '16x16', href: '/favicon-16x16.png' },
-        { rel: 'manifest', href: '/site.webmanifest' }
+        { rel: 'apple-touch-icon', sizes: '57x57', href: '/icons/apple-icon-57x57.png' },
+        { rel: 'apple-touch-icon', sizes: '60x60', href: '/icons/apple-icon-60x60.png' },
+        { rel: 'apple-touch-icon', sizes: '72x72', href: '/icons/apple-icon-72x72.png' },
+        { rel: 'apple-touch-icon', sizes: '76x76', href: '/icons/apple-icon-76x76.png' },
+        { rel: 'apple-touch-icon', sizes: '114x114', href: '/icons/apple-icon-114x114.png' },
+        { rel: 'apple-touch-icon', sizes: '120x120', href: '/icons/apple-icon-120x120.png' },
+        { rel: 'apple-touch-icon', sizes: '144x144', href: '/icons/apple-icon-144x144.png' },
+        { rel: 'apple-touch-icon', sizes: '152x152', href: '/icons/apple-icon-152x152.png' },
+        { rel: 'apple-touch-icon', sizes: '180x180', href: '/icons/apple-icon-180x180.png' },
+        { rel: 'icon', type: 'image/png', sizes: '192x192', href: '/icons/android-icon-192x192.png' },
+        { rel: 'icon', type: 'image/png', sizes: '32x32', href: '/icons/favicon-32x32.png' },
+        { rel: 'icon', type: 'image/png', sizes: '96x96', href: '/icons/favicon-96x96.png' },
+        { rel: 'icon', type: 'image/png', sizes: '16x16', href: '/icons/favicon-16x16.png' },
+        { rel: 'manifest', href: '/manifest.json' }
       ]
     }
   },
@@ -141,7 +151,6 @@ export default defineNuxtConfig({
     limit: 4,                     // 동시에 표시할 수 있는 최대 알림 개수
     enqueue: true,                // 알림이 많을 때 대기열에 추가 (false면 새 알림이 기존 알림을 밀어냄)
     avoidDuplicates: true,        // 중복 알림 방지 (같은 내용의 알림이 연속으로 나타나는 것을 방지)
-    zIndex: 9999,                 // 모달(9000)보다 높게 설정하여 알림이 항상 최상단에 표시
     notifications: {
       global: {
         duration: 4000            // 기본 알림 표시 시간 (밀리초, 4초)

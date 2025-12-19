@@ -7,7 +7,9 @@
           ←
         </button>
       </div>
-      <NuxtLink v-else to="/" class="logo">사주라인</NuxtLink>
+      <NuxtLink v-else to="/" class="logo">
+        <img src="/logo.png" alt="사주라인" class="logo-image" />
+      </NuxtLink>
 
       <!-- 오른쪽 액션 영역 -->
       <div class="header-actions">
@@ -251,5 +253,19 @@ const handleLogout = async () => {
   display: flex;
   align-items: center;
   gap: 12px;
+}
+
+/* 로고 이미지 스타일 */
+.logo-image {
+  height: 28px;
+  width: auto;
+  object-fit: contain;
+  display: block;
+}
+
+@media (max-width: 768px) {
+  .logo-image {
+    height: 24px;
+  }
 }
 </style>

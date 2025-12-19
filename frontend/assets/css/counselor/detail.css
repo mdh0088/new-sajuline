@@ -312,8 +312,8 @@
 }
 
 .scrollable-content {
-  max-height: none;
-  overflow-y: visible;
+  max-height: 500px;
+  overflow-y: auto;
   padding-right: 4px;
 }
 

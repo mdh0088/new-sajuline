@@ -1,22 +1,31 @@
 {
   "name": "사주라인",
   "short_name": "사주라인",
+  "description": "AI와 전문가의 하이브리드 사주 상담 플랫폼",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#0f172a",
-  "theme_color": "#0f172a",
+  "background_color": "#0a0a0f",
+  "theme_color": "#1a1a1a",
   "icons": [
     {
-      "src": "/favicon-32x32.png",
+      "src": "/icons/android-icon-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/icons/favicon-96x96.png",
+      "sizes": "96x96",
+      "type": "image/png"
+    },
+    {
+      "src": "/icons/favicon-32x32.png",
       "sizes": "32x32",
       "type": "image/png"
     },
     {
-      "src": "/favicon-16x16.png",
+      "src": "/icons/favicon-16x16.png",
       "sizes": "16x16",
       "type": "image/png"
     }
   ]
 }
-
-

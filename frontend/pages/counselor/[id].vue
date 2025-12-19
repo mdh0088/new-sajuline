@@ -87,13 +87,13 @@
               :class="['tab-button', { active: activeTab === 'reviews' }]"
               @click="activeTab = 'reviews'"
             >
-              상담 후기
+              상담 후기 ({{ reviewTotal.toLocaleString() }})
             </button>
             <button
               :class="['tab-button', { active: activeTab === 'inquiries' }]"
               @click="activeTab = 'inquiries'"
             >
-              상담 문의
+              상담 문의 ({{ inquiryTotal.toLocaleString() }})
             </button>
           </div>
 
@@ -384,6 +384,7 @@ const inquiryItems = ref<InquirySummary[]>([])
 // 페이징/무한스크롤 상태 (후기)
 const reviewPage = ref(1)
 const reviewTotalPages = ref(1)
+const reviewTotal = ref(0)
 const reviewHasMore = computed(() => reviewPage.value < reviewTotalPages.value)
 const isLoadingMoreReviews = ref(false)
 const reviewSentinel = ref<HTMLElement | null>(null)
@@ -393,6 +394,7 @@ let reviewObserver: IntersectionObserver | null = null
 // 페이징/무한스크롤 상태 (문의)
 const inquiryPage = ref(1)
 const inquiryTotalPages = ref(1)
+const inquiryTotal = ref(0)
 const inquiryHasMore = computed(() => inquiryPage.value < inquiryTotalPages.value)
 const isLoadingMoreInquiries = ref(false)
 const inquirySentinel = ref<HTMLElement | null>(null)
@@ -915,6 +917,7 @@ const fetchReviews = async (page = 1, append = false) => {
   }
   reviewPage.value = res.page
   reviewTotalPages.value = res.total_pages
+  reviewTotal.value = res.total || 0
 }
 
 const fetchInquiries = async (page = 1, append = false) => {
@@ -926,6 +929,7 @@ const fetchInquiries = async (page = 1, append = false) => {
   }
   inquiryPage.value = res.page
   inquiryTotalPages.value = res.total_pages
+  inquiryTotal.value = res.total || 0
 }
 
 // IntersectionObserver 설정 (후기)
@@ -947,7 +951,7 @@ const setupReviewObserver = () => {
     } finally {
       isLoadingMoreReviews.value = false
     }
-  }, { root: reviewScrollEl.value, threshold: 0.1 })
+  }, { root: null, rootMargin: '100px', threshold: 0.1 })
   reviewObserver.observe(reviewSentinel.value)
 }
 
@@ -970,7 +974,7 @@ const setupInquiryObserver = () => {
     } finally {
       isLoadingMoreInquiries.value = false
     }
-  }, { root: inquiryScrollEl.value, threshold: 0.1 })
+  }, { root: null, rootMargin: '100px', threshold: 0.1 })
   inquiryObserver.observe(inquirySentinel.value)
 }
 
@@ -987,6 +991,15 @@ onMounted(async () => {
         inquiryTotalPages.value = 1
         inquiryItems.value = []
         await Promise.all([fetchReviews(1, false), fetchInquiries(1, false)])
+
+        // DOM 렌더링 완료 후 옵저버 설정
+        await nextTick()
+        if (activeTab.value === 'reviews') {
+          setupReviewObserver()
+        } else {
+          setupInquiryObserver()
+        }
+
         // 즐겨찾기 초기 상태 로딩
         showFavorite.value = isUser.value
         if (isUser.value) {
@@ -1006,16 +1019,11 @@ onMounted(async () => {
       }
     }
   )
-  // 탭별 옵저버 초기화
-  if (activeTab.value === 'reviews') {
-    setupReviewObserver()
-  } else {
-    setupInquiryObserver()
-  }
 })
 
 // 탭 전환 시 옵저버 재설정
-watch(activeTab, (tab) => {
+watch(activeTab, async (tab) => {
+  await nextTick()
   if (tab === 'reviews') {
     if (inquiryObserver) inquiryObserver.disconnect()
     setupReviewObserver()
