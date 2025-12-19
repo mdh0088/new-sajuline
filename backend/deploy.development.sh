@@ -20,6 +20,11 @@ git fetch origin
 git reset --hard origin/main
 log "Git pull 완료"
 
+# Cron 스크립트 실행 권한 부여
+log "Cron 스크립트 실행 권한 설정..."
+chmod +x "$APP_DIR/scripts/cron/"*.sh 2>/dev/null || true
+log "Cron 스크립트 권한 설정 완료"
+
 # uv로 의존성 설치
 log "Python 의존성 설치 (uv)..."
 uv sync
