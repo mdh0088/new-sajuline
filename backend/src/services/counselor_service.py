@@ -2,6 +2,7 @@
 상담사 서비스 클래스
 비즈니스 로직과 트랜잭션 관리
 """
+import random
 from typing import Tuple, Optional, List
 from datetime import datetime
 
@@ -111,8 +112,21 @@ class CounselorService:
             return [], 0
 
         # 상태별 정렬: 상담중(2) → 대기중(1) → 부재중(3) 순서
+        # 각 상태 그룹 내에서는 랜덤 셔플
         status_priority = {'2': 0, '1': 1, '3': 2}
-        filtered_codes.sort(key=lambda c: status_priority.get(state_map.get(c, '3'), 3))
+
+        # 상태별로 그룹핑
+        status_groups: dict[int, list[str]] = {0: [], 1: [], 2: [], 3: []}
+        for c in filtered_codes:
+            priority = status_priority.get(state_map.get(c, '3'), 3)
+            status_groups[priority].append(c)
+
+        # 각 그룹 내에서 랜덤 셔플
+        for group in status_groups.values():
+            random.shuffle(group)
+
+        # 우선순위 순서로 병합
+        filtered_codes = status_groups[0] + status_groups[1] + status_groups[2] + status_groups[3]
 
         total = len(filtered_codes)
         start = max(0, (page - 1) * limit)
