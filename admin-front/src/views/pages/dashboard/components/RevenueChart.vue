@@ -146,8 +146,8 @@ const fetchData = async () => {
     if (response.data && response.data.success) {
       statsData.value = response.data.data;
 
-      // 차트 렌더링
-      if (statsData.value && statsData.value.items.length > 0) {
+      // 차트 렌더링 (데이터가 없어도 이전 차트 정리 후 빈 차트 표시)
+      if (statsData.value && statsData.value.items) {
         await renderRevenueChart('revenueChart', statsData.value.items, statType.value);
       }
     }

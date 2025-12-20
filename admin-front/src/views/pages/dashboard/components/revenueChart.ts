@@ -26,13 +26,30 @@ export const renderRevenueChart = async (
     chartItems: RevenueChartItem[],
     statType: string = 'daily'
 ): Promise<void> => {
-    // 기존 인스턴스가 있으면 재사용
-    if (!roots[chartId]) {
-        roots[chartId] = am5.Root.new(chartId);
+    // 기존 인스턴스가 있으면 완전히 dispose 후 새로 생성
+    if (roots[chartId]) {
+        roots[chartId].dispose();
+        delete roots[chartId];
     }
 
-    const root = roots[chartId];
-    root.container.children.clear();
+    // 새 root 인스턴스 생성
+    const root = am5.Root.new(chartId);
+    roots[chartId] = root;
+
+    // 빈 데이터 처리
+    if (!chartItems || chartItems.length === 0) {
+        const container = root.container;
+        container.children.push(am5.Label.new(root, {
+            text: "데이터가 없습니다",
+            fontSize: 16,
+            x: am5.p50,
+            y: am5.p50,
+            centerX: am5.p50,
+            centerY: am5.p50,
+            fill: am5.color(0x999999)
+        }));
+        return;
+    }
 
     // 테마 설정
     const myTheme = am5.Theme.new(root);
