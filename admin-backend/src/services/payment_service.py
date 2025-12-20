@@ -19,6 +19,9 @@ from src.schemas.payment_schema import (
     PaymentWithUserItem,
     PaymentDetailResponse,
     PaymentCancelResponse,
+    RevenueStatParams,
+    RevenueStatResponse,
+    RevenueStatItem,
 )
 from src.config.settings import settings
 from src.common.logging import get_logger_with_request_id
@@ -206,6 +209,47 @@ class PaymentService:
         except Exception as e:
             log.error("Payment cancel error", payment_id=payment_id, error=str(e))
             raise ValueError(f"결제 취소 처리 중 오류: {str(e)}")
+
+    async def get_revenue_stats(self, params: RevenueStatParams) -> RevenueStatResponse:
+        """
+        수익 통계 조회
+        - stat_type: daily, monthly, yearly
+        - year: 조회 연도 (미지정시 현재 연도)
+        - month: 조회 월 (일별 통계시 사용, 미지정시 현재 월)
+        """
+        now = datetime.now(KST)
+        year = params.year if params.year else now.year
+        month = params.month if params.month else now.month
+
+        items_data = []
+
+        if params.stat_type == "daily":
+            items_data = await self.payment_repo.get_daily_revenue(year, month)
+        elif params.stat_type == "monthly":
+            items_data = await self.payment_repo.get_monthly_revenue(year)
+            month = None  # 월별 통계에서는 month 불필요
+        elif params.stat_type == "yearly":
+            items_data = await self.payment_repo.get_yearly_revenue()
+            month = None  # 연별 통계에서는 month 불필요
+        else:
+            # 기본값: 일별
+            items_data = await self.payment_repo.get_daily_revenue(year, month)
+
+        # 아이템 변환
+        items = [RevenueStatItem(**item) for item in items_data]
+
+        # 총합 계산
+        total_revenue = sum(item.total_amount for item in items)
+        total_count = sum(item.count for item in items)
+
+        return RevenueStatResponse(
+            stat_type=params.stat_type,
+            year=year,
+            month=month,
+            items=items,
+            total_revenue=total_revenue,
+            total_count=total_count
+        )
 
 
 
