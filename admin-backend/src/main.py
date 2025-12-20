@@ -28,6 +28,7 @@ from src.api.v1.promotion_api import router as promotion_router
 from src.api.v1.exhibition_api import router as exhibition_router
 from src.api.v1.mileage_api import router as mileage_router
 from src.api.v1.consultation_review_api import router as consultation_review_router
+from src.api.v1.dashboard_api import router as dashboard_router
 from src.common.response import fail
 from src.exceptions.custom_exceptions import BaseAppException
 from src.common.logging.config import setup_logging
@@ -224,6 +225,7 @@ app.include_router(promotion_router, prefix="/api/v1")
 app.include_router(exhibition_router, prefix="/api")
 app.include_router(mileage_router, prefix="/api/v1")
 app.include_router(consultation_review_router, prefix="/api/v1")
+app.include_router(dashboard_router, prefix="/api/v1")
 
 
 class HealthResponse(BaseModel):
