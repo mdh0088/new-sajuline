@@ -3,6 +3,7 @@ TM60 채팅로그 Repository 클래스
 ARS 시스템 연동 - MSSQL tm60_chatlog 테이블 전용 (읽기 전용)
 """
 import asyncio
+import calendar
 from sqlalchemy.orm import Session
 from sqlalchemy import func, and_, or_, not_, desc
 
@@ -80,11 +81,18 @@ class Tm60ChatlogRepository:
     async def get_monthly_stats_by_m_code(self, m_code: str, yyyy: str, mm: str) -> tuple[int, int]:
         """
         멤버 코드(m_code)와 연월(yyyy, mm)로 월별 합계 집계
-        - 조건: usepoint > 0
+        - 조건: chatstart >= 해당월 첫날, chatend <= 해당월 마지막날 23:59:59
         Returns: (sum_realchattm, sum_usepoint)
         """
         log = get_logger_with_request_id()
         log.info("Getting monthly stats by m_code", m_code=m_code, yyyy=yyyy, mm=mm)
+
+        # 해당 월의 날짜 범위 계산
+        year = int(yyyy)
+        month = int(mm)
+        first_day = f"{yyyy}-{mm}-01 00:00:00"
+        last_day_num = calendar.monthrange(year, month)[1]
+        last_day = f"{yyyy}-{mm}-{last_day_num:02d} 23:59:59"
 
         def _sync_get_stats() -> tuple[int, int]:
             try:
@@ -95,10 +103,10 @@ class Tm60ChatlogRepository:
                     )
                     .filter(
                         and_(
-                            Tm60Chatlog.usepoint > 0,
                             Tm60Chatlog.m_code == m_code,
-                            Tm60Chatlog.yyyy == yyyy,
-                            Tm60Chatlog.mm == mm,
+                            Tm60Chatlog.chatstart >= first_day,
+                            Tm60Chatlog.chatend <= last_day,
+                            Tm60Chatlog.success == 1,
                         )
                     )
                     .one()

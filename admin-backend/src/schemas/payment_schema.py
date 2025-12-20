@@ -62,4 +62,37 @@ class PaymentCancelResponse(BaseModel):
     message: str = Field(..., description="결과 메시지")
 
 
+# ===== 수익 통계 스키마 =====
+
+class RevenueStatType(str):
+    """수익 통계 타입"""
+    DAILY = "daily"
+    MONTHLY = "monthly"
+    YEARLY = "yearly"
+
+
+class RevenueStatParams(BaseModel):
+    """수익 통계 요청 파라미터"""
+    stat_type: str = Field(default="daily", description="통계 타입: daily|monthly|yearly")
+    year: Optional[int] = Field(default=None, description="조회 연도 (미지정시 현재 연도)")
+    month: Optional[int] = Field(default=None, ge=1, le=12, description="조회 월 (일별 통계시 사용, 미지정시 현재 월)")
+
+
+class RevenueStatItem(BaseModel):
+    """수익 통계 항목"""
+    label: str = Field(..., description="라벨 (날짜/월/연도)")
+    total_amount: int = Field(..., description="총 수익 금액")
+    count: int = Field(..., description="결제 건수")
+
+
+class RevenueStatResponse(BaseModel):
+    """수익 통계 응답"""
+    stat_type: str = Field(..., description="통계 타입")
+    year: int = Field(..., description="조회 연도")
+    month: Optional[int] = Field(None, description="조회 월 (일별 통계시)")
+    items: List[RevenueStatItem] = Field(..., description="통계 데이터 목록")
+    total_revenue: int = Field(..., description="조회 기간 총 수익")
+    total_count: int = Field(..., description="조회 기간 총 건수")
+
+
 
