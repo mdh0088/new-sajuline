@@ -84,6 +84,8 @@ export default defineNuxtConfig({
       ],
       link: [
         { rel: 'icon', type: 'image/x-icon', href: '/favicon.ico' },
+        // RSS 피드 자동 감지
+        { rel: 'alternate', type: 'application/rss+xml', title: '사주라인 RSS', href: '/rss.xml' },
         // 다양한 디바이스 아이콘 추가
         { rel: 'apple-touch-icon', sizes: '57x57', href: '/icons/apple-icon-57x57.png' },
         { rel: 'apple-touch-icon', sizes: '60x60', href: '/icons/apple-icon-60x60.png' },
@@ -287,6 +289,10 @@ export default defineNuxtConfig({
 
   // 개발 서버 프록시 설정 (CORS 해결) 및 보안 헤더 (즉시 적용 권장)
   nitro: {
+    // 프로덕션 빌드 시 RSS 피드 프리렌더링
+    prerender: {
+      routes: ['/rss.xml']
+    },
     routeRules: {
       // 빌드 자산 장기 캐싱 (1년, 해시 기반 무효화)
       // '/_nuxt/**': {
