@@ -58,5 +58,6 @@ Disallow: /cs/inquiries/
 Disallow: /api/
 Disallow: /admin/
 
-# 사이트맵 위치
+# 사이트맵 및 RSS 피드 위치
 Sitemap: https://sajuline.com/sitemap.xml
+RSS: https://sajuline.com/rss.xml
