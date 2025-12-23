@@ -59,6 +59,9 @@
         />
       </div>
 
+      <!-- 무한 스크롤 센티넬 (컨텐츠 영역 내부에 위치) -->
+      <div ref="sentinelRef" style="height: 1px; width: 100%;"></div>
+
       <!-- 빈 상태 -->
       <div class="empty-state" v-if="sortedCounselors.length === 0 && !isLoading">
         <div class="empty-icon"><img src="/images/search.png" alt="검색" width="48" height="48" /></div>
@@ -144,6 +147,9 @@ const isLoading = ref(false)
 const showModal = ref(false)
 const currentModal = ref('')
 const selectedModalOption = ref('')
+
+// 무한 스크롤 센티넬 ref
+const sentinelRef = ref<HTMLElement | null>(null)
 
 // 필터 상태
 const selectedFilters = ref({
@@ -375,23 +381,20 @@ const applySortFilter = () => {
 onMounted(async () => {
   await resetAndFetch()
 
-  // IntersectionObserver 설정 (index.vue와 동일한 패턴)
-  const sentinel = document.createElement('div')
-  sentinel.style.height = '1px'
-  sentinel.setAttribute('data-sentinel', 'counselor-search')
-  document.body.appendChild(sentinel)
+  // IntersectionObserver 설정 (템플릿 내부 sentinel 사용)
+  if (sentinelRef.value) {
+    const io = new IntersectionObserver(async (entries) => {
+      const entry = entries[0]
+      if (!entry || !entry.isIntersecting) return
+      if (isLoading.value) return
+      if ((searchParams.value.page || 1) >= totalPages.value) return
 
-  const io = new IntersectionObserver(async (entries) => {
-    const entry = entries[0]
-    if (!entry || !entry.isIntersecting) return
-    if (isLoading.value) return
-    if ((searchParams.value.page || 1) >= totalPages.value) return
+      searchParams.value.page = (searchParams.value.page || 1) + 1
+      await fetchNext()
+    })
 
-    searchParams.value.page = (searchParams.value.page || 1) + 1
-    await fetchNext()
-  })
-
-  io.observe(sentinel)
+    io.observe(sentinelRef.value)
+  }
 })
 
 // SEO 메타 데이터 설정
