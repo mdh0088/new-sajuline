@@ -128,12 +128,14 @@ class CounselorService:
         cs_keywords: Optional[List[str]] = None,
         search_name: Optional[str] = None,
         m_codes: Optional[List[str]] = None,
+        sort_by: Optional[str] = None,  # 'review' | 'price' | None
     ) -> tuple[list[dict], int]:
         """
         공개 상담사 검색 서비스 (게스트)
 
         - m_codes가 전달되면: 해당 코드 목록에서 페이징하여 조회 (셔플 없음)
         - m_codes가 없으면: 기존 필터 로직으로 조회 (셔플 없음)
+        - sort_by: 'review' (리뷰 많은 순), 'price' (가격 낮은 순)
         """
         log = get_logger_with_request_id()
 
@@ -171,6 +173,7 @@ class CounselorService:
             return [], 0
 
         all_codes = [row["counselor_code"] for row in code_id_rows]
+        code_to_id = {row["counselor_code"]: row["counselor_id"] for row in code_id_rows}
 
         # 2) TM60 상태 매핑 (필터 적용)
         state_map: dict[str, str] = {}
@@ -182,17 +185,31 @@ class CounselorService:
         if not filtered_codes:
             return [], 0
 
-        # 상태별 정렬: 상담중(2) → 대기중(1) → 부재중(3) 순서 (셔플 없음)
-        status_priority = {'2': 0, '1': 1, '3': 2}
+        # 3) 정렬 처리
+        if sort_by == 'review' and self.review_repo is not None:
+            # 리뷰 많은 순: 전체 상담사의 리뷰 수를 조회하여 정렬
+            counselor_ids = [code_to_id[c] for c in filtered_codes if c in code_to_id]
+            review_counts = await self.review_repo.get_review_counts_by_counselor_ids(counselor_ids)
 
-        # 상태별로 그룹핑
-        status_groups: dict[int, list[str]] = {0: [], 1: [], 2: [], 3: []}
-        for c in filtered_codes:
-            priority = status_priority.get(state_map.get(c, '3'), 3)
-            status_groups[priority].append(c)
+            # counselor_id -> review_count 매핑
+            id_to_count = {cid: cnt for cid, cnt in review_counts}
 
-        # 우선순위 순서로 병합 (셔플 제거됨)
-        filtered_codes = status_groups[0] + status_groups[1] + status_groups[2] + status_groups[3]
+            # 리뷰 수 기준 내림차순 정렬
+            filtered_codes.sort(key=lambda c: id_to_count.get(code_to_id.get(c, ''), 0), reverse=True)
+
+        elif sort_by == 'price':
+            # 가격 낮은 순: 상담사 정보에서 after_amount 기준 정렬
+            code_to_counselor_all = await self.counselor_repo.get_by_counselor_codes(filtered_codes)
+            filtered_codes.sort(key=lambda c: (code_to_counselor_all.get(c).after_amount or 0) if code_to_counselor_all.get(c) else float('inf'))
+
+        else:
+            # 기본: 상태별 정렬 (상담중→대기중→부재중)
+            status_priority = {'2': 0, '1': 1, '3': 2}
+            status_groups: dict[int, list[str]] = {0: [], 1: [], 2: [], 3: []}
+            for c in filtered_codes:
+                priority = status_priority.get(state_map.get(c, '3'), 3)
+                status_groups[priority].append(c)
+            filtered_codes = status_groups[0] + status_groups[1] + status_groups[2] + status_groups[3]
 
         total = len(filtered_codes)
         start = max(0, (page - 1) * limit)

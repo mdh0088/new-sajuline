@@ -920,7 +920,8 @@ async def search_public_counselors_by_codes(
     description=(
         "게스트 가능. 필터: is_best, is_new, cs_specialties[], cs_keywords[], search_name. "
         "t_counselor에서 필터링 후 counselor_code 목록으로 tm60_member.m_state를 조인하여 상태 반환. "
-        "또한 t_consultation_review의 is_visible=true 기준 review_count와 평균 rating을 포함. 페이징 제공."
+        "또한 t_consultation_review의 is_visible=true 기준 review_count와 평균 rating을 포함. 페이징 제공. "
+        "sort_by: 'review' (리뷰 많은 순), 'price' (가격 낮은 순), 없으면 상태별 정렬."
     ),
 )
 async def search_public_counselors(
@@ -933,6 +934,7 @@ async def search_public_counselors(
     cs_specialties: Optional[list[str]] = Query(None, description="전문분야 배열"),
     cs_keywords: Optional[list[str]] = Query(None, description="키워드 배열"),
     search_name: Optional[str] = Query(None, description="상담사 닉네임 like"),
+    sort_by: Optional[str] = Query(None, description="정렬 기준: 'review' (리뷰 많은 순), 'price' (가격 낮은 순)"),
     counselor_service: CounselorService = Depends(get_counselor_service),
 ):
     """공개 검색 목록 (게스트)
@@ -943,7 +945,7 @@ async def search_public_counselors(
     - 2차: counselor_code -> tm60_member.m_code IN 검색
     - 각 항목에 리뷰 총 개수(is_visible=true)와 평균 rating 포함
     - 페이징 응답 및 전체 count 포함
-    - 셔플 없음 (필터 조건이 있는 경우 사용)
+    - sort_by로 정렬 (review: 리뷰 많은 순, price: 가격 낮은 순)
     """
     log = get_logger_with_request_id()
     log.info(
@@ -956,6 +958,7 @@ async def search_public_counselors(
         cs_specialties=cs_specialties,
         cs_keywords=cs_keywords,
         search_name=search_name,
+        sort_by=sort_by,
     )
 
     items, total = await counselor_service.search_public(
@@ -967,6 +970,7 @@ async def search_public_counselors(
         cs_specialties=cs_specialties,
         cs_keywords=cs_keywords,
         search_name=search_name,
+        sort_by=sort_by,
     )
     return APIResponseBuilder.paginated(
         data=items,

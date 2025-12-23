@@ -75,6 +75,8 @@ const counselorApi = {
     if (params.is_best !== undefined && params.is_best !== null) query.set('is_best', String(params.is_best))
     if (params.is_new !== undefined && params.is_new !== null) query.set('is_new', String(params.is_new))
     if (params.search_name) query.set('search_name', params.search_name)
+    // 서버 사이드 정렬 파라미터
+    if (params.sort_by) query.set('sort_by', params.sort_by)
     // 배열 파라미터는 다중 키로 전달
     for (const v of params.cs_specialties || []) query.append('cs_specialties', v)
     for (const v of params.cs_keywords || []) query.append('cs_keywords', v)

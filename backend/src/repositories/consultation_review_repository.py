@@ -186,6 +186,31 @@ class ConsultationReviewRepository:
         return result.scalar() or 0
 
     @logger.catch(reraise=True)
+    async def get_review_counts_by_counselor_ids(
+        self,
+        counselor_ids: List[str],
+        is_visible: Optional[bool] = True
+    ) -> List[tuple]:
+        """여러 상담사의 리뷰 개수 일괄 조회 (정렬용)"""
+        if not counselor_ids:
+            return []
+
+        stmt = select(
+            ConsultationReview.counselor_id,
+            func.count(ConsultationReview.review_id).label('review_count')
+        ).where(
+            ConsultationReview.counselor_id.in_(counselor_ids)
+        )
+
+        if is_visible is not None:
+            stmt = stmt.where(ConsultationReview.is_visible == is_visible)
+
+        stmt = stmt.group_by(ConsultationReview.counselor_id)
+
+        result = await self.db.execute(stmt)
+        return list(result.all())
+
+    @logger.catch(reraise=True)
     async def get_all_reviews(
         self,
         is_visible: Optional[bool] = True,
