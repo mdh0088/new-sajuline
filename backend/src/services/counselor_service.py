@@ -34,6 +34,47 @@ class CounselorService:
         self.tm60_member_service = tm60_member_service
         self.review_repo = review_repo
         self.notification_wait_service = notification_wait_service
+
+    async def get_all_counselor_codes_shuffled(self) -> list[str]:
+        """
+        전체 상담사 코드 목록 조회 (상태별 정렬 + 그룹 내 셔플)
+        - 상담중(2) → 대기중(1) → 부재중(3) 순 정렬
+        - 각 그룹 내에서 랜덤 셔플
+        - counselor_code(m_code) 목록만 반환
+        """
+        log = get_logger_with_request_id()
+        log.info("Getting all counselor codes shuffled")
+
+        # 1) t_counselor에서 전체 코드 목록 조회 (is_out=false, is_show=true)
+        code_id_rows = await self.counselor_repo.find_codes_by_filters()
+        if not code_id_rows:
+            return []
+
+        all_codes = [row["counselor_code"] for row in code_id_rows]
+
+        # 2) TM60 상태 매핑 조회
+        state_map: dict[str, str] = {}
+        if self.tm60_member_service is not None:
+            state_map = await self.tm60_member_service.get_state_map_by_codes(all_codes)
+
+        # 3) 상태별 그룹핑: 상담중(2) → 대기중(1) → 부재중(3)
+        status_priority = {'2': 0, '1': 1, '3': 2}
+        status_groups: dict[int, list[str]] = {0: [], 1: [], 2: [], 3: []}
+
+        for code in all_codes:
+            state = state_map.get(code, '3')  # 상태 없으면 부재중으로 처리
+            priority = status_priority.get(state, 3)
+            status_groups[priority].append(code)
+
+        # 4) 각 그룹 내에서 랜덤 셔플
+        for group in status_groups.values():
+            random.shuffle(group)
+
+        # 5) 우선순위 순서로 병합
+        result = status_groups[0] + status_groups[1] + status_groups[2] + status_groups[3]
+
+        log.info("All counselor codes shuffled", total=len(result))
+        return result
     
     async def authenticate_counselor(self, nickname: str, password: str) -> CounselorResponse:
         """
@@ -86,8 +127,38 @@ class CounselorService:
         cs_specialties: Optional[List[str]] = None,
         cs_keywords: Optional[List[str]] = None,
         search_name: Optional[str] = None,
+        m_codes: Optional[List[str]] = None,
     ) -> tuple[list[dict], int]:
-        """공개 상담사 검색 서비스 (게스트)"""
+        """
+        공개 상담사 검색 서비스 (게스트)
+
+        - m_codes가 전달되면: 해당 코드 목록에서 페이징하여 조회 (셔플 없음)
+        - m_codes가 없으면: 기존 필터 로직으로 조회 (셔플 없음)
+        """
+        log = get_logger_with_request_id()
+
+        # m_codes가 전달된 경우: 해당 코드 목록에서 페이징
+        if m_codes is not None and len(m_codes) > 0:
+            log.info("Searching by m_codes", total_codes=len(m_codes), page=page, limit=limit)
+
+            total = len(m_codes)
+            start = max(0, (page - 1) * limit)
+            end = min(total, start + limit)
+            page_codes = m_codes[start:end]
+
+            # 상태 매핑 조회
+            state_map: dict[str, str] = {}
+            if self.tm60_member_service is not None:
+                state_map = await self.tm60_member_service.get_state_map_by_codes(page_codes)
+
+            # 상담사 정보 조회
+            code_to_counselor = await self.counselor_repo.get_by_counselor_codes(page_codes)
+
+            # 결과 생성
+            items = await self._build_counselor_items(page_codes, code_to_counselor, state_map)
+            return items, total
+
+        # 기존 필터 로직 (m_codes가 없는 경우)
         # 1) t_counselor 필터로 사전 코드 목록 수집
         code_id_rows = await self.counselor_repo.find_codes_by_filters(
             is_best=is_best,
@@ -111,8 +182,7 @@ class CounselorService:
         if not filtered_codes:
             return [], 0
 
-        # 상태별 정렬: 상담중(2) → 대기중(1) → 부재중(3) 순서
-        # 각 상태 그룹 내에서는 랜덤 셔플
+        # 상태별 정렬: 상담중(2) → 대기중(1) → 부재중(3) 순서 (셔플 없음)
         status_priority = {'2': 0, '1': 1, '3': 2}
 
         # 상태별로 그룹핑
@@ -121,11 +191,7 @@ class CounselorService:
             priority = status_priority.get(state_map.get(c, '3'), 3)
             status_groups[priority].append(c)
 
-        # 각 그룹 내에서 랜덤 셔플
-        for group in status_groups.values():
-            random.shuffle(group)
-
-        # 우선순위 순서로 병합
+        # 우선순위 순서로 병합 (셔플 제거됨)
         filtered_codes = status_groups[0] + status_groups[1] + status_groups[2] + status_groups[3]
 
         total = len(filtered_codes)
@@ -135,9 +201,20 @@ class CounselorService:
 
         code_to_counselor = await self.counselor_repo.get_by_counselor_codes(page_codes)
 
-        # 3) 리뷰 카운트/평균
+        # 결과 생성
+        items = await self._build_counselor_items(page_codes, code_to_counselor, state_map)
+        return items, total
+
+    async def _build_counselor_items(
+        self,
+        page_codes: List[str],
+        code_to_counselor: dict,
+        state_map: dict[str, str]
+    ) -> list[dict]:
+        """상담사 정보 목록 생성 (공통 로직)"""
         from json import loads
         items: list[dict] = []
+
         for code in page_codes:
             c = code_to_counselor.get(code)
             if not c:
@@ -169,7 +246,7 @@ class CounselorService:
                 "review_count": review_count,
                 "m_state": state_map.get(code) if state_map else None,
             })
-        return items, total
+        return items
     
     async def login(self, nickname: str, password: str) -> Tuple[str, CounselorResponse]:
         """

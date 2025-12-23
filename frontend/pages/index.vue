@@ -198,28 +198,87 @@ const activeCategoryFilter = ref(0)
 
 // 상담사 목록 (SSR 호환 API 연동)
 const params = ref<CounselorSearchParams>({ page: 1, limit: 10, cs_status: null, is_best: null, is_new: null, cs_specialties: null, cs_keywords: null, search_name: null })
-const { usePublicSearch, searchPublic } = useCounselorQueries()
-
-// SSR에서 초기 데이터 페칭 (enabled: true로 자동 실행)
-const { data: pageData, isLoading } = usePublicSearch(params, {
-  staleTime: 60 * 1000 // 1분 캐시
-})
+const { searchPublic, getAllCounselorCodes, searchPublicByCodes } = useCounselorQueries()
 
 // 페이징 처리를 위한 로컬 상태
 const items = ref<CounselorSearchItem[]>([])
 const totalPages = ref(1)
+const isLoading = ref(false)
 
-// pageData 변경 시 items 업데이트
-watch(pageData, (data) => {
-  if (data) {
-    if (params.value.page === 1) {
-      items.value = data.items
+// 셔플된 상담사 코드 목록 (필터 없을 때 사용)
+const allCounselorCodes = ref<string[]>([])
+const codesInitialized = ref(false)
+
+// 필터가 적용되어 있는지 확인하는 computed
+const hasFilters = computed(() => {
+  return params.value.cs_status !== null ||
+    params.value.is_best === true ||
+    params.value.is_new === true
+})
+
+// 상담사 목록 로드 함수
+async function loadCounselors(page: number, isAppend = false) {
+  if (isLoading.value) return
+  isLoading.value = true
+
+  try {
+    let result
+
+    if (hasFilters.value) {
+      // 필터가 있으면 기존 API 사용 (셔플 없음)
+      result = await searchPublic({ ...params.value, page })
     } else {
-      items.value = [...items.value, ...data.items]
+      // 필터가 없으면 m_codes 기반 API 사용
+      if (!codesInitialized.value || allCounselorCodes.value.length === 0) {
+        // 코드 목록이 없으면 먼저 가져오기
+        const codesData = await getAllCounselorCodes()
+        allCounselorCodes.value = codesData.codes
+        codesInitialized.value = true
+      }
+
+      // 현재 페이지에 해당하는 코드들만 추출
+      const limit = params.value.limit || 10
+      const startIdx = (page - 1) * limit
+      const endIdx = startIdx + limit
+      const pageCodes = allCounselorCodes.value.slice(startIdx, endIdx)
+
+      if (pageCodes.length === 0) {
+        // 더 이상 데이터가 없음
+        result = { items: [], page, limit, total: allCounselorCodes.value.length, total_pages: Math.ceil(allCounselorCodes.value.length / limit) }
+      } else {
+        result = await searchPublicByCodes({ page: 1, limit: pageCodes.length, m_codes: pageCodes })
+        // total_pages는 전체 코드 수 기준으로 재계산
+        result.total = allCounselorCodes.value.length
+        result.total_pages = Math.ceil(allCounselorCodes.value.length / limit)
+        result.page = page
+      }
     }
-    totalPages.value = data.total_pages
+
+    if (isAppend && page > 1) {
+      items.value = [...items.value, ...result.items]
+    } else {
+      items.value = result.items
+    }
+    totalPages.value = result.total_pages
+  } catch (e) {
+    console.error('상담사 목록 로드 실패:', e)
+  } finally {
+    isLoading.value = false
   }
-}, { immediate: true })
+}
+
+// params 변경 감지 (필터 변경 시)
+watch(() => [params.value.cs_status, params.value.is_best, params.value.is_new], () => {
+  // 필터가 변경되면 1페이지부터 다시 로드
+  params.value.page = 1
+  items.value = []
+  loadCounselors(1, false)
+}, { deep: true })
+
+// 초기 로드 (SSR에서는 클라이언트 마운트 시)
+onMounted(() => {
+  loadCounselors(1, false)
+})
 
 // 기존 목업 데이터 제거
 const counselors = ref([
@@ -362,16 +421,14 @@ function setActiveStatusFilter(index: number) {
   activeStatusFilter.value = index
   const map = [null, '2', '3', '1'] as (string | null)[]
   params.value.cs_status = map[index] || null
-  params.value.page = 1
-  items.value = [] // 리셋
+  // watch에서 loadCounselors 호출됨
 }
 
 function setActiveCategoryFilter(index: number) {
   activeCategoryFilter.value = index
   params.value.is_best = index === 2 ? true : null
   params.value.is_new = index === 3 ? true : null
-  params.value.page = 1
-  items.value = [] // 리셋
+  // watch에서 loadCounselors 호출됨
 }
 
 // function startFreeTrial() {
@@ -400,10 +457,13 @@ onMounted(() => {
       const entry = entries[0]
       if (!entry || !entry.isIntersecting) return
       if (isLoading.value) return
-      if ((params.value.page || 1) >= totalPages.value) return
+      const currentPage = params.value.page || 1
+      if (currentPage >= totalPages.value) return
 
       // 다음 페이지 로드
-      params.value.page = (params.value.page || 1) + 1
+      const nextPage = currentPage + 1
+      params.value.page = nextPage
+      await loadCounselors(nextPage, true)
     }, {
       rootMargin: '100px' // 100px 전에 미리 로드
     })
