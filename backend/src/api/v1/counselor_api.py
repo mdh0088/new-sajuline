@@ -848,6 +848,72 @@ async def call_by_point(
 # =====================
 
 @router.get(
+    "/public/codes",
+    response_model=APIResponse,
+    summary="전체 상담사 코드 목록 조회 (셔플 포함)",
+    description=(
+        "게스트 가능. 전체 상담사 코드 목록을 상태별 정렬 + 그룹 내 랜덤 셔플하여 반환. "
+        "상담중(2) → 대기중(1) → 부재중(3) 순 정렬, 각 그룹 내 랜덤 셔플. "
+        "프론트엔드에서 이 목록을 보관하고 페이징 시 해당 코드만 /public/search에 전달하여 사용."
+    ),
+)
+async def get_all_counselor_codes(
+    request: Request,
+    counselor_service: CounselorService = Depends(get_counselor_service),
+):
+    """전체 상담사 코드 목록 조회 (상태별 정렬 + 그룹 내 셔플)"""
+    log = get_logger_with_request_id()
+    log.info("API: Getting all counselor codes shuffled")
+
+    codes = await counselor_service.get_all_counselor_codes_shuffled()
+
+    log.info("API: All counselor codes retrieved", total=len(codes))
+    return ok(data={"codes": codes, "total": len(codes)}, message="전체 상담사 코드 목록 조회 성공")
+
+
+@router.post(
+    "/public/search",
+    response_model=APIResponse,
+    summary="상담사 공개 검색 목록 (m_codes 기반)",
+    description=(
+        "게스트 가능. m_codes가 전달되면 해당 코드 목록에서 페이징하여 조회. "
+        "m_codes가 없으면 기존 필터 로직으로 조회."
+    ),
+)
+async def search_public_counselors_by_codes(
+    request: Request,
+    payload: dict,
+    page: int = Query(1, ge=1, description="페이지 번호"),
+    limit: int = Query(10, ge=1, le=50, description="페이지당 항목 수"),
+    counselor_service: CounselorService = Depends(get_counselor_service),
+):
+    """m_codes 기반 공개 검색 목록 (POST)"""
+    log = get_logger_with_request_id()
+
+    m_codes = payload.get("m_codes", [])
+
+    log.info(
+        "API: Public counselor search by codes",
+        page=page,
+        limit=limit,
+        m_codes_count=len(m_codes) if m_codes else 0,
+    )
+
+    items, total = await counselor_service.search_public(
+        page=page,
+        limit=limit,
+        m_codes=m_codes if m_codes else None,
+    )
+    return APIResponseBuilder.paginated(
+        data=items,
+        page=page,
+        limit=limit,
+        total=total,
+        message="상담사 공개 검색 목록 조회 성공",
+    )
+
+
+@router.get(
     "/public/search",
     response_model=APIResponse,
     summary="상담사 공개 검색 목록",
@@ -877,6 +943,7 @@ async def search_public_counselors(
     - 2차: counselor_code -> tm60_member.m_code IN 검색
     - 각 항목에 리뷰 총 개수(is_visible=true)와 평균 rating 포함
     - 페이징 응답 및 전체 count 포함
+    - 셔플 없음 (필터 조건이 있는 경우 사용)
     """
     log = get_logger_with_request_id()
     log.info(
