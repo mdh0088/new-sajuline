@@ -261,8 +261,14 @@ async function fetchNext() {
         ? [selectedFilters.value.style]
         : null
 
+      // sort_by 매핑 (빈 문자열이면 null) - 서버 사이드 정렬
+      const sortBy = selectedFilters.value.sort && selectedFilters.value.sort !== ''
+        ? selectedFilters.value.sort
+        : null
+
       searchParams.value.cs_specialties = csSpecialties
       searchParams.value.cs_keywords = csKeywords
+      searchParams.value.sort_by = sortBy
 
       result = await searchPublic(searchParams.value)
     } else {
@@ -316,24 +322,9 @@ async function resetAndFetch() {
 }
 
 // 정렬된 상담사 목록
+// 서버 사이드에서 정렬되어 오므로 클라이언트 정렬 불필요
 const sortedCounselors = computed(() => {
-  const list = [...counselors.value]
-
-  // 정렬 필터가 '전체'이거나 없으면 원래 순서 유지
-  if (!selectedFilters.value.sort || selectedFilters.value.sort === '') {
-    return list
-  }
-
-  if (selectedFilters.value.sort === 'review') {
-    // 리뷰 수 내림차순
-    return list.sort((a, b) => (b.review_count || 0) - (a.review_count || 0))
-  } else if (selectedFilters.value.sort === 'price') {
-    // 가격 오름차순
-    return list.sort((a, b) => (a.after_amount || 0) - (b.after_amount || 0))
-  }
-
-  // 기본: 원래 순서
-  return list
+  return counselors.value
 })
 
 // Watch: 검색 태그 변경 시 자동 검색
