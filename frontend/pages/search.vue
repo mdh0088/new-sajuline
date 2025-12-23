@@ -185,7 +185,7 @@ const sortFilterLabel = computed(() => {
 })
 
 // API 검색 결과
-const { searchPublic } = useCounselorQueries()
+const { searchPublic, getAllCounselorCodes, searchPublicByCodes } = useCounselorQueries()
 const counselors = ref<CounselorSearchItem[]>([])
 const searchParams = ref<CounselorSearchParams>({
   page: 1,
@@ -199,6 +199,16 @@ const searchParams = ref<CounselorSearchParams>({
 })
 const totalPages = ref(1)
 const totalCount = ref(0)
+
+// 셔플된 상담사 코드 목록 (필터 없을 때 사용)
+const allCounselorCodes = ref<string[]>([])
+const codesInitialized = ref(false)
+
+// 필터가 적용되어 있는지 확인하는 computed
+const hasFilters = computed(() => {
+  return searchTags.value.length > 0 ||
+    (selectedFilters.value.style !== '' && selectedFilters.value.style !== null)
+})
 
 // 검색 태그 추가 (최대 4개, FIFO)
 const addSearchTag = () => {
@@ -237,18 +247,50 @@ async function fetchNext() {
   if (isLoading.value) return
   isLoading.value = true
   try {
-    // 검색 태그를 cs_keywords로 변환
-    const csKeywords = searchTags.value.length > 0 ? searchTags.value : null
+    let result
 
-    // cs_specialties 매핑 (빈 문자열이면 null)
-    const csSpecialties = selectedFilters.value.style && selectedFilters.value.style !== ''
-      ? [selectedFilters.value.style]
-      : null
+    if (hasFilters.value) {
+      // 필터가 있으면 기존 API 사용 (셔플 없음)
+      // 검색 태그를 cs_keywords로 변환
+      const csKeywords = searchTags.value.length > 0 ? searchTags.value : null
 
-    searchParams.value.cs_specialties = csSpecialties
-    searchParams.value.cs_keywords = csKeywords
+      // cs_specialties 매핑 (빈 문자열이면 null)
+      const csSpecialties = selectedFilters.value.style && selectedFilters.value.style !== ''
+        ? [selectedFilters.value.style]
+        : null
 
-    const result = await searchPublic(searchParams.value)
+      searchParams.value.cs_specialties = csSpecialties
+      searchParams.value.cs_keywords = csKeywords
+
+      result = await searchPublic(searchParams.value)
+    } else {
+      // 필터가 없으면 m_codes 기반 API 사용
+      if (!codesInitialized.value || allCounselorCodes.value.length === 0) {
+        // 코드 목록이 없으면 먼저 가져오기
+        const codesData = await getAllCounselorCodes()
+        allCounselorCodes.value = codesData.codes
+        codesInitialized.value = true
+      }
+
+      // 현재 페이지에 해당하는 코드들만 추출
+      const limit = searchParams.value.limit || 10
+      const page = searchParams.value.page || 1
+      const startIdx = (page - 1) * limit
+      const endIdx = startIdx + limit
+      const pageCodes = allCounselorCodes.value.slice(startIdx, endIdx)
+
+      if (pageCodes.length === 0) {
+        // 더 이상 데이터가 없음
+        result = { items: [], page, limit, total: allCounselorCodes.value.length, total_pages: Math.ceil(allCounselorCodes.value.length / limit) }
+      } else {
+        result = await searchPublicByCodes({ page: 1, limit: pageCodes.length, m_codes: pageCodes })
+        // total_pages는 전체 코드 수 기준으로 재계산
+        result.total = allCounselorCodes.value.length
+        result.total_pages = Math.ceil(allCounselorCodes.value.length / limit)
+        result.page = page
+      }
+    }
+
     totalPages.value = Math.max(1, result.total_pages || 1)
     totalCount.value = result.total || 0
 

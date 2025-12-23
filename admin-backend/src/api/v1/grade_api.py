@@ -3,14 +3,18 @@
 
 - 등록 목록 조회: 페이징 없이 전체를 grade_level DESC로 반환
 - 등급 상세 조회: grade_code로 단건 조회
+- 월별 등급 업데이트: 전월 결제 금액 기준으로 사용자 등급 갱신
+- 등급 변경 로그 조회: 사용자별 등급 변경 이력 조회
 """
-from fastapi import APIRouter, Depends, Query, UploadFile, File, Form
+from typing import Optional
+from fastapi import APIRouter, Depends, Query, UploadFile, File, Form, Body
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.common.response import APIResponse, ok
 from src.core.database import get_db as get_db_maria
 from src.repositories.grade_repository import GradeRepository
 from src.repositories.user_repository import UserRepository
+from src.repositories.grade_change_log_repository import GradeChangeLogRepository
 from src.services.grade_service import GradeService
 from src.schemas.grade_schema import (
     GradeListResponse,
@@ -19,6 +23,9 @@ from src.schemas.grade_schema import (
     GradeUpdateRequest,
     GradeDeleteResponse,
     UsersByGradeResponse,
+    MonthlyGradeUpdateRequest,
+    MonthlyGradeUpdateResponse,
+    GradeChangeLogListResponse,
 )
 
 
@@ -26,7 +33,17 @@ router = APIRouter(prefix="/grades", tags=["grades"])
 
 
 def _get_grade_service(db: AsyncSession = Depends(get_db_maria)) -> GradeService:
+    """기본 등급 서비스 (CRUD 용)"""
     return GradeService(GradeRepository(db), user_repo=UserRepository(db))
+
+
+def _get_grade_service_with_batch(db: AsyncSession = Depends(get_db_maria)) -> GradeService:
+    """배치 처리용 등급 서비스 (등급 변경 로그 포함)"""
+    return GradeService(
+        grade_repo=GradeRepository(db),
+        user_repo=UserRepository(db),
+        grade_change_log_repo=GradeChangeLogRepository(db)
+    )
 
 
 @router.get("/list", response_model=APIResponse[GradeListResponse], summary="등급 목록 조회 (전체, 내림차순)")
@@ -135,5 +152,56 @@ async def update_grade(
     )
     data = await service.update_with_image(payload=payload, image=grade_image)
     return ok(data=data, message="등급 수정 성공")
+
+
+# =====================================================
+# 월별 등급 업데이트 배치 API
+# =====================================================
+
+@router.post(
+    "/monthly-update",
+    response_model=APIResponse[MonthlyGradeUpdateResponse],
+    summary="월별 등급 업데이트 실행",
+    description="""
+전월 결제 금액을 기준으로 ACTIVE 상태 사용자들의 등급을 업데이트합니다.
+
+**처리 로직:**
+1. t_user 테이블에서 ACTIVE 상태 사용자 조회
+2. t_payment에서 전월 결제 금액 합산 (payment_status='SUCCESS')
+3. t_grade의 min_purchase_amount 기준으로 등급 결정
+4. t_grade_change_log에 변경 내역 기록
+5. t_user의 grade_code 업데이트
+
+**dry_run 옵션:**
+- True: 실제 업데이트 없이 결과만 미리보기
+- False: 실제 업데이트 수행
+"""
+)
+async def execute_monthly_grade_update(
+    request: MonthlyGradeUpdateRequest = Body(...),
+    service: GradeService = Depends(_get_grade_service_with_batch),
+):
+    data = await service.execute_monthly_grade_update(
+        target_year=request.target_year,
+        target_month=request.target_month,
+        dry_run=request.dry_run
+    )
+    message = "월별 등급 업데이트 테스트 완료" if request.dry_run else "월별 등급 업데이트 완료"
+    return ok(data=data, message=message)
+
+
+@router.get(
+    "/change-logs",
+    response_model=APIResponse[GradeChangeLogListResponse],
+    summary="등급 변경 로그 조회",
+    description="사용자별 등급 변경 이력을 조회합니다. user_id 미입력시 전체 로그를 조회합니다."
+)
+async def get_grade_change_logs(
+    user_id: Optional[str] = Query(default=None, description="사용자 ID (선택)"),
+    limit: int = Query(default=100, ge=1, le=500, description="조회 건수"),
+    service: GradeService = Depends(_get_grade_service_with_batch),
+):
+    data = await service.get_grade_change_logs(user_id=user_id, limit=limit)
+    return ok(data=data, message="등급 변경 로그 조회 성공")
 
 

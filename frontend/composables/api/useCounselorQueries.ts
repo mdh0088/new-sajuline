@@ -93,6 +93,40 @@ const counselorApi = {
     }
   },
 
+  // 공개: 전체 상담사 코드 목록 조회 (셔플 포함)
+  async getAllCounselorCodes(): Promise<{ codes: string[]; total: number }> {
+    const { $api } = useNuxtApp()
+    const response = await $api<APIResponse<{ codes: string[]; total: number }>>('/api/v1/counselors/public/codes', { method: 'GET' })
+    if (!response.success || !response.data) {
+      throw new Error(response.error?.message || '상담사 코드 목록을 불러오지 못했습니다.')
+    }
+    return response.data
+  },
+
+  // 공개: m_codes 기반 상담사 검색 목록 (POST)
+  async searchPublicByCodes(params: { page: number; limit: number; m_codes: string[] }): Promise<PaginatedResult<CounselorSearchItem>> {
+    const { $api } = useNuxtApp()
+    const query = new URLSearchParams()
+    query.set('page', String(params.page))
+    query.set('limit', String(params.limit))
+
+    const response = await $api<APIResponse<CounselorSearchItem[]>>(`/api/v1/counselors/public/search?${query.toString()}`, {
+      method: 'POST',
+      body: { m_codes: params.m_codes }
+    })
+    if (!response.success) {
+      throw new Error(response.error?.message || '상담사 목록을 불러오지 못했습니다.')
+    }
+    const pagination = response.meta?.pagination
+    return {
+      items: response.data ?? [],
+      page: pagination?.page ?? params.page,
+      limit: pagination?.limit ?? params.limit,
+      total: pagination?.total ?? (response.data?.length ?? 0),
+      total_pages: pagination?.total_pages ?? 1
+    }
+  },
+
   // 상담사 로그아웃
   async logout(): Promise<void> {
     const { $api } = useNuxtApp()
@@ -623,7 +657,10 @@ export const useCounselorQueries = () => {
     useCounselorAdminInquiriesCount,
     usePublicDetail,
     usePublicSearch,
+    // Direct API functions
     searchPublic: counselorApi.searchPublic,
+    getAllCounselorCodes: counselorApi.getAllCounselorCodes,
+    searchPublicByCodes: counselorApi.searchPublicByCodes,
     getPublicCounselorReviews: counselorApi.getPublicCounselorReviews,
     getPublicCounselorUserInquiries: counselorApi.getPublicCounselorUserInquiries,
     createUserInquiry: counselorApi.createUserInquiry,
