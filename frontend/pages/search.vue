@@ -205,9 +205,11 @@ const allCounselorCodes = ref<string[]>([])
 const codesInitialized = ref(false)
 
 // 필터가 적용되어 있는지 확인하는 computed
+// 검색 태그, 스타일 필터, 정렬 필터 중 하나라도 있으면 true
 const hasFilters = computed(() => {
   return searchTags.value.length > 0 ||
-    (selectedFilters.value.style !== '' && selectedFilters.value.style !== null)
+    (selectedFilters.value.style !== '' && selectedFilters.value.style !== null) ||
+    (selectedFilters.value.sort !== '' && selectedFilters.value.sort !== null)
 })
 
 // 검색 태그 추가 (최대 4개, FIFO)
@@ -345,7 +347,8 @@ watch(() => selectedFilters.value.style, () => {
 })
 
 watch(() => selectedFilters.value.sort, () => {
-  // 정렬은 클라이언트 사이드에서 처리되므로 API 호출 불필요
+  // 정렬 필터 변경 시 GET API로 다시 조회 (hasFilters에 포함되므로)
+  resetAndFetch()
 })
 
 // 모달 메서드들
