@@ -105,6 +105,7 @@
 
 <script setup lang="ts">
 import { useToast } from '~/composables/ui/useToast'
+import { useNotify } from '~/composables/utils/useNotify'
 import { useSocialAuthQueries, type SocialSignupRequest } from '~/composables/api/useSocialAuthQueries'
 import { useAuth } from '~/composables/auth/useAuth'
 import { usePhoneVerification, type PhoneVerificationResult } from '~/composables/api/usePhoneVerification'
@@ -127,6 +128,7 @@ useHead({
 const route = useRoute()
 const router = useRouter()
 const toast = useToast()
+const { notifyConfirm } = useNotify()
 const { handleLoginSuccessWithRole } = useAuth()
 const { useSocialSignup } = useSocialAuthQueries()
 
@@ -337,9 +339,26 @@ const socialSignupMutation = useSocialSignup({
     toast.success('회원가입이 완료되었습니다!')
     currentStep.value = 4
   },
-  onError: (error: any) => {
+  onError: async (error: any) => {
     isSigningUp.value = false
-    toast.error(error?.message || '회원가입에 실패했습니다.')
+
+    // 에러 메시지 추출 (H3Error, API Response, 일반 Error 모두 대응)
+    const errorMessage =
+      error?.statusMessage ||
+      error?.message ||
+      error?.data?.message ||
+      '회원가입에 실패했습니다.'
+
+    // 탈퇴 후 재가입 제한 경고 - 중요 경고이므로 confirm 다이얼로그로 표시
+    if (errorMessage.includes('탈퇴') && errorMessage.includes('재가입')) {
+      await notifyConfirm(errorMessage, {
+        title: '재가입 제한 안내',
+        confirmText: '확인',
+        cancelText: ''
+      })
+    } else {
+      toast.error(errorMessage)
+    }
   }
 })
 
