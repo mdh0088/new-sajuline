@@ -456,6 +456,9 @@ class UserRepository:
         if user_out:
             # 재가입 가능 일자 계산
             rejoin_available_date = user_out.created_at + timedelta(days=months * 30)
+            # timezone-aware로 변환하여 비교
+            if rejoin_available_date.tzinfo is None:
+                rejoin_available_date = rejoin_available_date.replace(tzinfo=KST)
             remaining_days = (rejoin_available_date - datetime.now(KST)).days
             remaining_days = max(0, remaining_days)  # 음수 방지
 
