@@ -552,7 +552,11 @@ class UserService:
             log.warning("User not found for phone", phone=phone)
             raise NotFoundError("해당 전화번호로 가입된 사용자를 찾을 수 없습니다.")
 
-        join_type_value = user.join_type.value if user.join_type else "COMMON"
+        # join_type이 Enum이면 .value, 문자열이면 그대로 사용
+        if hasattr(user.join_type, 'value'):
+            join_type_value = user.join_type.value
+        else:
+            join_type_value = user.join_type or "COMMON"
 
         # SNS 가입자는 ID를 노출하지 않음
         if join_type_value in ("KAKAO", "NAVER"):
@@ -612,7 +616,11 @@ class UserService:
                        phone=request.phone)
             raise NotFoundError("입력하신 정보와 일치하는 사용자를 찾을 수 없습니다.")
 
-        join_type_value = user.join_type.value if user.join_type else "COMMON"
+        # join_type이 Enum이면 .value, 문자열이면 그대로 사용
+        if hasattr(user.join_type, 'value'):
+            join_type_value = user.join_type.value
+        else:
+            join_type_value = user.join_type or "COMMON"
 
         # SNS 가입자는 비밀번호 찾기 불가
         if join_type_value in ("KAKAO", "NAVER"):
