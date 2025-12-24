@@ -170,43 +170,43 @@ export const usePhoneVerification = () => {
       return form
     }
 
-    // 모바일/PC 모두 새 창(팝업) 방식 사용
-    // 모바일에서 _self 사용 시 KCP가 POST 대신 GET으로 리다이렉트하여 인증 데이터 손실됨
-    const windowName = 'kcp_auth_popup'
-
-    // 새 창 열기 (모바일에서는 새 탭으로 열림)
-    let popup: Window | null = null
-
     if (isMobile) {
-      // 모바일: 새 탭으로 열기 (팝업 옵션 없이)
-      popup = window.open('about:blank', windowName)
+      // 모바일: 현재 창에서 Form POST (_self 방식)
+      // 인증 완료 후 백엔드에서 return_url로 리다이렉트됨
+      submitKcpForm('_self')
+      return () => { } // 모바일은 페이지 이동이므로 닫기 불필요
     } else {
       // PC: 팝업 창으로 열기
-      popup = window.open('', windowName)
+      const windowName = 'kcp_auth_popup'
+
+      // 기존 팝업이 있으면 재사용, 없으면 새로 생성
+      let popup = window.open('', windowName)
+
       if (!popup || popup.closed) {
+        // 팝업 차단 - 새로 열기 시도
         popup = window.open(
           'about:blank',
           windowName,
           'width=600,height=700,scrollbars=yes,resizable=yes'
         )
+
+        if (!popup || popup.closed) {
+          throw new Error('인증창을 열 수 없습니다. 팝업 차단을 해제해주세요.')
+        }
       }
-    }
 
-    if (!popup || popup.closed) {
-      throw new Error('인증창을 열 수 없습니다. 팝업 차단을 해제해주세요.')
-    }
+      // Form을 팝업으로 제출
+      submitKcpForm(windowName, popup)
 
-    // Form을 새 창으로 제출
-    submitKcpForm(windowName, popup)
-
-    // 창 닫기 함수 반환
-    return () => {
-      if (popup && !popup.closed) {
-        popup.close()
-      }
-      const form = document.getElementById('kcp_cert_form')
-      if (form) {
-        form.remove()
+      // 팝업 닫기 함수 반환
+      return () => {
+        if (popup && !popup.closed) {
+          popup.close()
+        }
+        const form = document.getElementById('kcp_cert_form')
+        if (form) {
+          form.remove()
+        }
       }
     }
   }
