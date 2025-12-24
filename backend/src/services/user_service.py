@@ -538,7 +538,7 @@ class UserService:
             phone: 본인인증된 전화번호
 
         Returns:
-            FindIdResponse: 사용자 ID와 가입일시
+            FindIdResponse: 사용자 ID와 가입일시 (SNS 가입자는 ID 대신 join_type만 반환)
 
         Raises:
             NotFoundError: 사용자를 찾을 수 없음
@@ -552,10 +552,22 @@ class UserService:
             log.warning("User not found for phone", phone=phone)
             raise NotFoundError("해당 전화번호로 가입된 사용자를 찾을 수 없습니다.")
 
+        join_type_value = user.join_type.value if user.join_type else "COMMON"
+
+        # SNS 가입자는 ID를 노출하지 않음
+        if join_type_value in ("KAKAO", "NAVER"):
+            log.info("SNS user found", join_type=join_type_value)
+            return FindIdResponse(
+                user_id=None,
+                created_at=None,
+                join_type=join_type_value
+            )
+
         log.info("User found", user_id=user.user_id)
         return FindIdResponse(
             user_id=user.user_id,
-            created_at=user.created_at
+            created_at=user.created_at,
+            join_type=join_type_value
         )
 
     def _generate_temporary_password(self, length: int = 12) -> str:
@@ -579,17 +591,17 @@ class UserService:
             request: 비밀번호 찾기 요청 (user_id, phone)
 
         Returns:
-            FindPasswordResponse: 처리 결과
+            FindPasswordResponse: 처리 결과 (SNS 가입자는 join_type만 반환)
 
         Raises:
-            NotFoundError: 사용자를 찾을 수 없음 (user_id + phone 불일치 또는 SNS 가입자)
+            NotFoundError: 사용자를 찾을 수 없음
             ValidationError: 이메일 전송 실패
         """
         log = get_logger_with_request_id()
         log.info("Finding password", user_id=request.user_id, phone=request.phone)
 
-        # 1. 사용자 조회 (user_id + phone + join_type='COMMON' 조건)
-        user = await self.user_repo.get_by_user_id_and_phone_for_password_reset(
+        # 1. 사용자 조회 (user_id + phone, join_type 무관)
+        user = await self.user_repo.get_by_user_id_and_phone(
             request.user_id,
             request.phone
         )
@@ -598,10 +610,18 @@ class UserService:
             log.warning("User not found for password reset",
                        user_id=request.user_id,
                        phone=request.phone)
-            raise NotFoundError(
-                "입력하신 정보와 일치하는 사용자를 찾을 수 없습니다. "
-                "아이디와 전화번호를 확인해주세요. "
-                "(SNS 가입 회원은 비밀번호 찾기를 사용할 수 없습니다.)"
+            raise NotFoundError("입력하신 정보와 일치하는 사용자를 찾을 수 없습니다.")
+
+        join_type_value = user.join_type.value if user.join_type else "COMMON"
+
+        # SNS 가입자는 비밀번호 찾기 불가
+        if join_type_value in ("KAKAO", "NAVER"):
+            log.info("SNS user cannot reset password", join_type=join_type_value)
+            return FindPasswordResponse(
+                user_id=None,
+                email=None,
+                message=f"{join_type_value} 가입자입니다.",
+                join_type=join_type_value
             )
 
         # 2. 임시 비밀번호 생성
@@ -648,7 +668,8 @@ class UserService:
         return FindPasswordResponse(
             user_id=user.user_id,
             email=masked_email,
-            message=f"임시 비밀번호가 {masked_email}로 전송되었습니다. 로그인 후 비밀번호를 변경해주세요."
+            message=f"임시 비밀번호가 {masked_email}로 전송되었습니다. 로그인 후 비밀번호를 변경해주세요.",
+            join_type=join_type_value
         )
 
     async def change_password(self, user_id: str, request: PasswordChangeRequest) -> PasswordChangeResponse:

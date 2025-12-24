@@ -85,6 +85,18 @@
           </p>
         </div>
 
+        <!-- SNS 가입자 안내 -->
+        <div v-if="snsMessage" class="mt-6 auth-result-box warning">
+          <div class="auth-result-icon">ℹ️</div>
+          <h3 class="auth-result-title">SNS 계정으로 가입하셨습니다</h3>
+          <div class="auth-result-content">
+            <p class="auth-result-value">{{ snsMessage }}</p>
+          </div>
+          <p class="auth-result-meta">
+            해당 SNS 계정으로 로그인해주세요
+          </p>
+        </div>
+
         <!-- 에러 메시지 표시 -->
         <div v-if="errorMessage" class="mt-6 auth-error-message">
           <div class="flex items-center gap-2">
@@ -157,6 +169,7 @@ const route = useRoute()
 const userId = ref('')
 const maskedEmail = ref('')
 const successMessage = ref('')
+const snsMessage = ref('')
 const errorMessage = ref('')
 const isVerifying = ref(false)
 // ✅ KCP redirect 시 페이지 진입부터 로딩 표시
@@ -211,9 +224,16 @@ onMounted(async () => {
 
       try {
         const data = await callFindPasswordAPI({ user_id: redirectUserId, phone: phone })
-        maskedEmail.value = data.email
-        successMessage.value = data.message
-        toast.success('임시 비밀번호가 발송되었습니다')
+
+        // SNS 가입자 체크
+        if (data.join_type && data.join_type !== 'COMMON') {
+          snsMessage.value = `${data.join_type} 가입자입니다.`
+          toast.info(snsMessage.value)
+        } else {
+          maskedEmail.value = data.email
+          successMessage.value = data.message
+          toast.success('임시 비밀번호가 발송되었습니다')
+        }
       } catch (error: any) {
         console.error('Find password error:', error)
         errorMessage.value = error.message || '비밀번호 찾기 중 오류가 발생했습니다.'
@@ -239,6 +259,7 @@ const handleSubmit = async () => {
   isVerifying.value = true
   errorMessage.value = ''
   successMessage.value = ''
+  snsMessage.value = ''
   maskedEmail.value = ''
 
   // 비밀번호 찾기 전용 API 호출
@@ -281,9 +302,16 @@ const handleVerificationComplete = async (result: PhoneVerificationResult) => {
     // 인증된 전화번호로 비밀번호 찾기 API 호출
     try {
       const data = await callFindPasswordAPI({ user_id: userId.value, phone: result.phone })
-      maskedEmail.value = data.email
-      successMessage.value = data.message
-      toast.success('임시 비밀번호가 발송되었습니다')
+
+      // SNS 가입자 체크
+      if (data.join_type && data.join_type !== 'COMMON') {
+        snsMessage.value = `${data.join_type} 가입자입니다.`
+        toast.info(snsMessage.value)
+      } else {
+        maskedEmail.value = data.email
+        successMessage.value = data.message
+        toast.success('임시 비밀번호가 발송되었습니다')
+      }
     } catch (error: any) {
       console.error('Find password error:', error)
       errorMessage.value = error.message || '비밀번호 찾기 중 오류가 발생했습니다.'

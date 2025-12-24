@@ -143,8 +143,9 @@ class FindIdRequest(BaseModel):
 
 class FindIdResponse(BaseModel):
     """ID 찾기 응답"""
-    user_id: str = Field(..., description="사용자 ID")
-    created_at: datetime = Field(..., description="가입일시")
+    user_id: Optional[str] = Field(None, description="사용자 ID (SNS 가입자는 None)")
+    created_at: Optional[datetime] = Field(None, description="가입일시")
+    join_type: Optional[str] = Field(None, description="가입 유형 (COMMON, KAKAO, NAVER)")
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -169,9 +170,10 @@ class FindPasswordRequest(BaseModel):
 
 class FindPasswordResponse(BaseModel):
     """비밀번호 찾기 응답"""
-    user_id: str = Field(..., description="사용자 ID")
-    email: str = Field(..., description="임시 비밀번호가 전송된 이메일 (마스킹)")
+    user_id: Optional[str] = Field(None, description="사용자 ID")
+    email: Optional[str] = Field(None, description="임시 비밀번호가 전송된 이메일 (마스킹)")
     message: str = Field(..., description="안내 메시지")
+    join_type: Optional[str] = Field(None, description="가입 유형 (COMMON, KAKAO, NAVER)")
 
     model_config = ConfigDict(from_attributes=True)
 
