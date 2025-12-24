@@ -112,6 +112,26 @@ class UserRepository:
         log.info("Password reset user lookup completed", user_id=user_id, found=user is not None)
         return user
 
+    @logger.catch(reraise=True)
+    async def get_by_user_id_and_phone(self, user_id: str, phone: str) -> Optional[User]:
+        """
+        user_id, phone으로 사용자 조회 (join_type 무관)
+        """
+        log = get_logger_with_request_id()
+        log.info("Looking up user by user_id and phone", user_id=user_id, phone=phone)
+
+        stmt = select(User).where(
+            and_(
+                User.user_id == user_id,
+                User.phone == phone
+            )
+        )
+        result = await self.db.execute(stmt)
+        user = result.scalar_one_or_none()
+
+        log.info("User lookup completed", user_id=user_id, found=user is not None)
+        return user
+
 # TODO: 사용자 목록 조회 - 추후 참고용
     # @logger.catch(reraise=True)
     # async def get_list(
