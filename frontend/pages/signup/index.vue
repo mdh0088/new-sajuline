@@ -324,7 +324,23 @@ const completeSignup = async () => {
     toast.success('회원가입이 완료되었습니다.')
     currentStep.value = 5
   } catch (error: any) {
-    toast.error(error?.message || '회원가입에 실패했습니다.')
+    // 에러 메시지 추출 (H3Error, API Response, 일반 Error 모두 대응)
+    const errorMessage =
+      error?.statusMessage ||
+      error?.message ||
+      error?.data?.message ||
+      '회원가입에 실패했습니다.'
+
+    // 탈퇴 후 재가입 제한 경고 - 중요 경고이므로 confirm 다이얼로그로 표시
+    if (errorMessage.includes('탈퇴') && errorMessage.includes('재가입')) {
+      await notifyConfirm(errorMessage, {
+        title: '재가입 제한 안내',
+        confirmText: '확인',
+        cancelText: ''
+      })
+    } else {
+      toast.error(errorMessage)
+    }
   }
 }
 
