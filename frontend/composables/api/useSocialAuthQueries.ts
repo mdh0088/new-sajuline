@@ -111,17 +111,17 @@ const socialAuthApi = {
    * 소셜 회원가입 (기존 /users/social/signup 엔드포인트 사용)
    */
   async socialSignup(signupData: SocialSignupRequest): Promise<SocialLoginSuccess> {
-    const response = await $fetch<APIResponse<SocialLoginSuccess>>(
+    const { $api } = useNuxtApp()
+    const response = await $api<APIResponse<SocialLoginSuccess>>(
       '/api/v1/users/social/signup',
       {
         method: 'POST',
-        credentials: 'include',
         body: signupData
       }
     )
 
     if (!response.success || !response.data) {
-      throw new Error(response.error?.message || '소셜 회원가입 실패')
+      throw new Error(response.error?.message || response.message || '소셜 회원가입 실패')
     }
 
     return response.data
