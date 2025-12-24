@@ -58,6 +58,18 @@
           </p>
         </div>
 
+        <!-- SNS 가입자 안내 -->
+        <div v-if="snsMessage" class="auth-result-box warning">
+          <div class="auth-result-icon">ℹ️</div>
+          <h3 class="auth-result-title">SNS 계정으로 가입하셨습니다</h3>
+          <div class="auth-result-content">
+            <p class="auth-result-value">{{ snsMessage }}</p>
+          </div>
+          <p class="auth-result-meta">
+            해당 SNS 계정으로 로그인해주세요
+          </p>
+        </div>
+
         <!-- 에러 메시지 표시 -->
         <div v-if="errorMessage" class="auth-error-message">
           <div class="flex items-center gap-2">
@@ -128,6 +140,7 @@ const route = useRoute()
 // 상태 관리
 const foundUserId = ref('')
 const foundUserDate = ref('')
+const snsMessage = ref('')
 const errorMessage = ref('')
 const isVerifying = ref(false)
 // ✅ KCP Fallback 리다이렉트 시 페이지 진입부터 로딩 표시
@@ -140,13 +153,24 @@ let cleanupListener: (() => void) | null = null
 // ID 찾기 mutation hook
 const { mutate: findUserId } = useFindUserId({
   onSuccess: (data) => {
+    isVerifying.value = false
+
+    // SNS 가입자 체크
+    if (data.join_type && data.join_type !== 'COMMON') {
+      snsMessage.value = `${data.join_type} 가입자입니다.`
+      foundUserId.value = ''
+      foundUserDate.value = ''
+      toast.info(snsMessage.value)
+      return
+    }
+
     foundUserId.value = data.user_id
     foundUserDate.value = new Date(data.created_at).toLocaleDateString('ko-KR', {
       year: 'numeric',
       month: 'long',
       day: 'numeric'
     })
-    isVerifying.value = false
+    snsMessage.value = ''
     toast.success('아이디를 찾았습니다')
   },
   onError: (error: any) => {
@@ -197,6 +221,7 @@ const startVerification = async () => {
   errorMessage.value = ''
   foundUserId.value = ''
   foundUserDate.value = ''
+  snsMessage.value = ''
 
   // ID 찾기 전용 API 호출
   try {
