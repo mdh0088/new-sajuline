@@ -19,9 +19,9 @@ class UserListParams(BaseModel):
 
 class UserListItem(BaseModel):
     user_id: str
-    email: str
-    nickname: str
-    phone: str
+    email: Optional[str] = None
+    nickname: Optional[str] = None
+    phone: Optional[str] = None
     join_type: str
     grade_code: str
     created_at: datetime
@@ -49,9 +49,9 @@ class ArsUserInfo(BaseModel):
 class UserListItemResponse(BaseModel):
     """유저 목록 아이템 - t_user + mileage_point + ars_user_info 통합"""
     user_id: str
-    email: str
-    nickname: str
-    phone: str
+    email: Optional[str] = None
+    nickname: Optional[str] = None
+    phone: Optional[str] = None
     join_type: str
     grade_code: str
     mileage_point: int
