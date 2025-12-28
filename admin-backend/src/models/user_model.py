@@ -23,10 +23,10 @@ class User(Base):
 
     # 기본키 및 로그인 정보
     user_id: Mapped[str] = mapped_column(String(100), primary_key=True, comment="사용자 ID (로그인 ID)")
-    email: Mapped[str] = mapped_column(String(100), unique=True, nullable=False, comment="이메일")
+    email: Mapped[Optional[str]] = mapped_column(String(100), nullable=True, comment="이메일")
     password_hash: Mapped[Optional[str]] = mapped_column(String(255), nullable=True, comment="비밀번호 해시 (소셜로그인은 NULL)")
-    nickname: Mapped[str] = mapped_column(String(100), unique=True, nullable=False, comment="닉네임")
-    phone: Mapped[str] = mapped_column(String(20), unique=True, nullable=False, comment="전화번호")
+    nickname: Mapped[Optional[str]] = mapped_column(String(100), nullable=True, comment="닉네임")
+    phone: Mapped[Optional[str]] = mapped_column(String(15), nullable=True, comment="전화번호")
 
     # 가입 정보
     join_type: Mapped[str] = mapped_column(String(20), nullable=False, default="COMMON", comment="가입유형: COMMON|KAKAO|NAVER")
