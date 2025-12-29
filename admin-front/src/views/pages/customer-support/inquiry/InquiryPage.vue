@@ -387,6 +387,17 @@ const doSearch = async () => {
   }
 }
 
+const activeTabEvent = async (tab:string) => {
+  activeTab.value = tab;
+  if (tab === "counselor") {
+    await getCounselorInquiryList(searchOptions, counselorTableOptions);
+  } else if (tab === "user") {
+    await getUserInquiryList(searchOptions, userInquirytableOptions);
+  } else {
+    await getUserToCsList(searchOptions, usertToCstableOptions);
+  }
+}
+
 
 watch(
     () => activeTab.value,
@@ -403,6 +414,9 @@ watch(
 );
 
 onMounted(async () => {
-  await doSearch();
+  //await doSearch();
+  await activeTabEvent("userToCs");
+  await activeTabEvent("user");
+  await activeTabEvent("counselor");
 })
 </script>
