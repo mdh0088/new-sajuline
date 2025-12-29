@@ -169,7 +169,7 @@ class InquiryService:
             user_id=user_id,
             counselor_id=payload.counselor_id,
             content=payload.content,
-            category=payload.category,
+            category="USER_TO_CS",
             title=payload.title
         )
 
