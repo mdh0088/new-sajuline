@@ -26,9 +26,13 @@ export const toPercentage = (val: number | string): string => {
     return (num ).toFixed(2).replace(/\.00$/, "") + "%";
 }
 
-export const formatDate = (date: Date | string, format: string = 'yyyy-MM-dd HH:ss:mm'): string => {
+export const formatDate = (date: Date | string | null | undefined, format: string = 'yyyy-MM-dd HH:ss:mm'): string => {
+    if (date === null || date === undefined || date === '') {
+        return '';
+    }
+
     const d = new Date(date);
-    
+
     if (isNaN(d.getTime())) {
         return '';
     }
