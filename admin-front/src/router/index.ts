@@ -60,7 +60,7 @@ const routes: Array<RouteRecordRaw> = [
         }
       },
       {
-        path: 'grade-history',
+        path: 'user/grade-history',
         name: '등급변경이력',
         component: () => import('@/views/pages/grade-history/GradeHistoryPage.vue'),
         meta: { title: '등급 변경 이력' }
