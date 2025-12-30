@@ -673,10 +673,30 @@ const handleRemoveImage3: UploadProps['onRemove'] = (uploadFile, uploadFiles) =>
 };
 
 /**
- * 이미지 미리보기
+ * 이미지 클릭 시 다운로드
  */
-const handlePreview: UploadProps['onPreview'] = (file) => {
-  console.log(file);
+const handlePreview: UploadProps['onPreview'] = async (file) => {
+  if (!file.url) {
+    await swal.swalAlert('다운로드할 이미지가 없습니다.', 'warning');
+    return;
+  }
+
+  try {
+    // 이미지 다운로드
+    const response = await fetch(file.url);
+    const blob = await response.blob();
+    const url = window.URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = file.name || 'image.png';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    window.URL.revokeObjectURL(url);
+  } catch (error) {
+    console.error('이미지 다운로드 실패:', error);
+    await swal.swalAlert('이미지 다운로드에 실패했습니다.', 'error');
+  }
 };
 </script>
 
