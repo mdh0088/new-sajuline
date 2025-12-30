@@ -147,5 +147,7 @@ class GradeChangeLogListResponse(BaseModel):
     """등급 변경 로그 목록 응답"""
     logs: List[GradeChangeLogItem]
     total: int
+    page: int = Field(default=1, description="현재 페이지")
+    size: int = Field(default=20, description="페이지 당 개수")
 
 

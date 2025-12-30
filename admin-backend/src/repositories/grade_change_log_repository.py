@@ -239,3 +239,98 @@ class GradeChangeLogRepository:
         )
         result = await self.db.execute(stmt)
         return list(result.scalars().all())
+
+    async def get_logs_with_pagination(
+        self,
+        year: Optional[int] = None,
+        month: Optional[int] = None,
+        user_id: Optional[str] = None,
+        change_reason: Optional[str] = None,
+        skip: int = 0,
+        limit: int = 20
+    ) -> List[GradeChangeLog]:
+        """등급 변경 로그 목록 조회 (페이지네이션, 월별 검색)
+
+        Args:
+            year: 대상 연도 (선택)
+            month: 대상 월 (선택)
+            user_id: 사용자 ID (선택)
+            change_reason: 변경 사유 (선택)
+            skip: 건너뛸 개수
+            limit: 조회할 개수
+
+        Returns:
+            등급 변경 로그 목록
+        """
+        conditions = []
+
+        # 월별 검색 조건
+        if year is not None and month is not None:
+            start_date = datetime(year, month, 1, 0, 0, 0, tzinfo=KST)
+            if month == 12:
+                end_date = datetime(year + 1, 1, 1, 0, 0, 0, tzinfo=KST)
+            else:
+                end_date = datetime(year, month + 1, 1, 0, 0, 0, tzinfo=KST)
+            conditions.append(GradeChangeLog.created_at >= start_date)
+            conditions.append(GradeChangeLog.created_at < end_date)
+
+        # 사용자 ID 조건
+        if user_id:
+            conditions.append(GradeChangeLog.user_id == user_id)
+
+        # 변경 사유 조건
+        if change_reason:
+            conditions.append(GradeChangeLog.change_reason == change_reason)
+
+        stmt = select(GradeChangeLog)
+        if conditions:
+            stmt = stmt.where(and_(*conditions))
+        stmt = stmt.order_by(desc(GradeChangeLog.created_at)).offset(skip).limit(limit)
+
+        result = await self.db.execute(stmt)
+        return list(result.scalars().all())
+
+    async def count_logs(
+        self,
+        year: Optional[int] = None,
+        month: Optional[int] = None,
+        user_id: Optional[str] = None,
+        change_reason: Optional[str] = None
+    ) -> int:
+        """등급 변경 로그 개수 조회
+
+        Args:
+            year: 대상 연도 (선택)
+            month: 대상 월 (선택)
+            user_id: 사용자 ID (선택)
+            change_reason: 변경 사유 (선택)
+
+        Returns:
+            등급 변경 로그 개수
+        """
+        conditions = []
+
+        # 월별 검색 조건
+        if year is not None and month is not None:
+            start_date = datetime(year, month, 1, 0, 0, 0, tzinfo=KST)
+            if month == 12:
+                end_date = datetime(year + 1, 1, 1, 0, 0, 0, tzinfo=KST)
+            else:
+                end_date = datetime(year, month + 1, 1, 0, 0, 0, tzinfo=KST)
+            conditions.append(GradeChangeLog.created_at >= start_date)
+            conditions.append(GradeChangeLog.created_at < end_date)
+
+        # 사용자 ID 조건
+        if user_id:
+            conditions.append(GradeChangeLog.user_id == user_id)
+
+        # 변경 사유 조건
+        if change_reason:
+            conditions.append(GradeChangeLog.change_reason == change_reason)
+
+        stmt = select(func.count(GradeChangeLog.log_id))
+        if conditions:
+            stmt = stmt.where(and_(*conditions))
+
+        result = await self.db.execute(stmt)
+        return int(result.scalar() or 0)
