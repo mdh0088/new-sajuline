@@ -60,6 +60,12 @@ const routes: Array<RouteRecordRaw> = [
         }
       },
       {
+        path: 'grade-history',
+        name: '등급변경이력',
+        component: () => import('@/views/pages/grade-history/GradeHistoryPage.vue'),
+        meta: { title: '등급 변경 이력' }
+      },
+      {
         path: 'customer-support/notice',
         name: '공지사항',
         component: () => import("@/views/pages/customer-support/notice/NoticePage.vue"),
