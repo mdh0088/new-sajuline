@@ -416,28 +416,20 @@ const handleRemove: UploadProps['onRemove'] = (uploadFile, uploadFiles) => {
   profileImageFile.value = null;
 }
 
-const handlePreview: UploadProps['onPreview'] = async (file) => {
+const handlePreview: UploadProps['onPreview'] = (file) => {
   if (!file.url) {
-    await swal.swalAlert('다운로드할 이미지가 없습니다.', 'warning');
+    swal.swalAlert('다운로드할 이미지가 없습니다.', 'warning');
     return;
   }
 
-  try {
-    // 이미지 다운로드
-    const response = await fetch(file.url);
-    const blob = await response.blob();
-    const url = window.URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = file.name || 'image.png';
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    window.URL.revokeObjectURL(url);
-  } catch (error) {
-    console.error('이미지 다운로드 실패:', error);
-    await swal.swalAlert('이미지 다운로드에 실패했습니다.', 'error');
-  }
+  // <a> 태그를 사용한 다운로드 (fetch 없이 CORS 우회)
+  const link = document.createElement('a');
+  link.href = file.url;
+  link.download = file.name || 'image.png';
+  link.target = '_blank';
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
 }
 
 const uploadImgs = async (target) => {
