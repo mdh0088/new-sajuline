@@ -145,7 +145,7 @@
               </div>
               <template #tip>
                 <div class="el-upload__tip">
-                  jpg/png 파일만 업로드 가능합니다.
+                  1MB이하의 jpg/png파일만 업로드 가능합니다.
                 </div>
               </template>
             </el-upload>
@@ -235,12 +235,19 @@ const rules = reactive<FormRules>({
   valid_until: [{required: true, message: '종료일을 선택해주세요', trigger: 'change'}],
 });
 
-const handleFileChange = (file: any) => {
+const handleFileChange = async (file: any) => {
   const validExtensions = ['png', 'jpg', 'jpeg'];
   const fileExtension = file.name.split('.').pop()?.toLowerCase();
 
   if (!validExtensions.includes(fileExtension || '')) {
-    swal.swalAlert('이미지 파일만 업로드 가능합니다.', 'warning');
+    await swal.swalAlert('이미지 파일만 업로드 가능합니다.', 'warning');
+    attachFile.value = [];
+    return;
+  }
+
+  // 파일 크기 체크 (1MB)
+  if (file.raw && file.raw.size > 1024 * 1024) {
+    await swal.swalAlert('1MB 이하의 이미지만 업로드 가능합니다.', 'warning');
     attachFile.value = [];
     return;
   }
