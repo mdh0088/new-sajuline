@@ -144,7 +144,7 @@
               </div>
               <template #tip>
                 <div class="el-upload__tip">
-                  500kb이하의 jpg/png파일만 업로드 간으합니다.
+                  1MB이하의 jpg/png파일만 업로드 가능합니다.
                 </div>
               </template>
             </el-upload>
@@ -353,6 +353,13 @@ const uploadImgs = async (target) => {
 
   if (!validExtensions.includes(fileExtension)) {
     await swal.swalAlert('이미지 파일만 업로드 가능합니다.', 'warning');
+    attachFile.value = [];
+    return;
+  }
+
+  // 파일 크기 체크 (1MB)
+  if (file.size > 1024 * 1024) {
+    await swal.swalAlert('1MB 이하의 이미지만 업로드 가능합니다.', 'warning');
     attachFile.value = [];
     return;
   }
