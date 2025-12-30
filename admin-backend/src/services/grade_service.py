@@ -304,9 +304,9 @@ class GradeService:
         user_id: Optional[str] = None,
         limit: int = 100
     ) -> GradeChangeLogListResponse:
-        """등급 변경 로그 조회"""
+        """등급 변경 로그 조회 (기존 메서드 - 하위호환용)"""
         if self.grade_change_log_repo is None:
-            return GradeChangeLogListResponse(logs=[], total=0)
+            return GradeChangeLogListResponse(logs=[], total=0, page=1, size=limit)
 
         if user_id:
             logs = await self.grade_change_log_repo.get_by_user_id(user_id, limit)
@@ -315,6 +315,78 @@ class GradeService:
             logs = await self.grade_change_log_repo.get_by_user_id("", limit)
 
         items = [GradeChangeLogItem.model_validate(log, from_attributes=True) for log in logs]
-        return GradeChangeLogListResponse(logs=items, total=len(items))
+        return GradeChangeLogListResponse(logs=items, total=len(items), page=1, size=limit)
+
+    async def get_grade_change_logs_with_pagination(
+        self,
+        year: Optional[int] = None,
+        month: Optional[int] = None,
+        user_id: Optional[str] = None,
+        change_reason: Optional[str] = None,
+        page: int = 1,
+        size: int = 20
+    ) -> GradeChangeLogListResponse:
+        """등급 변경 로그 목록 조회 (페이지네이션, 월별 검색)
+
+        Args:
+            year: 대상 연도 (선택)
+            month: 대상 월 (선택)
+            user_id: 사용자 ID (선택)
+            change_reason: 변경 사유 (선택)
+            page: 페이지 번호 (기본값: 1)
+            size: 페이지 당 개수 (기본값: 20)
+
+        Returns:
+            GradeChangeLogListResponse: 등급 변경 로그 목록
+        """
+        log = get_logger_with_request_id()
+        log.info(
+            "Getting grade change logs",
+            year=year,
+            month=month,
+            user_id=user_id,
+            change_reason=change_reason,
+            page=page,
+            size=size
+        )
+
+        if self.grade_change_log_repo is None:
+            return GradeChangeLogListResponse(logs=[], total=0, page=page, size=size)
+
+        # 페이지네이션 계산
+        skip = (page - 1) * size
+
+        # 로그 목록 조회
+        logs = await self.grade_change_log_repo.get_logs_with_pagination(
+            year=year,
+            month=month,
+            user_id=user_id,
+            change_reason=change_reason,
+            skip=skip,
+            limit=size
+        )
+
+        # 총 개수 조회
+        total = await self.grade_change_log_repo.count_logs(
+            year=year,
+            month=month,
+            user_id=user_id,
+            change_reason=change_reason
+        )
+
+        items = [GradeChangeLogItem.model_validate(log_item, from_attributes=True) for log_item in logs]
+
+        log.info(
+            "Grade change logs retrieved",
+            count=len(items),
+            total=total
+        )
+
+        return GradeChangeLogListResponse(
+            logs=items,
+            total=total,
+            page=page,
+            size=size
+        )
 
 

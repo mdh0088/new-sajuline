@@ -205,3 +205,40 @@ async def get_grade_change_logs(
     return ok(data=data, message="등급 변경 로그 조회 성공")
 
 
+@router.get(
+    "/change-logs/list",
+    response_model=APIResponse[GradeChangeLogListResponse],
+    summary="등급 변경 로그 목록 조회 (페이지네이션, 월별 검색)",
+    description="""
+등급 변경 이력을 페이지네이션과 월별 검색 기능과 함께 조회합니다.
+
+**검색 조건:**
+- year, month: 특정 연월 검색 (예: 2024년 12월)
+- user_id: 특정 사용자 검색
+- change_reason: 변경 사유 검색 (AUTO_BATCH, MANUAL 등)
+
+**페이지네이션:**
+- page: 페이지 번호 (기본값: 1)
+- size: 페이지 당 개수 (기본값: 20)
+"""
+)
+async def get_grade_change_logs_list(
+    year: Optional[int] = Query(default=None, description="대상 연도 (선택)"),
+    month: Optional[int] = Query(default=None, ge=1, le=12, description="대상 월 (선택, 1-12)"),
+    user_id: Optional[str] = Query(default=None, description="사용자 ID (선택)"),
+    change_reason: Optional[str] = Query(default=None, description="변경 사유 (선택)"),
+    page: int = Query(default=1, ge=1, description="페이지 번호"),
+    size: int = Query(default=20, ge=1, le=100, description="페이지 당 개수"),
+    service: GradeService = Depends(_get_grade_service_with_batch),
+):
+    data = await service.get_grade_change_logs_with_pagination(
+        year=year,
+        month=month,
+        user_id=user_id,
+        change_reason=change_reason,
+        page=page,
+        size=size
+    )
+    return ok(data=data, message="등급 변경 로그 목록 조회 성공")
+
+
