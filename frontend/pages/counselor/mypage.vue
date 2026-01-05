@@ -261,7 +261,7 @@
                   <div v-for="q in items" :key="q.inquiry_id" class="inquiry-card">
                     <div class="inquiry-header">
                       <div class="inquirer-info">
-                        <span class="inquirer-name">{{ q.inquirer_id || '익명' }}</span>
+                        <span class="inquirer-name">{{ q.inquirer_nickname || '익명' }}</span>
                         <span class="inquiry-date">{{ formatDate(q.created_at) }}</span>
                       </div>
                       <div class="inquiry-status-badges">

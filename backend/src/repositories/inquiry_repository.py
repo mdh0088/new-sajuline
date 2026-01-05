@@ -11,6 +11,7 @@ from sqlalchemy import select, update, func, and_, or_
 from sqlalchemy.engine import Result
 
 from src.models.inquiry_model import Inquiry, InquirerType
+from src.models.user_model import User
 from src.schemas.inquiry_schema import InquiryCreate, InquiryUpdate, InquiryListParams
 from src.common.logging import logger, get_logger_with_request_id
 
@@ -30,27 +31,39 @@ class InquiryRepository:
         counselor_id: str,
         page: int = 1,
         limit: int = 20
-    ) -> Tuple[List[Inquiry], int]:
+    ) -> Tuple[List[tuple], int]:
         """
         상담문의 목록 조회
         - inquirer_type = 'USER' AND counselor_id = #{counselor_id}
+        - t_user를 LEFT OUTER JOIN하여 nickname 조회
+        Returns: List[tuple(Inquiry, nickname)], total
         """
         log = get_logger_with_request_id()
         log.info("Getting counselor user inquiries", counselor_id=counselor_id)
-        
+
         skip = (page - 1) * limit
-        
-        # 목록 조회
-        stmt = select(Inquiry).where(
-            and_(
+
+        # 목록 조회 - t_user LEFT OUTER JOIN하여 nickname 가져오기
+        stmt = (
+            select(Inquiry, User.nickname)
+            .outerjoin(User, and_(
                 Inquiry.inquirer_type == InquirerType.USER,
-                Inquiry.counselor_id == counselor_id
+                Inquiry.inquirer_id == User.user_id
+            ))
+            .where(
+                and_(
+                    Inquiry.inquirer_type == InquirerType.USER,
+                    Inquiry.counselor_id == counselor_id
+                )
             )
-        ).offset(skip).limit(limit).order_by(Inquiry.created_at.desc())
-        
+            .offset(skip)
+            .limit(limit)
+            .order_by(Inquiry.created_at.desc())
+        )
+
         result = await self.db.execute(stmt)
-        inquiries = list(result.scalars().all())
-        
+        inquiries = list(result.all())
+
         # 전체 개수 조회
         count_stmt = select(func.count(Inquiry.inquiry_id)).where(
             and_(
@@ -60,12 +73,12 @@ class InquiryRepository:
         )
         count_result = await self.db.execute(count_stmt)
         total = count_result.scalar() or 0
-        
-        log.info("Counselor user inquiries retrieved", 
-                counselor_id=counselor_id, 
-                count=len(inquiries), 
+
+        log.info("Counselor user inquiries retrieved",
+                counselor_id=counselor_id,
+                count=len(inquiries),
                 total=total)
-        
+
         return inquiries, total
     
     @logger.catch(reraise=True)

@@ -4,6 +4,7 @@ export interface InquirySummary {
   inquiry_id: number
   inquirer_type: InquirerType
   inquirer_id?: string | null
+  inquirer_nickname?: string | null
   counselor_id?: string | null
   category?: string | null
   title?: string | null

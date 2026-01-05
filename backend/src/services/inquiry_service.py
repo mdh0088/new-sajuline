@@ -42,36 +42,37 @@ class InquiryService:
         Returns: (inquiries, page, limit, total)
         """
         log = get_logger_with_request_id()
-        log.info("Getting counselor user inquiries", 
-                counselor_id=counselor_id, 
-                page=page, 
+        log.info("Getting counselor user inquiries",
+                counselor_id=counselor_id,
+                page=page,
                 limit=limit)
-        
+
         # 파라미터 유효성 검사
         if page < 1:
             page = 1
         if limit < 1 or limit > 100:
             limit = 20
-        
-        # 문의 목록 조회
-        inquiries, total = await self.inquiry_repo.get_counselor_user_inquiries(
+
+        # 문의 목록 조회 (Repository에서 tuple 반환: (Inquiry, nickname))
+        inquiry_tuples, total = await self.inquiry_repo.get_counselor_user_inquiries(
             counselor_id=counselor_id,
             page=page,
             limit=limit
         )
-        
+
         # 응답 데이터 변환
         inquiry_summaries = []
-        for inquiry in inquiries:
+        for inquiry, nickname in inquiry_tuples:
             summary = InquirySummary.model_validate(inquiry)
+            summary.inquirer_nickname = nickname  # t_user.nickname 설정
             summary.has_reply = bool(inquiry.reply_content)
             inquiry_summaries.append(summary)
-        
-        log.info("Counselor user inquiries retrieved", 
-                counselor_id=counselor_id, 
-                count=len(inquiry_summaries), 
+
+        log.info("Counselor user inquiries retrieved",
+                counselor_id=counselor_id,
+                count=len(inquiry_summaries),
                 total=total)
-        
+
         return inquiry_summaries, page, limit, total
 
     async def get_counselor_user_inquiries_count(
