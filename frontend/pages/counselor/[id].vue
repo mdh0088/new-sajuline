@@ -177,7 +177,7 @@
               >
                 <div class="inquiry-header">
                   <div class="inquirer-info">
-                    <span class="inquirer-name">{{ maskName(inquiry.inquirer_id || '손님') }}</span>
+                    <span class="inquirer-name">{{ maskName(inquiry.inquirer_nickname || '손님') }}</span>
                     <span class="inquiry-date">{{ formatDate(inquiry.created_at) }}</span>
                   </div>
                   <div v-if="!canViewInquiry(inquiry)" class="secret-badge">🔒 비밀글</div>

@@ -63,6 +63,7 @@ class InquirySummary(BaseModel):
     inquiry_id: int = Field(..., description="문의 ID")
     inquirer_type: InquirerType = Field(..., description="문의자 타입")
     inquirer_id: Optional[str] = Field(None, description="문의자 ID")
+    inquirer_nickname: Optional[str] = Field(None, description="문의자 닉네임 (t_user.nickname)")
     counselor_id: Optional[str] = Field(None, description="문의 상담사 ID")
     category: Optional[str] = Field(None, description="문의 카테고리")
     inquiry_type: Optional[str] = Field(None, description="문의 유형: PAY, ACCOUNT, CS, EVENT, ETC")
