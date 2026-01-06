@@ -172,12 +172,16 @@
                 v-for="inquiry in inquiryItems"
                 :key="inquiry.inquiry_id"
                 class="inquiry-card"
-                :class="{ 'has-reply': inquiry.has_reply && canViewInquiry(inquiry), 'expanded': isInquiryExpanded(inquiry.inquiry_id), 'is-secret': !canViewInquiry(inquiry) }"
+                :class="{ 'has-reply': inquiry.has_reply, 'expanded': isInquiryExpanded(inquiry.inquiry_id), 'is-secret': !canViewInquiry(inquiry) }"
                 @click="inquiry.has_reply && canViewInquiry(inquiry) && toggleInquiryExpand(inquiry.inquiry_id)"
               >
                 <div class="inquiry-header">
                   <div class="inquirer-info">
+<<<<<<< HEAD
+                    <span class="inquirer-name">{{ inquiry.inquirer_nickname || '손님' }}</span>
+=======
                     <span class="inquirer-name">{{ maskName(inquiry.inquirer_nickname || '손님') }}</span>
+>>>>>>> 236b7dbbf57e66dcfd412f5fa652d0d8ef1f0816
                     <span class="inquiry-date">{{ formatDate(inquiry.created_at) }}</span>
                   </div>
                   <div v-if="!canViewInquiry(inquiry)" class="secret-badge">🔒 비밀글</div>
@@ -193,11 +197,12 @@
                     </div>
                   </template>
                 </div>
-                <div v-if="inquiry.has_reply && canViewInquiry(inquiry)" class="reply-indicator">
+                <div v-if="inquiry.has_reply" :class="['reply-indicator', { 'highlighted': canViewInquiry(inquiry) }]">
                   <span class="reply-icon">💬</span>
                   <span class="reply-text">상담사 답변</span>
-                  <span class="expand-icon">{{ isInquiryExpanded(inquiry.inquiry_id) ? '▲' : '▼' }}</span>
+                  <span v-if="canViewInquiry(inquiry)" class="expand-icon">{{ isInquiryExpanded(inquiry.inquiry_id) ? '▲' : '▼' }}</span>
                 </div>
+                <!-- 본인 작성글: 실제 답변 내용 표시 -->
                 <div v-if="inquiry.has_reply && canViewInquiry(inquiry) && isInquiryExpanded(inquiry.inquiry_id)" class="counselor-reply">
                   <div class="reply-header">
                     <span class="reply-author">{{ counselor.nickname }} 선생님</span>
@@ -205,6 +210,17 @@
                   </div>
                   <div class="reply-content">
                     {{ getInquiryReply(inquiry) || '답변이 등록되었습니다.' }}
+                  </div>
+                </div>
+                <!-- 타인 작성글: 비밀글 표시 -->
+                <div v-if="inquiry.has_reply && !canViewInquiry(inquiry)" class="counselor-reply secret-reply">
+                  <div class="reply-header">
+                    <span class="reply-author">{{ counselor.nickname }} 선생님</span>
+                    <span class="reply-date">{{ formatDate(getInquiryAnsweredAt(inquiry)) }}</span>
+                  </div>
+                  <div class="secret-message">
+                    <span class="secret-icon">🔒</span>
+                    <span>비밀글입니다</span>
                   </div>
                 </div>
               </div>
