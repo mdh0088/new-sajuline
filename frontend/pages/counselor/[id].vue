@@ -177,7 +177,7 @@
               >
                 <div class="inquiry-header">
                   <div class="inquirer-info">
-                    <span class="inquirer-name">{{ maskName(inquiry.inquirer_nickname || '손님') }}</span>
+                    <span class="inquirer-name">{{ inquiry.inquirer_nickname || '손님' }}</span>
                     <span class="inquiry-date">{{ formatDate(inquiry.created_at) }}</span>
                   </div>
                   <div v-if="!canViewInquiry(inquiry)" class="secret-badge">🔒 비밀글</div>
@@ -193,7 +193,7 @@
                     </div>
                   </template>
                 </div>
-                <div v-if="inquiry.has_reply" class="reply-indicator">
+                <div v-if="inquiry.has_reply" :class="['reply-indicator', { 'highlighted': canViewInquiry(inquiry) }]">
                   <span class="reply-icon">💬</span>
                   <span class="reply-text">상담사 답변</span>
                   <span v-if="canViewInquiry(inquiry)" class="expand-icon">{{ isInquiryExpanded(inquiry.inquiry_id) ? '▲' : '▼' }}</span>
