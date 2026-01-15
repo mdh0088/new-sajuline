@@ -1,0 +1,66 @@
+{
+  "workflow_version": "1.2.0",
+  "timestamps": {
+    "started": "2026-01-15T06:00:00Z",
+    "last_updated": "2026-01-15T07:30:00Z",
+    "completed": "2026-01-15T07:30:00Z"
+  },
+  "mode": "initial_scan",
+  "scan_level": "deep",
+  "project_root": "/mnt/c/Users/user/mdh/project/new-sajuline",
+  "output_folder": "/mnt/c/Users/user/mdh/project/new-sajuline/docs",
+  "status": "completed",
+  "completed_steps": [
+    {"step": "step_1", "status": "completed", "timestamp": "2026-01-15T06:10:00Z", "summary": "Classified as multi-part with 4 parts"},
+    {"step": "step_2", "status": "completed", "timestamp": "2026-01-15T06:20:00Z", "summary": "Found 35 existing docs, AWS infrastructure documented"},
+    {"step": "step_3", "status": "completed", "timestamp": "2026-01-15T06:30:00Z", "summary": "Tech stack analyzed for all 4 parts"},
+    {"step": "step_4", "status": "completed", "timestamp": "2026-01-15T06:40:00Z", "summary": "API, data models, UI components analyzed"},
+    {"step": "step_5_6", "status": "completed", "timestamp": "2026-01-15T06:50:00Z", "summary": "Source tree and deployment info documented"},
+    {"step": "step_7_9", "status": "completed", "timestamp": "2026-01-15T07:10:00Z", "summary": "Architecture and support documents generated"},
+    {"step": "step_10_12", "status": "completed", "timestamp": "2026-01-15T07:30:00Z", "summary": "Index generated and validated"}
+  ],
+  "findings": {
+    "project_classification": "multi-part, 4 parts, Nuxt/Vue/FastAPI",
+    "existing_docs_count": 35,
+    "user_context": "AWS cloud infrastructure with S3, CloudFront, Lambda, VPC, ALB, Route53"
+  },
+  "aws_infrastructure": {
+    "services": ["Route53", "CloudFront", "S3", "Lambda", "ALB", "VPC", "EC2"],
+    "vpc_architecture": {
+      "public_subnet": {"bastion": "t3.micro", "redis": true},
+      "private_subnet": {"app_server": "t2.small", "db_server": "t2.small"}
+    },
+    "features": ["SSL termination", "Auto Scaling", "이중화", "Image resizing via Lambda"]
+  },
+  "project_types": [
+    {"part_id": "frontend", "project_type_id": "web", "display_name": "Nuxt 4 + Vue 3 + TypeScript"},
+    {"part_id": "admin-front", "project_type_id": "web", "display_name": "Vue 3 + Vite 5 + TypeScript"},
+    {"part_id": "backend", "project_type_id": "backend", "display_name": "FastAPI + Python 3.11"},
+    {"part_id": "admin-backend", "project_type_id": "backend", "display_name": "FastAPI + Python 3.11"}
+  ],
+  "cicd": {
+    "platform": "GitHub Actions",
+    "workflows": ["deploy-all.yml", "deploy-admin-all.yml"],
+    "runner": "self-hosted (sajuline)",
+    "environments": ["prod", "dev"]
+  },
+  "outputs_generated": [
+    "docs/ARCHITECTURE.md",
+    "docs/TECH-STACK.md",
+    "docs/API-REFERENCE.md",
+    "docs/DATA-MODELS.md",
+    "docs/DEPLOYMENT.md",
+    "docs/index.md",
+    "docs/project-scan-report.json"
+  ],
+  "statistics": {
+    "total_files_scanned": 500,
+    "backend_models": 19,
+    "admin_backend_models": 16,
+    "backend_api_routers": 14,
+    "admin_api_routers": 14,
+    "frontend_pages": 38,
+    "frontend_components": 28,
+    "admin_views": 67
+  }
+}
