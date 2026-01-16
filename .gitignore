@@ -7,8 +7,116 @@
 *$py.class
 *.so
 
-# 가상환경
+# ============================================
+# 🔴 환경 변수 및 설정 파일 (민감 정보 포함)
+# ============================================
+# 모든 환경 변수 파일
 .env
+.env.*
+!.env.example
+!.env.sample
+
+# 백엔드 환경 변수
+backend/.env
+backend/.env.*
+backend/.env.development
+backend/.env.production
+backend/.env.staging
+backend/.env.local
+backend/.env.prod_bak*
+
+# Admin 백엔드 환경 변수
+admin-backend/.env
+admin-backend/.env.*
+admin-backend/.env.development
+admin-backend/.env.production
+
+# 프론트엔드 환경 변수
+frontend/.env
+frontend/.env.*
+frontend/.env.development
+frontend/.env.production
+frontend/.env.local
+
+# Admin 프론트엔드 환경 변수
+admin-front/.env.*
+admin-front/.env.dev
+admin-front/.env.prod
+admin-front/.env.production
+admin-front/.env.development
+
+# ============================================
+# 🔴 배포 스크립트 (서버 정보 포함)
+# ============================================
+**/deploy.sh
+**/deploy.*.sh
+**/deploy.development.sh
+**/deploy.production.sh
+**/deploy.staging.sh
+
+# ============================================
+# 🔴 PM2 Ecosystem 설정 (서버 경로 포함)
+# ============================================
+**/ecosystem.config.js
+**/ecosystem.config.cjs
+**/ecosystem.*.config.js
+**/ecosystem.*.config.cjs
+**/ecosystem.development.config.*
+**/ecosystem.production.config.*
+**/ecosystem.staging.config.*
+
+# ============================================
+# 🔴 인증서 및 키 파일
+# ============================================
+*.pem
+*.key
+*.crt
+*.p12
+*.pfx
+*.jks
+**/*.pem
+**/*.key
+**/credentials*
+**/secret*
+!**/user-secret.svg
+
+# ============================================
+# 🟠 Cron 스크립트 (서버 정보 포함 가능)
+# ============================================
+backend/scripts/cron/*.sh
+
+# ============================================
+# 🟠 프로토타입 디렉터리 (레거시 코드)
+# ============================================
+prototype/
+
+# ============================================
+# 🟠 결제 샘플 코드 (API 구조 노출)
+# ============================================
+payment_sample/
+
+# ============================================
+# 🟡 인프라 설정 (Docker/Redis)
+# ============================================
+infra/
+
+# ============================================
+# 🟡 개발 규칙 문서 (내부용)
+# ============================================
+c2c-rules/
+
+# ============================================
+# 로그 파일
+# ============================================
+*.log
+logs/
+**/logs/
+backend/logs/
+backend/src/logs/
+backend/*.log
+admin-backend/logs/
+
+# 가상환경
 .venv/
 venv/
 env/
@@ -25,13 +133,6 @@ htmlcov/
 .mypy_cache/
 .dmypy.json
 dmypy.json
-
-# 로그 파일
-*.log
-logs/
-backend/logs/
-backend/src/logs/
-backend/*.log
 
 # 데이터베이스
 *.sqlite
@@ -96,9 +197,7 @@ docker-compose.override.yml
 *.backup
 *~
 
-
 # YoYo AI version control directory
 .yoyo/
 *.sql
 *.dump
-*.bak
