@@ -28,4 +28,10 @@ class Tm60MemberService:
             return False
         return self.repo.update_tel_by_code(m_code=m_code, m_tel=m_tel)
 
+    def update_prate_by_code(self, *, m_code: str, m_prate: int) -> bool:
+        """m_code로 tm60_member.m_prate 값을 갱신"""
+        if not m_code or m_prate is None:
+            return False
+        return self.repo.update_prate_by_code(m_code=m_code, m_prate=m_prate)
+
 

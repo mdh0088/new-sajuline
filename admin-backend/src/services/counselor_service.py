@@ -236,6 +236,12 @@ class CounselorService:
             if counselor_code:
                 self.tm60_member_service.update_tel_by_code(m_code=counselor_code, m_tel=form.phone)
 
+        # after_amount 변경 시 tm60_member.m_prate도 동기화
+        if form.after_amount is not None and self.tm60_member_service is not None:
+            counselor_code = getattr(counselor, "counselor_code", None)
+            if counselor_code:
+                self.tm60_member_service.update_prate_by_code(m_code=counselor_code, m_prate=form.after_amount)
+
         updated = await self.counselor_repo.partial_update(counselor_id, **updates)
         if not updated:
             # 변경사항 없으면 현재 상태 반환
