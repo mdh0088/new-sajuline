@@ -158,6 +158,10 @@ class CounselorService:
 
         return resp_items, params.page, params.limit, total
 
+    async def get_all_counselors(self):
+        """전체 상담사 목록 조회 (셀렉트박스용, 페이지네이션 없음)"""
+        return await self.counselor_repo.get_all()
+
     async def update_show_status(self, *, counselor_id: str, is_show: bool) -> None:
         """상담사 노출여부만 수정"""
         counselor = await self.counselor_repo.get_by_id(counselor_id)

@@ -163,4 +163,18 @@ class CounselorRepository:
         total = count_result.scalar() or 0
         return items, total
 
+    async def get_all(self) -> List[Counselor]:
+        """전체 상담사 목록 조회 (셀렉트박스용, 페이지네이션 없음)
+
+        - 탈퇴하지 않은 상담사만 조회
+        - 닉네임 기준 정렬
+        """
+        stmt = (
+            select(Counselor)
+            .where(Counselor.is_out.is_(False))
+            .order_by(Counselor.nickname)
+        )
+        result = await self.db.execute(stmt)
+        return list(result.scalars().all())
+
 

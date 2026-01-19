@@ -144,30 +144,20 @@ export const updateReviewQuick = async (
 };
 
 /**
- * 상담사 목록 조회 (더미 리뷰 생성용)
- * 모든 상담사 목록을 가져옵니다 (is_show, is_out 필터 없음)
+ * 전체 상담사 목록 조회 (더미 리뷰 생성용)
+ * 페이지네이션 없이 모든 상담사를 가져옵니다 (탈퇴한 상담사 제외)
  */
 export const getCounselorList = async (): Promise<Array<{ counselor_id: string; nickname: string; name: string }>> => {
   try {
-    console.log('[getCounselorList] API 호출 시작:', counselorApi.getCounselorsListURL);
+    console.log('[getCounselorList] API 호출 시작:', counselorApi.getCounselorsAllURL);
 
-    const response = await http.get(counselorApi.getCounselorsListURL, {
-      params: {
-        page: 1,
-        limit: 1000,
-        search_type: 'all',
-      }
-    });
+    const response = await http.get(counselorApi.getCounselorsAllURL);
 
     console.log('[getCounselorList] API 응답:', response.data);
 
     if (response.data && response.data.success && response.data.data) {
-      const result = response.data.data.map((item: any) => ({
-        counselor_id: item.counselor_id,
-        nickname: item.nickname || '',
-        name: item.name || '',
-      }));
-      console.log('[getCounselorList] 변환된 결과:', result.length, '건');
+      const result = response.data.data as Array<{ counselor_id: string; nickname: string; name: string }>;
+      console.log('[getCounselorList] 결과:', result.length, '건');
       return result;
     }
 

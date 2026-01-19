@@ -98,6 +98,21 @@ async def get_counselor_list(
     )
 
 
+@router.get("/all", response_model=APIResponse, summary="전체 상담사 목록 조회 (셀렉트박스용)")
+async def get_all_counselors(
+    counselor_service: CounselorService = Depends(_get_counselor_service),
+):
+    """
+    페이지네이션 없이 전체 상담사 목록을 조회합니다.
+    셀렉트박스 등에서 사용하기 위한 간소화된 API입니다.
+    """
+    items = await counselor_service.get_all_counselors()
+    return ok(
+        data=[{"counselor_id": i.counselor_id, "nickname": i.nickname, "name": i.name} for i in items],
+        message="전체 상담사 목록 조회 성공",
+    )
+
+
 @router.patch(
     "/{counselor_id}/show",
     response_model=APIResponse,
