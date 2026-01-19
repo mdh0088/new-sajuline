@@ -149,6 +149,8 @@ export const updateReviewQuick = async (
  */
 export const getCounselorList = async (): Promise<Array<{ counselor_id: string; nickname: string; name: string }>> => {
   try {
+    console.log('[getCounselorList] API 호출 시작:', counselorApi.getCounselorsListURL);
+
     const response = await http.get(counselorApi.getCounselorsListURL, {
       params: {
         page: 1,
@@ -157,16 +159,23 @@ export const getCounselorList = async (): Promise<Array<{ counselor_id: string; 
       }
     });
 
-    if (response.data && response.data.data) {
-      return response.data.data.map((item: any) => ({
+    console.log('[getCounselorList] API 응답:', response.data);
+
+    if (response.data && response.data.success && response.data.data) {
+      const result = response.data.data.map((item: any) => ({
         counselor_id: item.counselor_id,
         nickname: item.nickname || '',
         name: item.name || '',
       }));
+      console.log('[getCounselorList] 변환된 결과:', result.length, '건');
+      return result;
     }
+
+    console.warn('[getCounselorList] 응답 데이터 없음 또는 실패:', response.data);
     return [];
   } catch (error: any) {
-    console.error('상담사 목록 조회 실패:', error);
+    console.error('[getCounselorList] 상담사 목록 조회 실패:', error);
+    console.error('[getCounselorList] 에러 상세:', error.response?.data || error.message);
     return [];
   }
 };

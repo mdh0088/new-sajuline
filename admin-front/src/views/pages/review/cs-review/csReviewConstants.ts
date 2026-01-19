@@ -18,7 +18,7 @@ export const csReviewHeader: Array<Tableheader> = [
     value: 'user_nickname',
     label: '사용자',
     isShow: true,
-    type: "key",
+    type: "text",
     width: '100px',
     options: {},
     isSortable: false
@@ -27,7 +27,7 @@ export const csReviewHeader: Array<Tableheader> = [
     value: 'counselor_nickname',
     label: '상담사',
     isShow: true,
-    type: "text",
+    type: "key",
     width: '100px',
     options: {},
     isSortable: false

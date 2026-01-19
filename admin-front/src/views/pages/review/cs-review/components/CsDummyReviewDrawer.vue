@@ -64,6 +64,12 @@
                 :value="counselor.counselor_id"
               />
             </el-select>
+            <div v-if="!isLoadingCounselors && counselorList.length === 0" style="color: #f56c6c; font-size: 12px; margin-top: 4px;">
+              상담사 목록을 불러오지 못했습니다.
+            </div>
+            <div v-else-if="!isLoadingCounselors" style="color: #909399; font-size: 12px; margin-top: 4px;">
+              총 {{ counselorList.length }}명의 상담사
+            </div>
           </el-form-item>
         </el-form>
       </div>
@@ -191,9 +197,15 @@ const isSaving = ref<boolean>(false);
 
 // 상담사 목록 로드
 const loadCounselors = async () => {
+  console.log('[CsDummyReviewDrawer] loadCounselors 시작');
   isLoadingCounselors.value = true;
   try {
-    counselorList.value = await getCounselorList();
+    const result = await getCounselorList();
+    console.log('[CsDummyReviewDrawer] getCounselorList 결과:', result);
+    counselorList.value = result;
+    console.log('[CsDummyReviewDrawer] counselorList 설정 완료:', counselorList.value.length, '건');
+  } catch (error) {
+    console.error('[CsDummyReviewDrawer] loadCounselors 에러:', error);
   } finally {
     isLoadingCounselors.value = false;
   }
@@ -249,10 +261,10 @@ const handleSave = async () => {
 
 // Drawer 열릴 때
 const openDrawer = async () => {
-  // 상담사 목록이 없으면 로드
-  if (counselorList.value.length === 0) {
-    await loadCounselors();
-  }
+  console.log('[CsDummyReviewDrawer] openDrawer 호출, 현재 counselorList:', counselorList.value.length, '건');
+  // 상담사 목록 항상 로드 (최신 데이터 유지)
+  console.log('[CsDummyReviewDrawer] 상담사 목록 로드 시작');
+  await loadCounselors();
 };
 
 // Drawer 닫힐 때
