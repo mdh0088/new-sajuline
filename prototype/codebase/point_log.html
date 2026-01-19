@@ -1,0 +1,525 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>포인트 내역 - 사주라인</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Apple SD Gothic Neo', 'Noto Sans KR', sans-serif;
+            background-color: #0a0a0f;
+            color: #ffffff;
+            line-height: 1.6;
+            overflow-x: hidden;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        a {
+            text-decoration: none;
+            color: inherit;
+        }
+
+        button {
+            outline: none;
+            border: none;
+            cursor: pointer;
+        }
+
+        /* 헤더 */
+        .header {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            background: rgba(10, 10, 15, 0.95);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            z-index: 1000;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .header-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 16px 20px;
+            height: 60px;
+        }
+
+        .back-button {
+            width: 36px;
+            height: 36px;
+            background: transparent;
+            color: #fff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+        }
+
+        .header-title {
+            position: absolute;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 18px;
+            font-weight: 600;
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+
+        .icon-btn {
+            width: 36px;
+            height: 36px;
+            background: rgba(255, 255, 255, 0.05);
+            color: #fff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 12px;
+            transition: all 0.3s ease;
+            font-size: 18px;
+        }
+
+        .icon-btn:active {
+            transform: scale(0.95);
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        /* 메인 콘텐츠 */
+        .main-content {
+            margin-top: 60px;
+            padding: 20px;
+            padding-bottom: 120px; /* 하단 네비 공간 */
+            flex: 1;
+            overflow-y: auto;
+        }
+
+        /* 검색 영역 */
+        .search-section {
+            margin-bottom: 20px;
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 16px;
+            padding: 16px;
+        }
+
+        .search-title {
+            font-size: 15px;
+            font-weight: 600;
+            margin-bottom: 12px;
+            color: #fff;
+        }
+
+        .date-search {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+
+        .date-input {
+            flex: 1;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            padding: 10px 12px;
+            color: #fff;
+            font-size: 14px;
+            outline: none;
+        }
+
+        .date-input::-webkit-calendar-picker-indicator {
+            filter: invert(1);
+            opacity: 0.7;
+        }
+
+        .date-input::-webkit-datetime-edit {
+            color: #fff;
+        }
+
+        .date-input::-webkit-datetime-edit-fields-wrapper {
+            color: #fff;
+        }
+
+        .date-input:focus {
+            border-color: #9333EA;
+        }
+
+        .search-btn {
+            background: linear-gradient(90deg, #9333EA 0%, #B794F6 100%);
+            border: none;
+            border-radius: 8px;
+            padding: 10px 16px;
+            color: #fff;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .search-btn:hover {
+            opacity: 0.9;
+            transform: translateY(-1px);
+        }
+
+        .search-btn:active {
+            transform: translateY(0);
+        }
+
+        /* 거래 내역 리스트 */
+        .transaction-list {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .transaction-item {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 16px;
+            padding: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: all 0.3s ease;
+        }
+
+        .transaction-item:hover {
+            background: rgba(147, 51, 234, 0.08);
+            transform: translateY(-2px);
+        }
+
+        .trans-left {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            padding-left: 12px;
+            flex: 1;
+            max-width: calc(100% - 140px);
+        }
+
+        .trans-date {
+            font-size: 13px;
+            color: rgba(255, 255, 255, 0.6);
+        }
+
+        .trans-desc {
+            font-size: 15px;
+            font-weight: 500;
+            color: #fff;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .trans-icon {
+            width: 32px;
+            height: 32px;
+            background: rgba(147, 51, 234, 0.1);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+        }
+
+        .trans-right {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-end;
+            gap: 6px;
+            min-width: 120px;
+            margin-left: 16px;
+            position: absolute;
+            right: 20px;
+        }
+
+        .trans-amount {
+            font-size: 17px;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            white-space: nowrap;
+        }
+
+        .amount-positive {
+            color: #B794F6;
+        }
+
+        .amount-negative {
+            color: #FF6B6B;
+        }
+
+        .trans-balance {
+            font-size: 13px;
+            color: rgba(255, 255, 255, 0.6);
+            background: rgba(255, 255, 255, 0.05);
+            padding: 4px 8px;
+            border-radius: 6px;
+            white-space: nowrap;
+        }
+
+        /* 빈 상태 */
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: 16px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            margin-top: 20px;
+        }
+
+        .empty-icon {
+            font-size: 48px;
+            margin-bottom: 16px;
+            opacity: 0.5;
+            color: #B794F6;
+        }
+
+        .empty-title {
+            font-size: 17px;
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: #fff;
+        }
+
+        .empty-desc {
+            font-size: 14px;
+            color: rgba(255, 255, 255, 0.6);
+            line-height: 1.6;
+        }
+
+        /* 하단 네비게이션 */
+        .bottom-nav {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: rgba(10, 10, 15, 0.95);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            display: flex;
+            justify-content: space-around;
+            padding: 8px 0 12px;
+            z-index: 1000;
+        }
+
+        .nav-item {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 8px;
+            color: rgba(255, 255, 255, 0.5);
+            text-decoration: none;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .nav-item::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 0;
+            height: 2px;
+            background: linear-gradient(90deg, #9333EA 0%, #B794F6 100%);
+            transition: width 0.3s ease;
+        }
+
+        .nav-item.active {
+            color: #B794F6;
+        }
+
+        .nav-item.active::before {
+            width: 40px;
+        }
+
+        .nav-icon {
+            font-size: 24px;
+            margin-bottom: 4px;
+        }
+
+        .nav-label {
+            font-size: 11px;
+            font-weight: 500;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .transaction-item {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 12px;
+            }
+
+            .trans-right {
+                align-items: flex-start;
+            }
+        }
+
+        /* 정렬 버튼 */
+        .sort-buttons {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 16px;
+        }
+
+        .sort-btn {
+            background: rgba(255, 255, 255, 0.05);
+            border: none;
+            border-radius: 8px;
+            padding: 8px 12px;
+            color: rgba(255, 255, 255, 0.7);
+            font-size: 13px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .sort-btn:hover {
+            background: rgba(147, 51, 234, 0.1);
+            color: #fff;
+        }
+
+        .sort-btn.active {
+            background: linear-gradient(90deg, #9333EA 0%, #B794F6 100%);
+            color: #fff;
+        }
+    </style>
+</head>
+<body>
+    <!-- 헤더 -->
+    <header class="header">
+        <div class="header-top">
+            <button class="back-button" onclick="window.history.back();">←</button>
+            <h1 class="header-title">포인트 내역</h1>
+            <div class="header-actions">
+                <button class="icon-btn" onclick="window.location.href='search-page.html'">🔍</button>
+                <button class="icon-btn" onclick="window.location.href='login-page.html'">👤</button>
+            </div>
+        </div>
+    </header>
+
+    <!-- 메인 콘텐츠 -->
+    <main class="main-content">
+        <!-- 검색 영역 -->
+        <div class="search-section">
+            <div class="search-title">날짜 검색</div>
+            <div class="date-search">
+                <input type="date" class="date-input" placeholder="시작일">
+                <span style="color: rgba(255, 255, 255, 0.5);">~</span>
+                <input type="date" class="date-input" placeholder="종료일">
+                <button class="search-btn">검색</button>
+            </div>
+        </div>
+
+        <!-- 정렬 버튼 -->
+        <div class="sort-buttons">
+            <button class="sort-btn active">최신순</button>
+            <button class="sort-btn">높은순</button>
+            <button class="sort-btn">낮은순</button>
+        </div>
+
+        <div class="transaction-list">
+            <!-- 예시 거래 내역 1 -->
+            <div class="transaction-item">
+                <div class="trans-left">
+                    <span class="trans-date">2025.06.15 14:30</span>
+                    <div class="trans-desc">
+                        <span class="trans-icon">💰</span>
+                        <span>포인트 충전</span>
+                    </div>
+                </div>
+                <div class="trans-right">
+                    <div class="trans-amount amount-positive">
+                        <span>+</span>
+                        <span>10,000P</span>
+                    </div>
+                    <span class="trans-balance">잔액: 12,000P</span>
+                </div>
+            </div>
+
+            <!-- 예시 거래 내역 2 -->
+            <div class="transaction-item">
+                <div class="trans-left">
+                    <span class="trans-date">2025.06.14 16:45</span>
+                    <div class="trans-desc">
+                        <span class="trans-icon">🎯</span>
+                        <span>상담 이용</span>
+                    </div>
+                </div>
+                <div class="trans-right">
+                    <div class="trans-amount amount-negative">
+                        <span>-</span>
+                        <span>5,000P</span>
+                    </div>
+                    <span class="trans-balance">잔액: 2,000P</span>
+                </div>
+            </div>
+
+            <!-- 예시 거래 내역 3 -->
+            <div class="transaction-item">
+                <div class="trans-left">
+                    <span class="trans-date">2025.06.13 09:15</span>
+                    <div class="trans-desc">
+                        <span class="trans-icon">🎁</span>
+                        <span>이벤트 보너스</span>
+                    </div>
+                </div>
+                <div class="trans-right">
+                    <div class="trans-amount amount-positive">
+                        <span>+</span>
+                        <span>3,000P</span>
+                    </div>
+                    <span class="trans-balance">잔액: 7,000P</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- 빈 상태 -->
+        <div class="empty-state" style="display: none;">
+            <div class="empty-icon">💰</div>
+            <h3 class="empty-title">거래 내역이 없습니다</h3>
+            <p class="empty-desc">포인트 충전이나 사용 내역이 없습니다.<br>첫 거래를 시작해보세요!</p>
+        </div>
+    </main>
+
+    <!-- 하단 네비게이션 -->
+    <nav class="bottom-nav">
+        <a href="main.html" class="nav-item">
+            <span class="nav-icon">🏠</span>
+            <span class="nav-label">홈</span>
+        </a>
+        <a href="ai-fortune-complete.html" class="nav-item">
+            <span class="nav-icon">🤖</span>
+            <span class="nav-label">AI운세</span>
+        </a>
+        <a href="event.html" class="nav-item">
+            <span class="nav-icon">🎁</span>
+            <span class="nav-label">이벤트</span>
+        </a>
+        <a href="favorite.html" class="nav-item">
+            <span class="nav-icon">⭐</span>
+            <span class="nav-label">즐겨찾기</span>
+        </a>
+        <a href="mypage.html" class="nav-item">
+            <span class="nav-icon">👤</span>
+            <span class="nav-label">마이</span>
+        </a>
+    </nav>
+</body>
+</html>

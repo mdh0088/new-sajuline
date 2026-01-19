@@ -1,0 +1,812 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>상담사 페이지 - 사주라인</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Apple SD Gothic Neo', 'Noto Sans KR', sans-serif;
+            background-color: #0a0a0f;
+            color: #ffffff;
+            line-height: 1.6;
+            overflow-x: hidden;
+        }
+
+        /* 헤더 */
+        .header {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            background: rgba(10, 10, 15, 0.95);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            z-index: 1000;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .header-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 16px 20px;
+            height: 60px;
+        }
+
+        .header-title {
+            font-size: 20px;
+            font-weight: 700;
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 12px;
+        }
+
+        .icon-btn {
+            width: 36px;
+            height: 36px;
+            border: none;
+            background: transparent;
+            color: #fff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            font-size: 20px;
+        }
+
+        /* 메인 콘텐츠 */
+        .main-content {
+            margin-top: 60px;
+            padding-bottom: 80px;
+        }
+
+        /* 프로필 섹션 */
+        .profile-section {
+            padding: 24px 20px;
+            background: linear-gradient(180deg, rgba(147, 51, 234, 0.15) 0%, transparent 100%);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .profile-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 20px;
+        }
+
+        .profile-info {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .profile-badge {
+            width: 48px;
+            height: 48px;
+            background: linear-gradient(135deg, #FFD700 0%, #FFA500 100%);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            box-shadow: 0 4px 12px rgba(255, 215, 0, 0.3);
+        }
+
+        .profile-name {
+            font-size: 18px;
+            font-weight: 700;
+            margin-bottom: 4px;
+        }
+
+        .profile-status-container {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .status-toggle {
+            display: flex;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 30px;
+            padding: 2px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .status-option {
+            padding: 6px 16px;
+            border-radius: 30px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            background: transparent;
+            border: none;
+            color: rgba(255, 255, 255, 0.6);
+        }
+
+        .status-option.active {
+            background: rgba(147, 51, 234, 0.3);
+            color: #B794F6;
+        }
+
+        .status-option.away {
+            background: transparent;
+        }
+
+        .status-option.busy.active {
+            background: linear-gradient(135deg, #7C3AED 0%, #9333EA 100%);
+            color: white;
+        }
+
+        .status-toggle-btn {
+            padding: 8px 20px;
+            background: linear-gradient(135deg, #7C3AED 0%, #9333EA 100%);
+            border: none;
+            border-radius: 20px;
+            color: white;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .status-toggle-btn:active {
+            transform: scale(0.95);
+        }
+
+        .manage-link {
+            padding: 8px 16px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            color: rgba(255, 255, 255, 0.8);
+            font-size: 13px;
+            text-decoration: none;
+            transition: all 0.3s ease;
+        }
+
+        .manage-link:active {
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        /* 상담사간 카드 */
+        .counselor-info-card {
+            margin-top: 20px;
+            padding: 20px;
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            border-radius: 16px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .counselor-info-card::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            right: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(255, 255, 255, 0.1) 0%, transparent 70%);
+            animation: pulse 3s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); opacity: 0.5; }
+            50% { transform: scale(1.1); opacity: 0.8; }
+        }
+
+        .counselor-info-content {
+            position: relative;
+            z-index: 1;
+        }
+
+        .counselor-info-title {
+            font-size: 16px;
+            font-weight: 700;
+            margin-bottom: 16px;
+        }
+
+        .counselor-info-times {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+        }
+
+        .time-label {
+            font-size: 14px;
+            color: rgba(255, 255, 255, 0.8);
+        }
+
+        .time-value {
+            font-size: 18px;
+            font-weight: 700;
+        }
+
+        /* 활동시간 섹션 */
+        .activity-section {
+            padding: 20px;
+        }
+
+        .section-card {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 16px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+        }
+
+        .section-title {
+            font-size: 16px;
+            font-weight: 600;
+        }
+
+        .edit-btn {
+            padding: 6px 14px;
+            background: linear-gradient(135deg, #7C3AED 0%, #9333EA 100%);
+            border: none;
+            border-radius: 16px;
+            color: white;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .edit-btn:active {
+            transform: scale(0.95);
+        }
+
+        .activity-input {
+            width: 100%;
+            padding: 12px 16px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            color: white;
+            font-size: 14px;
+            margin-bottom: 8px;
+        }
+
+        .activity-input::placeholder {
+            color: rgba(255, 255, 255, 0.4);
+        }
+
+        /* 오늘의 공지 섹션 */
+        .notice-input {
+            width: 100%;
+            min-height: 100px;
+            padding: 12px 16px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            color: white;
+            font-size: 14px;
+            resize: vertical;
+            font-family: inherit;
+            line-height: 1.6;
+        }
+
+        .notice-input::placeholder {
+            color: rgba(255, 255, 255, 0.4);
+        }
+
+        /* 탭 섹션 */
+        .tab-section {
+            padding: 0 20px 20px;
+        }
+
+        .tab-header {
+            display: flex;
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            padding: 4px;
+            margin-bottom: 20px;
+        }
+
+        .tab-button {
+            flex: 1;
+            padding: 12px;
+            background: transparent;
+            border: none;
+            border-radius: 8px;
+            color: rgba(255, 255, 255, 0.6);
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .tab-button.active {
+            background: linear-gradient(135deg, #7C3AED 0%, #9333EA 100%);
+            color: white;
+        }
+
+        .tab-button .badge {
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            padding: 2px 6px;
+            background: rgba(255, 59, 48, 0.2);
+            border-radius: 10px;
+            font-size: 10px;
+            font-weight: 700;
+            color: #FF6B6B;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        /* 리스트 아이템 */
+        .list-item {
+            padding: 16px;
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            margin-bottom: 12px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .list-item:active {
+            transform: scale(0.98);
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .list-item-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+
+        .list-item-title {
+            font-size: 15px;
+            font-weight: 600;
+            color: white;
+        }
+
+        .list-item-date {
+            font-size: 12px;
+            color: rgba(255, 255, 255, 0.5);
+        }
+
+        .list-item-content {
+            font-size: 14px;
+            color: rgba(255, 255, 255, 0.7);
+            line-height: 1.5;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 40px 20px;
+            color: rgba(255, 255, 255, 0.4);
+        }
+
+        .empty-icon {
+            font-size: 48px;
+            margin-bottom: 12px;
+            opacity: 0.3;
+        }
+
+        .empty-text {
+            font-size: 14px;
+        }
+
+        /* 채팅 버튼 */
+        .chat-button {
+            position: fixed;
+            bottom: 100px;
+            right: 20px;
+            width: 56px;
+            height: 56px;
+            background: linear-gradient(135deg, #FFD700 0%, #FFA500 100%);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            box-shadow: 0 4px 20px rgba(255, 215, 0, 0.4);
+            cursor: pointer;
+            z-index: 999;
+            transition: all 0.3s ease;
+        }
+
+        .chat-button:active {
+            transform: scale(0.95);
+        }
+
+        .chat-badge {
+            position: absolute;
+            top: -4px;
+            right: -4px;
+            width: 20px;
+            height: 20px;
+            background: #FF3B30;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 11px;
+            font-weight: 700;
+            color: white;
+            border: 2px solid #0a0a0f;
+        }
+
+        /* 하단 네비게이션 */
+        .bottom-nav {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: rgba(10, 10, 15, 0.95);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            display: flex;
+            justify-content: space-around;
+            padding: 8px 0 12px;
+            z-index: 1000;
+        }
+
+        .nav-item {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 8px;
+            color: rgba(255, 255, 255, 0.5);
+            text-decoration: none;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .nav-item::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 0;
+            height: 2px;
+            background: linear-gradient(90deg, #9333EA 0%, #B794F6 100%);
+            transition: width 0.3s ease;
+        }
+
+        .nav-item.active {
+            color: #B794F6;
+        }
+
+        .nav-item.active::before {
+            width: 40px;
+        }
+
+        .nav-icon {
+            font-size: 24px;
+            margin-bottom: 4px;
+        }
+
+        .nav-label {
+            font-size: 11px;
+            font-weight: 500;
+        }
+    </style>
+</head>
+<body>
+<!-- 헤더 -->
+<header class="header">
+    <div class="header-top">
+        <h1 class="header-title">상담사 페이지</h1>
+        <div class="header-actions">
+            <button class="icon-btn" onclick="window.location.href='search-page.html'">🔍</button>
+            <button class="icon-btn" onclick="window.location.href='login-page.html'">🔔</button>
+        </div>
+    </div>
+</header>
+
+<!-- 메인 콘텐츠 -->
+<main class="main-content">
+    <!-- 프로필 섹션 -->
+    <section class="profile-section">
+        <div class="profile-header">
+            <div class="profile-info">
+                <div class="profile-badge">🔮</div>
+                <div>
+                    <div class="profile-name">마리아</div>
+                </div>
+            </div>
+            <a href="#" class="manage-link">상담료 안내</a>
+        </div>
+        
+        <div class="profile-status-container">
+            <div class="status-toggle">
+                <button class="status-option" onclick="setStatus('ready')">대기</button>
+                <button class="status-option active" onclick="setStatus('away')">부재중</button>
+            </div>
+            <button class="status-toggle-btn">변경저장</button>
+        </div>
+
+        <!-- 상담사간 카드 -->
+        <div class="counselor-info-card">
+            <div class="counselor-info-content">
+                <div class="counselor-info-title">상담사간</div>
+                <div class="counselor-info-times">
+                    <div>
+                        <div class="time-label">7월</div>
+                        <div class="time-value">00:00:00</div>
+                    </div>
+                    <div>
+                        <div class="time-label">8월</div>
+                        <div class="time-value">00:00:00</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 활동시간 섹션 -->
+    <section class="activity-section">
+        <div class="section-card">
+            <div class="section-header">
+                <h3 class="section-title">활동시간</h3>
+                <button class="edit-btn">변경하기</button>
+            </div>
+            <input type="text" class="activity-input" placeholder="매일 04:00~밤 새벽 1:00" value="매일 04:00~밤 새벽 1:00">
+        </div>
+
+        <!-- 오늘의 공지 -->
+        <div class="section-card">
+            <div class="section-header">
+                <h3 class="section-title">오늘의 공지</h3>
+                <button class="edit-btn">변경하기</button>
+            </div>
+            <textarea class="notice-input" placeholder="중간중간 상황에따라 부재중일때도 있으니 상시 매일 상담 가능합니다">중간중간 상황에따라 부재중일때도 있으니 상시 매일 상담 가능합니다</textarea>
+        </div>
+    </section>
+
+    <!-- 탭 섹션 -->
+    <section class="tab-section">
+        <div class="tab-header">
+            <button class="tab-button active" onclick="showTab('notice')">
+                공지사항
+            </button>
+            <button class="tab-button" onclick="showTab('review')">
+                고객 후기
+                <span class="badge">26</span>
+            </button>
+            <button class="tab-button" onclick="showTab('inquiry')">
+                상담 문의
+                <span class="badge">0</span>
+            </button>
+            <button class="tab-button" onclick="showTab('admin')">
+                관리자문의
+                <span class="badge">0</span>
+            </button>
+        </div>
+
+        <!-- 공지사항 탭 -->
+        <div id="notice-tab" class="tab-content active">
+            <div class="list-item">
+                <div class="list-item-header">
+                    <div class="list-item-title">23.07.31)네이버_엑스퍼트_모집</div>
+                    <div class="list-item-date">2023.07.31</div>
+                </div>
+                <div class="list-item-content">
+                    네이버 엑스퍼트 상담사 모집 중입니다. 관심 있으신 분들은 지원해주세요.
+                </div>
+            </div>
+            <div class="list-item">
+                <div class="list-item-header">
+                    <div class="list-item-title">6/5)화계팅_상담료 관련</div>
+                    <div class="list-item-date">2023.06.05</div>
+                </div>
+                <div class="list-item-content">
+                    화계팅 상담료 관련 공지사항입니다. 자세한 내용은 클릭하여 확인해주세요.
+                </div>
+            </div>
+            <div class="list-item">
+                <div class="list-item-header">
+                    <div class="list-item-title">23.05.22)전당상향</div>
+                    <div class="list-item-date">2023.05.23</div>
+                </div>
+                <div class="list-item-content">
+                    전당 상향 관련 안내사항입니다.
+                </div>
+            </div>
+            <div class="list-item">
+                <div class="list-item-header">
+                    <div class="list-item-title">23.04.22)운영팀_공지사항</div>
+                    <div class="list-item-date">2023.04.22</div>
+                </div>
+                <div class="list-item-content">
+                    운영팀에서 전달하는 공지사항입니다.
+                </div>
+            </div>
+            <div class="list-item">
+                <div class="list-item-header">
+                    <div class="list-item-title">23.04.20)운영팀_유의사항전달</div>
+                    <div class="list-item-date">2023.04.20</div>
+                </div>
+                <div class="list-item-content">
+                    운영팀에서 전달하는 유의사항입니다. 필독 부탁드립니다.
+                </div>
+            </div>
+            <div class="list-item">
+                <div class="list-item-header">
+                    <div class="list-item-title">23.04.14)지원팀_자주찾으시는 질문</div>
+                    <div class="list-item-date">2023.04.14</div>
+                </div>
+                <div class="list-item-content">
+                    자주 찾으시는 질문에 대한 답변 모음입니다.
+                </div>
+            </div>
+        </div>
+
+        <!-- 고객 후기 탭 -->
+        <div id="review-tab" class="tab-content">
+            <div class="list-item">
+                <div class="list-item-header">
+                    <div class="list-item-title">정말 잘 맞아요!</div>
+                    <div class="list-item-date">2024.01.15</div>
+                </div>
+                <div class="list-item-content">
+                    선생님 상담 받고 마음이 편해졌어요. 앞으로도 잘 부탁드립니다.
+                </div>
+            </div>
+            <div class="list-item">
+                <div class="list-item-header">
+                    <div class="list-item-title">감사합니다</div>
+                    <div class="list-item-date">2024.01.14</div>
+                </div>
+                <div class="list-item-content">
+                    친절하고 자세한 상담 감사합니다. 많은 도움이 되었어요.
+                </div>
+            </div>
+        </div>
+
+        <!-- 상담 문의 탭 -->
+        <div id="inquiry-tab" class="tab-content">
+            <div class="empty-state">
+                <div class="empty-icon">📭</div>
+                <div class="empty-text">새로운 상담 문의가 없습니다</div>
+            </div>
+        </div>
+
+        <!-- 관리자문의 탭 -->
+        <div id="admin-tab" class="tab-content">
+            <div class="empty-state">
+                <div class="empty-icon">📬</div>
+                <div class="empty-text">관리자 문의가 없습니다</div>
+            </div>
+        </div>
+    </section>
+</main>
+
+<!-- 채팅 버튼 -->
+<div class="chat-button">
+    💬
+    <span class="chat-badge">1</span>
+</div>
+
+<!-- 하단 네비게이션 -->
+<nav class="bottom-nav">
+    <a href="main.html" class="nav-item">
+        <span class="nav-icon">🏠</span>
+        <span class="nav-label">홈</span>
+    </a>
+    <a href="event.html" class="nav-item">
+        <span class="nav-icon">🎁</span>
+        <span class="nav-label">이벤트</span>
+    </a>
+    <a href="chat_list.html" class="nav-item">
+        <span class="nav-icon">💬</span>
+        <span class="nav-label">빠른 상담</span>
+    </a>
+    <a href="favorite.html" class="nav-item">
+        <span class="nav-icon">💳</span>
+        <span class="nav-label">충전</span>
+    </a>
+    <a href="counselor-mypage.html" class="nav-item active">
+        <span class="nav-icon">👤</span>
+        <span class="nav-label">마이페이지</span>
+    </a>
+</nav>
+
+<script>
+    // 상태 변경 함수
+    function setStatus(status) {
+        const buttons = document.querySelectorAll('.status-option');
+        buttons.forEach(btn => {
+            btn.classList.remove('active');
+        });
+        
+        if (status === 'ready') {
+            buttons[0].classList.add('active');
+        } else if (status === 'away') {
+            buttons[1].classList.add('active');
+        }
+    }
+
+    // 탭 전환 함수
+    function showTab(tabName) {
+        // 모든 탭 버튼에서 active 클래스 제거
+        const tabButtons = document.querySelectorAll('.tab-button');
+        tabButtons.forEach(btn => {
+            btn.classList.remove('active');
+        });
+        
+        // 모든 탭 콘텐츠 숨기기
+        const tabContents = document.querySelectorAll('.tab-content');
+        tabContents.forEach(content => {
+            content.classList.remove('active');
+        });
+        
+        // 선택된 탭 활성화
+        if (tabName === 'notice') {
+            tabButtons[0].classList.add('active');
+            document.getElementById('notice-tab').classList.add('active');
+        } else if (tabName === 'review') {
+            tabButtons[1].classList.add('active');
+            document.getElementById('review-tab').classList.add('active');
+        } else if (tabName === 'inquiry') {
+            tabButtons[2].classList.add('active');
+            document.getElementById('inquiry-tab').classList.add('active');
+        } else if (tabName === 'admin') {
+            tabButtons[3].classList.add('active');
+            document.getElementById('admin-tab').classList.add('active');
+        }
+    }
+
+    // 변경하기 버튼 클릭 이벤트
+    document.querySelectorAll('.edit-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            alert('변경 사항이 저장되었습니다.');
+        });
+    });
+
+    // 변경저장 버튼 클릭 이벤트
+    document.querySelector('.status-toggle-btn').addEventListener('click', function() {
+        const activeStatus = document.querySelector('.status-option.active');
+        const status = activeStatus.textContent === '대기' ? '대기' : '부재중';
+        alert(`상태가 '${status}'로 변경되었습니다.`);
+    });
+
+    // 리스트 아이템 클릭 효과
+    document.querySelectorAll('.list-item').forEach(item => {
+        item.addEventListener('click', function() {
+            this.style.background = 'rgba(255, 255, 255, 0.05)';
+            setTimeout(() => {
+                this.style.background = '';
+            }, 200);
+        });
+    });
+</script>
+</body>
+</html>

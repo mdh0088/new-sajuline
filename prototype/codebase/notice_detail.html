@@ -1,0 +1,385 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>공지사항 상세 - 사주라인</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Apple SD Gothic Neo', 'Noto Sans KR', sans-serif;
+            background-color: #0a0a0f;
+            color: #ffffff;
+            line-height: 1.6;
+            overflow-x: hidden;
+        }
+
+        /* 헤더 */
+        .header {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            background: rgba(10, 10, 15, 0.95);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            z-index: 1000;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .header-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 16px 20px;
+            height: 60px;
+        }
+
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .back-button {
+            width: 36px;
+            height: 36px;
+            border: none;
+            background: transparent;
+            color: #fff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            font-size: 20px;
+        }
+
+        .header-title {
+            font-size: 20px;
+            font-weight: 700;
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 12px;
+        }
+
+        .icon-btn {
+            width: 36px;
+            height: 36px;
+            border: none;
+            background: transparent;
+            color: #fff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            font-size: 20px;
+        }
+
+        /* 메인 콘텐츠 */
+        .main-content {
+            margin-top: 60px;
+            padding: 20px;
+            padding-bottom: 80px;
+        }
+
+        /* 공지사항 상세 */
+        .notice-detail {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 16px;
+            padding: 24px;
+            margin-bottom: 20px;
+        }
+
+        .notice-detail-header {
+            margin-bottom: 24px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .notice-detail-title {
+            font-size: 20px;
+            font-weight: 700;
+            margin-bottom: 12px;
+            line-height: 1.4;
+            padding: 0 4px;
+        }
+
+        .notice-detail-meta {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            color: rgba(255, 255, 255, 0.5);
+            font-size: 14px;
+            padding: 0 4px;
+        }
+
+        .notice-detail-content {
+            font-size: 15px;
+            line-height: 1.8;
+            color: rgba(255, 255, 255, 0.8);
+            white-space: pre-wrap;
+            word-break: keep-all;
+            text-align: left;
+            background-color: rgba(255, 255, 255, 0.05);
+            border-radius: 8px;
+            padding: 20px 4px;
+        }
+
+        .notice-detail-content p {
+            margin-bottom: 16px;
+            text-align: left;
+            padding-left: 0;
+        }
+
+        .notice-detail-content p:last-child {
+            margin-bottom: 0;
+        }
+
+        .notice-detail-content strong {
+            display: block;
+            color: #B794F6;
+            font-weight: 600;
+            margin: 24px 0 12px;
+            font-size: 16px;
+        }
+
+        .notice-detail-content ul {
+            list-style: none;
+            margin: 12px 0;
+            padding-left: 0;
+        }
+
+        .notice-detail-content li {
+            position: relative;
+            margin-bottom: 8px;
+            padding-left: 16px;
+        }
+
+        .notice-detail-content li:last-child {
+            margin-bottom: 0;
+        }
+
+        .notice-detail-content li::before {
+            content: '•';
+            position: absolute;
+            left: 0;
+            color: #B794F6;
+        }
+
+        .notice-detail-content .highlight {
+            background: rgba(147, 51, 234, 0.1);
+            padding: 2px 6px;
+            border-radius: 4px;
+            color: #B794F6;
+        }
+
+        .notice-badge {
+            display: inline-block;
+            padding: 4px 8px;
+            background: rgba(147, 51, 234, 0.2);
+            color: #B794F6;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 600;
+            margin-right: 8px;
+        }
+
+        /* 하단 네비게이션 */
+        .bottom-nav {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: rgba(10, 10, 15, 0.95);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            display: flex;
+            justify-content: space-around;
+            padding: 8px 0 12px;
+            z-index: 1000;
+        }
+
+        .nav-item {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 8px;
+            color: rgba(255, 255, 255, 0.5);
+            text-decoration: none;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .nav-item::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 0;
+            height: 2px;
+            background: linear-gradient(90deg, #9333EA 0%, #B794F6 100%);
+            transition: width 0.3s ease;
+        }
+
+        .nav-item.active {
+            color: #B794F6;
+        }
+
+        .nav-item.active::before {
+            width: 40px;
+        }
+
+        .nav-icon {
+            font-size: 24px;
+            margin-bottom: 4px;
+        }
+
+        .nav-label {
+            font-size: 11px;
+            font-weight: 500;
+        }
+
+        /* 이전/다음 버튼 */
+        .notice-navigation {
+            display: flex;
+            justify-content: space-between;
+            gap: 12px;
+            margin-top: 24px;
+            padding-top: 24px;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .nav-button {
+            flex: 1;
+            padding: 12px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            color: #fff;
+            font-size: 14px;
+            text-decoration: none;
+            transition: all 0.3s ease;
+        }
+
+        .nav-button:hover {
+            background: rgba(255, 255, 255, 0.08);
+        }
+
+        .nav-button.disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            pointer-events: none;
+        }
+
+        .nav-button .nav-label {
+            display: block;
+            font-size: 12px;
+            color: rgba(255, 255, 255, 0.5);
+            margin-bottom: 4px;
+        }
+
+        .nav-button .nav-title {
+            font-size: 14px;
+            font-weight: 500;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+    </style>
+</head>
+<body>
+    <!-- 헤더 -->
+    <header class="header">
+        <div class="header-top">
+            <div class="header-left">
+                <button class="back-button" onclick="window.history.back()">←</button>
+                <h1 class="header-title">공지사항</h1>
+            </div>
+            <div class="header-actions">
+                <button class="icon-btn" onclick="window.location.href='search-page.html'">🔍</button>
+                <button class="icon-btn" onclick="window.location.href='login-page.html'">👤</button>
+            </div>
+        </div>
+    </header>
+
+    <!-- 메인 콘텐츠 -->
+    <main class="main-content">
+        <div class="notice-detail">
+            <div class="notice-detail-header">
+                <h2 class="notice-detail-title">
+                    <span class="notice-badge">NEW</span>
+                    시스템 점검 안내
+                </h2>
+                <div class="notice-detail-meta">
+                    <span>2024.03.15</span>
+                    <span>조회수 1,234</span>
+                </div>
+            </div>
+            <div class="notice-detail-content">
+                안녕하세요, 사주라인입니다.
+
+                더 나은 서비스 제공을 위해 시스템 점검을 진행할 예정입니다.
+
+                점검 일시
+                2024년 3월 20일 (수) 02:00 ~ 06:00
+                점검 시간 동안 서비스 이용이 제한됩니다.
+
+                점검 내용
+                • 서버 시스템 업그레이드
+                • 데이터베이스 최적화
+                • 보안 시스템 강화
+
+                이용에 참고 부탁드립니다.
+                문의사항은 고객센터로 연락주시기 바랍니다.
+            </div>
+
+            <!-- 이전/다음 버튼 -->
+            <div class="notice-navigation">
+                <a href="#" class="nav-button">
+                    <span class="nav-label">이전글</span>
+                    <span class="nav-title">봄맞이 이벤트 안내</span>
+                </a>
+                <a href="#" class="nav-button disabled">
+                    <span class="nav-label">다음글</span>
+                    <span class="nav-title">마지막 글입니다</span>
+                </a>
+            </div>
+        </div>
+    </main>
+
+    <!-- 하단 네비게이션 -->
+    <nav class="bottom-nav">
+        <a href="main.html" class="nav-item">
+            <span class="nav-icon">🏠</span>
+            <span class="nav-label">홈</span>
+        </a>
+        <a href="ai-fortune-complete.html" class="nav-item">
+            <span class="nav-icon">🤖</span>
+            <span class="nav-label">AI운세</span>
+        </a>
+        <a href="event.html" class="nav-item">
+            <span class="nav-icon">🎁</span>
+            <span class="nav-label">이벤트</span>
+        </a>
+        <a href="favorite.html" class="nav-item">
+            <span class="nav-icon">⭐</span>
+            <span class="nav-label">즐겨찾기</span>
+        </a>
+        <a href="mypage.html" class="nav-item">
+            <span class="nav-icon">👤</span>
+            <span class="nav-label">마이</span>
+        </a>
+    </nav>
+</body>
+</html> 

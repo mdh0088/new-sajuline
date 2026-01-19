@@ -1,0 +1,542 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>로그인 - 사주라인</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Apple SD Gothic Neo', 'Noto Sans KR', sans-serif;
+            background-color: #0a0a0f;
+            color: #ffffff;
+            line-height: 1.6;
+            overflow-x: hidden;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* 헤더 */
+        .header {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            background: rgba(10, 10, 15, 0.95);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            z-index: 1000;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .header-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 16px 20px;
+            height: 60px;
+        }
+
+        .back-button {
+            width: 36px;
+            height: 36px;
+            border: none;
+            background: transparent;
+            color: #fff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            font-size: 20px;
+        }
+
+        .header-title {
+            position: absolute;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 18px;
+            font-weight: 600;
+        }
+
+        /* 메인 콘텐츠 */
+        .main-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            padding: 80px 20px 40px;
+            max-width: 400px;
+            width: 100%;
+            margin: 0 auto;
+        }
+
+        /* 로고 섹션 */
+        .logo-section {
+            text-align: center;
+            margin-bottom: 48px;
+        }
+
+        .logo-icon {
+            width: 80px;
+            height: 80px;
+            margin: 0 auto 20px;
+            background: linear-gradient(135deg, rgba(147, 51, 234, 0.3) 0%, rgba(124, 58, 237, 0.2) 100%);
+            border-radius: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 40px;
+            box-shadow: 0 8px 32px rgba(147, 51, 234, 0.3);
+        }
+
+        .logo-title {
+            font-size: 28px;
+            font-weight: 800;
+            background: linear-gradient(135deg, #B794F6 0%, #9F7AEA 50%, #805AD5 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 8px;
+        }
+
+        .logo-subtitle {
+            font-size: 16px;
+            color: rgba(255, 255, 255, 0.6);
+        }
+
+        /* 로그인 폼 */
+        .login-form {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .input-group {
+            position: relative;
+        }
+
+        .input-icon {
+            position: absolute;
+            left: 20px;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 20px;
+            color: rgba(255, 255, 255, 0.4);
+        }
+
+        .input-field {
+            width: 100%;
+            padding: 18px 20px 18px 52px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 16px;
+            font-size: 16px;
+            color: #ffffff;
+            outline: none;
+            transition: all 0.3s ease;
+        }
+
+        .input-field:focus {
+            border-color: rgba(147, 51, 234, 0.5);
+            background: rgba(255, 255, 255, 0.08);
+        }
+
+        .input-field::placeholder {
+            color: rgba(255, 255, 255, 0.4);
+        }
+
+        /* 옵션 행 */
+        .options-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin: 8px 0;
+        }
+
+        .remember-me {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .checkbox {
+            width: 20px;
+            height: 20px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 4px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+        }
+
+        .checkbox.checked {
+            background: linear-gradient(135deg, #9333EA 0%, #7C3AED 100%);
+            border-color: transparent;
+        }
+
+        .checkbox.checked::after {
+            content: '✓';
+            color: white;
+            font-size: 14px;
+            font-weight: 700;
+        }
+
+        .remember-label {
+            font-size: 14px;
+            color: rgba(255, 255, 255, 0.8);
+            cursor: pointer;
+        }
+
+        .forgot-link {
+            font-size: 14px;
+            color: #B794F6;
+            text-decoration: none;
+            transition: opacity 0.3s ease;
+        }
+
+        .forgot-link:hover {
+            opacity: 0.8;
+        }
+
+        /* 로그인 버튼 */
+        .login-button {
+            width: 100%;
+            padding: 18px;
+            background: linear-gradient(135deg, #9333EA 0%, #7C3AED 100%);
+            border: none;
+            border-radius: 16px;
+            color: white;
+            font-size: 16px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 20px rgba(147, 51, 234, 0.4);
+            margin-top: 8px;
+        }
+
+        .login-button:active {
+            transform: scale(0.98);
+        }
+
+        .login-button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        /* 구분선 */
+        .divider {
+            margin: 32px 0;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .divider-line {
+            flex: 1;
+            height: 1px;
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .divider-text {
+            font-size: 13px;
+            color: rgba(255, 255, 255, 0.5);
+        }
+
+        /* 소셜 로그인 */
+        .social-login {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .social-button {
+            width: 100%;
+            padding: 16px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 16px;
+            background: rgba(255, 255, 255, 0.05);
+            color: white;
+            font-size: 15px;
+            font-weight: 500;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            transition: all 0.3s ease;
+        }
+
+        .social-button:hover {
+            background: rgba(255, 255, 255, 0.08);
+        }
+
+        .social-button:active {
+            transform: scale(0.98);
+        }
+
+        .social-icon {
+            font-size: 20px;
+        }
+
+        .kakao-button {
+            background: #FEE500;
+            color: #000000;
+            border-color: #FEE500;
+        }
+
+        .kakao-button:hover {
+            background: #FDD835;
+        }
+
+        .naver-button {
+            background: #03C75A;
+            border-color: #03C75A;
+        }
+
+        .naver-button:hover {
+            background: #02B351;
+        }
+
+        .apple-button {
+            background: #000000;
+            border-color: rgba(255, 255, 255, 0.2);
+        }
+
+        .apple-button:hover {
+            background: #1a1a1a;
+        }
+
+        /* 회원가입 링크 */
+        .signup-link {
+            text-align: center;
+            margin-top: 32px;
+            font-size: 14px;
+            color: rgba(255, 255, 255, 0.6);
+        }
+
+        .signup-link a {
+            color: #B794F6;
+            text-decoration: none;
+            font-weight: 600;
+            margin-left: 4px;
+        }
+
+        /* 하단 정보 */
+        .footer-info {
+            text-align: center;
+            padding: 20px;
+            font-size: 12px;
+            color: rgba(255, 255, 255, 0.4);
+        }
+
+        /* 로딩 오버레이 */
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(10, 10, 15, 0.95);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 2000;
+        }
+
+        .loading-spinner {
+            width: 40px;
+            height: 40px;
+            border: 3px solid rgba(255, 255, 255, 0.1);
+            border-top-color: #B794F6;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* 에러 메시지 */
+        .error-message {
+            display: none;
+            padding: 12px 16px;
+            background: rgba(255, 59, 48, 0.1);
+            border: 1px solid rgba(255, 59, 48, 0.3);
+            border-radius: 12px;
+            color: #FF6B6B;
+            font-size: 14px;
+            margin-bottom: 16px;
+            animation: shake 0.3s ease;
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-5px); }
+            75% { transform: translateX(5px); }
+        }
+
+        .error-message.show {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+<!-- 헤더 -->
+<header class="header">
+    <div class="header-top">
+        <button class="back-button" onclick="window.location.href='main.html'">←</button>
+        <h1 class="header-title">로그인</h1>
+    </div>
+</header>
+
+<!-- 메인 콘텐츠 -->
+<main class="main-content">
+    <!-- 로고 섹션 -->
+    <section class="logo-section">
+        <div class="logo-icon">🔮</div>
+        <h2 class="logo-title">사주라인</h2>
+        <p class="logo-subtitle">당신의 운명을 밝히는 빛</p>
+    </section>
+
+    <!-- 에러 메시지 -->
+    <div class="error-message">
+        이메일 또는 비밀번호가 올바르지 않습니다.
+    </div>
+
+    <!-- 로그인 폼 -->
+    <form class="login-form">
+        <div class="input-group">
+            <span class="input-icon">📧</span>
+            <input type="email" class="input-field" placeholder="이메일" id="email">
+        </div>
+
+        <div class="input-group">
+            <span class="input-icon">🔒</span>
+            <input type="password" class="input-field" placeholder="비밀번호" id="password">
+        </div>
+
+        <div class="options-row">
+            <label class="remember-me">
+                <div class="checkbox" id="remember"></div>
+                <span class="remember-label">로그인 상태 유지</span>
+            </label>
+            <a href="#" class="forgot-link">비밀번호 찾기</a>
+        </div>
+
+        <button type="submit" class="login-button">로그인</button>
+    </form>
+
+    <!-- 구분선 -->
+    <div class="divider">
+        <div class="divider-line"></div>
+        <span class="divider-text">간편 로그인</span>
+        <div class="divider-line"></div>
+    </div>
+
+    <!-- 소셜 로그인 -->
+    <div class="social-login">
+        <button class="social-button kakao-button">
+            <span class="social-icon">💬</span>
+            <span>카카오 로그인</span>
+        </button>
+        <button class="social-button naver-button">
+            <span class="social-icon">N</span>
+            <span>네이버 로그인</span>
+        </button>
+        <button class="social-button apple-button">
+            <span class="social-icon">🍎</span>
+            <span>Apple로 로그인</span>
+        </button>
+        <button class="social-button">
+            <span class="social-icon">G</span>
+            <span>Google 로그인</span>
+        </button>
+    </div>
+
+    <!-- 회원가입 링크 -->
+    <div class="signup-link">
+        아직 회원이 아니신가요?
+        <a href="signup-page.html">회원가입</a>
+    </div>
+</main>
+
+<!-- 하단 정보 -->
+<footer class="footer-info">
+    © 2025 사주라인. All rights reserved.
+</footer>
+
+<!-- 로딩 오버레이 -->
+<div class="loading-overlay">
+    <div class="loading-spinner"></div>
+</div>
+
+<script>
+    // 로그인 상태 유지 체크박스
+    document.getElementById('remember').addEventListener('click', function() {
+        this.classList.toggle('checked');
+    });
+
+    // 로그인 폼 제출
+    document.querySelector('.login-form').addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        const email = document.getElementById('email').value;
+        const password = document.getElementById('password').value;
+        
+        // 입력값 검증
+        if (!email || !password) {
+            showError('이메일과 비밀번호를 입력해주세요.');
+            return;
+        }
+        
+        // 이메일 형식 검증
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(email)) {
+            showError('올바른 이메일 형식이 아닙니다.');
+            return;
+        }
+        
+        // 로딩 표시
+        document.querySelector('.loading-overlay').style.display = 'flex';
+        
+        // 실제로는 API 호출
+        setTimeout(() => {
+            document.querySelector('.loading-overlay').style.display = 'none';
+            // 성공 시: window.location.href = '/';
+            // 실패 시:
+            showError('이메일 또는 비밀번호가 올바르지 않습니다.');
+        }, 1000);
+    });
+
+    // 에러 메시지 표시
+    function showError(message) {
+        const errorElement = document.querySelector('.error-message');
+        errorElement.textContent = message;
+        errorElement.classList.add('show');
+        
+        // 3초 후 자동 숨김
+        setTimeout(() => {
+            errorElement.classList.remove('show');
+        }, 3000);
+    }
+
+    // 소셜 로그인 버튼들
+    document.querySelectorAll('.social-button').forEach(button => {
+        button.addEventListener('click', function() {
+            const provider = this.textContent.trim();
+            console.log(`${provider} 로그인 시도`);
+            // 실제로는 각 소셜 로그인 API 호출
+        });
+    });
+</script>
+</body>
+</html>

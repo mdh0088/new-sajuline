@@ -1,0 +1,431 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>개인정보처리방침 - 사주라인</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Apple SD Gothic Neo', 'Noto Sans KR', sans-serif;
+            background-color: #0a0a0f;
+            color: #ffffff;
+            line-height: 1.6;
+            overflow-x: hidden;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+
+        a {
+            text-decoration: none;
+            color: inherit;
+        }
+
+        button {
+            outline: none;
+            border: none;
+            cursor: pointer;
+        }
+
+        /* 헤더 */
+        .header {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            background: rgba(10, 10, 15, 0.95);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            z-index: 1000;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .header-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 16px 20px;
+            height: 60px;
+        }
+
+        .back-button {
+            width: 36px;
+            height: 36px;
+            background: transparent;
+            color: #fff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+        }
+
+        .header-title {
+            position: absolute;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 18px;
+            font-weight: 600;
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+
+        .icon-btn {
+            width: 36px;
+            height: 36px;
+            background: rgba(255, 255, 255, 0.05);
+            color: #fff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 12px;
+            transition: all 0.3s ease;
+            font-size: 18px;
+        }
+
+        .icon-btn:active {
+            transform: scale(0.95);
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        /* 메인 콘텐츠 */
+        .main-content {
+            margin-top: 60px;
+            padding: 20px;
+            padding-bottom: 120px; /* 하단 네비 공간 */
+            flex: 1;
+            overflow-y: auto;
+        }
+
+        .terms-section {
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            padding: 24px;
+            margin-bottom: 24px;
+        }
+
+        .terms-section h2 {
+            font-size: 20px;
+            font-weight: 700;
+            margin-bottom: 16px;
+            color: #B794F6;
+            padding-bottom: 12px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .terms-section h3 {
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 4px;
+            color: #fff;
+        }
+
+        .terms-section p {
+            font-size: 15px;
+            line-height: 1.6;
+            color: rgba(255, 255, 255, 0.9);
+            margin-bottom: 12px;
+            text-align: justify;
+        }
+
+        .terms-section ol {
+            margin: 4px 0;
+            padding-left: 24px;
+        }
+
+        .terms-section li {
+            font-size: 15px;
+            line-height: 1.6;
+            color: rgba(255, 255, 255, 0.9);
+            margin-bottom: 6px;
+            list-style-type: decimal;
+        }
+
+        .terms-section ul {
+            margin: 4px 0;
+            padding-left: 24px;
+        }
+
+        .terms-section li ul {
+            list-style-type: disc;
+        }
+
+        .highlight {
+            background: rgba(147, 51, 234, 0.1);
+            padding: 16px;
+            border-radius: 12px;
+            margin: 16px 0;
+            border: 1px solid rgba(147, 51, 234, 0.2);
+        }
+
+        .highlight p {
+            margin-bottom: 12px;
+        }
+
+        .highlight p:last-child {
+            margin-bottom: 0;
+        }
+
+        /* 하단 네비게이션 */
+        .bottom-nav {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: rgba(10, 10, 15, 0.95);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            display: flex;
+            justify-content: space-around;
+            padding: 8px 0 12px;
+            z-index: 1000;
+        }
+
+        .nav-item {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 8px;
+            color: rgba(255, 255, 255, 0.5);
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .nav-item::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 0;
+            height: 2px;
+            background: linear-gradient(90deg, #9333EA 0%, #B794F6 100%);
+            transition: width 0.3s ease;
+        }
+
+        .nav-item.active {
+            color: #B794F6;
+        }
+
+        .nav-item.active::before {
+            width: 40px;
+        }
+
+        .nav-icon {
+            font-size: 24px;
+            margin-bottom: 4px;
+        }
+
+        .nav-label {
+            font-size: 11px;
+            font-weight: 500;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .terms-section h2 {
+                font-size: 18px;
+            }
+            .terms-section h3 {
+                font-size: 15px;
+            }
+            .terms-section p,
+            .terms-section li {
+                font-size: 13px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- 헤더 -->
+    <header class="header">
+        <div class="header-top">
+            <button class="back-button" onclick="window.history.back();">←</button>
+            <h1 class="header-title">개인정보처리방침</h1>
+            <div class="header-actions">
+                <button class="icon-btn" onclick="window.location.href='search-page.html'">🔍</button>
+                <button class="icon-btn" onclick="window.location.href='login-page.html'">👤</button>
+            </div>
+        </div>
+    </header>
+
+    <!-- 메인 콘텐츠 -->
+    <main class="main-content">
+        <section class="terms-section">
+            <p>
+                피플라인(이하 "회사"는) 고객님의 개인정보를 중요시하며, "정보통신망 이용촉진 및 정보보호"에 관한 법률을 준수하고 있습니다.<br>
+                회사는 개인정보처리방침을 통하여 고객님께서 제공하시는 개인정보가 어떠한 용도와 방식으로 이용되고 있으며, 개인정보 보호를 위해 어떠한 조치가 취해지고 있는지 알려드립니다.<br>
+                회사는 개인정보처리방침을 개정하는 경우 웹사이트 공지사항(또는 개별공지)을 통하여 공지할 것입니다.
+            </p>
+
+            <h2>1. 개인정보의 수집 항목 및 수집 방법</h2>
+            <p>
+                (1) 회사는 회원가입, 원활한 고객상담, 각종 서비스 제공을 위해 최초 회원가입 시 다음과 같은 개인정보를 수집합니다.<br>
+                수집 항목: 아이디, 비밀번호, 닉네임, 휴대폰번호, 이메일<br>
+                (2) 서비스 이용과정에서 아래 정보들이 자동으로 생성되어 수집될 수 있습니다.<br>
+                - IP 주소, 쿠키, 방문 일시, 서비스 이용 기록, 불량 이용 기록<br>
+                (3) 유료 서비스 이용 과정에서 아래 결제 정보들이 수집될 수 있습니다.<br>
+                - 신용카드 결제 시: 카드사명, 카드번호 등<br>
+                - 휴대전화 결제 시: 이동전화번호, 통신사, 결제승인번호 등<br>
+                - 계좌이체 시: 은행명, 계좌번호 등<br>
+                (4) 개인정보 수집 방법<br>
+                - 홈페이지(회원가입), 고객센터를 통한 전화 및 온라인 상담, 경품 행사 응모
+            </p>
+
+            <h2>2. 개인정보의 수집목적 및 이용목적</h2>
+            <p>
+                회사는 수집한 개인정보를 다음 목적을 위해 활용합니다.<br>
+                (1) 서비스 제공에 관한 계약 이행 및 서비스 제공에 따른 요금 정산<br>
+                - 콘텐츠 제공, 구매 및 요금 결제, 서비스 제공을 위한 예약/안내<br>
+                (2) 회원 관리<br>
+                - 회원제 서비스 이용 확인, 개인 식별, 불량회원 부정 이용 방지, 비인가 사용 방지, 불만 처리 등 민원 처리, 고지사항 전달<br>
+                (3) 마케팅 및 광고 활용<br>
+                - 신규 서비스(제품) 개발 및 특화, 이벤트 등 광고성 정보 전달, 인구통계학적 특성에 따른 서비스 제공 및 광고 게재, 접속 빈도 파악, 회원 서비스 이용 통계
+            </p>
+
+            <h2>3. 개인정보의 보유 및 이용기간</h2>
+            <p>
+                원칙적으로 회원님의 개인정보는 수집 목적 또는 제공받은 목적이 달성된 후 지체 없이 파기합니다. 다만, 관계법령의 규정에 의해 보존이 필요한 경우에는 아래 이유로 명시된 기간 동안 보관합니다.<br>
+                (1) 회사 내부 방침에 의한 정보 보유 사유<br>
+                - 부정 이용 기록: 부정 이용 방지 목적, 보존 기간 1년<br>
+                (2) 관련 법령에 의한 정보 보유 사유<br>
+                - 웹사이트 방문 기록: 통신비밀보호법, 보존 기간 3개월<br>
+                - 본인확인에 관한 기록: 정보통신망 이용촉진 및 정보보호 등에 관한 법률, 보존 기간 6개월<br>
+                - 소비자 불만 또는 분쟁처리에 관한 기록: 전자상거래 등에서의 소비자보호에 관한 법률, 보존 기간 3년<br>
+                - 계약 또는 청약철회 등에 관한 기록: 전자상거래 등에서의 소비자보호에 관한 법률, 보존 기간 5년<br>
+                - 대금결제 및 재화 등의 공급에 관한 기록: 전자상거래 등에서의 소비자보호에 관한 법률, 보존 기간 5년
+            </p>
+
+            <h2>4. 개인정보의 파기절차 및 방법</h2>
+            <p>
+                (1) 파기절차<br>
+                회원가입 등을 위해 입력된 정보는 목적이 달성된 후 별도 DB로 옮겨져(종이의 경우 별도 서류함) 내부 방침 및 관련 법령에 따른 정보 보호 사유에 따라 일정 기간 저장된 후 파기됩니다. 별도 DB로 옮겨진 개인정보는 법률에 의한 경우를 제외하고는 다른 목적에 이용되지 않습니다.<br>
+                (2) 파기방법<br>
+                - 종이에 출력된 개인정보: 분쇄기 또는 소각을 통해 파기<br>
+                - 전자적 파일 형태로 저장된 개인정보: 기록을 재생할 수 없는 기술적 방법으로 삭제
+            </p>
+
+            <h2>5. 개인정보의 제3자 제공 및 공유</h2>
+            <p>
+                회사는 고객님의 개인정보를 서비스 이용 목적 외로 이용하거나 타인 또는 타기관에 제공하지 않습니다. 다만, 아래의 경우 관련 법령에 따라 고객 동의 없이 제공될 수 있습니다.<br>
+                - 이용자가 사전에 공개하거나 제3자 제공에 동의한 경우<br>
+                - 관계법령에 의거하거나, 수사 목적 상 수사기관 요구가 있는 경우
+            </p>
+
+            <h2>6. 개인정보의 취급위탁</h2>
+            <p>
+                회사는 서비스 향상을 위해 고객님의 개인정보가 필요한 경우 법령상 요건을 구비하여 외부에 수집·취급·관리 등을 위탁할 수 있으며, 아래와 같이 위탁업무를 수행합니다.<br>
+                - 수탁자: PAYLETTER<br>
+                - 위탁 범위: 전자결제 대행<br>
+                회사는 위탁 계약 시 개인정보가 안전하게 관리될 수 있도록 필요한 사항을 규정하며, 공유되는 정보는 목적 달성을 위한 최소한 정보에 국한합니다.<br>
+                회사는 고객 동의 없이 인터넷 서비스 외 다른 용도로 사용하거나 제3자 제공하지 않습니다. 다만, 다음과 같은 경우 예외로 합니다.<br>
+                (1) 이용약관 위반, 위법 행위자에 대한 법적 조치 시<br>
+                (2) 법령에 의하거나 수사 목적 상 절차에 따라 수사기관 요구 시<br>
+                (3) 유료서비스 제공을 위해 불가피한 경우<br>
+                (4) 통계 작성, 학술연구, 시장조사 등 특정 개인 식별 불가 형태로 제공 시
+            </p>
+
+            <h2>7. 링크사이트에 대한 책임</h2>
+            <p>
+                회사는 회원님께 다른 회사 웹사이트 또는 자료에 대한 링크를 제공할 수 있습니다. 이 경우 회사는 외부 사이트 및 자료에 대한 통제권이 없으므로 유용성에 대해 책임지지 않으며 보증하지 않습니다. 링크 클릭 시 이동된 사이트의 개인정보보호정책은 회사와 무관하므로, 해당 사이트 정책을 별도 확인하시기 바랍니다.
+            </p>
+
+            <h2>8. 이용자 및 법정대리인의 권리와 그 행사방법</h2>
+            <p>
+                (1) 이용자 및 법정대리인은 언제든지 등록된 자신의 개인정보를 조회하거나 수정할 수 있으며, 가입 해지를 요청할 수 있습니다.<br>
+                (2) 개인정보 조회 및 수정을 위해서는 '개인정보변경'(또는 '회원정보수정')을, 가입 해지를 위해서는 '회원탈퇴'를 클릭하여 본인 확인 절차를 거친 후 직접 열람, 정정 또는 탈퇴가 가능합니다.<br>
+                (3) 개인정보관리책임자에게 서면 또는 전화로 연락 시 지체 없이 조치합니다.<br>
+                (4) 이용자가 개인정보 오류 정정을 요청한 경우 정정 완료 전까지 해당 개인정보를 이용 또는 제공하지 않습니다. 잘못된 개인정보를 제3자에게 제공한 경우 정정 결과를 지체 없이 통지하여 정정하도록 합니다.<br>
+                (5) 이용자의 요청에 의해 해지·삭제된 개인정보는 '개인정보 보유 및 이용 기간'에 따라 처리되며, 그 외 목적으로 열람 또는 이용할 수 없도록 조치합니다.
+            </p>
+
+            <h2>9. 개인정보 자동수집 장치의 설치, 운영 및 그 거부에 관한 사항</h2>
+            <p>
+                회사는 쿠키(cookie) 등을 운용하여 귀하의 정보를 저장 및 확인합니다. 쿠키는 웹사이트가 회원님의 브라우저에 보내는 작은 텍스트 파일로 하드디스크에 저장됩니다.<br>
+                (1) 쿠키 사용 목적:<br>
+                - 회원과 비회원의 접속 빈도 및 방문 시간 분석<br>
+                - 이용자 취향 및 관심사 파악, 자취 추적<br>
+                - 각종 이벤트 참여 정도 및 방문 횟수 파악<br>
+                - 타겟 마케팅 및 개인 맞춤 서비스 제공<br>
+                (2) 쿠키 설정 거부 방법:<br>
+                웹 브라우저 옵션 설정을 통해 모든 쿠키 허용, 쿠키 저장 시 확인, 또는 모든 쿠키 거부가 가능합니다. (예: Internet Explorer 상단 도구 > 인터넷 옵션 > 개인정보). 단, 쿠키 설치 거부 시 서비스 제공에 어려움이 있을 수 있습니다.
+            </p>
+
+            <h2>10. 개인정보의 기술적/관리적 보호 대책</h2>
+            <p>
+                회사는 이용자의 개인정보가 분실, 도난, 누출, 변조 또는 훼손되지 않도록 다음과 같은 보호 대책을 강구합니다.<br>
+                (1) 개인정보 암호화:<br>
+                - 이용자 비밀번호는 일방향 암호화하여 저장·관리하며, 주민등록번호, 외국인등록번호, 은행계좌번호 등은 안전한 암호 알고리즘으로 암호화하여 저장·관리합니다.<br>
+                (2) 해킹 대비 대책:<br>
+                - 해킹 등 정보통신망 침입 방지를 위해 침입탐지·차단 시스템을 24시간 가동하며, 민감한 개인정보는 암호화 통신을 통해 네트워크 상 안전하게 전송합니다.<br>
+                (3) 개인정보 취급자의 최소화 및 교육:<br>
+                - 개인정보 취급자를 최소한으로 제한하고, 교육 등을 통해 개인정보 보호의 중요성을 인식시킵니다.
+            </p>
+
+            <h2>11. 개인정보에 관한 민원서비스</h2>
+            <p>
+                회사는 고객의 개인정보 보호 및 불만 처리를 위해 다음과 같이 책임자 및 담당 부서를 지정합니다.<br>
+                개인정보관리책임자 성명: 김진형<br>
+                - 전화번호: 02-6212-0645<br>
+                - 이메일: help@sajurot.com<br>
+                개인정보관리담당 부서: 고객만족팀<br>
+                - 전화번호: 02-6212-0645<br>
+                - 이메일: help@sajurot.com<br>
+                (1) 고객은 서비스 이용 중 발생하는 개인정보 보호 관련 민원을 책임자 또는 담당 부서로 신고할 수 있습니다.<br>
+                (2) 회사는 신고사항에 대해 신속하고 충분한 답변을 제공합니다.<br>
+                (3) 기타 개인정보침해 신고·상담이 필요한 경우, 아래 기관에 문의하시기 바랍니다.<br>
+                - 개인분쟁조정위원회 (www.1336.or.kr / 1336)<br>
+                - 정보보호마크인증위원회 (www.eprivacy.or.kr / 02-580-0533~4)<br>
+                - 대검찰청 인터넷범죄수사센터 (http://icic.sppo.go.kr / 02-3480-3600)<br>
+                - 경찰청 사이버테러대응센터 (www.ctrc.go.kr / 02-392-0330)
+            </p>
+
+            <h2>12. 개인정보처리방침의 개정 및 공지</h2>
+            <p>
+                본 방침은 2023년 3월 1일부터 시행됩니다. 회사는 개인정보처리방침 내용 중 추가, 삭제 또는 수정이 있을 경우 최소 7일 전부터 홈페이지 공지사항(고객센터) 또는 이메일로 안내합니다. 다만, 개인정보 수집·활용, 제3자 제공 등 이용자 권리에 불리한 변경이 있을 경우 최소 7일 전 공지합니다.<br>
+                - 공고일자: 2023년 03월 01일<br>
+                - 시행일자: 2023년 03월 01일
+            </p>
+        </section>
+    </main>
+
+    <!-- 하단 네비게이션 -->
+    <nav class="bottom-nav">
+        <a href="main.html" class="nav-item">
+            <span class="nav-icon">🏠</span>
+            <span class="nav-label">홈</span>
+        </a>
+        <a href="ai-fortune-complete.html" class="nav-item">
+            <span class="nav-icon">🤖</span>
+            <span class="nav-label">AI운세</span>
+        </a>
+        <a href="event.html" class="nav-item">
+            <span class="nav-icon">🎁</span>
+            <span class="nav-label">이벤트</span>
+        </a>
+        <a href="favorite.html" class="nav-item">
+            <span class="nav-icon">⭐</span>
+            <span class="nav-label">즐겨찾기</span>
+        </a>
+        <a href="mypage.html" class="nav-item">
+            <span class="nav-icon">👤</span>
+            <span class="nav-label">마이</span>
+        </a>
+    </nav>
+</body>
+</html>

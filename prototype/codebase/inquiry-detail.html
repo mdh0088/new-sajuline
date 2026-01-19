@@ -1,0 +1,354 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>문의 상세 - 사주라인</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Apple SD Gothic Neo', 'Noto Sans KR', sans-serif;
+            background-color: #0a0a0f;
+            color: #ffffff;
+            line-height: 1.6;
+            overflow-x: hidden;
+        }
+
+        /* 헤더 */
+        .header {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            background: rgba(10, 10, 15, 0.95);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            z-index: 1000;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .header-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 16px 20px;
+            height: 60px;
+        }
+
+        .back-button {
+            width: 36px;
+            height: 36px;
+            border: none;
+            background: transparent;
+            color: #fff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            font-size: 20px;
+        }
+
+        .header-title {
+            position: absolute;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 18px;
+            font-weight: 600;
+        }
+
+        /* 메인 콘텐츠 */
+        .main-content {
+            margin-top: 60px;
+            padding: 20px;
+            padding-bottom: 100px;
+        }
+
+        /* 문의 상세 */
+        .inquiry-detail {
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 24px;
+            padding: 28px;
+            margin-bottom: 24px;
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            box-shadow: 0 4px 24px rgba(0, 0, 0, 0.1);
+        }
+
+        .inquiry-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 24px;
+            padding-bottom: 24px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+        }
+
+        .inquiry-category {
+            font-size: 13px;
+            color: #B794F6;
+            background: rgba(147, 51, 234, 0.08);
+            padding: 8px 18px;
+            border-radius: 24px;
+            font-weight: 500;
+            letter-spacing: -0.3px;
+            border: 1px solid rgba(147, 51, 234, 0.2);
+        }
+
+        .inquiry-date {
+            font-size: 13px;
+            color: rgba(255, 255, 255, 0.4);
+            letter-spacing: -0.3px;
+            font-weight: 500;
+        }
+
+        .inquiry-content {
+            font-size: 15px;
+            color: rgba(255, 255, 255, 0.95);
+            line-height: 1.8;
+            margin-bottom: 28px;
+            white-space: pre-wrap;
+            letter-spacing: -0.3px;
+            font-weight: 400;
+        }
+
+        .inquiry-status {
+            font-size: 13px;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 18px;
+            border-radius: 24px;
+            font-weight: 500;
+            letter-spacing: -0.3px;
+        }
+
+        .inquiry-status.waiting {
+            color: #FFD700;
+            background: rgba(255, 215, 0, 0.08);
+            border: 1px solid rgba(255, 215, 0, 0.2);
+        }
+
+        .inquiry-status.completed {
+            color: #4ADE80;
+            background: rgba(74, 222, 128, 0.08);
+            border: 1px solid rgba(74, 222, 128, 0.2);
+        }
+
+        /* 답변 섹션 */
+        .answer-section {
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 24px;
+            padding: 28px;
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            box-shadow: 0 4px 24px rgba(0, 0, 0, 0.1);
+        }
+
+        .answer-header {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            margin-bottom: 24px;
+            padding-bottom: 24px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+        }
+
+        .answer-icon {
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(135deg, #9333EA 0%, #7C3AED 100%);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            font-weight: 600;
+            box-shadow: 0 4px 16px rgba(147, 51, 234, 0.25);
+        }
+
+        .answer-title {
+            font-size: 17px;
+            font-weight: 600;
+            color: #ffffff;
+            letter-spacing: -0.3px;
+        }
+
+        .answer-content {
+            font-size: 15px;
+            color: rgba(255, 255, 255, 0.95);
+            line-height: 1.8;
+            white-space: pre-wrap;
+            letter-spacing: -0.3px;
+            font-weight: 400;
+        }
+
+        .answer-date {
+            font-size: 13px;
+            color: rgba(255, 255, 255, 0.4);
+            margin-top: 24px;
+            letter-spacing: -0.3px;
+            font-weight: 500;
+        }
+
+        /* 하단 버튼 */
+        .bottom-buttons {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            padding: 20px;
+            background: rgba(10, 10, 15, 0.95);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-top: 1px solid rgba(255, 255, 255, 0.08);
+            display: flex;
+            gap: 14px;
+        }
+
+        .bottom-button {
+            flex: 1;
+            padding: 16px;
+            border: none;
+            border-radius: 16px;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            letter-spacing: -0.3px;
+        }
+
+        .delete-button {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            color: rgba(255, 255, 255, 0.7);
+        }
+
+        .edit-button {
+            background: linear-gradient(135deg, #9333EA 0%, #7C3AED 100%);
+            color: white;
+            box-shadow: 0 4px 16px rgba(147, 51, 234, 0.25);
+        }
+
+        .bottom-button:active {
+            transform: scale(0.98);
+        }
+
+        /* 반응형 */
+        @media screen and (max-width: 768px) {
+            .main-content {
+                padding: 16px;
+            }
+
+            .inquiry-detail,
+            .answer-section {
+                padding: 20px;
+                border-radius: 20px;
+            }
+        }
+
+        @media screen and (max-width: 480px) {
+            .main-content {
+                padding: 12px;
+            }
+
+            .inquiry-detail,
+            .answer-section {
+                padding: 16px;
+                border-radius: 16px;
+            }
+
+            .inquiry-content,
+            .answer-content {
+                font-size: 14px;
+                line-height: 1.7;
+            }
+
+            .bottom-buttons {
+                padding: 16px;
+            }
+
+            .bottom-button {
+                padding: 14px;
+                font-size: 14px;
+            }
+        }
+    </style>
+</head>
+<body>
+<!-- 헤더 -->
+<header class="header">
+    <div class="header-top">
+        <button class="back-button" onclick="window.history.back();">←</button>
+        <h1 class="header-title">문의 상세</h1>
+    </div>
+</header>
+
+<!-- 메인 콘텐츠 -->
+<main class="main-content">
+    <!-- 문의 상세 -->
+    <section class="inquiry-detail">
+        <div class="inquiry-header">
+            <span class="inquiry-category">결제/환불</span>
+            <span class="inquiry-date">2024.03.15</span>
+        </div>
+        <div class="inquiry-content">
+            포인트 충전이 되지 않아 문의드립니다.
+            결제는 완료되었는데 포인트가 반영되지 않았습니다.
+            결제 내역은 다음과 같습니다:
+            - 결제일시: 2024.03.15 14:30
+            - 결제금액: 10,000원
+            - 결제수단: 신용카드
+        </div>
+        <div class="inquiry-status completed">
+            <span>✓</span>
+            <span>답변완료</span>
+        </div>
+    </section>
+
+    <!-- 답변 섹션 -->
+    <section class="answer-section">
+        <div class="answer-header">
+            <div class="answer-icon">A</div>
+            <h2 class="answer-title">관리자 답변</h2>
+        </div>
+        <div class="answer-content">
+            안녕하세요, 사주라인 고객센터입니다.
+            문의하신 포인트 미반영 문제 확인해보았습니다.
+            현재 시스템 점검으로 인해 일시적인 지연이 발생했던 점 양해 부탁드립니다.
+            포인트는 1시간 이내에 정상적으로 반영될 예정입니다.
+            추가 문의사항이 있으시면 언제든지 문의해 주세요.
+        </div>
+        <div class="answer-date">2024.03.15 15:30</div>
+    </section>
+</main>
+
+<!-- 하단 버튼 -->
+<div class="bottom-buttons">
+    <button class="bottom-button delete-button">삭제</button>
+    <button class="bottom-button edit-button">수정</button>
+</div>
+
+<script>
+    // 삭제 버튼 클릭 이벤트
+    document.querySelector('.delete-button').addEventListener('click', function() {
+        if (confirm('정말로 이 문의를 삭제하시겠습니까?')) {
+            // 삭제 로직 추가
+            window.history.back();
+        }
+    });
+
+    // 수정 버튼 클릭 이벤트
+    document.querySelector('.edit-button').addEventListener('click', function() {
+        // 수정 페이지로 이동
+        window.location.href = 'inquiry-write.html?mode=edit';
+    });
+</script>
+</body>
+</html> 

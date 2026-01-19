@@ -1,0 +1,860 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>마이페이지 - 사주라인</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Apple SD Gothic Neo', 'Noto Sans KR', sans-serif;
+            background-color: #0a0a0f;
+            color: #ffffff;
+            line-height: 1.6;
+            overflow-x: hidden;
+        }
+
+        /* 헤더 */
+        .header {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            background: rgba(10, 10, 15, 0.95);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            z-index: 1000;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .header-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 16px 20px;
+            height: 60px;
+        }
+
+        .header-title {
+            font-size: 20px;
+            font-weight: 700;
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 12px;
+        }
+
+        .icon-btn {
+            width: 36px;
+            height: 36px;
+            border: none;
+            background: transparent;
+            color: #fff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            font-size: 20px;
+        }
+
+        /* 메인 콘텐츠 */
+        .main-content {
+            margin-top: 60px;
+            padding-bottom: 80px;
+        }
+
+        /* 프로필 섹션 */
+        .profile-section {
+            padding: 32px 20px;
+            background: linear-gradient(180deg, rgba(147, 51, 234, 0.15) 0%, transparent 100%);
+            text-align: center;
+        }
+
+        .profile-avatar {
+            width: 100px;
+            height: 100px;
+            margin: 0 auto 16px;
+            background: linear-gradient(135deg, rgba(147, 51, 234, 0.3) 0%, rgba(124, 58, 237, 0.2) 100%);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 48px;
+            position: relative;
+            box-shadow: 0 8px 32px rgba(147, 51, 234, 0.3);
+        }
+
+        .profile-edit {
+            position: absolute;
+            bottom: 0;
+            right: 0;
+            width: 32px;
+            height: 32px;
+            background: #9333EA;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+            cursor: pointer;
+            border: 3px solid #0a0a0f;
+        }
+
+        .profile-name {
+            font-size: 24px;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+
+        .profile-email {
+            font-size: 14px;
+            color: rgba(255, 255, 255, 0.6);
+            margin-bottom: 20px;
+        }
+
+        .profile-stats {
+            display: flex;
+            justify-content: center;
+            gap: 40px;
+        }
+
+        .stat-item {
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 24px;
+            font-weight: 700;
+            color: #B794F6;
+        }
+
+        .stat-label {
+            font-size: 12px;
+            color: rgba(255, 255, 255, 0.6);
+        }
+
+        /* 포인트 섹션 */
+        .point-section {
+            margin: 20px;
+            padding: 24px;
+            background: linear-gradient(135deg, rgba(255, 215, 0, 0.1) 0%, rgba(255, 215, 0, 0.05) 100%);
+            border: 1px solid rgba(255, 215, 0, 0.3);
+            border-radius: 20px;
+        }
+
+        .point-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+        }
+
+        .point-title {
+            font-size: 18px;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .point-value {
+            font-size: 32px;
+            font-weight: 800;
+            color: #FFD700;
+            margin-bottom: 16px;
+        }
+
+        .point-buttons {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 24px;
+        }
+
+        .point-button {
+            flex: 1;
+            padding: 14px;
+            border: none;
+            border-radius: 12px;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .charge-button {
+            background: linear-gradient(135deg, #FFD700 0%, #FFA500 100%);
+            color: #0a0a0f;
+        }
+
+        .history-button {
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            backdrop-filter: blur(10px);
+        }
+
+        .history-button:hover {
+            background: rgba(255, 255, 255, 0.15);
+        }
+
+        /* 등급업 프로그레스바 */
+        .progress-container {
+            margin-top: 16px;
+            padding: 16px;
+            background: rgba(147, 51, 234, 0.05);
+            border: 1px solid rgba(147, 51, 234, 0.2);
+            border-radius: 16px;
+        }
+
+        .progress-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+
+        .progress-title {
+            font-size: 15px;
+            font-weight: 600;
+            color: #B794F6;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .progress-title .icon {
+            font-size: 16px;
+        }
+
+        .progress-amount {
+            font-size: 14px;
+            color: rgba(255, 255, 255, 0.8);
+            font-weight: 500;
+        }
+
+        .progress-bar-container {
+            width: 100%;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            height: 8px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .progress-fill {
+            width: 35%;
+            height: 100%;
+            background: linear-gradient(90deg, #9333EA 0%, #B794F6 100%);
+            border-radius: 12px;
+            transition: width 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .progress-fill::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(
+                90deg,
+                rgba(255, 255, 255, 0) 0%,
+                rgba(255, 255, 255, 0.2) 50%,
+                rgba(255, 255, 255, 0) 100%
+            );
+            animation: shimmer 2s infinite;
+        }
+
+        @keyframes shimmer {
+            0% { transform: translateX(-100%); }
+            100% { transform: translateX(100%); }
+        }
+
+        .progress-info {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 8px;
+            font-size: 12px;
+            color: rgba(255, 255, 255, 0.6);
+        }
+
+        .tier-info {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .tier-icon {
+            font-size: 14px;
+        }
+
+        .current-tier {
+            color: #B794F6;
+            font-weight: 500;
+        }
+
+        .next-tier {
+            color: rgba(255, 255, 255, 0.8);
+            font-weight: 500;
+        }
+
+        /* 메뉴 리스트 */
+        .menu-section {
+            padding: 20px;
+        }
+
+        .menu-group {
+            margin-bottom: 24px;
+        }
+
+        .menu-group-title {
+            font-size: 14px;
+            color: rgba(255, 255, 255, 0.6);
+            margin-bottom: 12px;
+            padding: 0 4px;
+        }
+
+        .menu-list {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 16px;
+            overflow: hidden;
+        }
+
+        .menu-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 18px 20px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            text-decoration: none;
+            color: inherit;
+        }
+
+        .menu-item:last-child {
+            border-bottom: none;
+        }
+
+        .menu-item:active {
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .menu-left {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .menu-icon {
+            width: 40px;
+            height: 40px;
+            background: rgba(147, 51, 234, 0.1);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+        }
+
+        .menu-text {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .menu-title {
+            font-size: 16px;
+            font-weight: 500;
+            margin-bottom: 2px;
+        }
+
+        .menu-desc {
+            font-size: 13px;
+            color: rgba(255, 255, 255, 0.6);
+        }
+
+        .menu-right {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .menu-badge {
+            padding: 4px 10px;
+            background: rgba(255, 59, 48, 0.2);
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 600;
+            color: #FF6B6B;
+        }
+
+        .menu-arrow {
+            color: rgba(255, 255, 255, 0.3);
+            font-size: 18px;
+        }
+
+        /* 프리미엄 배너 */
+        .premium-banner {
+            margin: 20px;
+            padding: 24px;
+            background: linear-gradient(135deg, #9333EA 0%, #7C3AED 100%);
+            border-radius: 20px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .premium-banner::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            right: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(255, 255, 255, 0.1) 0%, transparent 70%);
+            animation: pulse 3s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); opacity: 0.5; }
+            50% { transform: scale(1.1); opacity: 0.8; }
+        }
+
+        .premium-content {
+            position: relative;
+            z-index: 1;
+        }
+
+        .premium-title {
+            font-size: 20px;
+            font-weight: 800;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .premium-desc {
+            font-size: 14px;
+            margin-bottom: 16px;
+            opacity: 0.95;
+        }
+
+        .premium-button {
+            background: rgba(255, 255, 255, 0.2);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            color: white;
+            padding: 12px 24px;
+            border-radius: 24px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        /* 로그아웃 버튼 */
+        .logout-section {
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+
+        .logout-button {
+            width: 100%;
+            padding: 16px;
+            background: rgba(255, 59, 48, 0.1);
+            border: 1px solid rgba(255, 59, 48, 0.3);
+            border-radius: 12px;
+            color: #FF6B6B;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .logout-button:active {
+            transform: scale(0.98);
+        }
+
+       /* 하단 네비게이션 */
+       .bottom-nav {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: rgba(10, 10, 15, 0.95);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            display: flex;
+            justify-content: space-around;
+            padding: 8px 0 12px;
+            z-index: 1000;
+        }
+
+        .nav-item {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 8px;
+            color: rgba(255, 255, 255, 0.5);
+            text-decoration: none;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .nav-item::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 0;
+            height: 2px;
+            background: linear-gradient(90deg, #9333EA 0%, #B794F6 100%);
+            transition: width 0.3s ease;
+        }
+
+        .nav-item.active {
+            color: #B794F6;
+        }
+
+        .nav-item.active::before {
+            width: 40px;
+        }
+
+        .nav-icon {
+            font-size: 24px;
+            margin-bottom: 4px;
+        }
+
+        .nav-label {
+            font-size: 11px;
+            font-weight: 500;
+        }
+
+        .point-card {
+            background: linear-gradient(135deg, rgba(147, 51, 234, 0.1) 0%, rgba(124, 58, 237, 0.05) 100%);
+            border: 1px solid rgba(147, 51, 234, 0.2);
+            border-radius: 20px;
+            padding: 20px;
+            margin-bottom: 16px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            color: inherit;
+        }
+
+        .point-card:active {
+            transform: scale(0.98);
+        }
+    </style>
+</head>
+<body>
+<!-- 헤더 -->
+<header class="header">
+    <div class="header-top">
+        <h1 class="header-title">마이페이지</h1>
+        <div class="header-actions">
+            <button class="icon-btn" onclick="window.location.href='search-page.html'">🔍</button>
+            <button class="icon-btn" onclick="window.location.href='login-page.html'">👤</button>
+        </div>
+    </div>
+</header>
+
+<!-- 메인 콘텐츠 -->
+<main class="main-content">
+    <!-- 프로필 섹션 -->
+    <section class="profile-section">
+        <div class="profile-avatar">
+            👤
+            <div class="profile-edit">✏️</div>
+        </div>
+        <h2 class="profile-name">김사주</h2>
+        <p class="profile-email">kim@example.com</p>
+
+        <div class="profile-stats">
+            <div class="stat-item">
+                <div class="stat-value">156</div>
+                <div class="stat-label">총 상담</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-value">12</div>
+                <div class="stat-label">즐겨찾기</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-value">89</div>
+                <div class="stat-label">후기작성</div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 포인트 섹션 -->
+    <section class="point-section">
+        <div class="point-header">
+            <h3 class="point-title">
+                <span>💰</span>
+                <span>내 포인트</span>
+            </h3>
+        </div>
+        <div class="point-value">1,200 P</div>
+        <div class="point-buttons">
+            <button class="point-button charge-button" onclick="window.location.href='point.html'">충전하기</button>
+            <button class="point-button history-button" onclick="window.location.href='point_log.html'">사용내역</button>
+        </div>
+    </section>
+
+    <!-- 등급업 프로그레스바 -->
+    <div class="progress-container">
+        <div class="progress-header">
+            <div class="progress-title">
+                <span class="icon">🎯</span>
+                <span>다음 등급까지</span>
+            </div>
+            <div class="progress-amount">300,000원 남음</div>
+        </div>
+        <div class="progress-bar-container">
+            <div class="progress-fill"></div>
+        </div>
+        <div class="progress-info">
+            <div class="tier-info">
+                <span class="tier-icon">🥉</span>
+                <span class="current-tier">SILVER</span>
+            </div>
+            <div class="tier-info">
+                <span class="tier-icon">👑</span>
+                <span class="next-tier">VIP</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- 프리미엄 배너 -->
+    <section class="premium-banner">
+        <div class="premium-content">
+            <h3 class="premium-title">
+                <span>👑</span>
+                <span>VIP 멤버십</span>
+            </h3>
+            <p class="premium-desc">
+                매월 무료 상담권과 최대 30% 할인 혜택!
+            </p>
+            <button class="premium-button" onclick="window.location.href='member_benefit.html'">자세히 보기</button>
+        </div>
+    </section>
+
+    <!-- 메뉴 리스트 -->
+    <section class="menu-section">
+        <!-- 상담 관리 -->
+        <div class="menu-group">
+            <h4 class="menu-group-title">상담 관리</h4>
+            <div class="menu-list">
+                <a href="cs_log.html" class="menu-item">
+                    <div class="menu-left">
+                        <div class="menu-icon">💬</div>
+                        <div class="menu-text">
+                            <div class="menu-title">상담 내역</div>
+                            <div class="menu-desc">지난 상담 기록 확인</div>
+                        </div>
+                    </div>
+                    <div class="menu-right">
+                        <span class="menu-arrow">›</span>
+                    </div>
+                </a>
+                <a href="favorite.html" class="menu-item">
+                    <div class="menu-left">
+                        <div class="menu-icon">⭐</div>
+                        <div class="menu-text">
+                            <div class="menu-title">즐겨찾기 상담사</div>
+                            <div class="menu-desc">자주 찾는 상담사 관리</div>
+                        </div>
+                    </div>
+                    <div class="menu-right">
+                        <span class="menu-badge">12</span>
+                        <span class="menu-arrow">›</span>
+                    </div>
+                </a>
+                <a href="review-page.html" class="menu-item">
+                    <div class="menu-left">
+                        <div class="menu-icon">📝</div>
+                        <div class="menu-text">
+                            <div class="menu-title">상담 후기</div>
+                            <div class="menu-desc">내가 작성한 후기 보기</div>
+                        </div>
+                    </div>
+                    <div class="menu-right">
+                        <span class="menu-arrow">›</span>
+                    </div>
+                </a>
+            </div>
+        </div>
+
+        <!-- 혜택 -->
+        <div class="menu-group">
+            <h4 class="menu-group-title">혜택</h4>
+            <div class="menu-list">
+                <div class="menu-item">
+                    <div class="menu-left">
+                        <div class="menu-icon">🎁</div>
+                        <div class="menu-text">
+                            <div class="menu-title">쿠폰함</div>
+                            <div class="menu-desc">사용 가능한 쿠폰 확인</div>
+                        </div>
+                    </div>
+                    <div class="menu-right">
+                        <span class="menu-badge">3</span>
+                        <span class="menu-arrow">›</span>
+                    </div>
+                </div>
+                <div class="menu-item">
+                    <div class="menu-left">
+                        <div class="menu-icon">🎯</div>
+                        <div class="menu-text">
+                            <div class="menu-title">출석 체크</div>
+                            <div class="menu-desc">매일 포인트 받기</div>
+                        </div>
+                    </div>
+                    <div class="menu-right">
+                        <span class="menu-arrow">›</span>
+                    </div>
+                </div>
+                <div class="menu-item">
+                    <div class="menu-left">
+                        <div class="menu-icon">🤝</div>
+                        <div class="menu-text">
+                            <div class="menu-title">친구 초대</div>
+                            <div class="menu-desc">초대하고 5,000P 받기</div>
+                        </div>
+                    </div>
+                    <div class="menu-right">
+                        <span class="menu-arrow">›</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 기타 -->
+        <div class="menu-group">
+            <h4 class="menu-group-title">기타</h4>
+            <div class="menu-list">
+                <div class="menu-item" onclick="window.location.href='notice.html'">
+                    <div class="menu-left">
+                        <div class="menu-icon">📢</div>
+                        <div class="menu-text">
+                            <div class="menu-title">공지사항</div>
+                            <div class="menu-desc">서비스 소식 확인</div>
+                        </div>
+                    </div>
+                    <div class="menu-right">
+                        <span class="menu-badge">NEW</span>
+                        <span class="menu-arrow">›</span>
+                    </div>
+                </div>
+                <div class="menu-item">
+                    <div class="menu-left">
+                        <div class="menu-icon">🔔</div>
+                        <div class="menu-text">
+                            <div class="menu-title">알림 설정</div>
+                            <div class="menu-desc">푸시 알림 관리</div>
+                        </div>
+                    </div>
+                    <div class="menu-right">
+                        <span class="menu-arrow">›</span>
+                    </div>
+                </div>
+                <div class="menu-item" onclick="window.location.href='quick-cs-page.html'">
+                    <div class="menu-left">
+                        <div class="menu-icon">❓</div>
+                        <div class="menu-text">
+                            <div class="menu-title">고객센터</div>
+                            <div class="menu-desc">1:1 문의 및 FAQ</div>
+                        </div>
+                    </div>
+                    <div class="menu-right">
+                        <span class="menu-arrow">›</span>
+                    </div>
+                </div>
+                <div class="menu-item" onclick="window.location.href='provision.html'">
+                    <div class="menu-left">
+                        <div class="menu-icon">📜</div>
+                        <div class="menu-text">
+                            <div class="menu-title">이용약관</div>
+                            <div class="menu-desc">서비스 이용 약관</div>
+                        </div>
+                    </div>
+                    <div class="menu-right">
+                        <span class="menu-arrow">›</span>
+                    </div>
+                </div>
+                <div class="menu-item" onclick="window.location.href='privacy.html'">
+                    <div class="menu-left">
+                        <div class="menu-icon">🔒</div>
+                        <div class="menu-text">
+                            <div class="menu-title">개인정보처리방침</div>
+                            <div class="menu-desc">개인정보 보호 정책</div>
+                        </div>
+                    </div>
+                    <div class="menu-right">
+                        <span class="menu-arrow">›</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 로그아웃 -->
+    <section class="logout-section">
+        <button class="logout-button">로그아웃</button>
+    </section>
+</main>
+
+<!-- 하단 네비게이션 -->
+<nav class="bottom-nav">
+    <a href="main.html" class="nav-item">
+        <span class="nav-icon">🏠</span>
+        <span class="nav-label">홈</span>
+    </a>
+    <a href="ai-fortune-complete.html" class="nav-item">
+        <span class="nav-icon">🤖</span>
+        <span class="nav-label">AI운세</span>
+    </a>
+    <a href="event.html" class="nav-item">
+        <span class="nav-icon">🎁</span>
+        <span class="nav-label">이벤트</span>
+    </a>
+    <a href="favorite.html" class="nav-item">
+        <span class="nav-icon">⭐</span>
+        <span class="nav-label">즐겨찾기</span>
+    </a>
+    <a href="mypage.html" class="nav-item active">
+        <span class="nav-icon">👤</span>
+        <span class="nav-label">마이</span>
+    </a>
+</nav>
+
+<script>
+    // 메뉴 아이템 클릭 효과
+    document.querySelectorAll('.menu-item').forEach(item => {
+        item.addEventListener('click', function() {
+            this.style.background = 'rgba(255, 255, 255, 0.05)';
+            setTimeout(() => {
+                this.style.background = '';
+            }, 200);
+        });
+    });
+
+    // 프로필 편집 버튼
+    document.querySelector('.profile-edit').addEventListener('click', function(e) {
+        e.stopPropagation();
+        alert('프로필 편집 기능');
+    });
+</script>
+</body>
+</html>
