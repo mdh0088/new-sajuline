@@ -197,7 +197,7 @@ const activeStatusFilter = ref(0)
 const activeCategoryFilter = ref(0)
 
 // 상담사 목록 (SSR 호환 API 연동)
-const params = ref<CounselorSearchParams>({ page: 1, limit: 10, cs_status: null, is_best: null, is_new: null, cs_specialties: null, cs_keywords: null, search_name: null })
+const params = ref<CounselorSearchParams>({ page: 1, limit: 10, cs_status: null, is_best: null, is_new: null, cs_specialties: null, cs_keywords: null, search_name: null, sort_by: null })
 const { searchPublic, getAllCounselorCodes, searchPublicByCodes } = useCounselorQueries()
 
 // 페이징 처리를 위한 로컬 상태
@@ -212,7 +212,7 @@ const codesInitialized = ref(false)
 // 필터가 적용되어 있는지 확인하는 computed
 const hasFilters = computed(() => {
   return params.value.cs_status !== null ||
-    params.value.is_best === true ||
+    params.value.sort_by !== null ||
     params.value.is_new === true
 })
 
@@ -268,7 +268,7 @@ async function loadCounselors(page: number, isAppend = false) {
 }
 
 // params 변경 감지 (필터 변경 시)
-watch(() => [params.value.cs_status, params.value.is_best, params.value.is_new], () => {
+watch(() => [params.value.cs_status, params.value.sort_by, params.value.is_new], () => {
   // 필터가 변경되면 1페이지부터 다시 로드
   params.value.page = 1
   items.value = []
@@ -426,7 +426,14 @@ function setActiveStatusFilter(index: number) {
 
 function setActiveCategoryFilter(index: number) {
   activeCategoryFilter.value = index
-  params.value.is_best = index === 2 ? true : null
+  // HOT(index 1): 최근 7일 상담 많은 순, 베스트(index 2): 리뷰 수 많은 순
+  if (index === 1) {
+    params.value.sort_by = 'hot'
+  } else if (index === 2) {
+    params.value.sort_by = 'review'
+  } else {
+    params.value.sort_by = null
+  }
   params.value.is_new = index === 3 ? true : null
   // watch에서 loadCounselors 호출됨
 }

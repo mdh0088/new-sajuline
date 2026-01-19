@@ -19,6 +19,7 @@ from src.repositories.inquiry_repository import InquiryRepository
 from src.repositories.notification_repository import NotificationRepository
 from src.repositories.ars.tm60_member_repository import Tm60MemberRepository
 from src.repositories.ars.tm60_mobile_repository import Tm60MobileRepository
+from src.repositories.ars.tm60_chatlog_repository import Tm60ChatlogRepository
 from src.services.counselor_service import CounselorService
 from src.services.auth_service import AuthService, get_current_user, TokenPayload, KST
 from src.services.user_activity_log_service import UserActivityLogService
@@ -151,15 +152,22 @@ def get_notification_wait_service(
     )
 
 
+def get_tm60_chatlog_repository():
+    """TM60 채팅로그 리포지토리 의존성 주입"""
+    for mssql_session in get_db_mssql():
+        return Tm60ChatlogRepository(mssql_session)
+
+
 def get_counselor_service(
     counselor_repo: CounselorRepository = Depends(get_counselor_repository),
     auth_service: AuthService = Depends(get_auth_service),
     tm60_member_service: Tm60MemberService = Depends(get_tm60_member_service),
     review_repo: ConsultationReviewRepository = Depends(get_consultation_review_repository),
-    notification_wait_service: NotificationWaitService = Depends(get_notification_wait_service)
+    notification_wait_service: NotificationWaitService = Depends(get_notification_wait_service),
+    chatlog_repo: Tm60ChatlogRepository = Depends(get_tm60_chatlog_repository)
 ) -> CounselorService:
     """상담사 서비스 의존성 주입"""
-    return CounselorService(counselor_repo, auth_service, tm60_member_service, review_repo, notification_wait_service)
+    return CounselorService(counselor_repo, auth_service, tm60_member_service, review_repo, notification_wait_service, chatlog_repo)
 
 
 @router.post(
@@ -921,7 +929,7 @@ async def search_public_counselors_by_codes(
         "게스트 가능. 필터: is_best, is_new, cs_specialties[], cs_keywords[], search_name. "
         "t_counselor에서 필터링 후 counselor_code 목록으로 tm60_member.m_state를 조인하여 상태 반환. "
         "또한 t_consultation_review의 is_visible=true 기준 review_count와 평균 rating을 포함. 페이징 제공. "
-        "sort_by: 'review' (리뷰 많은 순), 'price' (가격 낮은 순), 없으면 상태별 정렬."
+        "sort_by: 'review' (리뷰 많은 순), 'hot' (최근 7일 상담 많은 순), 'price' (가격 낮은 순), 없으면 상태별 정렬."
     ),
 )
 async def search_public_counselors(
@@ -934,7 +942,7 @@ async def search_public_counselors(
     cs_specialties: Optional[list[str]] = Query(None, description="전문분야 배열"),
     cs_keywords: Optional[list[str]] = Query(None, description="키워드 배열"),
     search_name: Optional[str] = Query(None, description="상담사 닉네임 like"),
-    sort_by: Optional[str] = Query(None, description="정렬 기준: 'review' (리뷰 많은 순), 'price' (가격 낮은 순)"),
+    sort_by: Optional[str] = Query(None, description="정렬 기준: 'review' (리뷰 많은 순), 'hot' (최근 7일 상담 많은 순), 'price' (가격 낮은 순)"),
     counselor_service: CounselorService = Depends(get_counselor_service),
 ):
     """공개 검색 목록 (게스트)
@@ -945,7 +953,7 @@ async def search_public_counselors(
     - 2차: counselor_code -> tm60_member.m_code IN 검색
     - 각 항목에 리뷰 총 개수(is_visible=true)와 평균 rating 포함
     - 페이징 응답 및 전체 count 포함
-    - sort_by로 정렬 (review: 리뷰 많은 순, price: 가격 낮은 순)
+    - sort_by로 정렬 (review: 리뷰 많은 순, hot: 최근 7일 상담 많은 순, price: 가격 낮은 순)
     """
     log = get_logger_with_request_id()
     log.info(

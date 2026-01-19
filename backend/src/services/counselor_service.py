@@ -16,6 +16,7 @@ from src.services.ars.tm60_member_service import Tm60MemberService
 from src.repositories.counselor_repository import CounselorRepository
 from src.services.auth_service import AuthService
 from src.repositories.consultation_review_repository import ConsultationReviewRepository
+from src.repositories.ars.tm60_chatlog_repository import Tm60ChatlogRepository
 
 
 class CounselorService:
@@ -27,13 +28,15 @@ class CounselorService:
         auth_service: AuthService,
         tm60_member_service: Tm60MemberService | None = None,
         review_repo: ConsultationReviewRepository | None = None,
-        notification_wait_service = None
+        notification_wait_service = None,
+        chatlog_repo: Tm60ChatlogRepository | None = None
     ):
         self.counselor_repo = counselor_repo
         self.auth_service = auth_service
         self.tm60_member_service = tm60_member_service
         self.review_repo = review_repo
         self.notification_wait_service = notification_wait_service
+        self.chatlog_repo = chatlog_repo
 
     async def get_all_counselor_codes_shuffled(self) -> list[str]:
         """
@@ -201,6 +204,19 @@ class CounselorService:
             # 가격 낮은 순: 상담사 정보에서 after_amount 기준 정렬
             code_to_counselor_all = await self.counselor_repo.get_by_counselor_codes(filtered_codes)
             filtered_codes.sort(key=lambda c: (code_to_counselor_all.get(c).after_amount or 0) if code_to_counselor_all.get(c) else float('inf'))
+
+        elif sort_by == 'hot' and self.chatlog_repo is not None:
+            # HOT 정렬: 최근 7일간 상담 건수 많은 순
+            consultation_counts = await self.chatlog_repo.get_consultation_counts_by_m_codes_recent_days(
+                m_codes=filtered_codes,
+                days=7
+            )
+
+            # m_code -> count 매핑
+            code_to_count = {m_code: cnt for m_code, cnt in consultation_counts}
+
+            # 상담 건수 기준 내림차순 정렬
+            filtered_codes.sort(key=lambda c: code_to_count.get(c, 0), reverse=True)
 
         else:
             # 기본: 상태별 정렬 (상담중→대기중→부재중)
