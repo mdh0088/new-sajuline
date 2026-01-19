@@ -270,3 +270,48 @@ class Tm60ChatlogRepository:
                 raise BaseAppException(f"포인트 사용 내역 조회 실패: {str(e)}", status_code=500)
 
         return await asyncio.to_thread(_sync_get_usage_logs)
+
+    @logger.catch(reraise=True)
+    async def get_consultation_counts_by_m_codes_recent_days(
+        self,
+        m_codes: list[str],
+        days: int = 7
+    ) -> list[tuple[str, int]]:
+        """
+        여러 상담사 코드(m_code)에 대해 최근 N일간 상담 건수 일괄 조회 (HOT 정렬용)
+        - 조건: starttm >= (오늘 - days일) AND m_code IN (m_codes)
+        - Returns: [(m_code, count), ...]
+        """
+        log = get_logger_with_request_id()
+        log.info("Getting recent consultation counts by m_codes", m_codes_count=len(m_codes), days=days)
+
+        if not m_codes:
+            return []
+
+        from datetime import datetime, timedelta
+        # 최근 N일 기준 날짜 계산 (starttm은 'yyyy-mm-dd hh:mm:ss' 문자열)
+        start_date = (datetime.now() - timedelta(days=days)).strftime("%Y-%m-%d 00:00:00")
+
+        def _sync_get_counts() -> list[tuple[str, int]]:
+            try:
+                results = (
+                    self.mssql_session.query(
+                        Tm60Chatlog.m_code,
+                        func.count(Tm60Chatlog.idx)
+                    )
+                    .filter(
+                        and_(
+                            Tm60Chatlog.m_code.in_(m_codes),
+                            Tm60Chatlog.starttm >= start_date,
+                        )
+                    )
+                    .group_by(Tm60Chatlog.m_code)
+                    .all()
+                )
+                log.info("Recent consultation counts fetched", result_count=len(results))
+                return [(str(m_code), int(cnt)) for m_code, cnt in results]
+            except Exception as e:
+                log.warning("Failed to get recent consultation counts", error=str(e))
+                raise BaseAppException(f"최근 상담 건수 조회 실패: {str(e)}", status_code=500)
+
+        return await asyncio.to_thread(_sync_get_counts)

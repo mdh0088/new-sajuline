@@ -21,7 +21,7 @@ export interface CounselorSearchParams {
   cs_specialties?: string[] | null
   cs_keywords?: string[] | null
   search_name?: string | null
-  sort_by?: string | null // 'review' (리뷰 많은 순), 'price' (가격 낮은 순)
+  sort_by?: string | null // 'review' (리뷰 많은 순), 'hot' (최근 7일 상담 많은 순), 'price' (가격 낮은 순)
 }
 
 
