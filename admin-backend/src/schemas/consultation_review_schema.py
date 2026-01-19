@@ -15,9 +15,9 @@ class ConsultationReviewItem(BaseModel):
     review_id: int
     session_id: int
     user_id: str
-    user_nickname: str  # JOIN으로 가져온 사용자 닉네임
+    user_nickname: Optional[str] = None  # JOIN으로 가져온 사용자 닉네임 (COALESCE: User.nickname → ConsultationReview.user_nickname)
     counselor_id: str
-    counselor_nickname: str  # JOIN으로 가져온 상담사 닉네임
+    counselor_nickname: Optional[str] = None  # JOIN으로 가져온 상담사 닉네임
     rating: int
     content: Optional[str] = None
     counselor_reply: Optional[str] = None

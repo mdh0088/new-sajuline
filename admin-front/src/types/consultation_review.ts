@@ -7,9 +7,9 @@ export interface ConsultationReviewItem {
   review_id: number;
   session_id: number;
   user_id: string;
-  user_nickname: string;
+  user_nickname: string | null;
   counselor_id: string;
-  counselor_nickname: string;
+  counselor_nickname: string | null;
   rating: number;
   content: string | null;
   counselor_reply: string | null;
