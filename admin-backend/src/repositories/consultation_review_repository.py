@@ -35,11 +35,11 @@ class ConsultationReviewRepository:
         후기 목록 조회 (User, Counselor JOIN)
         """
         # 기본 쿼리
-        # user_nickname: User 테이블 JOIN 우선, 없으면 테이블의 user_nickname 사용
+        # resolved_user_nickname: User 테이블 JOIN 우선, 없으면 테이블의 user_nickname 사용
         stmt = (
             select(
                 ConsultationReview,
-                func.coalesce(User.nickname, ConsultationReview.user_nickname).label("user_nickname"),
+                func.coalesce(User.nickname, ConsultationReview.user_nickname).label("resolved_user_nickname"),
                 Counselor.nickname.label("counselor_nickname"),
             )
             .outerjoin(User, ConsultationReview.user_id == User.user_id)
@@ -96,12 +96,12 @@ class ConsultationReviewRepository:
         result = await self.session.execute(stmt)
         rows = result.all()
 
-        # 결과 변환 (review, user_nickname, counselor_nickname)
+        # 결과 변환 (review, resolved_user_nickname, counselor_nickname)
         items = []
         for row in rows:
             review_dict = {
-                **{c.name: getattr(row.ConsultationReview, c.name) for c in ConsultationReview.__table__.columns},
-                "user_nickname": row.user_nickname,
+                **{c.name: getattr(row.ConsultationReview, c.name) for c in ConsultationReview.__table__.columns if c.name != "user_nickname"},
+                "user_nickname": row.resolved_user_nickname,
                 "counselor_nickname": row.counselor_nickname,
             }
             items.append(review_dict)
@@ -112,11 +112,11 @@ class ConsultationReviewRepository:
         """
         후기 상세 조회 (User, Counselor JOIN)
         """
-        # user_nickname: User 테이블 JOIN 우선, 없으면 테이블의 user_nickname 사용
+        # resolved_user_nickname: User 테이블 JOIN 우선, 없으면 테이블의 user_nickname 사용
         stmt = (
             select(
                 ConsultationReview,
-                func.coalesce(User.nickname, ConsultationReview.user_nickname).label("user_nickname"),
+                func.coalesce(User.nickname, ConsultationReview.user_nickname).label("resolved_user_nickname"),
                 Counselor.nickname.label("counselor_nickname"),
             )
             .outerjoin(User, ConsultationReview.user_id == User.user_id)
@@ -132,8 +132,8 @@ class ConsultationReviewRepository:
 
         # 결과 변환
         review_dict = {
-            **{c.name: getattr(row.ConsultationReview, c.name) for c in ConsultationReview.__table__.columns},
-            "user_nickname": row.user_nickname,
+            **{c.name: getattr(row.ConsultationReview, c.name) for c in ConsultationReview.__table__.columns if c.name != "user_nickname"},
+            "user_nickname": row.resolved_user_nickname,
             "counselor_nickname": row.counselor_nickname,
         }
 
