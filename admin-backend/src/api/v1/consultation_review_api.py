@@ -14,6 +14,7 @@ from src.services.consultation_review_service import ConsultationReviewService
 from src.schemas.consultation_review_schema import (
     ConsultationReviewListParams,
     ConsultationReviewUpdateRequest,
+    ConsultationReviewCreateRequest,
 )
 from src.common.response import APIResponse, APIResponseBuilder
 
@@ -91,4 +92,21 @@ async def update_review(
     return APIResponseBuilder.success(
         data=result.model_dump(),
         message="상담 후기 수정 성공",
+    )
+
+
+@router.post("", response_model=APIResponse, summary="더미 상담 후기 생성")
+async def create_dummy_review(
+    payload: ConsultationReviewCreateRequest,
+    service: Annotated[ConsultationReviewService, Depends(_get_service)],
+):
+    """
+    더미 상담 후기 생성
+    - session_id는 0 또는 음수로 자동 생성 (unique 제약 준수)
+    - user_id, counselor_id는 실제 존재하지 않아도 생성 가능
+    """
+    result = await service.create_dummy_review(payload)
+    return APIResponseBuilder.success(
+        data=result,
+        message="더미 상담 후기 생성 성공",
     )

@@ -6,7 +6,7 @@ from __future__ import annotations
 from datetime import datetime
 from typing import Optional
 
-from sqlalchemy import select, func, or_, and_
+from sqlalchemy import select, func, or_, and_, case
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.models.consultation_review_model import ConsultationReview
@@ -35,14 +35,15 @@ class ConsultationReviewRepository:
         후기 목록 조회 (User, Counselor JOIN)
         """
         # 기본 쿼리
+        # user_nickname: User 테이블 JOIN 우선, 없으면 테이블의 user_nickname 사용
         stmt = (
             select(
                 ConsultationReview,
-                User.nickname.label("user_nickname"),
+                func.coalesce(User.nickname, ConsultationReview.user_nickname).label("user_nickname"),
                 Counselor.nickname.label("counselor_nickname"),
             )
-            .join(User, ConsultationReview.user_id == User.user_id)
-            .join(Counselor, ConsultationReview.counselor_id == Counselor.counselor_id)
+            .outerjoin(User, ConsultationReview.user_id == User.user_id)
+            .outerjoin(Counselor, ConsultationReview.counselor_id == Counselor.counselor_id)
         )
 
         # 검색 조건
@@ -111,14 +112,15 @@ class ConsultationReviewRepository:
         """
         후기 상세 조회 (User, Counselor JOIN)
         """
+        # user_nickname: User 테이블 JOIN 우선, 없으면 테이블의 user_nickname 사용
         stmt = (
             select(
                 ConsultationReview,
-                User.nickname.label("user_nickname"),
+                func.coalesce(User.nickname, ConsultationReview.user_nickname).label("user_nickname"),
                 Counselor.nickname.label("counselor_nickname"),
             )
-            .join(User, ConsultationReview.user_id == User.user_id)
-            .join(Counselor, ConsultationReview.counselor_id == Counselor.counselor_id)
+            .outerjoin(User, ConsultationReview.user_id == User.user_id)
+            .outerjoin(Counselor, ConsultationReview.counselor_id == Counselor.counselor_id)
             .where(ConsultationReview.review_id == review_id)
         )
 
@@ -152,3 +154,27 @@ class ConsultationReviewRepository:
         await self.session.flush()
         await self.session.refresh(review)
         return review
+
+    async def create(self, review: ConsultationReview) -> ConsultationReview:
+        """
+        후기 생성
+        """
+        self.session.add(review)
+        await self.session.flush()
+        await self.session.refresh(review)
+        return review
+
+    async def get_next_dummy_session_id(self) -> int:
+        """
+        더미 리뷰용 session_id 생성 (0 또는 음수)
+        session_id가 unique이므로 기존 더미 session_id 중 최솟값 - 1 반환
+        """
+        stmt = select(func.min(ConsultationReview.session_id)).where(
+            ConsultationReview.session_id <= 0
+        )
+        result = await self.session.execute(stmt)
+        min_session_id = result.scalar()
+
+        if min_session_id is None:
+            return 0  # 첫 더미 리뷰는 session_id = 0
+        return min_session_id - 1  # 이후 더미 리뷰는 -1, -2, -3...

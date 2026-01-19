@@ -5,6 +5,15 @@
 
   <div>
     <el-card>
+      <template #header>
+        <div class="card-header">
+          <span class="card-title">상담 후기 관리</span>
+          <el-button type="primary" @click="openDummyReviewDrawer">
+            더미 후기 생성
+          </el-button>
+        </div>
+      </template>
+
       <el-tabs v-model="activeTab" class="demo-tabs">
         <el-tab-pane :label="`후기 목록 (${tableOptions.totalCnt || 0})`" name="review"/>
 
@@ -40,6 +49,11 @@
     :doSearch="doSearch"
   />
 
+  <CsDummyReviewDrawer
+    v-model:isDrawerActive="isDummyDrawerActive"
+    :doSearch="doSearch"
+  />
+
 </template>
 
 <script lang="ts" setup>
@@ -53,9 +67,11 @@ const CommonSearch = defineAsyncComponent(() => import("@/views/common/search/Co
 const CommonList = defineAsyncComponent(() => import("@/views/common/list/CommonList.vue"))
 const CustomSwitch = defineAsyncComponent(() => import("@/views/common/switch/CustomSwitch.vue"))
 const CsDetailDrawer = defineAsyncComponent(() => import("@/views/pages/review/cs-review/components/CsDetailDrawer.vue"))
+const CsDummyReviewDrawer = defineAsyncComponent(() => import("@/views/pages/review/cs-review/components/CsDummyReviewDrawer.vue"))
 
 const openType = ref("update"); // update only (no create for reviews)
 const activeTab = ref('review')
+const isDummyDrawerActive = ref(false)
 
 const tableOptions = ref<TableOptions<ConsultationReviewItem>>(
   new TableOptionsClass({ headers: csReviewHeader, isPagination: true, isSelectActive: false })
@@ -84,6 +100,11 @@ const handleVisibleChange = async (review: ConsultationReviewItem) => {
   await updateReviewQuick(review, doSearch, 'is_visible');
 }
 
+// 더미 후기 생성 Drawer 열기
+const openDummyReviewDrawer = () => {
+  isDummyDrawerActive.value = true;
+}
+
 onMounted(async () => {
   await doSearch();
 })
@@ -104,5 +125,16 @@ onMounted(async () => {
 
 .m-r-10 {
   margin-right: 10px;
+}
+
+.card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.card-title {
+  font-size: 16px;
+  font-weight: 600;
 }
 </style>
