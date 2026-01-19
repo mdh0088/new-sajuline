@@ -1,0 +1,458 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>이용약관 - 사주라인</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Apple SD Gothic Neo', 'Noto Sans KR', sans-serif;
+            background-color: #0a0a0f;
+            color: #ffffff;
+            line-height: 1.6;
+            overflow-x: hidden;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+
+        a {
+            text-decoration: none;
+            color: inherit;
+        }
+
+        button {
+            outline: none;
+            border: none;
+            cursor: pointer;
+        }
+
+        /* 헤더 */
+        .header {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            background: rgba(10, 10, 15, 0.95);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            z-index: 1000;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .header-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 16px 20px;
+            height: 60px;
+        }
+
+        .back-button {
+            width: 36px;
+            height: 36px;
+            background: transparent;
+            color: #fff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+        }
+
+        .header-title {
+            position: absolute;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 18px;
+            font-weight: 600;
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+
+        .icon-btn {
+            width: 36px;
+            height: 36px;
+            background: rgba(255, 255, 255, 0.05);
+            color: #fff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 12px;
+            transition: all 0.3s ease;
+            font-size: 18px;
+        }
+
+        .icon-btn:active {
+            transform: scale(0.95);
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        /* 메인 콘텐츠 */
+        .main-content {
+            margin-top: 60px;
+            padding: 20px;
+            padding-bottom: 120px; /* 하단 네비 공간 */
+            flex: 1;
+            overflow-y: auto;
+        }
+
+        .terms-section {
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            padding: 24px;
+            margin-bottom: 24px;
+        }
+
+        .terms-section h2 {
+            font-size: 20px;
+            font-weight: 700;
+            margin-bottom: 16px;
+            color: #B794F6;
+            padding-bottom: 12px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .terms-section h3 {
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 4px;
+            color: #fff;
+        }
+
+        .terms-section p {
+            font-size: 15px;
+            line-height: 1.6;
+            color: rgba(255, 255, 255, 0.9);
+            margin-bottom: 12px;
+            text-align: justify;
+        }
+
+        .terms-section ol {
+            margin: 4px 0;
+            padding-left: 24px;
+        }
+
+        .terms-section li {
+            font-size: 15px;
+            line-height: 1.6;
+            color: rgba(255, 255, 255, 0.9);
+            margin-bottom: 6px;
+            list-style-type: decimal;
+        }
+
+        .terms-section ul {
+            margin: 12px 0;
+            padding-left: 24px;
+        }
+
+        .terms-section li ul {
+            list-style-type: disc;
+        }
+
+        .highlight {
+            background: rgba(147, 51, 234, 0.1);
+            padding: 16px;
+            border-radius: 12px;
+            margin: 16px 0;
+            border: 1px solid rgba(147, 51, 234, 0.2);
+        }
+
+        .highlight p {
+            margin-bottom: 12px;
+        }
+
+        .highlight p:last-child {
+            margin-bottom: 0;
+        }
+
+        /* 하단 네비게이션 */
+        .bottom-nav {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: rgba(10, 10, 15, 0.95);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            display: flex;
+            justify-content: space-around;
+            padding: 8px 0 12px;
+            z-index: 1000;
+        }
+
+        .nav-item {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 8px;
+            color: rgba(255, 255, 255, 0.5);
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .nav-item::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 0;
+            height: 2px;
+            background: linear-gradient(90deg, #9333EA 0%, #B794F6 100%);
+            transition: width 0.3s ease;
+        }
+
+        .nav-item.active {
+            color: #B794F6;
+        }
+
+        .nav-item.active::before {
+            width: 40px;
+        }
+
+        .nav-icon {
+            font-size: 24px;
+            margin-bottom: 4px;
+        }
+
+        .nav-label {
+            font-size: 11px;
+            font-weight: 500;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .terms-section h2 {
+                font-size: 18px;
+            }
+            .terms-section h3 {
+                font-size: 15px;
+            }
+            .terms-section p,
+            .terms-section li {
+                font-size: 13px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- 헤더 -->
+    <header class="header">
+        <div class="header-top">
+            <button class="back-button" onclick="window.history.back();">←</button>
+            <h1 class="header-title">이용약관</h1>
+            <div class="header-actions">
+                <button class="icon-btn" onclick="window.location.href='search-page.html'">🔍</button>
+                <button class="icon-btn" onclick="window.location.href='login-page.html'">👤</button>
+            </div>
+        </div>
+    </header>
+
+    <!-- 메인 콘텐츠 -->
+    <main class="main-content">
+        <section class="terms-section">
+            <h2>제 1 장 총칙</h2>
+
+            <h3>제 1 조 (목적)</h3>
+            <p>
+                이 약관은 주식회사 피플라인(이하 "회사"라고 함)가 인터넷 사이트 (https://www.sajuline.com/, 이하 "홈페이지"라고 합니다.)와 모바일 사이트(https://m.www.sajuline.com/) 및 스마트폰 등 이동통신기기를 통해 제공되는 어플리케이션 "사주라인" 모바일 어플리케이션(이하 "모바일 서비스"라고 합니다.)을 통하여 제공하는 서비스 및 제반 서비스의 이용과 관련하여 회사와 이용고객 간의 권리와 의무, 책임사항 및 이용고객의 서비스 이용절차에 관한 사항을 규정함을 목적으로 합니다.
+            </p>
+
+            <h3>제 2 조 (약관의 명시, 효력 및 변경)</h3>
+            <ol>
+                <li>회사는 이 약관을 서비스를 이용하고자 하는 자와 이용고객이 알 수 있도록 서비스가 제공되는 홈페이지와 모바일 서비스에 게시하며, 회원가입을 위해 회원정보를 제출하거나 회사의 고지와 안내 멘트를 듣고 회사의 서비스를 이용하는 자는 이 약관에 동의하는 것을 의미합니다.</li>
+                <li>이 약관에 동의하는 것은 정기적으로 홈페이지와 모바일 서비스에 방문하여 약관의 변경 사항을 확인하는 것에 동의하는 것을 의미합니다.</li>
+                <li>
+                    회사는 필요한 경우 이 약관을 변경할 수 있습니다. 회사는 약관이 변경되는 경우에 변경된 약관의 내용과 시행일을 정하여, 그 시행일로부터 7일 전 홈페이지와 모바일 서비스에 게시합니다. 다만, 이용자에게 불리하게 약관내용을 변경하는 경우에는 최소한 30일 이상의 사전 유예기간을 두고 홈페이지와 모바일 서비스에 게시하거나 이용고객이 회원 가입 시 등록한 이메일로 전송하는 방법으로 고지합니다. 개정된 약관은 개정약관에서 소급효를 부여하지 않는 이상 적용일자 이전으로 소급하여 적용되지 아니합니다.
+                </li>
+                <li>
+                    이 약관은 회사와 이용고객 간에 성립되는 서비스이용계약의 기본약정입니다. 회사는 필요한 경우 특정 서비스에 관하여 적용될 사항(이하 "개별약관"이라고 합니다.)을 정하여 미리 공지할 수 있습니다. 이용고객이 이러한 개별약관에 동의하고 특정 서비스를 이용하는 경우에는 개별약관이 우선적으로 적용되고, 이 약관은 보충적인 효력을 갖습니다. 개별약관의 변경에 관해서는 위 3항을 준용합니다.
+                </li>
+            </ol>
+
+            <h3>제 3 조 (용어의 정의)</h3>
+            <p>이 약관에서 사용하는 용어의 정의는 다음과 같습니다. 상담 중개 서비스와 관련한 추가적인 용어의 정의는 제11조 제2항을 따릅니다.</p>
+            <ol>
+                <li><strong>이용 계약</strong>: 회사가 제공하는 서비스 이용과 관련하여 회사와 이용 고객 간에 체결하는 계약을 말합니다.</li>
+                <li><strong>회원</strong>: 회사가 제공하는 절차에 따른 가입 신청 및 이용 계약 체결을 완료한 뒤, ID를 발급받아 회사의 서비스를 이용할 수 있는 자를 말합니다.</li>
+                <li><strong>비회원</strong>: 회원등록을 하지 않고 회사가 제공하는 서비스를 이용하려는 개인 또는 전화번호를 말합니다.</li>
+                <li><strong>이용고객</strong>: 회원과 비회원을 모두 포함하여 회사가 제공하는 서비스를 이용하려는 자를 말합니다.</li>
+                <li>
+                    <strong>아이디(ID)</strong>: 회원의 식별과 서비스 이용을 위하여 이메일 주소를 활용하여 회원이 설정합니다. 이때 작성된 이메일에 대해서는 별도의 인증 과정을 거치지 않으며, 작성된 이메일에 오류가 있을 시(오타, 없는 주소 등...) 거래, 공지 등의 중요 알림이 전송되지 않을 수 있습니다. 이메일 작성 오류로 인한 문제 발생 시, 그 책임은 전적으로 회원 본인에게 있습니다.
+                </li>
+                <li><strong>비밀번호(PASSWORD)</strong>: 회원의 동일성 확인과 회원정보의 보호를 위하여 회원이 설정하고 회사가 승인한 문자(특수문자 포함)와 숫자의 조합을 말합니다.</li>
+                <li><strong>회원 탈퇴</strong>: 회원이 이용 계약을 해지함을 의미합니다.</li>
+                <li>
+                    <strong>닉네임</strong>: 홈페이지와 모바일 서비스에서 아이디와 함께, 또는 아이디를 대신하여 회원을 식별하기 위하여 가입 시 사용한 이메일 계정으로 자동 설정되며, 이용자의 선택으로 설정되는 문자(특수문자 포함)와 숫자의 조합으로 변경 사용됩니다.
+                </li>
+                <li><strong>상담사</strong>: 사주라인 상담 서비스를 제공하기 위해 회사와 계약한 자를 말합니다.</li>
+                <li>
+                    <strong>포인트</strong>: 회사에서 제공하는 상담 서비스와 유료 콘텐츠를 이용하기 위해 구매하는 상품권으로 현금 1원당 1포인트의 비율로 환산되며, 아이디를 기준으로 구매, 사용, 환불 등이 가능합니다.
+                </li>
+                <li><strong>직거래</strong>: 회사의 결제서비스를 통하지 않고 이용고객과 상담사가 직접 서비스 대금을 주고 받는 행위를 말합니다.</li>
+                <li>
+                    <strong>판매자</strong>: '판매자'란 회사와의 계약 하에 서비스에 입점하여 이용자에게 상품을 판매하고, 판매자에 대한 각종 정보 및 예약이 가능한 시간정보, 서비스 내용 등을 제공하는 자를 말합니다.
+                </li>
+                <li>
+                    <strong>판매자 매장</strong>: '판매자 매장'이란 판매자의 상표, 상호를 사용하여 대한민국 내에서 운영하는 영업장으로서 판매자가 직접 운영하는 사업장을 칭합니다.
+                </li>
+            </ol>
+            <p>
+                ② 이 약관에서 사용하는 용어의 정의는 약관 이외의 관계 법령 및 각 서비스 별 안내에서 정하는 바에 의합니다. 관계 법령과 각 서비스 별 안내에서 정하지 않는 것은 일반적인 상관례에 의합니다.
+            </p>
+
+            <h3>제 4 조 (개인정보의 보호 및 사용, 약관의 규정 외 사항에 관한 준칙)</h3>
+            <ol>
+                <li>회사는 관계법령이 정하는 바에 따라 이용자 등록정보를 포함한 이용자의 개인 정보를 보호하기 위해 노력합니다. 이용자의 개인 정보 보호 및 사용에 대해서는 관련 법령 및 회사의 개인정보처리방침이 적용됩니다. 단, 회사의 공식 사이트 이외의 링크된 사이트에서는 회사의 개인정보처리방침이 적용되지 않습니다.</li>
+                <li>회사는 이용자의 귀책 사유로 인해 노출된 이용자의 계정 정보를 비롯한 모든 정보에 대해서 일체의 책임을 지지 않습니다.</li>
+                <li>이 약관에 규정되지 않은 사항에 대해서는 회사가 정한 개별 서비스 이용약관, 운영정책 및 관계법령이 적용됩니다.</li>
+            </ol>
+
+            <h2>제 2 장 서비스 이용 계약</h2>
+
+            <h3>제 5 조 (서비스 이용 신청 및 이용계약의 성립)</h3>
+            <ol>
+                <li>
+                    회사가 제공하는 서비스에 관한 이용계약(이하 "이용계약"이라고 합니다.)은 서비스를 이용하고자 하는 자의 이용신청(회원가입신청)에 대하여 회사가 승낙함으로써 성립합니다. 회사는 홈페이지와 모바일 서비스, 기타 방법으로 가입양식과 약관을 게재하고, 회원이 회원정보를 입력하고 가입하기 누르기 등을 통해 제출하면 약관에 동의하고 이용신청한 것으로 판단하며, 회사는 이용승낙의 의사를 해당 서비스 화면에 게시하거나, 이메일 또는 기타 방법으로 이용신청자에 통지합니다. 단, 비회원을 포함한 이용고객이 060전화상담 서비스를 이용하는 경우의 이용신청 및 이용계약의 성립은 제10조 제4항에 따릅니다.
+                </li>
+                <li>
+                    이용신청 시 반드시 본인의 실제 정보를 기재하여야 하며, 만 19세 이상이어야 합니다. 그러지 아니한 경우 이용고객은 법적인 보호를 받을 수 없으며, 이에 따른 민사, 형사상의 모든 책임은 이용고객에게 있습니다. 또한 이용약관 제23조에 따라 서비스 이용에 제한이 있을 수 있습니다.
+                </li>
+                <li>이용 계약이 성립되면 회사는 이용고객에 대한 제반 관리 업무를 수행합니다.</li>
+                <li>
+                    이용고객은 회사가 정한 절차에 의해 회원가입을 통해 ID를 생성할 수 있으며, 각 ID를 통해 당해 회사가 제공하는 서비스를 이용할 수 있습니다. 단, 회사가 제시하는 절차를 완료하지 않은 회원 및 실명 확인이 완료되지 않은 회원은 서비스 이용에 제한이 있을 수 있습니다.
+                </li>
+                <li>아이디(ID)는 실명 1인당 1개의 아이디만을 사용할 수 있으며, 이용계약은 아이디(ID) 단위로 체결하는 것을 원칙으로 합니다.</li>
+            </ol>
+
+            <h3>제 6 조 (이용신청에 대한 승낙의 제한)</h3>
+            <ol>
+                <li>
+                    회사는 이용고객의 회원 신청에 대하여 업무상 또는 기술상의 문제가 없는 경우 서비스 이용을 승낙함을 원칙으로 합니다. 단, 회사는 다음 각 호에 해당하는 신청에 대하여는 승낙을 하지 않을 수 있습니다.
+                    <ul>
+                        <li>본 약관 제20조 제2항 각 호에서 금지하고 있는 사항을 위반하여 신청한 경우</li>
+                        <li>본 약관 제24조 제6항에 의거, 재가입이 제한된 이용자에 해당되는 경우</li>
+                        <li>회원 탈퇴 후 1주일 이내 회원 가입을 재신청하려는 경우</li>
+                        <li>기타 회원으로서 부적절한 행위를 할 우려가 있다고 인정되는 경우</li>
+                    </ul>
+                </li>
+                <li>
+                    회사는 다음 각 호의 경우에 원인이 해소될 때까지 승낙을 유보할 수 있습니다.
+                    <ul>
+                        <li>회사의 설비에 여유가 없는 경우</li>
+                        <li>기술상 서비스를 처리하지 못할 장애 사항이 발생한 경우</li>
+                        <li>이용자가 관련 법령에 의해 법정 대리인 동의 등 필요한 절차를 완료하지 않은 경우</li>
+                        <li>회사가 제시하는 회원 가입 절차를 완료하지 않은 경우</li>
+                        <li>기타 회원으로서 부적절한 행위를 할 우려가 있다고 인정되는 경우</li>
+                    </ul>
+                </li>
+            </ol>
+
+            <h2>제 3 장 서비스의 이용</h2>
+
+            <h3>제 7 조 (서비스의 이용개시)</h3>
+            <ol>
+                <li>회사는 이용 고객의 서비스 이용신청 시 서비스를 개시합니다. 단, 일부 서비스의 경우에는 회사의 필요에 따라 지정된 일자부터 서비스를 개시할 수 있습니다.</li>
+                <li>회사의 업무상 또는 기술상의 장애로 인하여 서비스를 개시하지 못하는 경우에는 홈페이지 또는 개별 서비스 관련 홈페이지에 공시하거나 이용고객에게 이를 통지합니다.</li>
+                <li>회사는 각 서비스 이용에 필요한 최소한의 기술 사양에 관한 정보를 각 서비스별 홈페이지 권장사양 정보에서 제공합니다. 이용고객은 각 서비스를 이용하기 위하여 서비스에 이용할 단말기 사양, 유무선 통신망의 품질 등이 해당 서비스의 이용에 적합한지 여부를 사전에 확인하여야 합니다.</li>
+                <li>이용 고객은 서비스를 이용함에 있어 서비스 이용을 위한 목적으로 설치되는 프로그램(이하 "프로그램"이라고 함) 및 원활한 프로그램 구동을 위해 추가적으로 필요한 프로그램, 소프트웨어 등(이하 "부가 프로그램"이라고 함)의 설치가 필요할 수 있습니다.</li>
+            </ol>
+
+            <h3>제 8 조 (서비스의 제공 등)</h3>
+            <ol>
+                <li>
+                    회사는 이용고객에게 아래와 같은 서비스를 제공합니다.
+                    <ul>
+                        <li>상담 중개 서비스 및 상담 중개 서비스에 부수되는 콘텐츠, 포인트 등의 제반 서비스</li>
+                        <li>기타 회사가 자체 개발하거나 다른 회사와의 협력 계약 등을 통해 이용고객에게 제공하는 일체의 서비스</li>
+                    </ul>
+                </li>
+                <li>1항 상의 각 서비스 및 제휴 서비스의 내용은 변경될 수 있으며, 이 경우 회사는 홈페이지, 각 서비스 별 홈페이지 및 제휴 서비스 홈페이지 등을 통해 이용자에게 공지합니다.</li>
+                <li>
+                    회사는 업무상 또는 기술상 특별한 지장이 없는 한 연중무휴 1일 24시간 서비스 제공을 원칙으로 합니다. 다만, 시스템 정기점검, 서버의 증설 및 교체, 새로운 콘텐츠 내용의 추가, 각종 버그 패치, 새로운 서비스로의 교체 등 운영상 필요한 경우, 일정 시간 또는 기간 동안 서비스를 일시 중지시킬 수 있으며 관련 법령 상 또는 서비스의 내용 및 운영상 필요한 경우, 1일 특정 시간 동안에만 서비스를 제공할 수 있습니다. 위와 같은 경우 회사는 사전에 그 내용 및 시간을 홈페이지 또는 개별 서비스 관련 홈페이지에 공지합니다.
+                </li>
+                <li>
+                    회사는 서비스 개선 및 이용고객 대상 서비스 소개 등을 위한 목적으로 이용고객 개인에 대한 추가정보를 요구할 수 있으며, 동 요청에 대해 이용고객은 승낙하여 추가정보를 제공하거나 거부할 수 있습니다.
+                </li>
+                <li>
+                    회사가 제공하는 모든 서비스의 지적재산권을 포함한 모든 소유권은 회사에게 있으며, 서비스를 이용하는 이용고객은 회사가 제공하는 서비스 범위 내에서 이용권을 가집니다. 즉, 이용고객은 회사가 제공하는 서비스를 일정기간 동안 회사가 제공하는 각 서비스 범위 내에서 이용할 권한을 갖는 것이며, 이를 회사가 정한 방법 이외의 방법으로 이용 또는 사용할 수 없습니다.
+                </li>
+                <li>회사가 제공하는 아래와 같은 서비스 중 일부에 대해서는 유료로 제공할 수 있으며, 유료로 제공하는 서비스에 대한 결제 관련 사항은 포인트서비스 및 서비스별 안내 사항을 따릅니다.</li>
+                <li>
+                    회사가 다른 회사와의 협력 계약을 통해 제공하는 서비스에 대한 내용, 제3자 회사의 의무, 이용자의 권리와 의무 등 상세 사항은 해당 서비스에 대하여 제3자가 제공하는 별도 약관, 운영정책 등에서 정하는 바에 따릅니다. 해당 서비스 이용 시, 이용자는 제3자가 제공하는 서비스 이용 약관에 대한 동의가 필요할 수 있습니다.
+                </li>
+            </ol>
+
+            <h3>제 9 조 (서비스 제공의 제한 및 중지 등)</h3>
+            <ol>
+                <li>회사는 관련법령에 따라 만 19세 미만의 서비스 이용을 제한할 수 있습니다. 이때, 연령 확인이 완료되지 않은 회원은 만 19세 미만 회원에 준하여 서비스 이용을 제한할 수 있습니다.</li>
+                <li>회사는 운영상 또는 기술상의 필요에 따라 제공하고 있는 서비스를 변경할 수 있습니다. 변경될 서비스의 내용 및 제공일자 등에 대해서는 제14조에서 정한 방법으로 사전에 통지합니다. 단, 회사가 사전에 통지할 수 없는 치명적인 버그 발생, 서버 기기결함, 긴급 보안문제 해결 등의 부득이한 사정이 있는 경우는 사후에 통지할 수 있습니다.</li>
+                <li>
+                    회사는 다음 각 호에 해당하는 경우 서비스의 전부 또는 일부를 제한하거나 중지할 수 있습니다. 이러한 경우 그 사유 및 기간을 사전 또는 사후에 홈페이지를 통하여 공지합니다.
+                    <ul>
+                        <li>전시, 사변, 천재지변 또는 국가비상사태 등 불가항력적인 사유가 있는 경우</li>
+                        <li>정전, 제반 설비의 장애 또는 이용량의 폭주 등으로 정상적인 서비스 이용에 지장이 있는 경우</li>
+                        <li>서비스용 설비의 보수 등 공사로 인한 부득이한 경우</li>
+                        <li>회사의 제반 사정으로 서비스를 할 수 없는 경우</li>
+                    </ul>
+                </li>
+                <li>
+                    회사는 회사의 분할, 합병, 영업양도, 영업의 폐지, 당해 서비스의 수익 악화, 당해 운영 서비스 권한 상실 등 회사의 경영상 중대한 필요에 의한 경우 30일 전 제14조에 따라 통지하고, 서비스의 제공을 종료할 수 있습니다. 다만, 회사가 통제할 수 없는 사유로 인한 서비스의 중단으로 인하여 사전 통지가 불가능한 경우에는 사후에 공지합니다.
+                </li>
+                <li>이용고객은 서비스 종료 시 사용 기간이 남아 있지 않거나 본 약관 제12조 제2항에서 규정한 사용 보증 기간이 지난 포인트에 대하여 배상을 청구할 수 없습니다.</li>
+                <li>회사는 서비스의 변경 및 중지로 발생하는 문제에 대해서는 책임을 지지 않습니다.</li>
+            </ol>
+
+            <h3>제 10 조 (상담 중개 서비스)</h3>
+            <p>① 상담 중개 서비스란 회사가 홈페이지와 모바일 서비스를 통하여 이용고객과 상담사 간의 전화상담, 화상상담, 기타 방법의 상담을 중개하는 서비스 및 관련 부가서비스 일체를 말합니다.</p>
+            <p>② 상담 중개 서비스와 관련한 용어의 정의는 다음과 같습니다.</p>
+            <ol>
+                <li><strong>060전화상담</strong>: 홈페이지와 모바일 서비스를 통해 제공되는 060 전화번호를 통해 상담사와 전화 상담을 할 수 있는 서비스를 말합니다.</li>
+                <li><strong>포인트상담</strong>: 모바일 서비스를 통해 포인트 구매 후 상담사와 전화 상담 또는 화상상담을 할 수 있는 서비스를 말합니다.</li>
+                <li><strong>오프라인 상담</strong>: 홈페이지와 모바일 서비스를 통해 이용고객이 상담 신청 및 결제 후 오프라인에서 상담사와 상담할 수 있는 서비스를 말합니다.</li>
+            </ol>
+            <p>③ 상담 중개 서비스에 대한 정책은 따로 정한 바에 의합니다.</p>
+        </section>
+    </main>
+
+    <!-- 하단 네비게이션 -->
+    <nav class="bottom-nav">
+        <a href="main.html" class="nav-item">
+            <span class="nav-icon">🏠</span>
+            <span class="nav-label">홈</span>
+        </a>
+        <a href="ai-fortune-complete.html" class="nav-item">
+            <span class="nav-icon">🤖</span>
+            <span class="nav-label">AI운세</span>
+        </a>
+        <a href="event.html" class="nav-item">
+            <span class="nav-icon">🎁</span>
+            <span class="nav-label">이벤트</span>
+        </a>
+        <a href="favorite.html" class="nav-item">
+            <span class="nav-icon">⭐</span>
+            <span class="nav-label">즐겨찾기</span>
+        </a>
+        <a href="mypage.html" class="nav-item">
+            <span class="nav-icon">👤</span>
+            <span class="nav-label">마이</span>
+        </a>
+    </nav>
+</body>
+</html>

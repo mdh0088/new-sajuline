@@ -1,0 +1,876 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>포인트 충전 - 사주라인</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Apple SD Gothic Neo', 'Noto Sans KR', sans-serif;
+            background-color: #0a0a0f;
+            color: #ffffff;
+            line-height: 1.6;
+            overflow-x: hidden;
+        }
+
+        /* 헤더 */
+        .header {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            background: rgba(10, 10, 15, 0.95);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            z-index: 1000;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .header-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 16px 20px;
+            height: 60px;
+        }
+
+        .back-button {
+            width: 36px;
+            height: 36px;
+            border: none;
+            background: transparent;
+            color: #fff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            font-size: 20px;
+        }
+
+        .header-title {
+            position: absolute;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 18px;
+            font-weight: 600;
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+
+        .icon-btn {
+            width: 36px;
+            height: 36px;
+            border: none;
+            background: transparent;
+            color: #fff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            font-size: 20px;
+        }
+
+        .guide-btn {
+            width: 36px;
+            height: 36px;
+            background: rgba(147, 51, 234, 0.1);
+            color: #B794F6;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 12px;
+            transition: all 0.3s ease;
+            font-size: 18px;
+            border: 1px solid rgba(147, 51, 234, 0.2);
+        }
+
+        .guide-btn:active {
+            transform: scale(0.95);
+            background: rgba(147, 51, 234, 0.2);
+        }
+
+        /* 메인 콘텐츠 */
+        .main-content {
+            margin-top: 60px;
+            padding-bottom: 220px;
+        }
+
+        /* 현재 포인트 */
+        .current-point {
+            padding: 32px 20px;
+            background: linear-gradient(180deg, rgba(147, 51, 234, 0.15) 0%, rgba(147, 51, 234, 0.05) 100%);
+            text-align: center;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .current-point::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: radial-gradient(circle at center, rgba(147, 51, 234, 0.1) 0%, transparent 70%);
+            pointer-events: none;
+        }
+
+        .point-label {
+            font-size: 15px;
+            color: rgba(255, 255, 255, 0.7);
+            margin-bottom: 12px;
+            font-weight: 500;
+            letter-spacing: -0.3px;
+        }
+
+        .current-point .point-value {
+            font-size: 34px;
+            font-weight: 800;
+            color: #ffffff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            letter-spacing: -1px;
+        }
+
+        .current-point .point-icon {
+            font-size: 36px;
+        }
+
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding: 0 20px;
+        }
+
+        .section-title {
+            font-size: 18px;
+            font-weight: 700;
+        }
+
+        .guide-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            padding: 6px 12px;
+            background: rgba(147, 51, 234, 0.1);
+            border: 1px solid rgba(147, 51, 234, 0.2);
+            border-radius: 6px;
+            color: #ffffff;
+            font-size: 13px;
+            font-weight: 500;
+            text-decoration: none;
+            transition: all 0.2s ease;
+        }
+
+        .guide-link:active {
+            background: rgba(147, 51, 234, 0.15);
+        }
+
+        .guide-link .icon {
+            font-size: 14px;
+        }
+
+        /* 프로모션 배너 */
+        .promo-banner {
+            margin: 20px;
+            padding: 16px 20px;
+            background: linear-gradient(135deg, #FF6B6B 0%, #FF8E53 100%);
+            border-radius: 16px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .promo-banner::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            right: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(255, 255, 255, 0.1) 0%, transparent 70%);
+            animation: pulse 3s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); opacity: 0.5; }
+            50% { transform: scale(1.1); opacity: 0.8; }
+        }
+
+        .promo-icon {
+            font-size: 32px;
+            z-index: 1;
+        }
+
+        .promo-content {
+            flex: 1;
+            z-index: 1;
+        }
+
+        .promo-title {
+            font-size: 16px;
+            font-weight: 700;
+            margin-bottom: 4px;
+        }
+
+        .promo-desc {
+            font-size: 13px;
+            opacity: 0.9;
+        }
+
+        /* 충전 금액 선택 */
+        .charge-section {
+            padding: 24px 20px;
+        }
+
+        .charge-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px;
+        }
+
+        .charge-item {
+            background: rgba(255, 255, 255, 0.03);
+            border: 2px solid rgba(255, 255, 255, 0.1);
+            border-radius: 16px;
+            padding: 20px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .charge-item.popular {
+            border-color: rgba(147, 51, 234, 0.3);
+            background: rgba(147, 51, 234, 0.05);
+        }
+
+        .charge-item.selected {
+            border-color: #9333EA;
+            background: rgba(147, 51, 234, 0.1);
+        }
+
+        .charge-item:active {
+            transform: scale(0.98);
+        }
+
+        .popular-badge {
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            padding: 4px 10px;
+            background: linear-gradient(135deg, #9333EA 0%, #7C3AED 100%);
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: 600;
+        }
+
+        .charge-amount {
+            font-size: 24px;
+            font-weight: 700;
+            margin-bottom: 4px;
+        }
+
+        .charge-bonus {
+            font-size: 14px;
+            color: #FFD700;
+            margin-bottom: 8px;
+            font-weight: 600;
+        }
+
+        .charge-price {
+            font-size: 16px;
+            color: rgba(255, 255, 255, 0.8);
+        }
+
+        .original-price {
+            text-decoration: line-through;
+            color: rgba(255, 255, 255, 0.4);
+            font-size: 14px;
+            margin-right: 8px;
+        }
+
+        /* 결제 수단 */
+        .payment-section {
+            padding: 24px 20px;
+            background: rgba(255, 255, 255, 0.02);
+        }
+
+        .payment-section .section-title {
+            font-size: 18px;
+            font-weight: 700;
+            margin-bottom: 20px;
+        }
+
+        .payment-methods {
+            display: grid;
+            gap: 12px;
+        }
+
+        .payment-method {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            padding: 16px 20px;
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 16px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .payment-method.selected {
+            border-color: #9333EA;
+            background: rgba(147, 51, 234, 0.05);
+        }
+
+        .payment-method:active {
+            transform: scale(0.98);
+        }
+
+        .payment-icon {
+            width: 44px;
+            height: 44px;
+            background: rgba(147, 51, 234, 0.1);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 22px;
+            color: #B794F6;
+        }
+
+        .payment-info {
+            flex: 1;
+        }
+
+        .payment-name {
+            font-size: 16px;
+            font-weight: 600;
+            color: #ffffff;
+            margin-bottom: 4px;
+        }
+
+        .payment-desc {
+            font-size: 13px;
+            color: rgba(255, 255, 255, 0.6);
+        }
+
+        .radio-button {
+            width: 24px;
+            height: 24px;
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            border-radius: 50%;
+            position: relative;
+            transition: all 0.3s ease;
+        }
+
+        .payment-method.selected .radio-button {
+            border-color: #9333EA;
+            background: rgba(147, 51, 234, 0.1);
+        }
+
+        .payment-method.selected .radio-button::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 12px;
+            height: 12px;
+            background: #9333EA;
+            border-radius: 50%;
+        }
+
+        /* 약관 동의 */
+        .terms-section {
+            padding: 24px 20px;
+        }
+
+        .terms-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+
+        .checkbox {
+            width: 24px;
+            height: 24px;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .checkbox.checked {
+            background: linear-gradient(135deg, #9333EA 0%, #7C3AED 100%);
+            border-color: transparent;
+        }
+
+        .checkbox.checked::after {
+            content: '✓';
+            color: white;
+            font-size: 16px;
+            font-weight: 700;
+        }
+
+        .terms-text {
+            font-size: 14px;
+            color: rgba(255, 255, 255, 0.8);
+        }
+
+        .terms-link {
+            color: #B794F6;
+            text-decoration: none;
+        }
+
+        /* 결제 내역 */
+        .payment-summary {
+            margin: 20px;
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: 16px;
+            overflow: hidden;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .summary-header {
+            padding: 16px 20px;
+            background: rgba(147, 51, 234, 0.05);
+            border-bottom: 1px solid rgba(147, 51, 234, 0.1);
+        }
+
+        .summary-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: #B794F6;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .summary-title .icon {
+            font-size: 18px;
+        }
+
+        .summary-content {
+            padding: 20px;
+        }
+
+        .summary-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 14px;
+            margin-bottom: 12px;
+        }
+
+        .summary-row.point-row {
+            margin-bottom: 16px;
+        }
+
+        .summary-label {
+            color: rgba(255, 255, 255, 0.6);
+            font-size: 14px;
+        }
+
+        .summary-value {
+            color: #ffffff;
+            font-weight: 500;
+        }
+
+        .point-value {
+            font-size: 34px;
+            font-weight: 500;
+            color: #ffffff;
+        }
+
+        .bonus-value {
+            font-size: 16px;
+            font-weight: 500;
+            color: #ffffff;
+        }
+
+        .payment-amount {
+            font-size: 20px;
+            font-weight: 600;
+            color: #B794F6;
+        }
+
+        .summary-divider {
+            height: 1px;
+            background: rgba(255, 255, 255, 0.05);
+            margin: 16px 0;
+        }
+
+        .vat-note {
+            font-size: 12px;
+            color: rgba(255, 255, 255, 0.4);
+            text-align: right;
+            margin-top: 8px;
+        }
+
+        /* 하단 결제 버튼 */
+        .bottom-cta {
+            position: fixed;
+            bottom: 80px;
+            left: 0;
+            right: 0;
+            padding: 16px 20px 24px;
+            background: linear-gradient(to top, #0a0a0f 0%, rgba(10, 10, 15, 0.95) 100%);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            z-index: 999;
+        }
+
+        .payment-button {
+            width: 100%;
+            padding: 16px;
+            background: linear-gradient(135deg, #9333EA 0%, #7C3AED 100%);
+            border: none;
+            border-radius: 12px;
+            color: white;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 20px rgba(147, 51, 234, 0.4);
+        }
+
+        .payment-button:active {
+            transform: scale(0.98);
+        }
+
+        .payment-button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        /* 하단 네비게이션 */
+        .bottom-nav {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: rgba(10, 10, 15, 0.95);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            display: flex;
+            justify-content: space-around;
+            padding: 8px 0 12px;
+            z-index: 1000;
+        }
+
+        .nav-item {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 8px;
+            color: rgba(255, 255, 255, 0.5);
+            text-decoration: none;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .nav-item::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 0;
+            height: 2px;
+            background: linear-gradient(90deg, #9333EA 0%, #B794F6 100%);
+            transition: width 0.3s ease;
+        }
+
+        .nav-item.active {
+            color: #B794F6;
+        }
+
+        .nav-item.active::before {
+            width: 40px;
+        }
+
+        .nav-icon {
+            font-size: 24px;
+            margin-bottom: 4px;
+        }
+
+        .nav-label {
+            font-size: 11px;
+            font-weight: 500;
+        }
+
+        /* 결제 내역의 포인트 값 */
+        .summary-row .point-value,
+        .summary-row .bonus-value {
+            font-size: 16px;
+            font-weight: 500;
+            color: #ffffff;
+        }
+    </style>
+</head>
+<body>
+<!-- 헤더 -->
+<header class="header">
+    <div class="header-top">
+        <button class="back-button" onclick="window.history.back();">←</button>
+        <h1 class="header-title">충전하기</h1>
+        <div class="header-actions">
+            <button class="icon-btn" onclick="window.location.href='search-page.html'">🔍</button>
+            <button class="icon-btn" onclick="window.location.href='login-page.html'">👤</button>
+        </div>
+    </div>
+</header>
+
+<!-- 메인 콘텐츠 -->
+<main class="main-content">
+    <!-- 현재 포인트 -->
+    <section class="current-point">
+        <div class="point-label">현재 보유 포인트</div>
+        <div class="point-value">
+            <span class="point-icon">💰</span>
+            <span>1,200 P</span>
+        </div>
+    </section>
+
+    <!-- 프로모션 배너 -->
+    <section class="promo-banner">
+        <div class="promo-icon">🎉</div>
+        <div class="promo-content">
+            <div class="promo-title">첫 충전 100% 보너스!</div>
+            <div class="promo-desc">지금 충전하면 2배로 받을 수 있어요</div>
+        </div>
+    </section>
+
+    <!-- 충전 금액 선택 -->
+    <section class="charge-section">
+        <div class="section-header">
+            <h2 class="section-title">충전할 금액을 선택하세요</h2>
+            <a href="point_guide.html" class="guide-link">
+                <span class="icon">ℹ️</span>
+                <span>이용안내</span>
+            </a>
+        </div>
+
+        <div class="charge-grid">
+            <div class="charge-item">
+                <div class="charge-amount">5,000 P</div>
+                <div class="charge-bonus">+1,000 P 보너스</div>
+                <div class="charge-price">5,000원</div>
+            </div>
+
+            <div class="charge-item popular selected">
+                <div class="popular-badge">인기</div>
+                <div class="charge-amount">10,000 P</div>
+                <div class="charge-bonus">+3,000 P 보너스</div>
+                <div class="charge-price">10,000원</div>
+            </div>
+
+            <div class="charge-item">
+                <div class="charge-amount">30,000 P</div>
+                <div class="charge-bonus">+10,000 P 보너스</div>
+                <div class="charge-price">
+                    <span class="original-price">30,000원</span>
+                    <span>27,000원</span>
+                </div>
+            </div>
+
+            <div class="charge-item">
+                <div class="charge-amount">50,000 P</div>
+                <div class="charge-bonus">+20,000 P 보너스</div>
+                <div class="charge-price">
+                    <span class="original-price">50,000원</span>
+                    <span>43,000원</span>
+                </div>
+            </div>
+
+            <div class="charge-item">
+                <div class="charge-amount">100,000 P</div>
+                <div class="charge-bonus">+50,000 P 보너스</div>
+                <div class="charge-price">
+                    <span class="original-price">100,000원</span>
+                    <span>79,000원</span>
+                </div>
+            </div>
+
+            <div class="charge-item">
+                <div class="charge-amount">200,000 P</div>
+                <div class="charge-bonus">+120,000 P 보너스</div>
+                <div class="charge-price">
+                    <span class="original-price">200,000원</span>
+                    <span>149,000원</span>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 결제 수단 -->
+    <section class="payment-section">
+        <h2 class="section-title">결제 수단</h2>
+
+        <div class="payment-methods">
+            <div class="payment-method selected">
+                <div class="payment-icon">💳</div>
+                <div class="payment-info">
+                    <div class="payment-name">신용/체크카드</div>
+                    <div class="payment-desc">모든 카드 결제 가능</div>
+                </div>
+                <div class="radio-button"></div>
+            </div>
+
+            <div class="payment-method">
+                <div class="payment-icon">📱</div>
+                <div class="payment-info">
+                    <div class="payment-name">휴대폰 결제</div>
+                    <div class="payment-desc">통신사 소액결제</div>
+                </div>
+                <div class="radio-button"></div>
+            </div>
+
+            <div class="payment-method">
+                <div class="payment-icon">🏦</div>
+                <div class="payment-info">
+                    <div class="payment-name">계좌이체</div>
+                    <div class="payment-desc">실시간 계좌이체</div>
+                </div>
+                <div class="radio-button"></div>
+            </div>
+
+            <div class="payment-method">
+                <div class="payment-icon">💛</div>
+                <div class="payment-info">
+                    <div class="payment-name">카카오페이</div>
+                    <div class="payment-desc">간편결제</div>
+                </div>
+                <div class="radio-button"></div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 약관 동의 -->
+    <section class="terms-section">
+        <div class="terms-item">
+            <div class="checkbox checked"></div>
+            <div class="terms-text">
+                <a href="#" class="terms-link">결제 이용약관</a>에 동의합니다
+            </div>
+        </div>
+        <div class="terms-item">
+            <div class="checkbox checked"></div>
+            <div class="terms-text">
+                충전한 포인트는 환불이 불가함을 확인했습니다
+            </div>
+        </div>
+    </section>
+
+    <!-- 결제 내역 -->
+    <div class="payment-summary">
+        <div class="summary-header">
+            <div class="summary-title">
+                <span>결제 내역</span>
+            </div>
+        </div>
+        <div class="summary-content">
+            <div class="summary-row point-row">
+                <span class="summary-label">충전 포인트</span>
+                <span class="point-value">10,000 P</span>
+            </div>
+            <div class="summary-row point-row">
+                <span class="summary-label">보너스 포인트</span>
+                <span class="bonus-value">+3,000 P</span>
+            </div>
+            <div class="summary-divider"></div>
+            <div class="summary-row">
+                <span class="summary-label">결제 금액</span>
+                <span class="payment-amount">10,000원</span>
+            </div>
+            <div class="vat-note">* VAT 별도</div>
+        </div>
+    </div>
+</main>
+
+<!-- 하단 결제 버튼 -->
+<div class="bottom-cta">
+    <button class="payment-button">10,000원 결제하기</button>
+</div>
+
+<!-- 하단 네비게이션 -->
+<nav class="bottom-nav">
+    <a href="main.html" class="nav-item">
+        <span class="nav-icon">🏠</span>
+        <span class="nav-label">홈</span>
+    </a>
+    <a href="ai-fortune-complete.html" class="nav-item">
+        <span class="nav-icon">🤖</span>
+        <span class="nav-label">AI운세</span>
+    </a>
+    <a href="event.html" class="nav-item">
+        <span class="nav-icon">🎁</span>
+        <span class="nav-label">이벤트</span>
+    </a>
+    <a href="favorite.html" class="nav-item">
+        <span class="nav-icon">⭐</span>
+        <span class="nav-label">즐겨찾기</span>
+    </a>
+    <a href="mypage.html" class="nav-item">
+        <span class="nav-icon">👤</span>
+        <span class="nav-label">마이</span>
+    </a>
+</nav>
+
+<script>
+    // 충전 금액 선택
+    document.querySelectorAll('.charge-item').forEach(item => {
+        item.addEventListener('click', function() {
+            document.querySelectorAll('.charge-item').forEach(i => i.classList.remove('selected'));
+            this.classList.add('selected');
+
+            // 결제 금액 업데이트
+            const price = this.querySelector('.charge-price').textContent.match(/[\d,]+원$/)[0];
+            document.querySelector('.summary-amount').textContent = price;
+            document.querySelector('.payment-button').textContent = `${price} 결제하기`;
+        });
+    });
+
+    // 결제 수단 선택
+    document.querySelectorAll('.payment-method').forEach(method => {
+        method.addEventListener('click', function() {
+            document.querySelectorAll('.payment-method').forEach(m => m.classList.remove('selected'));
+            this.classList.add('selected');
+        });
+    });
+
+    // 체크박스 토글
+    document.querySelectorAll('.checkbox').forEach(checkbox => {
+        checkbox.addEventListener('click', function() {
+            this.classList.toggle('checked');
+        });
+    });
+</script>
+</body>
+</html>

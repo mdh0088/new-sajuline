@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>채팅 목록 - 사주라인</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Apple SD Gothic Neo', 'Noto Sans KR', sans-serif;
+      background-color: #0a0a0f;
+      color: #fff;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+    .container {
+      max-width: 600px;
+      margin: 0 auto;
+      padding: 80px 0 80px 0;
+      flex: 1;
+      width: 100%;
+    }
+    /* 헤더 */
+    .header {
+      position: fixed; top: 0; left: 0; right: 0;
+      background: rgba(10, 10, 15, 0.95);
+      backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+      z-index: 1000;
+      border-bottom: 1px solid rgba(255,255,255,0.1);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    }
+    .header-top {
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 16px 20px; height: 60px;
+    }
+    .header-title {
+      font-size: 20px; font-weight: 800;
+      background: linear-gradient(135deg, #B794F6 0%, #9F7AEA 50%, #805AD5 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      text-fill-color: transparent;
+    }
+    .header-actions { display: flex; gap: 8px; align-items: center; }
+    .icon-btn {
+      width: 36px; height: 36px; border: none;
+      background: rgba(255,255,255,0.05); color: #fff;
+      display: flex; align-items: center; justify-content: center;
+      cursor: pointer; border-radius: 12px;
+      transition: all 0.3s ease; font-size: 18px;
+    }
+    .icon-btn:active { transform: scale(0.95); background: rgba(255,255,255,0.1); }
+    /* 검색바 */
+    .search-bar { margin: 0 20px 24px 20px; display: flex; }
+    .search-input {
+      flex: 1; padding: 12px 16px; background: rgba(255,255,255,0.05);
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 16px 0 0 16px;
+      color: #fff; font-size: 16px; outline: none;
+      transition: all 0.2s;
+    }
+    .search-input:focus { border-color: #B794F6; background: rgba(255,255,255,0.08); }
+    .search-btn {
+      padding: 0 20px; background: linear-gradient(135deg, #9333EA 0%, #7C3AED 100%);
+      border: none; border-radius: 0 16px 16px 0; color: #fff; font-weight: 700;
+      font-size: 16px; cursor: pointer; transition: background 0.2s;
+    }
+    .search-btn:hover, .search-btn:focus { background: linear-gradient(135deg, #7C3AED 0%, #9333EA 100%); }
+    .section-title {
+      font-size: 15px; color: #B794F6; margin: 24px 0 10px 24px; font-weight: 700;
+    }
+    .chat-list { display: flex; flex-direction: column; gap: 12px; margin: 0 20px; }
+    .chat-item {
+      display: flex; align-items: center; padding: 18px 16px; background: #181824;
+      border-radius: 16px; box-shadow: 0 2px 8px rgba(147,51,234,0.08);
+      transition: background 0.2s, box-shadow 0.2s, transform 0.2s;
+      cursor: pointer; position: relative;
+      border: 1px solid rgba(255,255,255,0.07);
+    }
+    .chat-item:hover, .chat-item:focus {
+      background: #232336;
+      box-shadow: 0 4px 16px rgba(147,51,234,0.12);
+      transform: translateY(-2px) scale(1.01);
+      outline: none;
+    }
+    .pinned { /* 강조선 완전 제거 */ border-left: none !important; }
+    .avatar {
+      width: 48px; height: 48px; border-radius: 14px; background: linear-gradient(135deg, rgba(147,51,234,0.15) 0%, rgba(124,58,237,0.10) 100%);
+      display: flex; align-items: center; justify-content: center; font-size: 22px;
+      flex-shrink: 0; margin-right: 14px;
+      box-shadow: 0 2px 8px rgba(147,51,234,0.08);
+    }
+    .chat-info {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      min-width: 0;
+    }
+    .chat-name {
+      font-size: 16px;
+      font-weight: 600;
+      color: #fff;
+      margin-bottom: 2px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .chat-preview {
+      font-size: 15px;
+      color: #bfc4d1;
+      margin-bottom: 0;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .chat-meta {
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      gap: 6px;
+      margin-top: 6px;
+      font-size: 13px;
+      color: #B794F6;
+      min-width: 0;
+    }
+    .chat-time {
+      font-size: 13px;
+      color: #B794F6;
+      white-space: nowrap;
+    }
+    .unread-badge {
+      background: #FF3B30;
+      color: #fff;
+      font-size: 12px;
+      font-weight: 700;
+      padding: 2px 8px;
+      border-radius: 12px;
+      margin-left: 4px;
+      box-shadow: 0 1px 4px rgba(255,59,48,0.15);
+      display: inline-block;
+    }
+    .chat-info > .chat-meta {
+      align-self: flex-end;
+    }
+    /* 하단 네비게이션 */
+    .bottom-nav {
+      position: fixed; bottom: 0; left: 0; right: 0; height: 64px;
+      background: rgba(10,10,15,0.95); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+      box-shadow: 0 -2px 12px rgba(147,51,234,0.08);
+      display: flex; justify-content: space-around; align-items: center;
+      border-top: 1px solid rgba(255,255,255,0.07); z-index: 1000;
+    }
+    .nav-item {
+      display: flex; flex-direction: column; align-items: center; color: #bfc4d1; font-size: 12px; font-weight: 500;
+      text-decoration: none; padding: 4px 0; transition: color 0.2s;
+    }
+    .nav-item.active { color: #B794F6; font-weight: 700; }
+    .nav-item span:first-child { font-size: 22px; margin-bottom: 2px; }
+    /* 반응형 */
+    @media (max-width: 600px) {
+      .container { padding: 70px 0 70px 0; }
+      .header-top { padding: 10px 10px; height: 52px; }
+      .header-title { font-size: 17px; }
+      .icon-btn { width: 32px; height: 32px; font-size: 16px; }
+      .bottom-nav { height: 56px; }
+      .nav-item span:first-child { font-size: 18px; }
+      .avatar { width: 40px; height: 40px; font-size: 18px; }
+      .chat-item { padding: 12px 8px; }
+    }
+    .sort-buttons {
+      display: flex;
+      gap: 8px;
+      margin: 0 20px 12px 20px;
+    }
+    .sort-btn {
+      background: rgba(255, 255, 255, 0.05);
+      border: none;
+      border-radius: 8px;
+      padding: 8px 14px;
+      color: rgba(255, 255, 255, 0.7);
+      font-size: 13px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+    .sort-btn:hover {
+      background: rgba(147, 51, 234, 0.1);
+      color: #fff;
+    }
+    .sort-btn.active {
+      background: linear-gradient(90deg, #9333EA 0%, #B794F6 100%);
+      color: #fff;
+    }
+  </style>
+</head>
+<body>
+  <header class="header">
+    <div class="header-top">
+      <div class="header-title">채팅</div>
+      <div class="header-actions">
+        <button class="icon-btn" aria-label="새 채팅">✏️</button>
+        <button class="icon-btn" aria-label="설정">⚙️</button>
+      </div>
+    </div>
+  </header>
+  <main class="container">
+    <form class="search-bar" onsubmit="event.preventDefault(); /* 검색 로직 */">
+      <input type="text" class="search-input" placeholder="대화 상대 검색" aria-label="대화 상대 검색" />
+      <button class="search-btn" type="submit">검색</button>
+    </form>
+    <div class="sort-buttons">
+      <button class="sort-btn active" data-sort="latest">최신순</button>
+      <button class="sort-btn" data-sort="name">이름순</button>
+      <button class="sort-btn" data-sort="unread">안읽은순</button>
+    </div>
+    <div class="section-title">고정된 채팅</div>
+    <div class="chat-list" id="pinnedList">
+      <div class="chat-item pinned" tabindex="0">
+        <div class="avatar" aria-label="김지은 상담사">👩</div>
+        <div class="chat-info">
+          <div class="chat-name">김지은 상담사</div>
+          <div class="chat-preview">👍 안녕하세요! 오늘 상담 어떠셨나요?</div>
+          <div class="chat-meta">
+            <span class="chat-time">10:24</span>
+            <span class="unread-badge">3</span>
+          </div>
+        </div>
+      </div>
+      <div class="chat-item pinned" tabindex="0">
+        <div class="avatar online" aria-label="박준현 상담사">👨</div>
+        <div class="chat-info">
+          <div class="chat-name">박준현 상담사</div>
+          <div class="chat-preview">궁금하신 점 있으면 언제든 물어보세요.</div>
+          <div class="chat-meta">
+            <span class="chat-time">어제</span>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="section-title">전체 채팅</div>
+    <div class="chat-list" id="chatList">
+      <div class="chat-item" tabindex="0">
+        <div class="avatar" aria-label="이소민 상담사">👤</div>
+        <div class="chat-info">
+          <div class="chat-name">이소민 상담사</div>
+          <div class="chat-preview">타로 결과를 정리해드렸어요.</div>
+          <div class="chat-meta">
+            <span class="chat-time">월요일</span>
+          </div>
+        </div>
+      </div>
+      <div class="chat-item" tabindex="0">
+        <div class="avatar" aria-label="최민수 상담사">🧑‍🦰</div>
+        <div class="chat-info">
+          <div class="chat-name">최민수 상담사</div>
+          <div class="chat-preview">네, 다시 분석해드릴게요.</div>
+          <div class="chat-meta">
+            <span class="chat-time">6/18</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+  <nav class="bottom-nav">
+    <a href="main.html" class="nav-item"><span>🏠</span><span>홈</span></a>
+    <a href="#" class="nav-item active"><span>💬</span><span>채팅</span></a>
+    <a href="favorite.html" class="nav-item"><span>⭐</span><span>즐겨찾기</span></a>
+    <a href="mypage.html" class="nav-item"><span>👤</span><span>마이</span></a>
+  </nav>
+  <script>
+    // 정렬 버튼 스타일
+    document.querySelectorAll('.sort-btn').forEach(btn => {
+      btn.addEventListener('click', function() {
+        document.querySelectorAll('.sort-btn').forEach(b => b.classList.remove('active'));
+        this.classList.add('active');
+        sortChatList(this.dataset.sort);
+      });
+    });
+
+    // 채팅 데이터 추출 (DOM 기반)
+    function getChatData(listId) {
+      const list = document.getElementById(listId);
+      return Array.from(list.children).map(item => {
+        const name = item.querySelector('.chat-name')?.textContent.trim() || '';
+        const time = item.querySelector('.chat-time')?.textContent.trim() || '';
+        const unread = parseInt(item.querySelector('.unread-badge')?.textContent.trim() || '0', 10);
+        return { item, name, time, unread };
+      });
+    }
+
+    // 시간 파싱(간단, 실제 서비스는 timestamp 필요)
+    function parseTime(str) {
+      if (str.includes('오전') || str.includes('오후')) {
+        // 예: 오전 10:24, 오후 3:12
+        let [ampm, hm] = str.split(' ');
+        let [h, m] = hm.split(':').map(Number);
+        if (ampm === '오후' && h < 12) h += 12;
+        if (ampm === '오전' && h === 12) h = 0;
+        return h * 60 + m;
+      }
+      if (str === '어제') return -1; // 어제는 최신순에서 뒤로
+      if (str === '월요일') return -2; // 예시
+      if (/\d{1,2}\/\d{1,2}/.test(str)) return -3; // 날짜(6/18 등)
+      return -99;
+    }
+
+    function sortChatList(type) {
+      const list = document.getElementById('chatList');
+      let data = getChatData('chatList');
+      if (type === 'latest') {
+        data.sort((a, b) => parseTime(b.time) - parseTime(a.time));
+      } else if (type === 'name') {
+        data.sort((a, b) => a.name.localeCompare(b.name, 'ko'));
+      } else if (type === 'unread') {
+        data.sort((a, b) => b.unread - a.unread || parseTime(b.time) - parseTime(a.time));
+      }
+      // 정렬 반영
+      data.forEach(d => list.appendChild(d.item));
+    }
+  </script>
+</body>
+</html>
