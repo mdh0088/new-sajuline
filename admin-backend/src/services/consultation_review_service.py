@@ -13,7 +13,9 @@ from src.schemas.consultation_review_schema import (
     ConsultationReviewItem,
     ConsultationReviewListParams,
     ConsultationReviewUpdateRequest,
+    ConsultationReviewCreateRequest,
 )
+from src.models.consultation_review_model import ConsultationReview
 from src.exceptions.custom_exceptions import NotFoundError
 
 
@@ -90,3 +92,43 @@ class ConsultationReviewService:
         # 수정 후 상세 정보 반환 (JOIN 포함)
         review_dict = await self.repo.get_by_id_with_users(review_id)
         return ConsultationReviewItem(**review_dict)
+
+    async def create_dummy_review(
+        self, payload: ConsultationReviewCreateRequest
+    ) -> dict:
+        """더미 후기 생성 (session_id는 0 또는 음수로 자동 생성)"""
+        # session_id 자동 생성 (unique 제약 준수)
+        session_id = await self.repo.get_next_dummy_session_id()
+
+        # 새 후기 엔티티 생성
+        review = ConsultationReview(
+            session_id=session_id,
+            user_id=payload.user_id,
+            user_nickname=payload.user_nickname,
+            counselor_id=payload.counselor_id,
+            rating=payload.rating,
+            content=payload.content,
+            counselor_reply=payload.counselor_reply,
+            review_tags=payload.review_tags,
+            is_visible=payload.is_visible,
+            is_best=payload.is_best,
+            like_count=0,
+            counselor_replied_at=datetime.now(KST) if payload.counselor_reply else None,
+        )
+
+        created = await self.repo.create(review)
+
+        # 생성된 후기 정보 반환 (user_nickname은 payload에서 가져옴)
+        return {
+            "review_id": created.review_id,
+            "session_id": created.session_id,
+            "user_id": created.user_id,
+            "user_nickname": payload.user_nickname,
+            "counselor_id": created.counselor_id,
+            "rating": created.rating,
+            "content": created.content,
+            "counselor_reply": created.counselor_reply,
+            "is_visible": created.is_visible,
+            "is_best": created.is_best,
+            "created_at": created.created_at,
+        }

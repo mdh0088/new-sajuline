@@ -55,3 +55,17 @@ class ConsultationReviewUpdateRequest(BaseModel):
     is_best: Optional[bool] = Field(None, description="베스트 여부")
     rating: Optional[int] = Field(None, ge=1, le=5, description="별점 (1-5)")
     review_tags: Optional[str] = Field(None, description="후기 태그 (JSON 문자열)")
+
+
+class ConsultationReviewCreateRequest(BaseModel):
+    """더미 상담 후기 생성 요청"""
+
+    user_id: str = Field(..., description="사용자 ID")
+    user_nickname: str = Field(..., description="사용자 닉네임 (표시용)")
+    counselor_id: str = Field(..., description="상담사 ID")
+    rating: int = Field(..., ge=1, le=5, description="별점 (1-5)")
+    content: Optional[str] = Field(None, description="후기 내용")
+    counselor_reply: Optional[str] = Field(None, description="상담사 답변")
+    review_tags: Optional[str] = Field(None, description="후기 태그 (JSON 문자열)")
+    is_visible: bool = Field(True, description="노출 여부")
+    is_best: bool = Field(False, description="베스트 여부")

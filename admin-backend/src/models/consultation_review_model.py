@@ -26,6 +26,7 @@ class ConsultationReview(Base):
     # 세션 및 사용자 정보
     session_id: Mapped[int] = mapped_column(Integer, unique=True, nullable=False, comment="상담 세션 ID")
     user_id: Mapped[str] = mapped_column(String(100), nullable=False, comment="작성자 ID")
+    user_nickname: Mapped[Optional[str]] = mapped_column(String(100), nullable=True, comment="작성자 닉네임")
     counselor_id: Mapped[str] = mapped_column(String(100), nullable=False, comment="상담사 ID")
 
     # 후기 내용

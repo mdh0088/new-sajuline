@@ -5,6 +5,7 @@
 
 import http from '@/api/_config/http';
 import * as consultationReviewApi from '@/api/consultation-review/consultationReviewApi';
+import * as counselorApi from '@/api/counselor/counselorApi';
 import * as swal from '@/commonUtils/swal';
 import type {
   ConsultationReviewItem,
@@ -138,6 +139,66 @@ export const updateReviewQuick = async (
     console.error('상담 후기 수정 실패:', error);
     await swal.swalAlert(error.response?.data?.message || '수정 중 오류가 발생했습니다.', 'error');
     await doSearch(); // 에러 발생시에도 원래대로 복원
+    return false;
+  }
+};
+
+/**
+ * 상담사 목록 조회 (더미 리뷰 생성용)
+ */
+export const getCounselorList = async (): Promise<Array<{ counselor_id: string; nickname: string }>> => {
+  try {
+    const response = await http.get(counselorApi.getCounselorsListURL, {
+      params: {
+        page: 1,
+        limit: 1000,
+        is_show: true,
+        is_out: false,
+      }
+    });
+
+    if (response.data.success) {
+      return response.data.data.map((item: any) => ({
+        counselor_id: item.counselor_id,
+        nickname: item.nickname || item.name || item.counselor_id,
+      }));
+    }
+    return [];
+  } catch (error: any) {
+    console.error('상담사 목록 조회 실패:', error);
+    return [];
+  }
+};
+
+/**
+ * 더미 상담 후기 생성
+ */
+export const createDummyReview = async (
+  payload: {
+    user_id: string;
+    user_nickname: string;
+    counselor_id: string;
+    rating: number;
+    content?: string;
+    counselor_reply?: string;
+    review_tags?: string;
+    is_visible?: boolean;
+    is_best?: boolean;
+  },
+  doSearch: () => void
+) => {
+  try {
+    const response = await http.post(consultationReviewApi.createDummyReviewURL, payload);
+
+    if (response.data.success) {
+      await swal.swalAlert('더미 상담 후기가 생성되었습니다.', 'success');
+      await doSearch();
+      return true;
+    }
+    return false;
+  } catch (error: any) {
+    console.error('더미 상담 후기 생성 실패:', error);
+    await swal.swalAlert(error.response?.data?.message || '생성 중 오류가 발생했습니다.', 'error');
     return false;
   }
 };

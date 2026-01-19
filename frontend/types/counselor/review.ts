@@ -1,6 +1,7 @@
 export interface ReviewSummary {
   review_id: number
   user_id: string
+  user_nickname?: string | null
   counselor_id: string
   rating: number
   content?: string | null

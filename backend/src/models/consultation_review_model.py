@@ -38,6 +38,11 @@ class ConsultationReview(Base):
         nullable=False,
         comment="사용자 ID"
     )
+    user_nickname: Mapped[Optional[str]] = mapped_column(
+        String(100),
+        nullable=True,
+        comment="사용자 닉네임"
+    )
     counselor_id: Mapped[str] = mapped_column(
         String(100),
         nullable=False,
