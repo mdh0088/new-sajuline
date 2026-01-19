@@ -145,22 +145,23 @@ export const updateReviewQuick = async (
 
 /**
  * 상담사 목록 조회 (더미 리뷰 생성용)
+ * 모든 상담사 목록을 가져옵니다 (is_show, is_out 필터 없음)
  */
-export const getCounselorList = async (): Promise<Array<{ counselor_id: string; nickname: string }>> => {
+export const getCounselorList = async (): Promise<Array<{ counselor_id: string; nickname: string; name: string }>> => {
   try {
     const response = await http.get(counselorApi.getCounselorsListURL, {
       params: {
         page: 1,
         limit: 1000,
-        is_show: true,
-        is_out: false,
+        search_type: 'all',
       }
     });
 
-    if (response.data.success) {
+    if (response.data && response.data.data) {
       return response.data.data.map((item: any) => ({
         counselor_id: item.counselor_id,
-        nickname: item.nickname || item.name || item.counselor_id,
+        nickname: item.nickname || '',
+        name: item.name || '',
       }));
     }
     return [];

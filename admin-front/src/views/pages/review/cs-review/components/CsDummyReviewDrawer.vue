@@ -60,7 +60,7 @@
               <el-option
                 v-for="counselor in counselorList"
                 :key="counselor.counselor_id"
-                :label="`${counselor.nickname} (${counselor.counselor_id})`"
+                :label="`${counselor.nickname || counselor.name} (${counselor.name}) - ${counselor.counselor_id}`"
                 :value="counselor.counselor_id"
               />
             </el-select>
@@ -161,7 +161,7 @@ const props = defineProps({
 const isDrawerActive = defineModel<boolean>("isDrawerActive", { default: false });
 
 // 상담사 목록
-const counselorList = ref<Array<{ counselor_id: string; nickname: string }>>([]);
+const counselorList = ref<Array<{ counselor_id: string; nickname: string; name: string }>>([]);
 const isLoadingCounselors = ref<boolean>(false);
 
 // 폼 데이터
