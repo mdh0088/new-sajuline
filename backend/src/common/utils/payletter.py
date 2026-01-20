@@ -11,8 +11,9 @@ KST = timezone(timedelta(hours=9))
 
 
 def generate_order_no(now: datetime | None = None) -> str:
+    """고유한 주문번호 생성 (밀리초 포함)"""
     now = now or datetime.now(KST)
-    return now.strftime("ORD-%Y%m%d%H%M%S")
+    return now.strftime("ORD-%Y%m%d%H%M%S") + f"{now.microsecond // 1000:03d}"
 
 
 def calc_amounts(price: int, discount_rate: int) -> Tuple[int, int, int]:

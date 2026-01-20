@@ -121,20 +121,21 @@
     <div class="bottom-cta">
       <button
         class="payment-button"
-        :disabled="!canProceedPayment"
+        :disabled="!canProceedPayment || isProcessing"
         @click="processPayment"
       >
-        {{ finalAmount.toLocaleString() }}원 결제하기
+        <template v-if="isProcessing">결제 처리 중...</template>
+        <template v-else>{{ finalAmount.toLocaleString() }}원 결제하기</template>
       </button>
     </div>
 
 
     <!-- PC 결제 모달 -->
-    <div v-if="showPaymentModal" class="payment-modal-backdrop" @click.self="showPaymentModal = false">
+    <div v-if="showPaymentModal" class="payment-modal-backdrop" @click.self="closePaymentModal">
       <div class="payment-modal">
         <div class="payment-modal-header">
           <div class="payment-modal-title">결제창</div>
-          <button class="payment-modal-close" @click="showPaymentModal = false">✕</button>
+          <button class="payment-modal-close" @click="closePaymentModal">✕</button>
         </div>
         <div class="payment-modal-body">
           <iframe v-if="paymentPageUrl" class="payment-iframe" :src="paymentPageUrl" title="Payletter Payment"></iframe>
@@ -265,7 +266,8 @@ const finalAmount = computed(() => discountedPriceVal.value + vatAmount.value)
 
 const canProceedPayment = computed(() => {
   return selectedProduct.value !== null &&
-         selectedPaymentMethod.value !== null
+         selectedPaymentMethod.value !== null &&
+         !isProcessing.value
 })
 
 // 디바이스 구분 (VueUse)
@@ -274,6 +276,9 @@ const isMobile = useMediaQuery('(max-width: 767px)')
 // PC 모달 상태
 const showPaymentModal = ref(false)
 const paymentPageUrl = ref('')
+
+// 결제 진행 중 상태 (중복 클릭 방지)
+const isProcessing = ref(false)
 
 // 메서드들
 function selectItem(index: number) { selectedIndex.value = index }
@@ -288,7 +293,17 @@ function goToLogin() {
   navigateTo('/login')
 }
 
-function processPayment() {
+function closePaymentModal() {
+  showPaymentModal.value = false
+  isProcessing.value = false
+}
+
+async function processPayment() {
+  // 이미 처리 중이면 중복 실행 방지
+  if (isProcessing.value) {
+    return
+  }
+
   if (!canProceedPayment.value) {
     notifyError('결제 진행 전 필수 항목을 확인해주세요.')
     return
@@ -303,38 +318,42 @@ function processPayment() {
     return
   }
 
+  // 결제 진행 시작 - 버튼 비활성화
+  isProcessing.value = true
+
   notifyInfo(`${paymentMethod.name}로 ${finalAmount.value.toLocaleString()}원 결제를 진행합니다.`)
 
-  const { requestPayment } = usePaymentApi()
-  // 백엔드에는 pgcode를 전송
-  requestPayment(product.product_id, (paymentMethod as any).code)
-    .then((res) => {
-      if (isMobile.value) {
-        if (res.mobile_url) {
-          window.location.href = res.mobile_url
-        } else if (res.online_url) {
-          window.location.href = res.online_url
-        } else {
-          notifyError('결제 페이지 URL을 찾을 수 없습니다')
-        }
-        return
-      }
+  try {
+    const { requestPayment } = usePaymentApi()
+    const res = await requestPayment(product.product_id, (paymentMethod as any).code)
 
-      // PC: 모달(iframe)로 online_url 표시
-      if (res.online_url) {
-        paymentPageUrl.value = res.online_url
-        showPaymentModal.value = true
-      } else if (res.mobile_url) {
-        // online_url이 없으면 mobile_url로 폴백
-        paymentPageUrl.value = res.mobile_url
-        showPaymentModal.value = true
+    if (isMobile.value) {
+      if (res.mobile_url) {
+        window.location.href = res.mobile_url
+      } else if (res.online_url) {
+        window.location.href = res.online_url
       } else {
         notifyError('결제 페이지 URL을 찾을 수 없습니다')
+        isProcessing.value = false
       }
-    })
-    .catch((err: any) => {
-      notifyError(err?.message || '결제 요청 중 오류가 발생했습니다')
-    })
+      return
+    }
+
+    // PC: 모달(iframe)로 online_url 표시
+    if (res.online_url) {
+      paymentPageUrl.value = res.online_url
+      showPaymentModal.value = true
+    } else if (res.mobile_url) {
+      paymentPageUrl.value = res.mobile_url
+      showPaymentModal.value = true
+    } else {
+      notifyError('결제 페이지 URL을 찾을 수 없습니다')
+      isProcessing.value = false
+    }
+  } catch (err: any) {
+    notifyError(err?.message || '결제 요청 중 오류가 발생했습니다')
+    isProcessing.value = false
+  }
 }
 
 // PC 결제 완료 postMessage 이벤트 핸들러
@@ -350,6 +369,7 @@ function handlePaymentMessage(event: MessageEvent) {
 
   if (event.data?.type === 'payment_success') {
     showPaymentModal.value = false
+    isProcessing.value = false
     notifySuccess('결제가 성공적으로 완료되었습니다.')
     // 페이지 새로고침으로 포인트 갱신
     setTimeout(() => {
@@ -357,9 +377,11 @@ function handlePaymentMessage(event: MessageEvent) {
     }, 1000)
   } else if (event.data?.type === 'payment_fail') {
     showPaymentModal.value = false
+    isProcessing.value = false
     notifyError('결제가 실패했습니다. 다시 시도해주세요.')
   } else if (event.data?.type === 'payment_pending') {
     showPaymentModal.value = false
+    isProcessing.value = false
     const message = event.data.message || '가상계좌가 발급되었습니다. 입금해주세요.'
     notifyInfo(message)
     // 가상계좌 안내 페이지로 이동 (또는 현재 페이지에서 안내)
