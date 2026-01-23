@@ -327,6 +327,11 @@ async function processPayment() {
     const { requestPayment } = usePaymentApi()
     const res = await requestPayment(product.product_id, (paymentMethod as any).code)
 
+    // 0.5초 후 로딩 상태 해제 (결제창 띄운 후 취소해도 다시 결제 가능)
+    setTimeout(() => {
+      isProcessing.value = false
+    }, 500)
+
     if (isMobile.value) {
       if (res.mobile_url) {
         window.location.href = res.mobile_url
@@ -334,7 +339,6 @@ async function processPayment() {
         window.location.href = res.online_url
       } else {
         notifyError('결제 페이지 URL을 찾을 수 없습니다')
-        isProcessing.value = false
       }
       return
     }
@@ -348,7 +352,6 @@ async function processPayment() {
       showPaymentModal.value = true
     } else {
       notifyError('결제 페이지 URL을 찾을 수 없습니다')
-      isProcessing.value = false
     }
   } catch (err: any) {
     notifyError(err?.message || '결제 요청 중 오류가 발생했습니다')
