@@ -31,7 +31,7 @@
             </div>
           </div>
 
-          <!-- 상담료 정보 -->
+          <!-- 상담료 정보 (기획 변경으로 임시 주석 처리)
           <div class="mt-4 p-4 rounded-xl bg-white/5 border border-white/10">
             <div class="text-sm font-semibold text-white/70 mb-3">상담료 (30초 기준)</div>
             <div class="flex gap-4">
@@ -45,6 +45,7 @@
               </div>
             </div>
           </div>
+          -->
 
           <div class="flex items-center gap-3">
             <!-- 상담중일 때는 상담중 표시 및 변경 불가 -->
