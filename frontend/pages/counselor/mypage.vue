@@ -21,10 +21,29 @@
                 <div v-else class="w-12 h-12 rounded-full bg-gradient-to-br from-yellow-400 to-amber-500 flex items-center justify-center text-2xl shadow-[0_4px_12px_rgba(255,215,0,0.3)]">🔮</div>
               </div>
               <div>
-                <div class="text-lg font-bold">{{ nickname }}</div>
+                <div class="flex items-center gap-2">
+                  <span class="text-lg font-bold">{{ nickname }}</span>
+                  <span :class="['px-2 py-0.5 text-xs font-semibold rounded-full bg-gradient-to-r text-white', gradeDisplay.color]">
+                    {{ gradeDisplay.label }}
+                  </span>
+                </div>
               </div>
             </div>
-            <button disabled class="px-3 py-2 text-sm rounded-lg border border-white/10 bg-white/5 opacity-50 cursor-not-allowed">상담료 안내 (준비중)</button>
+          </div>
+
+          <!-- 상담료 정보 -->
+          <div class="mt-4 p-4 rounded-xl bg-white/5 border border-white/10">
+            <div class="text-sm font-semibold text-white/70 mb-3">상담료 (30초 기준)</div>
+            <div class="flex gap-4">
+              <div class="flex-1 text-center p-3 rounded-lg bg-blue-500/10 border border-blue-500/20">
+                <div class="text-xs text-blue-300 mb-1">선불</div>
+                <div class="text-lg font-bold text-blue-400">{{ afterAmount?.toLocaleString() || 0 }}원</div>
+              </div>
+              <div class="flex-1 text-center p-3 rounded-lg bg-purple-500/10 border border-purple-500/20">
+                <div class="text-xs text-purple-300 mb-1">후불</div>
+                <div class="text-lg font-bold text-purple-400">{{ beforeAmount || '0' }}원</div>
+              </div>
+            </div>
           </div>
 
           <div class="flex items-center gap-3">
@@ -476,6 +495,9 @@ const shortIntro = ref<string | undefined>(undefined)
 const greeting = ref<string | undefined>(undefined)
 const career = ref<string | undefined>(undefined)
 const workTime = ref<string | undefined>(undefined)
+const grade = ref<string | undefined>(undefined)
+const afterAmount = ref<number | undefined>(undefined)
+const beforeAmount = ref<string | undefined>(undefined)
 
 watchEffect(() => {
   if (mypage.value) {
@@ -484,7 +506,20 @@ watchEffect(() => {
     greeting.value = mypage.value.greeting_message
     career.value = mypage.value.career_info
     workTime.value = mypage.value.work_time
+    grade.value = mypage.value.grade
+    afterAmount.value = mypage.value.after_amount
+    beforeAmount.value = mypage.value.before_amount
   }
+})
+
+// 등급 표시 변환
+const gradeDisplay = computed(() => {
+  const gradeMap: Record<string, { label: string; color: string }> = {
+    'BRONZE': { label: '브론즈', color: 'from-amber-700 to-amber-600' },
+    'SILVER': { label: '실버', color: 'from-gray-400 to-gray-300' },
+    'GOLD': { label: '골드', color: 'from-yellow-500 to-yellow-400' }
+  }
+  return gradeMap[grade.value || 'BRONZE'] || gradeMap['BRONZE']
 })
 const status = ref<'ready' | 'away' | 'consulting'>('away')
 const tab = ref<'notice' | 'review' | 'inquiry' | 'admin'>('notice')
