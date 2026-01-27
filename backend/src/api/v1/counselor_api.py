@@ -4,33 +4,18 @@
 from datetime import datetime
 from typing import Optional
 from fastapi import APIRouter, Depends, HTTPException, status, Query, Response, Request
-from sqlalchemy.ext.asyncio import AsyncSession
 
 # 레이트 리미팅 import 추가
 from src.common.middleware.rate_limit import limiter
 
-from src.core.database import get_db_maria, get_db_mssql
 from src.core.redis import get_redis
-from src.repositories.counselor_repository import CounselorRepository
-from src.repositories.user_repository import UserRepository
-from src.repositories.user_activity_log_repository import UserActivityLogRepository
-from src.repositories.consultation_review_repository import ConsultationReviewRepository
-from src.repositories.inquiry_repository import InquiryRepository
-from src.repositories.notification_repository import NotificationRepository
-from src.repositories.ars.tm60_member_repository import Tm60MemberRepository
-from src.repositories.ars.tm60_mobile_repository import Tm60MobileRepository
-from src.repositories.ars.tm60_chatlog_repository import Tm60ChatlogRepository
-from src.services.counselor_service import CounselorService
-from src.services.auth_service import AuthService, get_current_user, TokenPayload, KST
-from src.services.user_activity_log_service import UserActivityLogService
-from src.services.consultation_review_service import ConsultationReviewService
-from src.services.inquiry_service import InquiryService
-from src.services.notification_service import NotificationService
-from src.services.ars.tm60_member_service import Tm60MemberService
-from src.services.ars.tm60_chatlog_service import Tm60ChatlogService
-from src.services.ars.tm60_mobile_service import Tm60MobileService
-from src.repositories.notification_wait_repository import NotificationWaitRepository
-from src.services.notification_wait_service import NotificationWaitService
+from src.core.dependencies import (
+    CounselorServiceDep, CounselorRepositoryDep, AuthServiceDep,
+    UserActivityLogServiceDep, ConsultationReviewServiceDep, ConsultationReviewRepositoryDep,
+    InquiryServiceDep, InquiryServiceForCounselorDep, NotificationWaitServiceDep,
+    Tm60MemberServiceDep, Tm60ChatlogServiceDep, Tm60MobileServiceDep
+)
+from src.services.auth_service import get_current_user, TokenPayload, KST
 from src.schemas.auth_schema import LoginRequest, LoginResponse
 from src.schemas.counselor_schema import CounselorResponse, CounselorMypageUpdate, CounselorSearchItem
 from src.schemas.ars.tm60_mobile_schema import CallByPointRequest, CallByPointResponse
@@ -42,132 +27,6 @@ from src.common.utils.auth_utils import verify_counselor_role
 from src.exceptions.custom_exceptions import BaseAppException
 
 router = APIRouter(prefix="/counselors", tags=["counselors"])
-
-
-# Dependency injection functions
-def get_counselor_repository(db: AsyncSession = Depends(get_db_maria)) -> CounselorRepository:
-    """상담사 리포지토리 의존성 주입"""
-    return CounselorRepository(db)
-
-
-def get_auth_service() -> AuthService:
-    """인증 서비스 의존성 주입"""
-    return AuthService()
-
-
-def get_user_activity_log_repository(db: AsyncSession = Depends(get_db_maria)) -> UserActivityLogRepository:
-    """사용자 활동 로그 리포지토리 의존성 주입"""
-    return UserActivityLogRepository(db)
-
-
-def get_user_activity_log_service(
-    activity_repo: UserActivityLogRepository = Depends(get_user_activity_log_repository)
-) -> UserActivityLogService:
-    """사용자 활동 로그 서비스 의존성 주입"""
-    return UserActivityLogService(activity_repo)
-
-
-def get_consultation_review_repository(db: AsyncSession = Depends(get_db_maria)) -> ConsultationReviewRepository:
-    """상담 후기 리포지토리 의존성 주입"""
-    return ConsultationReviewRepository(db)
-
-
-def get_consultation_review_service(
-    review_repo: ConsultationReviewRepository = Depends(get_consultation_review_repository)
-) -> ConsultationReviewService:
-    """상담 후기 서비스 의존성 주입"""
-    return ConsultationReviewService(review_repo)
-
-
-def get_inquiry_repository(db: AsyncSession = Depends(get_db_maria)) -> InquiryRepository:
-    """1:1 문의 리포지토리 의존성 주입"""
-    return InquiryRepository(db)
-
-
-def get_user_repository(db: AsyncSession = Depends(get_db_maria)) -> UserRepository:
-    """사용자 리포지토리 의존성 주입"""
-    return UserRepository(db)
-
-
-def get_notification_repository(db: AsyncSession = Depends(get_db_maria)) -> NotificationRepository:
-    """알림 리포지토리 의존성 주입"""
-    return NotificationRepository(db)
-
-
-def get_inquiry_service(
-    inquiry_repo: InquiryRepository = Depends(get_inquiry_repository),
-    user_repo: UserRepository = Depends(get_user_repository),
-    notification_repo: NotificationRepository = Depends(get_notification_repository)
-) -> InquiryService:
-    """1:1 문의 서비스 의존성 주입"""
-    notification_service = NotificationService(notification_repo)
-    return InquiryService(
-        inquiry_repo=inquiry_repo,
-        user_repo=user_repo,
-        notification_service=notification_service
-    )
-
-
-def get_tm60_member_service(mssql = Depends(get_db_mssql)) -> Tm60MemberService:
-    repo = Tm60MemberRepository(mssql)
-    return Tm60MemberService(repo)
-
-def get_tm60_chatlog_service() -> Tm60ChatlogService:
-    for mssql in get_db_mssql():
-        return Tm60ChatlogService(mssql)
-
-
-def get_tm60_mobile_service(mssql = Depends(get_db_mssql)) -> Tm60MobileService:
-    """TM60 Mobile 서비스 의존성 주입"""
-    repo = Tm60MobileRepository(mssql)
-    return Tm60MobileService(repo)
-
-
-def get_notification_wait_repository(
-    db: AsyncSession = Depends(get_db_maria)
-) -> NotificationWaitRepository:
-    """알림 대기 리포지토리 의존성 주입"""
-    return NotificationWaitRepository(db)
-
-
-def get_notification_service(
-    notification_repo: NotificationRepository = Depends(get_notification_repository)
-) -> NotificationService:
-    """알림 서비스 의존성 주입"""
-    return NotificationService(notification_repo)
-
-
-def get_notification_wait_service(
-    repo: NotificationWaitRepository = Depends(get_notification_wait_repository),
-    user_repo: UserRepository = Depends(get_user_repository),
-    counselor_repo: CounselorRepository = Depends(get_counselor_repository),
-    notification_service: NotificationService = Depends(get_notification_service)
-) -> NotificationWaitService:
-    """알림 대기 서비스 의존성 주입"""
-    return NotificationWaitService(
-        notification_wait_repo=repo,
-        user_repo=user_repo,
-        counselor_repo=counselor_repo,
-        notification_service=notification_service
-    )
-
-
-def get_tm60_chatlog_repository():
-    """TM60 채팅로그 리포지토리 의존성 주입"""
-    for mssql_session in get_db_mssql():
-        return Tm60ChatlogRepository(mssql_session)
-
-
-def get_counselor_service(
-    counselor_repo: CounselorRepository = Depends(get_counselor_repository),
-    auth_service: AuthService = Depends(get_auth_service),
-    tm60_member_service: Tm60MemberService = Depends(get_tm60_member_service),
-    review_repo: ConsultationReviewRepository = Depends(get_consultation_review_repository),
-    notification_wait_service: NotificationWaitService = Depends(get_notification_wait_service),
-    chatlog_repo: Tm60ChatlogRepository = Depends(get_tm60_chatlog_repository)
-) -> CounselorService:
-    """상담사 서비스 의존성 주입"""
-    return CounselorService(counselor_repo, auth_service, tm60_member_service, review_repo, notification_wait_service, chatlog_repo)
 
 
 @router.post(
@@ -186,10 +45,9 @@ async def login(
     request: Request,
     login_request: LoginRequest,
     response: Response,
-    db: AsyncSession = Depends(get_db_maria),
-    counselor_service: CounselorService = Depends(get_counselor_service),
-    auth_service: AuthService = Depends(get_auth_service),
-    activity_log_service: UserActivityLogService = Depends(get_user_activity_log_service)
+    counselor_service: CounselorServiceDep,
+    auth_service: AuthServiceDep,
+    activity_log_service: UserActivityLogServiceDep
 ):
     """상담사 로그인 (닉네임 사용)"""
     log = get_logger_with_request_id()
@@ -272,9 +130,9 @@ async def login(
 async def logout(
     request: Request,
     response: Response,
-    current_user: TokenPayload = Depends(get_current_user),
-    auth_service: AuthService = Depends(get_auth_service),
-    redis_client = Depends(get_redis)
+    auth_service: AuthServiceDep,
+    redis_client = Depends(get_redis),
+    current_user: TokenPayload = Depends(get_current_user)
 ):
     """상담사 로그아웃"""
     log = get_logger_with_request_id()
@@ -340,11 +198,11 @@ async def logout(
 
 @router.get("/inquiries/reviews", response_model=APIResponse, summary="상담사별 후기 목록 조회")
 async def get_counselor_reviews(
+    review_service: ConsultationReviewServiceDep,
     page: int = Query(1, ge=1, description="페이지 번호"),
     limit: int = Query(20, ge=1, le=100, description="페이지당 항목 수"),
     visible_only: bool = Query(True, description="공개 후기만 조회"),
-    current_user: TokenPayload = Depends(get_current_user),
-    review_service: ConsultationReviewService = Depends(get_consultation_review_service)
+    current_user: TokenPayload = Depends(get_current_user)
 ) -> APIResponse:
     """
     상담사별 후기 목록을 조회합니다. (현재 로그인한 상담사 기준)
@@ -391,9 +249,9 @@ async def get_counselor_reviews(
 
 @router.get("/inquiries/reviews/count", response_model=APIResponse, summary="상담사별 후기 개수 조회")
 async def get_counselor_reviews_count(
+    review_service: ConsultationReviewServiceDep,
     visible_only: bool = Query(True, description="공개 후기만 조회"),
-    current_user: TokenPayload = Depends(get_current_user),
-    review_service: ConsultationReviewService = Depends(get_consultation_review_service)
+    current_user: TokenPayload = Depends(get_current_user)
 ) -> APIResponse:
     """
     상담사별 후기 개수만 조회합니다. (최적화된 count 전용)
@@ -426,8 +284,8 @@ async def get_counselor_reviews_count(
 async def reply_to_review(
     review_id: int,
     payload: dict,
-    current_user: TokenPayload = Depends(get_current_user),
-    review_service: ConsultationReviewService = Depends(get_consultation_review_service)
+    review_service: ConsultationReviewServiceDep,
+    current_user: TokenPayload = Depends(get_current_user)
 ) -> APIResponse:
     """
     고객 후기에 답변을 작성합니다.
@@ -465,10 +323,10 @@ async def reply_to_review(
 
 @router.get("/inquiries/users", response_model=APIResponse, summary="상담문의 목록 조회")
 async def get_counselor_user_inquiries(
+    inquiry_service: InquiryServiceDep,
     page: int = Query(1, ge=1, description="페이지 번호"),
     limit: int = Query(20, ge=1, le=100, description="페이지당 항목 수"),
-    current_user: TokenPayload = Depends(get_current_user),
-    inquiry_service: InquiryService = Depends(get_inquiry_service)
+    current_user: TokenPayload = Depends(get_current_user)
 ) -> APIResponse:
     """
     상담문의 목록을 조회합니다.
@@ -513,8 +371,8 @@ async def get_counselor_user_inquiries(
 
 @router.get("/inquiries/users/count", response_model=APIResponse, summary="상담문의 개수 조회")
 async def get_counselor_user_inquiries_count(
-    current_user: TokenPayload = Depends(get_current_user),
-    inquiry_service: InquiryService = Depends(get_inquiry_service)
+    inquiry_service: InquiryServiceDep,
+    current_user: TokenPayload = Depends(get_current_user)
 ) -> APIResponse:
     """
     상담문의 개수만 조회합니다. (최적화된 count 전용)
@@ -543,8 +401,8 @@ async def get_counselor_user_inquiries_count(
 async def reply_to_user_inquiry(
     inquiry_id: int,
     payload: dict,
-    current_user: TokenPayload = Depends(get_current_user),
-    inquiry_service: InquiryService = Depends(get_inquiry_service)
+    inquiry_service: InquiryServiceDep,
+    current_user: TokenPayload = Depends(get_current_user)
 ) -> APIResponse:
     """
     상담문의에 답변을 작성합니다.
@@ -582,10 +440,10 @@ async def reply_to_user_inquiry(
 
 @router.get("/inquiries/admin", response_model=APIResponse, summary="관리자 문의 목록 조회")
 async def get_counselor_admin_inquiries(
+    inquiry_service: InquiryServiceDep,
     page: int = Query(1, ge=1, description="페이지 번호"),
     limit: int = Query(20, ge=1, le=100, description="페이지당 항목 수"),
-    current_user: TokenPayload = Depends(get_current_user),
-    inquiry_service: InquiryService = Depends(get_inquiry_service)
+    current_user: TokenPayload = Depends(get_current_user)
 ) -> APIResponse:
     """
     관리자 문의 목록을 조회합니다.
@@ -630,8 +488,8 @@ async def get_counselor_admin_inquiries(
 
 @router.get("/inquiries/admin/count", response_model=APIResponse, summary="관리자 문의 개수 조회")
 async def get_counselor_admin_inquiries_count(
-    current_user: TokenPayload = Depends(get_current_user),
-    inquiry_service: InquiryService = Depends(get_inquiry_service)
+    inquiry_service: InquiryServiceDep,
+    current_user: TokenPayload = Depends(get_current_user)
 ) -> APIResponse:
     """
     관리자 문의 개수만 조회합니다. (최적화된 count 전용)
@@ -659,8 +517,8 @@ async def get_counselor_admin_inquiries_count(
 @router.post("/inquiries/admin", response_model=APIResponse, summary="관리자 문의 작성")
 async def create_counselor_admin_inquiry(
     payload: dict,
-    current_user: TokenPayload = Depends(get_current_user),
-    inquiry_service: InquiryService = Depends(get_inquiry_service)
+    inquiry_service: InquiryServiceDep,
+    current_user: TokenPayload = Depends(get_current_user)
 ) -> APIResponse:
     """
     상담사가 관리자에게 문의를 작성합니다.
@@ -699,8 +557,8 @@ async def create_counselor_admin_inquiry(
     description="현재 로그인한 상담사의 요약 정보를 반환합니다."
 )
 async def get_counselor_mypage(
-    current_user: TokenPayload = Depends(get_current_user),
-    counselor_service: CounselorService = Depends(get_counselor_service)
+    counselor_service: CounselorServiceDep,
+    current_user: TokenPayload = Depends(get_current_user)
 ):
     """
     상담사 마이페이지 정보 조회 (t_counselor 단일 행 반환)
@@ -726,8 +584,8 @@ async def get_counselor_mypage(
 )
 async def update_counselor_mypage(
     updates: CounselorMypageUpdate,
-    current_user: TokenPayload = Depends(get_current_user),
-    counselor_service: CounselorService = Depends(get_counselor_service)
+    counselor_service: CounselorServiceDep,
+    current_user: TokenPayload = Depends(get_current_user)
 ):
     """
     - 변경 대상 필드 (옵셔널):
@@ -750,11 +608,11 @@ async def update_counselor_mypage(
     description="tm60_chatlog에서 counselor_code(m_code) 기준 yyyy, mm 조건으로 합계를 조회"
 )
 async def get_monthly_consultation_stats(
+    counselor_service: CounselorServiceDep,
+    chatlog_service: Tm60ChatlogServiceDep,
     yyyy: str = Query(..., min_length=4, max_length=4, description="연도 (YYYY)"),
     mm: str = Query(..., min_length=2, max_length=2, description="월 (MM)"),
-    current_user: TokenPayload = Depends(get_current_user),
-    counselor_service: CounselorService = Depends(get_counselor_service),
-    chatlog_service: Tm60ChatlogService = Depends(get_tm60_chatlog_service)
+    current_user: TokenPayload = Depends(get_current_user)
 ):
     """현재 로그인 상담사의 `counselor_code`로 tm60_chatlog 집계 조회"""
     verify_counselor_role(current_user)
@@ -786,8 +644,8 @@ async def get_monthly_consultation_stats(
 async def call_by_point(
     request: Request,
     payload: CallByPointRequest,
-    current_user: TokenPayload = Depends(get_current_user),
-    tm60_mobile_service: Tm60MobileService = Depends(get_tm60_mobile_service)
+    tm60_mobile_service: Tm60MobileServiceDep,
+    current_user: TokenPayload = Depends(get_current_user)
 ) -> APIResponse[CallByPointResponse]:
     """
     포인트 전화 상담 전처리 API (레거시 call_by_point.php 대체)
@@ -867,7 +725,7 @@ async def call_by_point(
 )
 async def get_all_counselor_codes(
     request: Request,
-    counselor_service: CounselorService = Depends(get_counselor_service),
+    counselor_service: CounselorServiceDep,
 ):
     """전체 상담사 코드 목록 조회 (상태별 정렬 + 그룹 내 셔플)"""
     log = get_logger_with_request_id()
@@ -891,9 +749,9 @@ async def get_all_counselor_codes(
 async def search_public_counselors_by_codes(
     request: Request,
     payload: dict,
+    counselor_service: CounselorServiceDep,
     page: int = Query(1, ge=1, description="페이지 번호"),
     limit: int = Query(10, ge=1, le=50, description="페이지당 항목 수"),
-    counselor_service: CounselorService = Depends(get_counselor_service),
 ):
     """m_codes 기반 공개 검색 목록 (POST)"""
     log = get_logger_with_request_id()
@@ -934,6 +792,7 @@ async def search_public_counselors_by_codes(
 )
 async def search_public_counselors(
     request: Request,
+    counselor_service: CounselorServiceDep,
     page: int = Query(1, ge=1, description="페이지 번호"),
     limit: int = Query(10, ge=1, le=50, description="페이지당 항목 수"),
     cs_status: Optional[str] = Query(None, description="tm60_members.m_state 값(예: '1','2','3')"),
@@ -943,7 +802,6 @@ async def search_public_counselors(
     cs_keywords: Optional[list[str]] = Query(None, description="키워드 배열"),
     search_name: Optional[str] = Query(None, description="상담사 닉네임 like"),
     sort_by: Optional[str] = Query(None, description="정렬 기준: 'review' (리뷰 많은 순), 'hot' (최근 7일 상담 많은 순), 'price' (가격 낮은 순)"),
-    counselor_service: CounselorService = Depends(get_counselor_service),
 ):
     """공개 검색 목록 (게스트)
     요구사항 요약:
@@ -997,10 +855,10 @@ async def search_public_counselors(
 )
 async def get_public_counselor_detail(
     counselor_code: str,
-    counselor_repo: CounselorRepository = Depends(get_counselor_repository),
-    review_repo: ConsultationReviewRepository = Depends(get_consultation_review_repository),
-    chatlog_service: Tm60ChatlogService = Depends(get_tm60_chatlog_service),
-    tm60_member_service: Tm60MemberService = Depends(get_tm60_member_service)
+    counselor_repo: CounselorRepositoryDep,
+    review_repo: ConsultationReviewRepositoryDep,
+    chatlog_service: Tm60ChatlogServiceDep,
+    tm60_member_service: Tm60MemberServiceDep
 ):
     """상담사 공개 상세 조회
     - 입력: counselor_code
@@ -1041,10 +899,10 @@ async def get_public_counselor_detail(
 )
 async def get_public_counselor_reviews(
     counselor_id: str,
+    review_service: ConsultationReviewServiceDep,
     page: int = Query(1, ge=1, description="페이지 번호"),
     limit: int = Query(20, ge=1, le=100, description="페이지당 항목 수"),
     visible_only: bool = Query(True, description="공개 후기만 조회"),
-    review_service: ConsultationReviewService = Depends(get_consultation_review_service),
 ):
     log = get_logger_with_request_id()
     log.info("API: Public counselor reviews", counselor_id=counselor_id, page=page, limit=limit, visible_only=visible_only)
@@ -1073,9 +931,9 @@ async def get_public_counselor_reviews(
 )
 async def get_public_counselor_user_inquiries(
     counselor_id: str,
+    inquiry_service: InquiryServiceDep,
     page: int = Query(1, ge=1, description="페이지 번호"),
     limit: int = Query(20, ge=1, le=100, description="페이지당 항목 수"),
-    inquiry_service: InquiryService = Depends(get_inquiry_service),
 ):
     log = get_logger_with_request_id()
     log.info("API: Public counselor user inquiries", counselor_id=counselor_id, page=page, limit=limit)
@@ -1102,8 +960,8 @@ async def get_public_counselor_user_inquiries(
     description="tm60_member에서 전체 상담사 상태를 조회하여 t_counselor.counselor_status를 동기화합니다. WAITING으로 변경된 상담사에 대해 알림을 발송합니다."
 )
 async def sync_counselor_status(
-    counselor_service: CounselorService = Depends(get_counselor_service),
-    notification_wait_service: NotificationWaitService = Depends(get_notification_wait_service)
+    counselor_service: CounselorServiceDep,
+    notification_wait_service: NotificationWaitServiceDep
 ) -> APIResponse:
     """
     상담사 상태 동기화 API (스케줄러용)

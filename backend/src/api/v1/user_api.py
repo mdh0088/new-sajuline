@@ -1,41 +1,20 @@
 """
 사용자 관련 API 엔드포인트
 """
-from typing import Optional
 from fastapi import APIRouter, Depends, HTTPException, status, Query, Response, Request
-from sqlalchemy.ext.asyncio import AsyncSession
 
 # 레이트 리미팅 import 추가
 from src.common.middleware.rate_limit import limiter
 
-from src.core.database import get_db_maria, get_db_mssql
 from src.core.redis import get_redis
-from src.repositories.user_repository import UserRepository
-from src.repositories.counselor_repository import CounselorRepository
-from src.repositories.event_repository import EventRepository
-from src.repositories.point_transaction_repository import PointTransactionRepository
-from src.repositories.user_activity_log_repository import UserActivityLogRepository
-from src.repositories.ars.tm60_users_repository import Tm60UsersRepository
-from src.services.ars.tm60_users_service import Tm60UsersService
-from src.repositories.user_bookmark_repository import UserBookmarkRepository
-from src.repositories.consultation_review_repository import ConsultationReviewRepository
-from src.repositories.payment_repository import PaymentRepository
-from src.repositories.grade_repository import GradeRepository
-from src.repositories.ars.tm60_chatlog_repository import Tm60ChatlogRepository
-from src.services.user_service import UserService
+from src.core.dependencies import (
+    UserServiceDep, AuthServiceDep, NotificationServiceDep, InquiryServiceDep,
+    UserBookmarkServiceDep, ConsultationReviewServiceDep, PaymentServiceDep,
+    GradeServiceDep, PointTransactionServiceDep, Tm60UsersServiceDep,
+    Tm60ChatlogServiceDep, Tm60ChatlogRepositoryDep, CounselorRepositoryDep,
+    PaymentRepositoryDep, MariaSessionDep
+)
 from src.services.auth_service import AuthService, get_current_user, TokenPayload, KST
-from src.services.event_service import EventService
-from src.services.point_transaction_service import PointTransactionService
-from src.services.user_activity_log_service import UserActivityLogService
-from src.services.user_bookmark_service import UserBookmarkService
-from src.services.consultation_review_service import ConsultationReviewService
-from src.services.payment_service import PaymentService
-from src.services.grade_service import GradeService
-from src.services.ars.tm60_chatlog_service import Tm60ChatlogService
-from src.repositories.ars.tm60_chatlog_repository import Tm60ChatlogRepository
-from src.services.point_transaction_service import PointTransactionService
-from src.repositories.notification_repository import NotificationRepository
-from src.services.notification_service import NotificationService
 from src.schemas.consultation_review_schema import (
     UserReviewSummary,
     UserReviewList,
@@ -52,184 +31,14 @@ from src.schemas.user_schema import (
 )
 from src.common.utils.auth_utils import verify_user_role
 from src.schemas.user_bookmark_schema import UserBookmarkResponse
-from src.schemas.counselor_schema import CounselorSearchItem
 from src.schemas.auth_schema import LoginRequest, LoginResponse
-from src.common.response import APIResponse,APIResponseBuilder, ok, fail
-from src.repositories.inquiry_repository import InquiryRepository
-from src.services.inquiry_service import InquiryService
+from src.common.response import APIResponse, APIResponseBuilder, ok, fail
 from src.schemas.inquiry_schema import UserInquiryCreateRequest, InquiryResponse, UserAdminInquiryCreateRequest
 from src.common.logging import logger, get_logger_with_request_id
 from src.common.utils.client_info import extract_client_info
 from src.exceptions.custom_exceptions import BaseAppException
+
 router = APIRouter(prefix="/users", tags=["users"])
-
-
-# Dependency injection functions
-def get_user_repository(db: AsyncSession = Depends(get_db_maria)) -> UserRepository:
-    """사용자 리포지토리 의존성 주입"""
-    return UserRepository(db)
-
-
-def get_counselor_repository(db: AsyncSession = Depends(get_db_maria)) -> CounselorRepository:
-    """상담사 리포지토리 의존성 주입"""
-    return CounselorRepository(db)
-
-
-def get_auth_service() -> AuthService:
-    """인증 서비스 의존성 주입"""
-    return AuthService()
-
-
-def get_event_repository(db: AsyncSession = Depends(get_db_maria)) -> EventRepository:
-    """이벤트 리포지토리 의존성 주입"""
-    return EventRepository(db)
-
-
-def get_point_transaction_repository(db: AsyncSession = Depends(get_db_maria)) -> PointTransactionRepository:
-    """포인트 거래 리포지토리 의존성 주입"""
-    return PointTransactionRepository(db)
-
-
-def get_tm60_users_service():
-    """TM60 사용자 서비스 의존성 주입"""
-    for mssql_session in get_db_mssql():
-        repo = Tm60UsersRepository(mssql_session)
-        return Tm60UsersService(repo)
-
-
-def get_user_activity_log_repository(db: AsyncSession = Depends(get_db_maria)) -> UserActivityLogRepository:
-    """사용자 활동 로그 리포지토리 의존성 주입"""
-    return UserActivityLogRepository(db)
-
-
-def get_point_transaction_service(
-    point_transaction_repo: PointTransactionRepository = Depends(get_point_transaction_repository)
-) -> PointTransactionService:
-    """포인트 거래 서비스 의존성 주입"""
-    return PointTransactionService(point_transaction_repo)
-
-
-def get_user_activity_log_service(
-    activity_log_repo: UserActivityLogRepository = Depends(get_user_activity_log_repository)
-) -> UserActivityLogService:
-    """사용자 활동 로그 서비스 의존성 주입"""
-    return UserActivityLogService(activity_log_repo)
-
-
-def get_event_service(
-    event_repo: EventRepository = Depends(get_event_repository),
-    point_transaction_service: PointTransactionService = Depends(get_point_transaction_service),
-    tm60_users_service: Tm60UsersService = Depends(get_tm60_users_service)
-) -> EventService:
-    """이벤트 서비스 의존성 주입"""
-    return EventService(event_repo, point_transaction_service, tm60_users_service)
-
-
-def get_user_service(
-    user_repo: UserRepository = Depends(get_user_repository),
-    counselor_repo: CounselorRepository = Depends(get_counselor_repository),
-    auth_service: AuthService = Depends(get_auth_service),
-    event_service: EventService = Depends(get_event_service),
-    activity_log_service: UserActivityLogService = Depends(get_user_activity_log_service),
-    tm60_users_service: Tm60UsersService = Depends(get_tm60_users_service)
-) -> UserService:
-    """사용자 서비스 의존성 주입"""
-    return UserService(user_repo, counselor_repo, auth_service, activity_log_service, event_service, tm60_users_service)
-
-
-# 마이페이지용 추가 의존성 주입 함수들
-def get_user_bookmark_repository(db: AsyncSession = Depends(get_db_maria)) -> UserBookmarkRepository:
-    """사용자 북마크 리포지토리 의존성 주입"""
-    return UserBookmarkRepository(db)
-
-
-def get_consultation_review_repository(db: AsyncSession = Depends(get_db_maria)) -> ConsultationReviewRepository:
-    """상담 후기 리포지토리 의존성 주입"""
-    return ConsultationReviewRepository(db)
-
-
-def get_inquiry_repository(db: AsyncSession = Depends(get_db_maria)) -> InquiryRepository:
-    return InquiryRepository(db)
-
-
-def get_notification_repository(db: AsyncSession = Depends(get_db_maria)) -> NotificationRepository:
-    """알림 리포지토리 의존성 주입"""
-    return NotificationRepository(db)
-
-
-def get_notification_service(
-    notification_repo: NotificationRepository = Depends(get_notification_repository)
-) -> NotificationService:
-    """알림 서비스 의존성 주입"""
-    return NotificationService(notification_repo)
-
-
-def get_inquiry_service(
-    inquiry_repo: InquiryRepository = Depends(get_inquiry_repository),
-    counselor_repo: CounselorRepository = Depends(get_counselor_repository),
-    notification_repo: NotificationRepository = Depends(get_notification_repository)
-) -> InquiryService:
-    notification_service = NotificationService(notification_repo)
-    return InquiryService(
-        inquiry_repo=inquiry_repo,
-        counselor_repo=counselor_repo,
-        notification_service=notification_service
-    )
-
-
-def get_payment_repository(db: AsyncSession = Depends(get_db_maria)) -> PaymentRepository:
-    """결제 리포지토리 의존성 주입"""
-    return PaymentRepository(db)
-
-
-def get_grade_repository(db: AsyncSession = Depends(get_db_maria)) -> GradeRepository:
-    """등급 리포지토리 의존성 주입"""
-    return GradeRepository(db)
-
-
-def get_tm60_chatlog_repository():
-    """TM60 채팅로그 리포지토리 의존성 주입"""
-    for mssql_session in get_db_mssql():
-        return Tm60ChatlogRepository(mssql_session)
-
-
-def get_user_bookmark_service(
-    bookmark_repo: UserBookmarkRepository = Depends(get_user_bookmark_repository),
-    review_repo: ConsultationReviewRepository = Depends(get_consultation_review_repository)
-) -> UserBookmarkService:
-    """사용자 북마크 서비스 의존성 주입 (후기 리포지토리 포함)"""
-    return UserBookmarkService(bookmark_repo, review_repo)
-
-
-def get_consultation_review_service(
-    review_repo: ConsultationReviewRepository = Depends(get_consultation_review_repository)
-) -> ConsultationReviewService:
-    """상담 후기 서비스 의존성 주입"""
-    return ConsultationReviewService(review_repo)
-
-
-def get_payment_service(
-    payment_repo: PaymentRepository = Depends(get_payment_repository)
-) -> PaymentService:
-    """결제 서비스 의존성 주입"""
-    return PaymentService(payment_repo)
-
-
-def get_grade_service(
-    grade_repo: GradeRepository = Depends(get_grade_repository)
-) -> GradeService:
-    """등급 서비스 의존성 주입"""
-    return GradeService(grade_repo)
-
-
-def get_tm60_chatlog_service() -> Tm60ChatlogService:
-    """TM60 채팅로그 서비스 의존성 주입"""
-    for mssql_session in get_db_mssql():
-        return Tm60ChatlogService(mssql_session)
-
-def get_tm60_chatlog_repository():
-    for mssql_session in get_db_mssql():
-        return Tm60ChatlogRepository(mssql_session)
 
 
 @router.get(
@@ -238,10 +47,10 @@ def get_tm60_chatlog_repository():
     summary="사용자 → 관리자 문의 목록 조회"
 )
 async def get_user_admin_inquiries_api(
+    inquiry_service: InquiryServiceDep,
     page: int = Query(1, ge=1, description="페이지 번호"),
     limit: int = Query(20, ge=1, le=100, description="페이지당 항목 수"),
-    current_user: TokenPayload = Depends(get_current_user),
-    inquiry_service: InquiryService = Depends(get_inquiry_service)
+    current_user: TokenPayload = Depends(get_current_user)
 ) -> APIResponse:
     """
     사용자 → 관리자 문의 목록을 조회합니다.
@@ -289,8 +98,8 @@ async def get_user_admin_inquiries_api(
 )
 async def create_user_admin_inquiry_api(
     payload: UserAdminInquiryCreateRequest,
-    current_user: TokenPayload = Depends(get_current_user),
-    inquiry_service: InquiryService = Depends(get_inquiry_service)
+    inquiry_service: InquiryServiceDep,
+    current_user: TokenPayload = Depends(get_current_user)
 ) -> APIResponse[InquiryResponse]:
     """
     로그인 사용자 기준으로 관리자에게 문의 등록
@@ -324,8 +133,8 @@ async def create_user_admin_inquiry_api(
 )
 async def get_user_admin_inquiry_detail_api(
     inquiry_id: int,
-    current_user: TokenPayload = Depends(get_current_user),
-    inquiry_service: InquiryService = Depends(get_inquiry_service)
+    inquiry_service: InquiryServiceDep,
+    current_user: TokenPayload = Depends(get_current_user)
 ) -> APIResponse[InquiryResponse]:
     """
     사용자 → 관리자 문의 상세 조회
@@ -358,8 +167,8 @@ async def get_user_admin_inquiry_detail_api(
 )
 async def create_user_inquiry_api(
     payload: UserInquiryCreateRequest,
-    current_user: TokenPayload = Depends(get_current_user),
-    inquiry_service: InquiryService = Depends(get_inquiry_service)
+    inquiry_service: InquiryServiceDep,
+    current_user: TokenPayload = Depends(get_current_user)
 ) -> APIResponse[InquiryResponse]:
     """로그인 사용자 기준으로 상담사에게 문의 등록"""
     result = await inquiry_service.create_user_inquiry(user_id=current_user.sub, payload=payload)
@@ -381,8 +190,8 @@ async def create_user_inquiry_api(
 async def signup(
     request: Request,  # Rate Limiting 필수
     signup_data: UserSignup,
-    user_service: UserService = Depends(get_user_service),
-    notification_service: NotificationService = Depends(get_notification_service)
+    user_service: UserServiceDep,
+    notification_service: NotificationServiceDep
 ) -> APIResponse[UserResponse]:
     """통합 회원가입 - 일반/소셜 가입 통합 처리"""
     log = get_logger_with_request_id()
@@ -424,8 +233,8 @@ async def social_signup_with_login(
     request: Request,  # Rate Limiting 필수
     response: Response,
     signup_data: UserSignup,
-    user_service: UserService = Depends(get_user_service),
-    notification_service: NotificationService = Depends(get_notification_service)
+    user_service: UserServiceDep,
+    notification_service: NotificationServiceDep
 ) -> APIResponse[UserResponse]:
     """소셜 회원가입 + 자동 로그인"""
     log = get_logger_with_request_id()
@@ -516,7 +325,7 @@ async def social_signup_with_login(
 #     page: int = Query(1, ge=1, description="페이지 번호"),
 #     size: int = Query(20, ge=1, le=100, description="페이지 크기"),
 #     user_status: Optional[str] = Query(None, description="사용자 상태 필터"),
-#     user_service: UserService = Depends(get_user_service)
+#     user_service: UserServiceDep
 # ):
 #     """사용자 목록 조회 - 페이징 및 상태별 필터링"""
 #     return await user_service.get_user_list(page, size, user_status)
@@ -535,7 +344,7 @@ async def social_signup_with_login(
 async def authenticate_user(
     request: Request,
     login_data: LoginRequest,
-    user_service: UserService = Depends(get_user_service)
+    user_service: UserServiceDep
 ):
     """사용자 인증 - ID/이메일 및 비밀번호 검증"""
     return await user_service.authenticate_user(login_data.user_id, login_data.password)
@@ -558,9 +367,9 @@ async def login(
     request: Request,
     login_request: LoginRequest,
     response: Response,
-    db: AsyncSession = Depends(get_db_maria),
-    user_service: UserService = Depends(get_user_service),
-    auth_service: AuthService = Depends(get_auth_service)
+    db: MariaSessionDep,
+    user_service: UserServiceDep,
+    auth_service: AuthServiceDep
 ):
     """사용자 로그인"""
     log = get_logger_with_request_id()
@@ -633,8 +442,8 @@ async def login(
 async def logout(
     request: Request,
     response: Response,
+    auth_service: AuthServiceDep,
     current_user: TokenPayload = Depends(get_current_user),
-    auth_service: AuthService = Depends(get_auth_service),
     redis_client = Depends(get_redis)
 ):
     """사용자 로그아웃"""
@@ -708,8 +517,8 @@ async def logout(
 @limiter.limit("30/minute")  # 분당 30회 제한 (실시간 검증용)
 async def check_email_availability(
     request: Request,
-    value: str = Query(..., description="검사할 이메일"),
-    user_service: UserService = Depends(get_user_service)
+    user_service: UserServiceDep,
+    value: str = Query(..., description="검사할 이메일")
 ):
     """이메일 중복 검사"""
     available = await user_service.check_email_availability(value)
@@ -730,8 +539,8 @@ async def check_email_availability(
 @limiter.limit("30/minute")  # 분당 30회 제한 (실시간 검증용)
 async def check_user_id_availability(
     request: Request,
-    value: str = Query(..., description="검사할 사용자 ID"),
-    user_service: UserService = Depends(get_user_service)
+    user_service: UserServiceDep,
+    value: str = Query(..., description="검사할 사용자 ID")
 ):
     """사용자 ID 중복 검사"""
     available = await user_service.check_user_id_availability(value)
@@ -752,8 +561,8 @@ async def check_user_id_availability(
 @limiter.limit("30/minute")  # 분당 30회 제한 (실시간 검증용)
 async def check_phone_availability(
     request: Request,
-    value: str = Query(..., description="검사할 전화번호"),
-    user_service: UserService = Depends(get_user_service)
+    user_service: UserServiceDep,
+    value: str = Query(..., description="검사할 전화번호")
 ):
     """전화번호 중복 검사"""
     available = await user_service.check_phone_availability(value)
@@ -774,8 +583,8 @@ async def check_phone_availability(
 @limiter.limit("30/minute")  # 분당 30회 제한 (실시간 검증용)
 async def check_nickname_availability(
     request: Request,
-    value: str = Query(..., description="검사할 닉네임"),
-    user_service: UserService = Depends(get_user_service)
+    user_service: UserServiceDep,
+    value: str = Query(..., description="검사할 닉네임")
 ):
     """닉네임 중복 검사"""
     available = await user_service.check_nickname_availability(value)
@@ -795,7 +604,7 @@ async def check_nickname_availability(
 )
 async def find_user_id(
     find_id_data: FindIdRequest,
-    user_service: UserService = Depends(get_user_service)
+    user_service: UserServiceDep
 ) -> APIResponse[FindIdResponse]:
     """핸드폰 본인인증 기반 ID 찾기"""
     log = get_logger_with_request_id()
@@ -820,7 +629,7 @@ async def find_user_id(
 )
 async def find_password(
     find_password_data: FindPasswordRequest,
-    user_service: UserService = Depends(get_user_service)
+    user_service: UserServiceDep
 ) -> APIResponse[FindPasswordResponse]:
     """비밀번호 찾기 - 임시 비밀번호 발급 및 이메일 전송"""
     log = get_logger_with_request_id()
@@ -847,14 +656,14 @@ async def find_password(
 @limiter.limit("100/minute")  # 분당 100회 제한 (마이페이지는 자주 조회될 수 있음)
 async def get_user_mypage(
     request: Request,
-    current_user: TokenPayload = Depends(get_current_user),
-    user_service: UserService = Depends(get_user_service),
-    bookmark_service: UserBookmarkService = Depends(get_user_bookmark_service),
-    review_service: ConsultationReviewService = Depends(get_consultation_review_service),
-    payment_service: PaymentService = Depends(get_payment_service),
-    grade_service: GradeService = Depends(get_grade_service),
-    tm60_chatlog_service: Tm60ChatlogService = Depends(get_tm60_chatlog_service),
-    tm60_users_service: Tm60UsersService = Depends(get_tm60_users_service)
+    user_service: UserServiceDep,
+    bookmark_service: UserBookmarkServiceDep,
+    review_service: ConsultationReviewServiceDep,
+    payment_service: PaymentServiceDep,
+    grade_service: GradeServiceDep,
+    tm60_chatlog_service: Tm60ChatlogServiceDep,
+    tm60_users_service: Tm60UsersServiceDep,
+    current_user: TokenPayload = Depends(get_current_user)
 ) -> APIResponse[UserMypageResponse]:
     """사용자 마이페이지 통합 정보 조회"""
     log = get_logger_with_request_id()
@@ -933,9 +742,9 @@ async def get_user_mypage(
     summary="사용자 후기 요약 정보",
 )
 async def get_user_review_summary_api(
-    current_user: TokenPayload = Depends(get_current_user),
-    review_service: ConsultationReviewService = Depends(get_consultation_review_service),
-    tm60_chatlog_repo: Tm60ChatlogRepository = Depends(get_tm60_chatlog_repository),
+    review_service: ConsultationReviewServiceDep,
+    tm60_chatlog_repo: Tm60ChatlogRepositoryDep,
+    current_user: TokenPayload = Depends(get_current_user)
 ) -> APIResponse[UserReviewSummary]:
     data = await review_service.get_user_review_summary(
         user_id=current_user.sub,
@@ -951,13 +760,13 @@ async def get_user_review_summary_api(
     description="searchtype = my_reviews | pending_reviews, page/limit 기반"
 )
 async def get_user_reviews_api(
+    review_service: ConsultationReviewServiceDep,
+    tm60_chatlog_repo: Tm60ChatlogRepositoryDep,
+    counselor_repo: CounselorRepositoryDep,
     searchtype: str = Query("my_reviews"),
     page: int = Query(1, ge=1),
     limit: int = Query(20, ge=1, le=100),
-    current_user: TokenPayload = Depends(get_current_user),
-    review_service: ConsultationReviewService = Depends(get_consultation_review_service),
-    tm60_chatlog_repo: Tm60ChatlogRepository = Depends(get_tm60_chatlog_repository),
-    counselor_repo: CounselorRepository = Depends(get_counselor_repository),
+    current_user: TokenPayload = Depends(get_current_user)
 ):
     if searchtype == "my_reviews":
         data, total = await review_service.get_my_reviews_detailed(
@@ -1001,12 +810,12 @@ async def get_user_reviews_api(
 )
 async def create_user_review_api(
     payload: UserReviewCreateRequest,
-    current_user: TokenPayload = Depends(get_current_user),
-    review_service: ConsultationReviewService = Depends(get_consultation_review_service),
-    tm60_chatlog_repo: Tm60ChatlogRepository = Depends(get_tm60_chatlog_repository),
-    counselor_repo: CounselorRepository = Depends(get_counselor_repository),
-    tm60_users_service: Tm60UsersService = Depends(get_tm60_users_service),
-    point_tx_service: PointTransactionService = Depends(get_point_transaction_service),
+    review_service: ConsultationReviewServiceDep,
+    tm60_chatlog_repo: Tm60ChatlogRepositoryDep,
+    counselor_repo: CounselorRepositoryDep,
+    tm60_users_service: Tm60UsersServiceDep,
+    point_tx_service: PointTransactionServiceDep,
+    current_user: TokenPayload = Depends(get_current_user)
 ) -> APIResponse[ConsultationReviewResponse]:
     result = await review_service.create_user_review_with_award(
         user_id=current_user.sub,
@@ -1026,8 +835,8 @@ async def create_user_review_api(
 )
 async def update_user_review_api(
     payload: UserReviewUpdateRequest,
-    current_user: TokenPayload = Depends(get_current_user),
-    review_service: ConsultationReviewService = Depends(get_consultation_review_service),
+    review_service: ConsultationReviewServiceDep,
+    current_user: TokenPayload = Depends(get_current_user)
 ) -> APIResponse[ConsultationReviewResponse]:
     updated = await review_service.update_user_review_by_session(
         user_id=current_user.sub,
@@ -1043,8 +852,8 @@ async def update_user_review_api(
 )
 async def delete_user_review_api(
     review_id: int,
-    current_user: TokenPayload = Depends(get_current_user),
-    review_service: ConsultationReviewService = Depends(get_consultation_review_service),
+    review_service: ConsultationReviewServiceDep,
+    current_user: TokenPayload = Depends(get_current_user)
 ) -> APIResponse[bool]:
     success = await review_service.delete_user_review_with_check(review_id=review_id, user_id=current_user.sub)
     return ok(data=success, message="후기 삭제 성공")
@@ -1059,17 +868,17 @@ async def delete_user_review_api(
     ),
 )
 async def get_point_history(
+    user_service: UserServiceDep,
+    payment_repo: PaymentRepositoryDep,
+    tm60_chatlog_repo: Tm60ChatlogRepositoryDep,
+    counselor_repo: CounselorRepositoryDep,
     start_dt: str = Query(..., description="시작일 (yyyy-mm-dd)"),
     end_dt: str = Query(..., description="종료일 (yyyy-mm-dd)"),
     search_type: SearchType = Query(...),
     order_type: OrderType = Query("latest"),
     page: int = Query(1, ge=1, description="페이지 번호"),
     limit: int = Query(20, ge=1, le=100, description="페이지당 항목 수"),
-    current_user: TokenPayload = Depends(get_current_user),
-    user_service: UserService = Depends(get_user_service),
-    payment_repo: PaymentRepository = Depends(get_payment_repository),
-    tm60_chatlog_repo: Tm60ChatlogRepository = Depends(get_tm60_chatlog_repository),
-    counselor_repo: CounselorRepository = Depends(get_counselor_repository),
+    current_user: TokenPayload = Depends(get_current_user)
 ) -> APIResponse:
     """사용자 포인트 내역 조회"""
     data, total = await user_service.get_point_history(
@@ -1110,10 +919,10 @@ async def get_point_history(
     ),
 )
 async def list_bookmarks(
+    bookmark_service: UserBookmarkServiceDep,
     page: int = Query(1, ge=1, description="페이지 번호"),
     limit: int = Query(20, ge=1, le=100, description="페이지당 항목 수"),
-    current_user: TokenPayload = Depends(get_current_user),
-    bookmark_service: UserBookmarkService = Depends(get_user_bookmark_service),
+    current_user: TokenPayload = Depends(get_current_user)
 ):
     verify_user_role(current_user)
     items, total = await bookmark_service.get_favorite_counselors(
@@ -1135,9 +944,9 @@ async def list_bookmarks(
     summary="사용자 즐겨찾기 여부 조회"
 )
 async def check_bookmark(
+    bookmark_service: UserBookmarkServiceDep,
     counselor_id: str = Query(..., description="상담사 ID"),
-    current_user: TokenPayload = Depends(get_current_user),
-    bookmark_service: UserBookmarkService = Depends(get_user_bookmark_service)
+    current_user: TokenPayload = Depends(get_current_user)
 ) -> APIResponse[bool]:
     # 권한: 일반 사용자만
     verify_user_role(current_user)
@@ -1152,8 +961,8 @@ async def check_bookmark(
 )
 async def add_bookmark(
     counselor_id: str,
-    current_user: TokenPayload = Depends(get_current_user),
-    bookmark_service: UserBookmarkService = Depends(get_user_bookmark_service)
+    bookmark_service: UserBookmarkServiceDep,
+    current_user: TokenPayload = Depends(get_current_user)
 ) -> APIResponse[UserBookmarkResponse]:
     verify_user_role(current_user)
     created = await bookmark_service.add_bookmark(current_user.sub, counselor_id)
@@ -1167,8 +976,8 @@ async def add_bookmark(
 )
 async def remove_bookmark(
     counselor_id: str,
-    current_user: TokenPayload = Depends(get_current_user),
-    bookmark_service: UserBookmarkService = Depends(get_user_bookmark_service)
+    bookmark_service: UserBookmarkServiceDep,
+    current_user: TokenPayload = Depends(get_current_user)
 ) -> APIResponse[bool]:
     verify_user_role(current_user)
     removed = await bookmark_service.remove_bookmark(current_user.sub, counselor_id)
@@ -1191,8 +1000,8 @@ async def remove_bookmark(
 async def change_password(
     request_obj: Request,  # Rate Limiting 필수
     password_change_request: PasswordChangeRequest,
-    current_user: TokenPayload = Depends(get_current_user),
-    user_service: UserService = Depends(get_user_service)
+    user_service: UserServiceDep,
+    current_user: TokenPayload = Depends(get_current_user)
 ) -> APIResponse[PasswordChangeResponse]:
     """
     비밀번호 변경
@@ -1228,8 +1037,8 @@ async def change_password(
 )
 async def withdraw_user(
     request: WithdrawRequest,
-    current_user: TokenPayload = Depends(get_current_user),
-    user_service: UserService = Depends(get_user_service)
+    user_service: UserServiceDep,
+    current_user: TokenPayload = Depends(get_current_user)
 ) -> APIResponse[UserOutResponse]:
     """
     회원 탈퇴 처리
@@ -1269,11 +1078,11 @@ async def withdraw_user(
     description="모든 공개 후기를 조회합니다. 인증 불필요.",
 )
 async def get_all_public_reviews_api(
+    review_service: ConsultationReviewServiceDep,
+    chatlog_repo: Tm60ChatlogRepositoryDep,
+    counselor_repo: CounselorRepositoryDep,
     page: int = Query(1, ge=1, description="페이지 번호"),
-    limit: int = Query(20, ge=1, le=100, description="페이지당 항목 수"),
-    review_service: ConsultationReviewService = Depends(get_consultation_review_service),
-    chatlog_repo: Tm60ChatlogRepository = Depends(get_tm60_chatlog_repository),
-    counselor_repo: CounselorRepository = Depends(get_counselor_repository),
+    limit: int = Query(20, ge=1, le=100, description="페이지당 항목 수")
 ) -> APIResponse:
     """전체 공개 후기 목록 조회"""
     data, total = await review_service.get_all_public_reviews(

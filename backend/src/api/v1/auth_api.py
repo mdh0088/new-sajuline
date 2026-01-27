@@ -4,19 +4,16 @@
 from fastapi import APIRouter, Depends, Request, Response, status, HTTPException
 from src.common.middleware.rate_limit import limiter
 from src.core.redis import get_redis
+from src.core.dependencies import AuthServiceDep
 from src.schemas.auth_schema import RefreshTokenRequest, TokenResponse
 from src.schemas.auth_schema import TokenPayload as TokenPayloadSchema
-from src.services.auth_service import AuthService, get_current_user, TokenPayload as ServiceTokenPayload, KST
+from src.services.auth_service import get_current_user, TokenPayload as ServiceTokenPayload, KST
 from src.common.response import APIResponse, ok
 from src.common.logging import get_logger_with_request_id
 from src.exceptions.custom_exceptions import BaseAppException, AuthenticationError
 from src.config.settings import settings
 
 router = APIRouter(prefix="/auth", tags=["auth"])
-
-def get_auth_service() -> AuthService:
-    """인증 서비스 의존성 주입"""
-    return AuthService()
 
 @router.post(
     "/refresh",
@@ -34,7 +31,7 @@ async def refresh_token(
     request: Request,
     refresh_request: RefreshTokenRequest,
     response: Response,
-    auth_service: AuthService = Depends(get_auth_service),
+    auth_service: AuthServiceDep,
     redis_client = Depends(get_redis)
 ):
     """토큰 갱신 - Refresh Token Rotation으로 Access Token과 Refresh Token 모두 재발급"""

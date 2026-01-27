@@ -12,10 +12,13 @@ import json
 import httpx
 from fastapi import APIRouter, Depends, HTTPException, Request
 from fastapi.responses import HTMLResponse
-from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.config.settings import settings
-from src.core.database import get_db_maria, get_db_mssql
+from src.core.dependencies import (
+    PointProductServiceDep, UserServiceDep, PaymentServiceDep,
+    Tm60UsersServiceDep, PointTransactionServiceDep, NotificationServiceDep,
+    UserRepositoryDep, PointProductRepositoryDep
+)
 from src.services.auth_service import get_current_user, TokenPayload
 from src.common.utils.auth_utils import verify_user_role
 from src.common.response import ok, APIResponse
@@ -25,24 +28,7 @@ from src.common.utils.payletter import (
     calc_amounts,
     build_payletter_request_body,
 )
-from src.repositories.point_product_repository import PointProductRepository
-from src.repositories.payment_repository import PaymentRepository
-from src.repositories.user_repository import UserRepository
-from src.repositories.counselor_repository import CounselorRepository
-from src.repositories.grade_repository import GradeRepository
-from src.repositories.point_transaction_repository import PointTransactionRepository
-from src.repositories.ars.tm60_users_repository import Tm60UsersRepository
-from src.services.payment_service import PaymentService
-from src.services.point_product_service import PointProductService
-from src.services.user_service import UserService
-from src.services.auth_service import AuthService
-from src.services.ars.tm60_users_service import Tm60UsersService
-from src.services.point_transaction_service import PointTransactionService
-from src.services.notification_service import NotificationService
-from src.repositories.notification_repository import NotificationRepository
 from src.schemas.payment_schema import PaymentCreate
-from src.models.point_transaction_model import TransactionType, CurrencyType, ReferenceType
-from decimal import Decimal
 from src.schemas.payletter_schema import (
     PaymentRequestPayload,
     PayletterRequestResponse,
@@ -52,84 +38,17 @@ from src.schemas.payletter_schema import (
 
 router = APIRouter(prefix="/payment", tags=["payment"])
 
-
-# Dependencies (align with grade_api style)
-def get_point_product_repository(db: AsyncSession = Depends(get_db_maria)) -> PointProductRepository:
-    return PointProductRepository(db)
-
-
-def get_point_product_service(
-    repo: PointProductRepository = Depends(get_point_product_repository)
-) -> PointProductService:
-    return PointProductService(repo)
-
-
-def get_user_service(
-    db: AsyncSession = Depends(get_db_maria)
-) -> UserService:
-    return UserService(UserRepository(db), CounselorRepository(db), AuthService())
-
-
-def get_payment_service(
-    db: AsyncSession = Depends(get_db_maria)
-) -> PaymentService:
-    return PaymentService(PaymentRepository(db))
-
-
-def get_tm60_users_service():
-    """TM60 사용자 서비스 의존성 주입"""
-    for mssql_session in get_db_mssql():
-        repo = Tm60UsersRepository(mssql_session)
-        return Tm60UsersService(repo)
-
-
-def get_grade_repository(db: AsyncSession = Depends(get_db_maria)) -> GradeRepository:
-    return GradeRepository(db)
-
-
-def get_point_transaction_repository(db: AsyncSession = Depends(get_db_maria)) -> PointTransactionRepository:
-    return PointTransactionRepository(db)
-
-
-def get_user_repository(db: AsyncSession = Depends(get_db_maria)) -> UserRepository:
-    return UserRepository(db)
-
-
-def get_notification_repository(db: AsyncSession = Depends(get_db_maria)) -> NotificationRepository:
-    return NotificationRepository(db)
-
-
-def get_notification_service(
-    notification_repo: NotificationRepository = Depends(get_notification_repository)
-) -> NotificationService:
-    return NotificationService(notification_repo)
-
-
-def get_point_transaction_service(
-    point_transaction_repo: PointTransactionRepository = Depends(get_point_transaction_repository),
-    user_repo: UserRepository = Depends(get_user_repository),
-    grade_repo: GradeRepository = Depends(get_grade_repository)
-) -> PointTransactionService:
-    return PointTransactionService(point_transaction_repo, user_repo, grade_repo)
-
-
 KST = timezone(timedelta(hours=9))
 
-
-async def _get_product(repo: PointProductRepository, product_id: int):
-    from sqlalchemy import select
-    from src.models.point_product_model import PointProduct
-    result = await repo.db.execute(select(PointProduct).where(PointProduct.product_id == product_id))
-    return result.scalar_one_or_none()
 
 @router.post("/request", response_model=APIResponse[PayletterRequestResponse])
 async def request_payment(
     payload: PaymentRequestPayload,
     request: Request,
-    current_user: TokenPayload = Depends(get_current_user),
-    product_service: PointProductService = Depends(get_point_product_service),
-    user_service: UserService = Depends(get_user_service),
-    payment_service: PaymentService = Depends(get_payment_service),
+    product_service: PointProductServiceDep,
+    user_service: UserServiceDep,
+    payment_service: PaymentServiceDep,
+    current_user: TokenPayload = Depends(get_current_user)
 ) -> APIResponse[PayletterRequestResponse]:
     """
     결제 요청 API: Payletter 결제 토큰/URL 발급 요청 후 반환
@@ -305,12 +224,12 @@ async def request_payment(
 @router.post("/point_callback")
 async def payment_callback(
     request: Request,
-    payment_service: PaymentService = Depends(get_payment_service),
-    tm60_users_service: Tm60UsersService = Depends(get_tm60_users_service),
-    point_transaction_service: PointTransactionService = Depends(get_point_transaction_service),
-    user_repo: UserRepository = Depends(get_user_repository),
-    product_repo: PointProductRepository = Depends(get_point_product_repository),
-    notification_service: NotificationService = Depends(get_notification_service),
+    payment_service: PaymentServiceDep,
+    tm60_users_service: Tm60UsersServiceDep,
+    point_transaction_service: PointTransactionServiceDep,
+    user_repo: UserRepositoryDep,
+    product_repo: PointProductRepositoryDep,
+    notification_service: NotificationServiceDep
 ):
     """
     Payletter Callback URL (Server-to-Server)
@@ -498,7 +417,7 @@ async def payment_cancel(request: Request) -> APIResponse[dict]:
 @router.api_route("/point_return", methods=["GET", "POST"])
 async def payment_return(
     request: Request,
-    payment_service: PaymentService = Depends(get_payment_service),
+    payment_service: PaymentServiceDep
 ):
     """
     Payletter Return URL (사용자 브라우저 리다이렉트)
