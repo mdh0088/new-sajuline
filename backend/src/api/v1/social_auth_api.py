@@ -3,14 +3,10 @@
 """
 from typing import Union
 
-from fastapi import APIRouter, Depends, Query, Response, status, Request
-from sqlalchemy.ext.asyncio import AsyncSession
+from fastapi import APIRouter, Depends, Query, Response, Request
 from src.common.middleware.rate_limit import limiter
-from src.core.database import get_db_maria
 from src.core.redis import get_redis
-from src.services.social_auth_service import SocialAuthService
-from src.services.auth_service import AuthService
-from src.repositories.user_repository import UserRepository
+from src.core.dependencies import SocialAuthServiceDep
 from src.schemas.auth_schema import (
     LoginResponse,
     SocialAuthURLResponse,
@@ -21,25 +17,6 @@ from src.common.logging import get_logger_with_request_id
 from src.exceptions.custom_exceptions import BaseAppException, ValidationError
 
 router = APIRouter(prefix="/auth/social", tags=["social-auth"])
-
-
-# 의존성 함수들
-def get_user_repository(db: AsyncSession = Depends(get_db_maria)) -> UserRepository:
-    """UserRepository 의존성"""
-    return UserRepository(db)
-
-
-def get_auth_service() -> AuthService:
-    """AuthService 의존성"""
-    return AuthService()
-
-
-def get_social_auth_service(
-    auth_service: AuthService = Depends(get_auth_service),
-    user_repository: UserRepository = Depends(get_user_repository)
-) -> SocialAuthService:
-    """SocialAuthService 의존성"""
-    return SocialAuthService(auth_service, user_repository)
 
 
 @router.get(
@@ -57,9 +34,7 @@ def get_social_auth_service(
 async def get_social_auth_url(
     request: Request,
     provider: str,
-    social_auth_service: SocialAuthService = Depends(get_social_auth_service),
-    auth_service: AuthService = Depends(get_auth_service),
-    user_repository: UserRepository = Depends(get_user_repository),
+    social_auth_service: SocialAuthServiceDep,
     redis_client = Depends(get_redis)
 ):
     """소셜 로그인 URL 생성
@@ -83,11 +58,8 @@ async def get_social_auth_url(
     log.info("Social auth URL requested", provider=provider)
 
     try:
-        # SocialAuthService 인스턴스 생성 (의존성 주입)
-        service = SocialAuthService(auth_service, user_repository)
-
         # OAuth URL 생성
-        url_response = await service.get_authorization_url(provider, redis_client)
+        url_response = await social_auth_service.get_authorization_url(provider, redis_client)
 
         log.info("Social auth URL generated successfully", provider=provider)
         return ok(data=url_response, message=f"{provider.upper()} 로그인 URL 생성 성공")
@@ -117,11 +89,9 @@ async def handle_social_callback(
     request: Request,
     response: Response,
     provider: str,
+    social_auth_service: SocialAuthServiceDep,
     code: str = Query(..., description="OAuth 인증 코드"),
     state: str = Query(None, description="CSRF 방지용 state (Naver 필수)"),
-    social_auth_service: SocialAuthService = Depends(get_social_auth_service),
-    auth_service: AuthService = Depends(get_auth_service),
-    user_repository: UserRepository = Depends(get_user_repository),
     redis_client = Depends(get_redis)
 ):
     """소셜 로그인 콜백 처리
@@ -144,11 +114,8 @@ async def handle_social_callback(
     log.info("Social callback received", provider=provider, has_state=bool(state))
 
     try:
-        # SocialAuthService 인스턴스 생성 (의존성 주입)
-        service = SocialAuthService(auth_service, user_repository)
-
         # OAuth 콜백 처리
-        result = await service.handle_callback(
+        result = await social_auth_service.handle_callback(
             provider=provider,
             code=code,
             state=state,

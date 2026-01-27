@@ -3,31 +3,15 @@ Notification API Endpoints
 Kakao AlimTalk test API
 """
 from typing import Optional
-from fastapi import APIRouter, Depends, status
-
-from sqlalchemy.ext.asyncio import AsyncSession
-
-from src.core.database import get_db_maria
-from src.repositories.notification_repository import NotificationRepository
-from src.services.notification_service import NotificationService
-from src.common.response import APIResponse, ok
-from src.common.logging import get_logger_with_request_id
+from fastapi import APIRouter, status
 from pydantic import BaseModel, Field
 
+from src.core.dependencies import NotificationServiceDep
+from src.common.response import APIResponse, ok
+from src.common.logging import get_logger_with_request_id
+
+
 router = APIRouter(prefix="/notifications", tags=["notifications"])
-
-
-# Dependency injection functions
-def get_notification_repository(db: AsyncSession = Depends(get_db_maria)) -> NotificationRepository:
-    """알림 리포지토리 의존성 주입"""
-    return NotificationRepository(db)
-
-
-def get_notification_service(
-    notification_repo: NotificationRepository = Depends(get_notification_repository)
-) -> NotificationService:
-    """알림 서비스 의존성 주입"""
-    return NotificationService(notification_repo)
 
 
 # ==========================================
@@ -75,7 +59,7 @@ class TestKakaoAlimTalkRequest(BaseModel):
 )
 async def test_send_kakao_alimtalk(
     request: TestKakaoAlimTalkRequest,
-    notification_service: NotificationService = Depends(get_notification_service)
+    notification_service: NotificationServiceDep
 ):
     """
     카카오 알림톡 테스트 발송

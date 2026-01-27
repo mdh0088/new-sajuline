@@ -2,12 +2,9 @@
 공지사항 관련 API 엔드포인트
 """
 from typing import Optional
-from fastapi import APIRouter, Depends, Query, HTTPException, status, Request
-from sqlalchemy.ext.asyncio import AsyncSession
+from fastapi import APIRouter, Query, HTTPException, status, Request
 
-from src.core.database import get_db_maria
-from src.repositories.notice_repository import NoticeRepository
-from src.services.notice_service import NoticeService
+from src.core.dependencies import NoticeServiceDep
 from src.schemas.notice_schema import NoticeResponse, NoticeListParams, NoticeDetailResponse
 from src.models.notice_model import NoticeType, TargetAudience
 from src.common.response import APIResponse, APIResponseBuilder, ok
@@ -17,19 +14,9 @@ from src.common.logging import get_logger_with_request_id
 router = APIRouter(prefix="/notices", tags=["notices"])
 
 
-# Dependency injection functions
-def get_notice_repository(db: AsyncSession = Depends(get_db_maria)) -> NoticeRepository:
-    """공지사항 리포지토리 의존성 주입"""
-    return NoticeRepository(db)
-
-
-def get_notice_service(notice_repo: NoticeRepository = Depends(get_notice_repository)) -> NoticeService:
-    """공지사항 서비스 의존성 주입"""
-    return NoticeService(notice_repo)
-
-
 @router.get("/", response_model=APIResponse, summary="공지사항 목록 조회")
 async def get_notice_list(
+    notice_service: NoticeServiceDep,
     page: int = Query(1, ge=1, description="페이지 번호"),
     limit: int = Query(10, ge=1, le=100, description="페이지당 항목 수"),
     notice_type: Optional[NoticeType] = Query(None, description="공지 타입 필터"),
@@ -37,7 +24,6 @@ async def get_notice_list(
     is_active: Optional[bool] = Query(None, description="활성화 상태 필터"),
     is_important: Optional[bool] = Query(None, description="중요 공지 필터"),
     search: Optional[str] = Query(None, description="제목/내용 검색어"),
-    notice_service: NoticeService = Depends(get_notice_service)
 ) -> APIResponse:
     """
     공지사항 목록을 조회합니다.
@@ -89,7 +75,7 @@ async def get_notice_list(
 
 @router.get("/public", response_model=APIResponse, summary="공지사항 목록 조회 (게스트)")
 async def get_public_notices(
-    notice_service: NoticeService = Depends(get_notice_service)
+    notice_service: NoticeServiceDep
 ) -> APIResponse:
     """
     게스트도 접근 가능한 공지 목록 조회
@@ -106,7 +92,7 @@ async def get_public_notices(
 @router.get("/{notice_id}", response_model=APIResponse[NoticeDetailResponse], summary="공지사항 단일 조회")
 async def get_notice(
     notice_id: int,
-    notice_service: NoticeService = Depends(get_notice_service)
+    notice_service: NoticeServiceDep
 ) -> APIResponse[NoticeDetailResponse]:
     """
     공지사항 단일 항목을 조회합니다.
@@ -123,7 +109,7 @@ async def get_notice(
 @router.post("/{notice_id}/views", response_model=APIResponse, summary="공지 조회수 증가")
 async def increase_notice_view(
     notice_id: int,
-    notice_service: NoticeService = Depends(get_notice_service)
+    notice_service: NoticeServiceDep
 ) -> APIResponse:
     """공지 접속 시 view_count +1"""
     log = get_logger_with_request_id()

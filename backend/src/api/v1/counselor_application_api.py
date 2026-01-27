@@ -5,30 +5,14 @@ import json
 from typing import List
 
 from fastapi import APIRouter, Depends, File, Form, UploadFile, status, HTTPException
-from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.core.database import get_db_maria
-from src.repositories.counselor_application_repository import CounselorApplicationRepository
-from src.services.counselor_application_service import CounselorApplicationService
+from src.core.dependencies import CounselorApplicationServiceDep, MariaSessionDep
 from src.schemas.counselor_application_schema import CounselorApplicationCreate, CounselorApplicationResponse
 from src.common.response import APIResponse, ok
 from src.common.logging import get_logger_with_request_id
 from src.exceptions.custom_exceptions import BaseAppException, ValidationError
 
 router = APIRouter(prefix="/counselor-applications", tags=["counselor-applications"])
-
-
-# Dependency injection functions
-def get_counselor_application_repository(db: AsyncSession = Depends(get_db_maria)) -> CounselorApplicationRepository:
-    """상담사 지원 리포지토리 의존성 주입"""
-    return CounselorApplicationRepository(db)
-
-
-def get_counselor_application_service(
-    application_repo: CounselorApplicationRepository = Depends(get_counselor_application_repository)
-) -> CounselorApplicationService:
-    """상담사 지원 서비스 의존성 주입"""
-    return CounselorApplicationService(application_repo)
 
 
 @router.post(
@@ -39,6 +23,8 @@ def get_counselor_application_service(
     description="상담사 신청서를 제출합니다. 최대 3개의 사진을 첨부할 수 있습니다."
 )
 async def create_counselor_application(
+    db: MariaSessionDep,
+    application_service: CounselorApplicationServiceDep,
     name: str = Form(..., description="실명"),
     nickname: str = Form(..., description="희망 활동명"),
     email: str = Form(..., description="이메일"),
@@ -47,9 +33,7 @@ async def create_counselor_application(
     specialty_types: str = Form(..., description='신청 분야 JSON 배열 예: ["TARO","SAJU"]'),
     keywords: str = Form(None, description="키워드"),
     introduction: str = Form(None, description="자기소개"),
-    photos: List[UploadFile] = File(None, description="사진 (최대 3개, 각 5MB 이하)"),
-    db: AsyncSession = Depends(get_db_maria),
-    application_service: CounselorApplicationService = Depends(get_counselor_application_service)
+    photos: List[UploadFile] = File(None, description="사진 (최대 3개, 각 5MB 이하)")
 ):
     """상담사 신청 생성"""
     log = get_logger_with_request_id()

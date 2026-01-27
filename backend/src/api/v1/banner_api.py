@@ -3,26 +3,15 @@
  - 메인 배너 목록 (게스트)
  - 배너 클릭 카운트 증가
 """
-from fastapi import APIRouter, Depends, HTTPException
-from sqlalchemy.ext.asyncio import AsyncSession
+from fastapi import APIRouter, HTTPException
 
-from src.core.database import get_db_maria
+from src.core.dependencies import BannerServiceDep
 from src.common.response import ok, APIResponse
 from src.common.logging import get_logger_with_request_id
-from src.repositories.banner_repository import BannerRepository
-from src.services.banner_service import BannerService
 from src.schemas.banner_schema import BannerResponse
 
 
 router = APIRouter(prefix="/banners", tags=["banners"])
-
-
-def get_repo(db: AsyncSession = Depends(get_db_maria)) -> BannerRepository:
-    return BannerRepository(db)
-
-
-def get_service(repo: BannerRepository = Depends(get_repo)) -> BannerService:
-    return BannerService(repo)
 
 
 @router.get(
@@ -31,7 +20,7 @@ def get_service(repo: BannerRepository = Depends(get_repo)) -> BannerService:
     summary="메인 배너 목록(공개)",
     description="banner_type=MAIN, is_active=True, 현재 유효기간 내 배너를 display_order ASC로 반환"
 )
-async def list_public_main_banners(service: BannerService = Depends(get_service)) -> APIResponse[list[BannerResponse]]:
+async def list_public_main_banners(service: BannerServiceDep) -> APIResponse[list[BannerResponse]]:
     log = get_logger_with_request_id()
     log.info("API: list public main banners")
     items = await service.list_public_main()
@@ -43,7 +32,7 @@ async def list_public_main_banners(service: BannerService = Depends(get_service)
     response_model=APIResponse[dict],
     summary="배너 클릭 카운트 증가",
 )
-async def increase_click(banner_id: int, service: BannerService = Depends(get_service)) -> APIResponse[dict]:
+async def increase_click(banner_id: int, service: BannerServiceDep) -> APIResponse[dict]:
     log = get_logger_with_request_id()
     log.info("API: increase banner click", banner_id=banner_id)
     success = await service.increase_click(banner_id)

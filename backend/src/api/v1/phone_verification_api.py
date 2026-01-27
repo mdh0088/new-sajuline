@@ -3,13 +3,9 @@
 
 KCP 본인인증을 사용한 휴대폰 인증 엔드포인트
 """
-from fastapi import APIRouter, Depends, Request
+from fastapi import APIRouter, Request
 from fastapi.responses import HTMLResponse
-from sqlalchemy.ext.asyncio import AsyncSession
-from src.services.phone_verification_service import (
-    PhoneVerificationService,
-    get_phone_verification_service
-)
+from src.core.dependencies import PhoneVerificationServiceDep
 from typing import Optional, Dict
 from src.schemas.phone_verification_schema import (
     PhoneVerificationInitiateRequest,
@@ -35,7 +31,7 @@ router = APIRouter(prefix="/phone-verification", tags=["phone-verification"])
 )
 async def initiate_verification(
     request: PhoneVerificationInitiateRequest,
-    phone_service: PhoneVerificationService = Depends(get_phone_verification_service)
+    phone_service: PhoneVerificationServiceDep
 ):
     """본인인증 시작
 
@@ -70,7 +66,7 @@ async def initiate_verification(
 )
 async def initiate_verification_for_find_id(
     request: PhoneVerificationForFindIdRequest,
-    phone_service: PhoneVerificationService = Depends(get_phone_verification_service)
+    phone_service: PhoneVerificationServiceDep
 ):
     """ID 찾기용 본인인증 시작"""
     log = get_logger_with_request_id()
@@ -94,7 +90,7 @@ async def initiate_verification_for_find_id(
 )
 async def initiate_verification_for_find_password(
     request: PhoneVerificationForFindPasswordRequest,
-    phone_service: PhoneVerificationService = Depends(get_phone_verification_service)
+    phone_service: PhoneVerificationServiceDep
 ):
     """비밀번호 찾기용 본인인증 시작"""
     log = get_logger_with_request_id()
@@ -270,8 +266,8 @@ async def _kcp_callback_handler(
 )
 async def kcp_callback(
     request: Request,
-    session_id: Optional[str] = None,
-    phone_service: PhoneVerificationService = Depends(get_phone_verification_service)
+    phone_service: PhoneVerificationServiceDep,
+    session_id: Optional[str] = None
 ):
     """KCP 콜백 처리 - GET/POST 모두 지원
 
@@ -499,7 +495,7 @@ def _render_error_page(error_message: str) -> HTMLResponse:
 )
 async def get_verification_status(
     session_id: str,
-    phone_service: PhoneVerificationService = Depends(get_phone_verification_service)
+    phone_service: PhoneVerificationServiceDep
 ):
     """인증 상태 조회
 
