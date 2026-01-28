@@ -39,7 +39,9 @@
       "Bash(python -m py_compile:*)",
       "Bash(python:*)",
       "Bash(source:*)",
-      "Bash(uv run python:*)"
+      "Bash(uv run python:*)",
+      "Bash(sudo chmod:*)",
+      "Bash(uv run alembic revision:*)"
     ],
     "deny": [],
     "ask": []
