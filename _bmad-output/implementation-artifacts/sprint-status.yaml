@@ -1,0 +1,106 @@
+# generated: 2026-01-28
+# project: new-sajuline
+# project_key: sajuline-mvp
+# tracking_system: file-system
+# story_location: _bmad-output/implementation-artifacts
+
+# STATUS DEFINITIONS:
+# ==================
+# Epic Status:
+#   - backlog: Epic not yet started
+#   - in-progress: Epic actively being worked on
+#   - done: All stories in epic completed
+#
+# Epic Status Transitions:
+#   - backlog → in-progress: Automatically when first story is created (via create-story)
+#   - in-progress → done: Manually when all stories reach 'done' status
+#
+# Story Status:
+#   - backlog: Story only exists in epic file
+#   - ready-for-dev: Story file created in stories folder
+#   - in-progress: Developer actively working on implementation
+#   - review: Ready for code review (via Dev's code-review workflow)
+#   - done: Story completed
+#
+# Retrospective Status:
+#   - optional: Can be completed but not required
+#   - done: Retrospective has been completed
+#
+# WORKFLOW NOTES:
+# ===============
+# - Epic transitions to 'in-progress' automatically when first story is created
+# - Stories can be worked in parallel if team capacity allows
+# - SM typically creates next story after previous one is 'done' to incorporate learnings
+# - Dev moves story to 'review', then runs code-review (fresh context, different LLM recommended)
+#
+# PROJECT NOTES:
+# ==============
+# - Brownfield 프로젝트: Epic 1, 4, 5, 6은 이미 완료 (EXISTING)
+# - MVP 핵심: Epic 2, 3 (AI 운세 서비스 신규 개발)
+# - Epic 7: 기존 완료 + FR51 신규 (AI 운세 통계)
+# - POST-MVP: 실시간 상담 서비스 (FR17-FR25)
+
+generated: 2026-01-28
+project: new-sajuline
+project_key: sajuline-mvp
+tracking_system: file-system
+story_location: _bmad-output/implementation-artifacts
+
+development_status:
+  # ============================================================
+  # Epic 1: 사용자 인증 및 프로필 관리 - EXISTING (완료)
+  # ============================================================
+  epic-1: done
+  epic-1-retrospective: done
+
+  # ============================================================
+  # Epic 2: AI 일일 운세 서비스 (Backend) - NEW (MVP 핵심)
+  # 의존성: 없음
+  # Tech Spec: tech-spec-ai-saju-daily-fortune.md (ready-for-dev)
+  # ============================================================
+  epic-2: in-progress
+  2-1-saju-knowledge-base-data-model: done
+  2-2-saju-calculation-utility: backlog
+  2-3-fortune-cache-system: backlog
+  2-4-langchain-rag-chain: backlog
+  2-5-daily-fortune-api-endpoint: backlog
+  2-6-weekly-monthly-yearly-fortune-api: backlog
+  epic-2-retrospective: optional
+
+  # ============================================================
+  # Epic 3: AI 운세 프론트엔드 - NEW
+  # 의존성: Epic 2 완료 필요
+  # ============================================================
+  epic-3: backlog
+  3-1-fortune-api-composable: backlog
+  3-2-daily-fortune-page: backlog
+  3-3-fortune-period-tabs: backlog
+  3-4-fortune-loading-error-ui: backlog
+  epic-3-retrospective: optional
+
+  # ============================================================
+  # Epic 4: 결제 및 포인트 시스템 - EXISTING (완료)
+  # ============================================================
+  epic-4: done
+  epic-4-retrospective: done
+
+  # ============================================================
+  # Epic 5: 콘텐츠 및 고객 지원 - EXISTING (완료)
+  # ============================================================
+  epic-5: done
+  epic-5-retrospective: done
+
+  # ============================================================
+  # Epic 6: 알림 서비스 - EXISTING (완료)
+  # ============================================================
+  epic-6: done
+  epic-6-retrospective: done
+
+  # ============================================================
+  # Epic 7: 관리자 운영 도구 - EXTEND (기존 완료 + FR51 신규)
+  # 의존성: Epic 2 완료 필요 (통계 데이터)
+  # ============================================================
+  epic-7: backlog
+  7-1-ai-fortune-statistics-api: backlog
+  7-2-ai-fortune-statistics-dashboard: backlog
+  epic-7-retrospective: optional

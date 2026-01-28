@@ -24,12 +24,20 @@ from src.config.settings import settings
 from src.models.user_model import Base  # Base 메타데이터
 # 모든 모델을 import (중요!)
 from src.models.user_model import User
+# 사주 지식베이스 모델 (Story 2.1)
+from src.models.saju_cheongan_model import SajuCheongan
+from src.models.saju_jiji_model import SajuJiji
+from src.models.saju_sipsung_model import SajuSipsungInterpretation
+from src.models.saju_jiji_relation_model import SajuJijiRelation
+from src.models.fortune_history_model import FortuneHistory
 
 # Alembic Config 객체
 config = context.config
 
-# 설정 파일에서 DATABASE_URL 가져오기
-config.set_main_option("sqlalchemy.url", settings.database_url_sync)
+# 설정 파일에서 DATABASE_URL 가져오기 (동기 버전)
+# mariadb_url은 aiomysql을 사용하므로 Alembic용 동기 URL로 변환
+sync_url = settings.mariadb_url.replace("+aiomysql", "+pymysql")
+config.set_main_option("sqlalchemy.url", sync_url)
 
 # Python 로깅 설정
 if config.config_file_name is not None:
@@ -66,11 +74,11 @@ def do_run_migrations(connection: Connection) -> None:
 
 async def run_async_migrations() -> None:
     """비동기 모드에서 마이그레이션 실행"""
-    
+
     # 비동기 엔진 설정 수정
     configuration = config.get_section(config.config_ini_section)
-    configuration["sqlalchemy.url"] = settings.database_url  # 비동기 URL 사용
-    
+    configuration["sqlalchemy.url"] = settings.mariadb_url  # 비동기 URL 사용
+
     connectable = async_engine_from_config(
         configuration,
         prefix="sqlalchemy.",
