@@ -41,7 +41,15 @@
       "Bash(source:*)",
       "Bash(uv run python:*)",
       "Bash(sudo chmod:*)",
-      "Bash(uv run alembic revision:*)"
+      "Bash(uv run alembic revision:*)",
+      "Bash(.venv/bin/python -m pytest:*)",
+      "Bash(uv run pytest:*)",
+      "Bash(uv lock:*)",
+      "Bash(uv sync:*)",
+      "Bash(uv run flake8:*)",
+      "Bash(uv pip install:*)",
+      "Bash(uv run black:*)",
+      "Bash(uv run:*)"
     ],
     "deny": [],
     "ask": []

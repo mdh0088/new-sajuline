@@ -56,9 +56,22 @@ class Settings(BaseSettings):
     redis_password: Optional[str] = Field(None, env="REDIS_PASSWORD")
     
     # AI 서비스 설정
-    openai_api_key: str = Field(..., env="OPENAI_API_KEY")
-    openai_model: str = Field(..., env="OPENAI_MODEL")
-    ai_cache_ttl: int = Field(..., env="AI_CACHE_TTL")
+    # LLM Provider: openai | anthropic | google
+    llm_provider: str = Field(default="openai", env="LLM_PROVIDER")
+
+    # OpenAI
+    openai_api_key: Optional[str] = Field(None, env="OPENAI_API_KEY")
+    openai_model: str = Field(default="gpt-4o-mini", env="OPENAI_MODEL")
+
+    # Anthropic (Claude)
+    anthropic_api_key: Optional[str] = Field(None, env="ANTHROPIC_API_KEY")
+    anthropic_model: str = Field(default="claude-sonnet-4-20250514", env="ANTHROPIC_MODEL")
+
+    # Google (Gemini)
+    google_api_key: Optional[str] = Field(None, env="GOOGLE_API_KEY")
+    google_model: str = Field(default="gemini-2.0-flash", env="GOOGLE_MODEL")
+
+    ai_cache_ttl: int = Field(default=300, env="AI_CACHE_TTL")
     
     # AWS S3 설정
     aws_access_key_id: Optional[str] = Field(None, env="AWS_ACCESS_KEY_ID")

@@ -29,8 +29,8 @@ dependencies = [
     "fastapi[all]==0.110.0",
     "uvicorn[standard]==0.27.1",
     "gunicorn==21.2.0",
-    "pydantic==2.6.4",
-    "pydantic-settings==2.2.1",
+    "pydantic>=2.7.4,<3.0.0",
+    "pydantic-settings>=2.2.1,<3.0.0",
     
     # 데이터베이스
     "sqlalchemy[asyncio]==2.0.28",
@@ -52,17 +52,23 @@ dependencies = [
     "slowapi==0.1.9",  # 레이트 리미팅
     
     # WebSocket 및 실시간 통신
-    "websockets==12.0",
+    "websockets>=13.0.0,<15.1.0",  # langchain-google-genai 호환
     "python-socketio==5.11.1",
     
     # 외부 API 연동
-    "httpx==0.27.0",
+    "httpx>=0.28.1",  # langchain-google-genai 호환
     "aiohttp==3.9.3",
     
-    # AI/ML
-    "openai==1.14.0",
-    "langchain==0.1.16",
-    "langchain-openai==0.1.3",
+    # AI/ML (다중 LLM 지원: OpenAI, Anthropic, Google)
+    # LangChain 1.2.7 (2026-01 최신 안정 버전)
+    # 공식 문서: https://python.langchain.com/docs/
+    "openai>=1.14.0,<2.0.0",
+    "anthropic>=0.34.0,<1.0.0",
+    "langchain>=1.2.0,<2.0.0",
+    "langchain-openai>=1.1.0,<2.0.0",
+    "langchain-anthropic>=1.3.0,<2.0.0",
+    "langchain-google-genai>=4.2.0,<5.0.0",
+    "langchain-core>=1.2.0,<2.0.0",
     
     # 유틸리티
     "python-dateutil==2.9.0.post0",
@@ -99,7 +105,7 @@ dev = [
     "pytest==8.1.1",
     "pytest-asyncio==0.23.6",
     "pytest-cov==4.0.0",
-    "httpx==0.27.0",  # 테스트 클라이언트
+    "httpx>=0.28.1",  # 테스트 클라이언트 (langchain-google-genai 호환)
     
     # 코드 품질
     "black==24.3.0",

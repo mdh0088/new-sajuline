@@ -46,6 +46,8 @@ from src.repositories.user_bookmark_repository import UserBookmarkRepository
 from src.repositories.user_activity_log_repository import UserActivityLogRepository
 from src.repositories.counselor_application_repository import CounselorApplicationRepository
 from src.repositories.mileage_repository import MileageProductRepository
+from src.repositories.fortune_repository import FortuneRepository
+from src.repositories.saju_repository import SajuRepository
 
 # MSSQL (ARS) Repositories
 from src.repositories.ars.tm60_users_repository import Tm60UsersRepository
@@ -83,6 +85,11 @@ from src.services.ars.tm60_mobile_service import Tm60MobileService
 # Other Services
 from src.services.phone_verification_service import PhoneVerificationService
 from src.services.social_auth_service import SocialAuthService
+from src.services.fortune_cache_service import FortuneCacheService
+from src.services.fortune_service import FortuneService
+
+# LangChain
+from src.core.langchain_chain import DailyFortuneChain
 
 
 # ==================== MariaDB Repository DI Functions ====================
@@ -172,6 +179,16 @@ def get_mileage_repository(db: AsyncSession = Depends(get_db_maria)) -> MileageP
     return MileageProductRepository(db)
 
 
+def get_fortune_repository(db: AsyncSession = Depends(get_db_maria)) -> FortuneRepository:
+    """운세 이력 리포지토리 의존성 주입"""
+    return FortuneRepository(db)
+
+
+def get_saju_repository(db: AsyncSession = Depends(get_db_maria)) -> SajuRepository:
+    """사주 지식 베이스 리포지토리 의존성 주입"""
+    return SajuRepository(db)
+
+
 # ==================== MSSQL Repository DI Functions ====================
 # 중요: for loop 패턴 대신 Depends()를 사용하여 FastAPI가 세션 생명주기를 관리하도록 함
 
@@ -214,6 +231,8 @@ UserBookmarkRepositoryDep = Annotated[UserBookmarkRepository, Depends(get_user_b
 UserActivityLogRepositoryDep = Annotated[UserActivityLogRepository, Depends(get_user_activity_log_repository)]
 CounselorApplicationRepositoryDep = Annotated[CounselorApplicationRepository, Depends(get_counselor_application_repository)]
 MileageRepositoryDep = Annotated[MileageProductRepository, Depends(get_mileage_repository)]
+FortuneRepositoryDep = Annotated[FortuneRepository, Depends(get_fortune_repository)]
+SajuRepositoryDep = Annotated[SajuRepository, Depends(get_saju_repository)]
 
 # MSSQL Repository Types
 Tm60UsersRepositoryDep = Annotated[Tm60UsersRepository, Depends(get_tm60_users_repository)]
@@ -227,6 +246,11 @@ Tm60MobileRepositoryDep = Annotated[Tm60MobileRepository, Depends(get_tm60_mobil
 def get_auth_service() -> AuthService:
     """인증 서비스 의존성 주입 (stateless)"""
     return AuthService()
+
+
+def get_daily_fortune_chain() -> DailyFortuneChain:
+    """LangChain 일일 운세 체인 의존성 주입 (stateless)"""
+    return DailyFortuneChain()
 
 
 # ==================== Simple Service DI Functions (1 dependency) ====================
@@ -292,6 +316,14 @@ def get_point_product_service(
 ) -> PointProductService:
     """포인트 상품 서비스 의존성 주입"""
     return PointProductService(point_product_repo)
+
+
+def get_fortune_cache_service(
+    redis_client: redis.Redis = Depends(get_redis),
+    fortune_repo: FortuneRepository = Depends(get_fortune_repository)
+) -> FortuneCacheService:
+    """운세 캐시 서비스 의존성 주입 (Redis + Repository)"""
+    return FortuneCacheService(redis_client, fortune_repo)
 
 
 # ==================== MSSQL Service DI Functions ====================
@@ -457,6 +489,15 @@ def get_social_auth_service(
     return SocialAuthService(auth_service, user_repo)
 
 
+def get_fortune_service(
+    saju_repo: SajuRepository = Depends(get_saju_repository),
+    cache_service: FortuneCacheService = Depends(get_fortune_cache_service),
+    chain: DailyFortuneChain = Depends(get_daily_fortune_chain)
+) -> FortuneService:
+    """운세 서비스 의존성 주입 (3개 의존성: 사주 리포지토리 + 캐시 서비스 + LangChain)"""
+    return FortuneService(saju_repo, cache_service, chain)
+
+
 # ==================== Service Annotated Types ====================
 
 AuthServiceDep = Annotated[AuthService, Depends(get_auth_service)]
@@ -488,3 +529,6 @@ Tm60MobileServiceDep = Annotated[Tm60MobileService, Depends(get_tm60_mobile_serv
 # Other Service Types
 PhoneVerificationServiceDep = Annotated[PhoneVerificationService, Depends(get_phone_verification_service)]
 SocialAuthServiceDep = Annotated[SocialAuthService, Depends(get_social_auth_service)]
+FortuneCacheServiceDep = Annotated[FortuneCacheService, Depends(get_fortune_cache_service)]
+FortuneServiceDep = Annotated[FortuneService, Depends(get_fortune_service)]
+DailyFortuneChainDep = Annotated[DailyFortuneChain, Depends(get_daily_fortune_chain)]

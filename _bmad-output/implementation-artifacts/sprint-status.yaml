@@ -60,10 +60,10 @@ development_status:
   # ============================================================
   epic-2: in-progress
   2-1-saju-knowledge-base-data-model: done
-  2-2-saju-calculation-utility: backlog
-  2-3-fortune-cache-system: backlog
-  2-4-langchain-rag-chain: backlog
-  2-5-daily-fortune-api-endpoint: backlog
+  2-2-saju-calculation-utility: review
+  2-3-fortune-cache-system: review
+  2-4-langchain-rag-chain: done
+  2-5-daily-fortune-api-endpoint: done
   2-6-weekly-monthly-yearly-fortune-api: backlog
   epic-2-retrospective: optional
 

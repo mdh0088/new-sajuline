@@ -21,7 +21,7 @@ CREATE TABLE IF NOT EXISTS `saju_cheongan` (
     `yin_yang` VARCHAR(4) NOT NULL COMMENT '음양 (양, 음)',
     `description` TEXT NOT NULL COMMENT '천간 설명 및 특성',
     PRIMARY KEY (`id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='천간 (天干) 기초 데이터';
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci COMMENT='천간 (天干) 기초 데이터';
 ```
 
 ### 1.2 지지 테이블 (saju_jiji)
@@ -37,7 +37,7 @@ CREATE TABLE IF NOT EXISTS `saju_jiji` (
     `month` INT NOT NULL COMMENT '대응 음력월 (자=11월)',
     `description` TEXT NOT NULL COMMENT '지지 설명 및 특성',
     PRIMARY KEY (`id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='지지 (地支) 기초 데이터';
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci COMMENT='지지 (地支) 기초 데이터';
 ```
 
 ### 1.3 십성 해석 테이블 (saju_sipsung_interpretation)
@@ -53,7 +53,7 @@ CREATE TABLE IF NOT EXISTS `saju_sipsung_interpretation` (
     `daily_advice` TEXT NOT NULL COMMENT '일일 운세 조언',
     PRIMARY KEY (`id`),
     INDEX `idx_ilgan_sipsung` (`ilgan`, `sipsung`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='십성 해석 데이터';
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci COMMENT='십성 해석 데이터';
 ```
 
 ### 1.4 지지 관계 테이블 (saju_jiji_relation)
@@ -70,7 +70,7 @@ CREATE TABLE IF NOT EXISTS `saju_jiji_relation` (
     `daily_impact` TEXT NOT NULL COMMENT '일일 운세에 미치는 영향',
     PRIMARY KEY (`id`),
     INDEX `idx_relation` (`relation_type`, `jiji1`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='지지 관계 데이터';
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci COMMENT='지지 관계 데이터';
 ```
 
 ### 1.5 운세 이력 테이블 (fortune_histories)
@@ -87,7 +87,7 @@ CREATE TABLE IF NOT EXISTS `fortune_histories` (
     `created_at` DATETIME NOT NULL COMMENT '생성일시',
     PRIMARY KEY (`id`),
     INDEX `idx_user_type_date` (`user_id`, `fortune_type`, `target_date`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='AI 운세 생성 이력';
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci COMMENT='AI 운세 생성 이력';
 ```
 
 ---
@@ -242,6 +242,6 @@ DROP TABLE IF EXISTS saju_cheongan;
 
 ## 변경 이력
 
-| 날짜 | 버전 | 내용 |
-|------|------|------|
-| 2026-01-28 | 1.0 | 초기 생성 - Story 2.1 |
+| 날짜       | 버전 | 내용                  |
+| ---------- | ---- | --------------------- |
+| 2026-01-28 | 1.0  | 초기 생성 - Story 2.1 |
