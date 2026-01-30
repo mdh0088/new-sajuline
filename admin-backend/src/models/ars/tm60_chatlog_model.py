@@ -22,7 +22,9 @@ class Tm60Chatlog(ARSBase):
     fdnis: Mapped[str] = mapped_column(String(8), nullable=False, default="")
     m_code: Mapped[str] = mapped_column(String(3), nullable=False, default="")
     m_name: Mapped[str] = mapped_column(String(20), nullable=False, default="")
-    m_nickname: Mapped[str] = mapped_column(String(20), nullable=False, default="")
+    m_nickname: Mapped[str] = mapped_column(
+        String(20), nullable=False, default=""
+    )
 
     # 시간 정보
     starttm: Mapped[Optional[str]] = mapped_column(

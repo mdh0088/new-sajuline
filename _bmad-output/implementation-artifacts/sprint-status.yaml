@@ -58,23 +58,23 @@ development_status:
   # 의존성: 없음
   # Tech Spec: tech-spec-ai-saju-daily-fortune.md (ready-for-dev)
   # ============================================================
-  epic-2: in-progress
+  epic-2: done
   2-1-saju-knowledge-base-data-model: done
-  2-2-saju-calculation-utility: review
-  2-3-fortune-cache-system: review
+  2-2-saju-calculation-utility: done
+  2-3-fortune-cache-system: done
   2-4-langchain-rag-chain: done
   2-5-daily-fortune-api-endpoint: done
-  2-6-weekly-monthly-yearly-fortune-api: backlog
+  2-6-weekly-monthly-yearly-fortune-api: done
   epic-2-retrospective: optional
 
   # ============================================================
   # Epic 3: AI 운세 프론트엔드 - NEW
   # 의존성: Epic 2 완료 필요
   # ============================================================
-  epic-3: backlog
-  3-1-fortune-api-composable: backlog
-  3-2-daily-fortune-page: backlog
-  3-3-fortune-period-tabs: backlog
+  epic-3: in-progress
+  3-1-fortune-api-composable: done
+  3-2-daily-fortune-page: done
+  3-3-fortune-period-tabs: done
   3-4-fortune-loading-error-ui: backlog
   epic-3-retrospective: optional
 

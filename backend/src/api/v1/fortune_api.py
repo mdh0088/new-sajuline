@@ -161,3 +161,268 @@ async def get_daily_fortune(
     )
 
     return ok(data=fortune, message="일일 운세 조회 성공")
+
+
+# =============================================================================
+# 공통 검증 함수 (Story 2.6)
+# =============================================================================
+
+
+async def _validate_user_and_get_saju(
+    user_repo: UserRepositoryDep,
+    user_id: str,
+    log,
+) -> tuple:
+    """
+    사용자 및 사주 정보 검증 후 일주 반환
+
+    Args:
+        user_repo: 사용자 리포지토리
+        user_id: 사용자 ID
+        log: 로거 인스턴스
+
+    Returns:
+        tuple: (birth_stem, birth_branch)
+
+    Raises:
+        HTTPException: 사용자 없음 또는 사주 정보 미등록
+    """
+    # 사용자 정보 조회
+    user = await user_repo.get_by_id(user_id)
+    if not user:
+        log.warning("API: User not found", user_id=user_id)
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail={
+                "code": "USER_NOT_FOUND",
+                "message": "사용자 정보를 찾을 수 없습니다",
+            },
+        )
+
+    # 사주 정보 확인
+    if not user.birth_date:
+        log.warning("API: Saju info not registered", user_id=user_id)
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail={
+                "code": "SAJU_INFO_REQUIRED",
+                "message": "사주 정보를 먼저 등록해주세요",
+            },
+        )
+
+    # 생년월일시에서 일간/일지 계산
+    try:
+        birth_date_str = user.birth_date
+        if len(birth_date_str) <= 16:
+            birth_datetime = datetime.strptime(birth_date_str, "%Y-%m-%d %H:%M")
+        else:
+            birth_datetime = datetime.strptime(birth_date_str, "%Y-%m-%d %H:%M:%S")
+
+        birth_stem, birth_branch = get_ilju(birth_datetime.date())
+        return birth_stem, birth_branch
+    except (ValueError, TypeError) as e:
+        log.warning(
+            "API: Invalid birth_date format",
+            user_id=user_id,
+            birth_date=user.birth_date,
+            error=str(e),
+        )
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail={
+                "code": "SAJU_INFO_REQUIRED",
+                "message": "사주 정보 형식이 올바르지 않습니다. 다시 등록해주세요.",
+            },
+        )
+
+
+# =============================================================================
+# 주간 운세 API (Story 2.6)
+# =============================================================================
+
+
+@router.get(
+    "/weekly",
+    response_model=APIResponse[FortuneResponse],
+    summary="주간 운세 조회",
+    description="로그인한 사용자의 주간 AI 운세를 조회합니다.",
+    responses={
+        200: {"description": "주간 운세 조회 성공"},
+        400: {"description": "사주 정보 미등록"},
+        401: {"description": "인증 필요"},
+        429: {"description": "요청 한도 초과"},
+    },
+)
+@limiter.limit("100/minute")
+async def get_weekly_fortune(
+    request: Request,
+    response: Response,
+    fortune_service: FortuneServiceDep,
+    user_repo: UserRepositoryDep,
+    current_user: TokenPayload = Depends(get_current_user),
+) -> APIResponse[FortuneResponse]:
+    """
+    주간 운세 조회 API
+
+    - **로그인 필수**: JWT 토큰 인증
+    - **사주 정보 필수**: 사용자의 생년월일시 등록 필요
+    - **기간**: 이번 주 (월요일 ~ 일요일)
+    - **캐싱**: Redis 7일 + DB 영구 저장
+    - **성능**: p95 < 300ms (캐시 히트), < 3초 (신규 생성)
+    """
+    log = get_logger_with_request_id()
+    user_id = current_user.sub
+
+    log.info("API: Weekly fortune request", user_id=user_id)
+
+    # 사용자 및 사주 정보 검증
+    birth_stem, birth_branch = await _validate_user_and_get_saju(
+        user_repo, user_id, log
+    )
+
+    # 주간 운세 조회
+    fortune, cache_status = await fortune_service.get_weekly_fortune_with_status(
+        user_id=user_id,
+        birth_stem=birth_stem,
+        birth_branch=birth_branch,
+    )
+
+    # X-Cache 헤더 설정
+    response.headers["X-Cache"] = cache_status
+
+    log.info(
+        "API: Weekly fortune retrieved",
+        user_id=user_id,
+        cache_status=cache_status,
+        source=fortune.source,
+    )
+
+    return ok(data=fortune, message="주간 운세 조회 성공")
+
+
+# =============================================================================
+# 월간 운세 API (Story 2.6)
+# =============================================================================
+
+
+@router.get(
+    "/monthly",
+    response_model=APIResponse[FortuneResponse],
+    summary="월간 운세 조회",
+    description="로그인한 사용자의 월간 AI 운세를 조회합니다.",
+    responses={
+        200: {"description": "월간 운세 조회 성공"},
+        400: {"description": "사주 정보 미등록"},
+        401: {"description": "인증 필요"},
+        429: {"description": "요청 한도 초과"},
+    },
+)
+@limiter.limit("100/minute")
+async def get_monthly_fortune(
+    request: Request,
+    response: Response,
+    fortune_service: FortuneServiceDep,
+    user_repo: UserRepositoryDep,
+    current_user: TokenPayload = Depends(get_current_user),
+) -> APIResponse[FortuneResponse]:
+    """
+    월간 운세 조회 API
+
+    - **로그인 필수**: JWT 토큰 인증
+    - **사주 정보 필수**: 사용자의 생년월일시 등록 필요
+    - **기간**: 이번 달
+    - **캐싱**: Redis 30일 + DB 영구 저장
+    - **성능**: p95 < 300ms (캐시 히트), < 3초 (신규 생성)
+    """
+    log = get_logger_with_request_id()
+    user_id = current_user.sub
+
+    log.info("API: Monthly fortune request", user_id=user_id)
+
+    # 사용자 및 사주 정보 검증
+    birth_stem, birth_branch = await _validate_user_and_get_saju(
+        user_repo, user_id, log
+    )
+
+    # 월간 운세 조회
+    fortune, cache_status = await fortune_service.get_monthly_fortune_with_status(
+        user_id=user_id,
+        birth_stem=birth_stem,
+        birth_branch=birth_branch,
+    )
+
+    # X-Cache 헤더 설정
+    response.headers["X-Cache"] = cache_status
+
+    log.info(
+        "API: Monthly fortune retrieved",
+        user_id=user_id,
+        cache_status=cache_status,
+        source=fortune.source,
+    )
+
+    return ok(data=fortune, message="월간 운세 조회 성공")
+
+
+# =============================================================================
+# 연간 운세 API (Story 2.6)
+# =============================================================================
+
+
+@router.get(
+    "/yearly",
+    response_model=APIResponse[FortuneResponse],
+    summary="연간 운세 조회",
+    description="로그인한 사용자의 연간 AI 운세를 조회합니다.",
+    responses={
+        200: {"description": "연간 운세 조회 성공"},
+        400: {"description": "사주 정보 미등록"},
+        401: {"description": "인증 필요"},
+        429: {"description": "요청 한도 초과"},
+    },
+)
+@limiter.limit("100/minute")
+async def get_yearly_fortune(
+    request: Request,
+    response: Response,
+    fortune_service: FortuneServiceDep,
+    user_repo: UserRepositoryDep,
+    current_user: TokenPayload = Depends(get_current_user),
+) -> APIResponse[FortuneResponse]:
+    """
+    연간 운세 조회 API
+
+    - **로그인 필수**: JWT 토큰 인증
+    - **사주 정보 필수**: 사용자의 생년월일시 등록 필요
+    - **기간**: 올해
+    - **캐싱**: Redis 365일 + DB 영구 저장
+    - **성능**: p95 < 300ms (캐시 히트), < 3초 (신규 생성)
+    """
+    log = get_logger_with_request_id()
+    user_id = current_user.sub
+
+    log.info("API: Yearly fortune request", user_id=user_id)
+
+    # 사용자 및 사주 정보 검증
+    birth_stem, birth_branch = await _validate_user_and_get_saju(
+        user_repo, user_id, log
+    )
+
+    # 연간 운세 조회
+    fortune, cache_status = await fortune_service.get_yearly_fortune_with_status(
+        user_id=user_id,
+        birth_stem=birth_stem,
+        birth_branch=birth_branch,
+    )
+
+    # X-Cache 헤더 설정
+    response.headers["X-Cache"] = cache_status
+
+    log.info(
+        "API: Yearly fortune retrieved",
+        user_id=user_id,
+        cache_status=cache_status,
+        source=fortune.source,
+    )
+
+    return ok(data=fortune, message="연간 운세 조회 성공")

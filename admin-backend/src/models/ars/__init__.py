@@ -10,4 +10,3 @@ __all__ = [
     "Tm60Users",
     "Tm60Chatlog",
 ]
-

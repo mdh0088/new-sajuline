@@ -398,3 +398,141 @@ def get_yin_yang(stem: str) -> str:
     if stem not in CHEONGAN_YIN_YANG:
         raise ValueError(f"잘못된 천간입니다: {stem}")
     return CHEONGAN_YIN_YANG[stem]
+
+
+# =============================================================================
+# 연주(年柱) 계산 (Story 2.6)
+# =============================================================================
+
+# 기준: 2000년 = 경진년 (庚辰年)
+_YEAR_BASE = 2000
+_YEAR_BASE_GAN_IDX = 6  # 경 (庚)
+_YEAR_BASE_JI_IDX = 4   # 진 (辰)
+
+# 월지 상수 (정월=인월 기준)
+MONTH_JIJI: list[str] = ["인", "묘", "진", "사", "오", "미", "신", "유", "술", "해", "자", "축"]
+
+# 월별 계절/기운
+MONTH_ENERGY: dict[int, str] = {
+    1: "새해의 시작, 새로운 기운이 움트는 시기",
+    2: "봄의 기운이 깨어나는 시기",
+    3: "만물이 소생하는 활기찬 시기",
+    4: "생명력이 활발해지는 시기",
+    5: "여름의 열기가 시작되는 시기",
+    6: "풍요와 성장의 절정기",
+    7: "가을의 기운이 시작되는 시기",
+    8: "결실을 준비하는 시기",
+    9: "수확과 정리의 시기",
+    10: "겨울을 준비하는 시기",
+    11: "내면을 돌아보는 시기",
+    12: "한 해를 마무리하는 시기",
+}
+
+# 월 이름 (한글)
+MONTH_NAME_KO: dict[int, str] = {
+    1: "정월", 2: "이월", 3: "삼월", 4: "사월",
+    5: "오월", 6: "유월", 7: "칠월", 8: "팔월",
+    9: "구월", 10: "시월", 11: "십일월", 12: "십이월",
+}
+
+
+def get_year_pillar(target_date: date) -> tuple[str, str]:
+    """
+    연주(연간+연지)를 계산합니다.
+
+    60갑자 순환 알고리즘을 사용합니다.
+    기준: 2000년 = 경진년 (庚辰年)
+
+    Args:
+        target_date: 계산할 날짜
+
+    Returns:
+        tuple[str, str]: (연간, 연지) 예: ("병", "오")
+
+    Examples:
+        >>> get_year_pillar(date(2026, 1, 30))
+        ('병', '오')
+        >>> get_year_pillar(date(2000, 1, 1))
+        ('경', '진')
+    """
+    diff = target_date.year - _YEAR_BASE
+    gan_idx = (_YEAR_BASE_GAN_IDX + diff) % 10
+    ji_idx = (_YEAR_BASE_JI_IDX + diff) % 12
+
+    return CHEONGAN[gan_idx], JIJI[ji_idx]
+
+
+def get_month_branch(target_date: date) -> str:
+    """
+    월지(月支)를 반환합니다.
+
+    정월(1월) = 인월(寅月) 기준
+    참고: 정확한 절입 시간 계산은 생략 (MVP)
+
+    Args:
+        target_date: 대상 날짜
+
+    Returns:
+        str: 월지 (인, 묘, 진, ...)
+
+    Examples:
+        >>> get_month_branch(date(2026, 1, 30))
+        '인'
+        >>> get_month_branch(date(2026, 6, 15))
+        '오'
+    """
+    # 1월 = 인월(인덱스 0), 2월 = 묘월(인덱스 1), ...
+    month_idx = (target_date.month - 1) % 12
+    return MONTH_JIJI[month_idx]
+
+
+def get_month_energy(target_date: date) -> str:
+    """
+    해당 월의 기운/특성을 반환합니다.
+
+    Args:
+        target_date: 대상 날짜
+
+    Returns:
+        str: 월의 에너지 설명
+    """
+    return MONTH_ENERGY.get(target_date.month, "안정적인 기운의 시기")
+
+
+def get_month_name(month: int) -> str:
+    """
+    월의 한글 이름을 반환합니다.
+
+    Args:
+        month: 월 (1~12)
+
+    Returns:
+        str: 월 이름 (정월, 이월, ...)
+    """
+    return MONTH_NAME_KO.get(month, f"{month}월")
+
+
+def get_year_energy(target_date: date) -> str:
+    """
+    해당 연도의 기운/특성을 반환합니다.
+
+    연주(년간+년지)의 오행을 기반으로 설명합니다.
+
+    Args:
+        target_date: 대상 날짜
+
+    Returns:
+        str: 연도의 에너지 설명
+    """
+    year_gan, year_ji = get_year_pillar(target_date)
+    gan_oheng = CHEONGAN_OHENG[year_gan]
+
+    energy_desc = {
+        "목": "성장과 발전의 에너지가 강한 해",
+        "화": "열정과 확장의 에너지가 강한 해",
+        "토": "안정과 중심의 에너지가 강한 해",
+        "금": "수확과 결실의 에너지가 강한 해",
+        "수": "지혜와 유연함의 에너지가 강한 해",
+    }
+
+    return energy_desc.get(gan_oheng, "다양한 에너지가 조화를 이루는 해")

@@ -17,7 +17,16 @@ from langchain_core.language_models.chat_models import BaseChatModel
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.output_parsers import PydanticOutputParser
 
-from src.core.prompts import FORTUNE_SYSTEM_PROMPT, FORTUNE_USER_PROMPT_TEMPLATE
+from src.core.prompts import (
+    FORTUNE_SYSTEM_PROMPT,
+    FORTUNE_USER_PROMPT_TEMPLATE,
+    WEEKLY_FORTUNE_SYSTEM_PROMPT,
+    WEEKLY_FORTUNE_USER_PROMPT_TEMPLATE,
+    MONTHLY_FORTUNE_SYSTEM_PROMPT,
+    MONTHLY_FORTUNE_USER_PROMPT_TEMPLATE,
+    YEARLY_FORTUNE_SYSTEM_PROMPT,
+    YEARLY_FORTUNE_USER_PROMPT_TEMPLATE,
+)
 from src.schemas.fortune_schema import LLMFortuneOutput
 from src.config.settings import settings
 from src.common.logging import logger, get_logger_with_request_id
@@ -215,3 +224,275 @@ class DailyFortuneChain:
             "max_retries": 1,
             "output_schema": "LLMFortuneOutput",
         }
+
+    # =========================================================================
+    # 주간 운세 생성 (Story 2.6)
+    # =========================================================================
+
+    async def generate_weekly_fortune(
+        self,
+        ilgan: str,
+        ilgan_oheng: str,
+        ilgan_yin_yang: str,
+        week_start: str,
+        week_end: str,
+        weekly_pillar_summary: str,
+        main_sipsung: str,
+        sipsung_interpretation: str,
+        jiji_relation: str,
+        jiji_interpretation: str,
+        today: str,
+    ) -> LLMFortuneOutput:
+        """
+        주간 운세 생성
+
+        Args:
+            ilgan: 사용자 일간 (갑, 을, 병, ...)
+            ilgan_oheng: 일간의 오행 (목, 화, 토, 금, 수)
+            ilgan_yin_yang: 일간의 음양 (양, 음)
+            week_start: 주 시작일 (ISO format)
+            week_end: 주 종료일 (ISO format)
+            weekly_pillar_summary: 주간 일진 흐름 요약
+            main_sipsung: 주간 주요 십성
+            sipsung_interpretation: 십성 해석 텍스트
+            jiji_relation: 지지 관계 설명
+            jiji_interpretation: 지지 관계 해석 텍스트
+            today: 오늘 날짜 (ISO format)
+
+        Returns:
+            LLMFortuneOutput: 파싱된 주간 운세 결과
+        """
+        log = get_logger_with_request_id()
+
+        log.info(
+            "Generating weekly fortune with LLM",
+            provider=self.provider,
+            model=self._get_model_name(),
+            ilgan=ilgan,
+            week_start=week_start,
+            week_end=week_end
+        )
+
+        # 주간 운세 전용 프롬프트 체인 생성
+        weekly_prompt = ChatPromptTemplate.from_messages([
+            ("system", WEEKLY_FORTUNE_SYSTEM_PROMPT),
+            ("human", WEEKLY_FORTUNE_USER_PROMPT_TEMPLATE),
+        ])
+        weekly_chain = weekly_prompt | self.llm | self.parser
+
+        try:
+            result = await weekly_chain.ainvoke({
+                "ilgan": ilgan,
+                "ilgan_oheng": ilgan_oheng,
+                "ilgan_yin_yang": ilgan_yin_yang,
+                "week_start": week_start,
+                "week_end": week_end,
+                "weekly_pillar_summary": weekly_pillar_summary,
+                "main_sipsung": main_sipsung,
+                "sipsung_interpretation": sipsung_interpretation,
+                "jiji_relation": jiji_relation,
+                "jiji_interpretation": jiji_interpretation,
+                "today": today,
+            })
+
+            log.info(
+                "Weekly fortune generated successfully",
+                provider=self.provider,
+                ilgan=ilgan,
+                week_start=week_start
+            )
+
+            return result
+
+        except Exception as e:
+            log.error(
+                "LLM weekly fortune generation failed",
+                provider=self.provider,
+                error=str(e),
+                ilgan=ilgan
+            )
+            raise
+
+    # =========================================================================
+    # 월간 운세 생성 (Story 2.6)
+    # =========================================================================
+
+    async def generate_monthly_fortune(
+        self,
+        ilgan: str,
+        ilgan_oheng: str,
+        ilgan_yin_yang: str,
+        target_month: int,
+        month_num: int,
+        month_name: str,
+        month_branch: str,
+        month_energy: str,
+        main_sipsung: str,
+        sipsung_interpretation: str,
+        jiji_relation: str,
+        jiji_interpretation: str,
+        today: str,
+    ) -> LLMFortuneOutput:
+        """
+        월간 운세 생성
+
+        Args:
+            ilgan: 사용자 일간 (갑, 을, 병, ...)
+            ilgan_oheng: 일간의 오행
+            ilgan_yin_yang: 일간의 음양
+            target_month: 대상 연도 (예: 2026)
+            month_num: 대상 월 (1~12)
+            month_name: 월 이름 (예: "정월")
+            month_branch: 월지 (인, 묘, 진, ...)
+            month_energy: 월의 기운 설명
+            main_sipsung: 월간 주요 십성
+            sipsung_interpretation: 십성 해석 텍스트
+            jiji_relation: 지지 관계 설명
+            jiji_interpretation: 지지 관계 해석 텍스트
+            today: 오늘 날짜 (ISO format)
+
+        Returns:
+            LLMFortuneOutput: 파싱된 월간 운세 결과
+        """
+        log = get_logger_with_request_id()
+
+        log.info(
+            "Generating monthly fortune with LLM",
+            provider=self.provider,
+            model=self._get_model_name(),
+            ilgan=ilgan,
+            target_month=target_month,
+            month_num=month_num
+        )
+
+        # 월간 운세 전용 프롬프트 체인 생성
+        monthly_prompt = ChatPromptTemplate.from_messages([
+            ("system", MONTHLY_FORTUNE_SYSTEM_PROMPT),
+            ("human", MONTHLY_FORTUNE_USER_PROMPT_TEMPLATE),
+        ])
+        monthly_chain = monthly_prompt | self.llm | self.parser
+
+        try:
+            result = await monthly_chain.ainvoke({
+                "ilgan": ilgan,
+                "ilgan_oheng": ilgan_oheng,
+                "ilgan_yin_yang": ilgan_yin_yang,
+                "target_month": target_month,
+                "month_num": month_num,
+                "month_name": month_name,
+                "month_branch": month_branch,
+                "month_energy": month_energy,
+                "main_sipsung": main_sipsung,
+                "sipsung_interpretation": sipsung_interpretation,
+                "jiji_relation": jiji_relation,
+                "jiji_interpretation": jiji_interpretation,
+                "today": today,
+            })
+
+            log.info(
+                "Monthly fortune generated successfully",
+                provider=self.provider,
+                ilgan=ilgan,
+                target_month=f"{target_month}-{month_num:02d}"
+            )
+
+            return result
+
+        except Exception as e:
+            log.error(
+                "LLM monthly fortune generation failed",
+                provider=self.provider,
+                error=str(e),
+                ilgan=ilgan
+            )
+            raise
+
+    # =========================================================================
+    # 연간 운세 생성 (Story 2.6)
+    # =========================================================================
+
+    async def generate_yearly_fortune(
+        self,
+        ilgan: str,
+        ilgan_oheng: str,
+        ilgan_yin_yang: str,
+        target_year: int,
+        year_gan: str,
+        year_ji: str,
+        year_energy: str,
+        main_sipsung: str,
+        sipsung_interpretation: str,
+        jiji_relation: str,
+        jiji_interpretation: str,
+        today: str,
+    ) -> LLMFortuneOutput:
+        """
+        연간 운세 생성
+
+        Args:
+            ilgan: 사용자 일간 (갑, 을, 병, ...)
+            ilgan_oheng: 일간의 오행
+            ilgan_yin_yang: 일간의 음양
+            target_year: 대상 연도 (예: 2026)
+            year_gan: 연간 (병, 정, ...)
+            year_ji: 연지 (오, 미, ...)
+            year_energy: 연도의 기운 설명
+            main_sipsung: 연간 주요 십성
+            sipsung_interpretation: 십성 해석 텍스트
+            jiji_relation: 지지 관계 설명
+            jiji_interpretation: 지지 관계 해석 텍스트
+            today: 오늘 날짜 (ISO format)
+
+        Returns:
+            LLMFortuneOutput: 파싱된 연간 운세 결과
+        """
+        log = get_logger_with_request_id()
+
+        log.info(
+            "Generating yearly fortune with LLM",
+            provider=self.provider,
+            model=self._get_model_name(),
+            ilgan=ilgan,
+            target_year=target_year
+        )
+
+        # 연간 운세 전용 프롬프트 체인 생성
+        yearly_prompt = ChatPromptTemplate.from_messages([
+            ("system", YEARLY_FORTUNE_SYSTEM_PROMPT),
+            ("human", YEARLY_FORTUNE_USER_PROMPT_TEMPLATE),
+        ])
+        yearly_chain = yearly_prompt | self.llm | self.parser
+
+        try:
+            result = await yearly_chain.ainvoke({
+                "ilgan": ilgan,
+                "ilgan_oheng": ilgan_oheng,
+                "ilgan_yin_yang": ilgan_yin_yang,
+                "target_year": target_year,
+                "year_gan": year_gan,
+                "year_ji": year_ji,
+                "year_energy": year_energy,
+                "main_sipsung": main_sipsung,
+                "sipsung_interpretation": sipsung_interpretation,
+                "jiji_relation": jiji_relation,
+                "jiji_interpretation": jiji_interpretation,
+                "today": today,
+            })
+
+            log.info(
+                "Yearly fortune generated successfully",
+                provider=self.provider,
+                ilgan=ilgan,
+                target_year=target_year
+            )
+
+            return result
+
+        except Exception as e:
+            log.error(
+                "LLM yearly fortune generation failed",
+                provider=self.provider,
+                error=str(e),
+                ilgan=ilgan
+            )
+            raise

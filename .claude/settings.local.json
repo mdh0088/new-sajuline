@@ -49,7 +49,9 @@
       "Bash(uv run flake8:*)",
       "Bash(uv pip install:*)",
       "Bash(uv run black:*)",
-      "Bash(uv run:*)"
+      "Bash(uv run:*)",
+      "Bash(npm run:*)",
+      "Bash(git add:*)"
     ],
     "deny": [],
     "ask": []
