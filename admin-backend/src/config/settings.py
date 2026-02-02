@@ -117,6 +117,14 @@ class Settings(BaseSettings):
     payment_gateway_key: str = Field(..., env="PAYMENT_GATEWAY_KEY")
     payment_client_id: str = Field(..., env="PAYMENT_CLIENT_ID")
 
+    # AI Assistant Settings
+    openai_api_key: str = Field(default="", env="OPENAI_API_KEY")
+    ai_redis_url: str = Field(default="redis://localhost:6379/1", env="AI_REDIS_URL")
+    ai_session_ttl: int = Field(default=1800, env="AI_SESSION_TTL")  # 30분
+    ai_llm_model: str = Field(default="gpt-4o-mini", env="AI_LLM_MODEL")
+    ai_llm_timeout: int = Field(default=10, env="AI_LLM_TIMEOUT")
+    ai_llm_fallback_model: str = Field(default="gpt-3.5-turbo", env="AI_LLM_FALLBACK_MODEL")
+
     class Config:
         # 환경에 따라 자동으로 env 파일 선택
         env_file = ".env.development" if os.getenv("APP_ENV", "development") == "development" else ".env.production"

@@ -23,16 +23,16 @@
       @touchmove.passive="handleTouchMove"
       @touchend.passive="handleTouchEnd"
     >
-      <!-- 로딩 상태 -->
+      <!-- 로딩 상태 (Story 3.4: FortuneLoading 통합, AC 1, 2) -->
       <div v-if="isLoading" class="px-5 py-6">
-        <FortuneCardSkeleton />
+        <FortuneLoading :is-extended-loading="isExtendedLoading" />
       </div>
 
-      <!-- 에러 상태 -->
+      <!-- 에러 상태 (Story 3.4: errorType 분기, AC 3, 4, 5) -->
       <div v-else-if="error" class="px-5 py-6">
         <FortuneError
           :message="errorMessage"
-          :is-saju-required="isSajuRequired"
+          :error-type="errorType"
           @retry="handleRetry"
         />
       </div>
@@ -44,11 +44,11 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch } from 'vue'
 import FortuneTabs from '~/components/fortune/FortuneTabs.vue'
 import FortuneCard from '~/components/fortune/FortuneCard.vue'
-import FortuneCardSkeleton from '~/components/fortune/FortuneCardSkeleton.vue'
+import FortuneLoading from '~/components/fortune/FortuneLoading.vue'
 import FortuneError from '~/components/fortune/FortuneError.vue'
+import type { FortuneErrorType } from '~/types/fortune'
 import { useFortuneApi } from '~/composables/api/useFortune'
 import { getTodayKoreanDate } from '~/utils/dateFormat'
 import type { FortuneType } from '~/types/fortune'
@@ -75,25 +75,6 @@ const isValidFortuneType = (value: unknown): value is FortuneType => {
   return typeof value === 'string' && FORTUNE_TYPES.includes(value as FortuneType)
 }
 
-/**
- * API 에러 응답에서 에러 코드 추출
- */
-interface ApiErrorData {
-  error?: { code?: string; message?: string }
-  detail?: { code?: string; message?: string }
-}
-
-const extractErrorCode = (err: unknown): string | undefined => {
-  if (!err || typeof err !== 'object') return undefined
-
-  const errorObj = err as { data?: ApiErrorData }
-  const errorData = errorObj.data
-
-  if (!errorData) return undefined
-
-  return errorData.error?.code ?? errorData.detail?.code
-}
-
 // =============================================================================
 // 상태 관리
 // =============================================================================
@@ -110,8 +91,82 @@ const getInitialTab = (): FortuneType => {
 const activeTab = ref<FortuneType>(getInitialTab())
 
 // 운세 API composable 사용 (Task 2.2: useFortune 통합 composable)
-const { useFortune, getFortuneErrorMessage, invalidateFortuneCache } = useFortuneApi()
+const { useFortune, getFortuneErrorMessage, invalidateFortuneCache, extractErrorCode } = useFortuneApi()
 const { data: fortune, isLoading, error, refetch } = useFortune(activeTab)
+
+// =============================================================================
+// Story 3.4: 로딩 타이머 (AC 2, Task 3)
+// =============================================================================
+
+const EXTENDED_LOADING_THRESHOLD = 3000 // 3초
+
+const isExtendedLoading = ref(false)
+let loadingTimer: ReturnType<typeof setTimeout> | null = null
+
+// Task 3.2, 3.3: 로딩 상태 감시 및 타이머 로직
+watch(isLoading, (loading) => {
+  if (loading) {
+    // 3초 타이머 시작
+    loadingTimer = setTimeout(() => {
+      isExtendedLoading.value = true
+    }, EXTENDED_LOADING_THRESHOLD)
+  } else {
+    // 로딩 완료 시 타이머 정리 (Task 3.4)
+    if (loadingTimer) {
+      clearTimeout(loadingTimer)
+      loadingTimer = null
+    }
+    isExtendedLoading.value = false
+  }
+})
+
+// 컴포넌트 언마운트 시 타이머 정리 (Task 3.4)
+onUnmounted(() => {
+  if (loadingTimer) {
+    clearTimeout(loadingTimer)
+  }
+})
+
+// =============================================================================
+// Story 3.4: 에러 타입 자동 감지 (AC 3, 4, 5, Task 4)
+// =============================================================================
+
+/**
+ * 에러 타입 추출 함수 (Task 4.1, 4.2)
+ */
+const getErrorType = (err: unknown): FortuneErrorType => {
+  // 네트워크 오류 체크 (Task 4.2)
+  if (typeof navigator !== 'undefined' && !navigator.onLine) {
+    return 'network'
+  }
+
+  // Fetch 에러 체크 (Task 4.2)
+  if (err instanceof TypeError && err.message.includes('fetch')) {
+    return 'network'
+  }
+
+  // 네트워크 관련 에러 메시지 체크
+  if (err instanceof Error) {
+    const msg = err.message.toLowerCase()
+    if (msg.includes('network') || msg.includes('offline') || msg.includes('failed to fetch')) {
+      return 'network'
+    }
+  }
+
+  // 서버 에러 코드 체크
+  const errorCode = extractErrorCode(err)
+  if (errorCode === 'SAJU_INFO_REQUIRED') {
+    return 'saju_required'
+  }
+
+  return 'general'
+}
+
+// Task 4.3: errorType computed 속성
+const errorType = computed<FortuneErrorType>(() => {
+  if (!error.value) return 'general'
+  return getErrorType(error.value)
+})
 
 // =============================================================================
 // 페이지 메타데이터
@@ -165,12 +220,6 @@ const errorMessage = computed(() => {
   return error.value ? getFortuneErrorMessage(error.value) : null
 })
 
-// 사주 정보 미등록 여부 확인
-const isSajuRequired = computed(() => {
-  if (!error.value) return false
-  return extractErrorCode(error.value) === 'SAJU_INFO_REQUIRED'
-})
-
 // =============================================================================
 // 이벤트 핸들러
 // =============================================================================
@@ -189,10 +238,15 @@ watch(activeTab, (type) => {
   }
 })
 
-// 다시 시도 핸들러 (캐시 무효화 후 재요청)
+// 다시 시도 핸들러 (캐시 무효화 후 재요청) - Code Review: 에러 처리 추가
 const handleRetry = async () => {
-  invalidateFortuneCache(activeTab.value)
-  await refetch()
+  try {
+    invalidateFortuneCache(activeTab.value)
+    await refetch()
+  } catch (e) {
+    // refetch 에러는 TanStack Query의 error 상태로 자동 처리됨
+    console.error('[FortuneRetry] 재시도 실패:', e)
+  }
 }
 
 // =============================================================================

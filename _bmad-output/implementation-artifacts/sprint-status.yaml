@@ -71,11 +71,11 @@ development_status:
   # Epic 3: AI 운세 프론트엔드 - NEW
   # 의존성: Epic 2 완료 필요
   # ============================================================
-  epic-3: in-progress
+  epic-3: done
   3-1-fortune-api-composable: done
   3-2-daily-fortune-page: done
   3-3-fortune-period-tabs: done
-  3-4-fortune-loading-error-ui: backlog
+  3-4-fortune-loading-error-ui: done
   epic-3-retrospective: optional
 
   # ============================================================

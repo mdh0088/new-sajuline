@@ -95,6 +95,12 @@ export type FortuneErrorCode =
   | 'USER_NOT_FOUND'          // 사용자 없음
   | 'RATE_LIMIT_EXCEEDED'     // Rate Limit 초과 (429)
 
+/**
+ * 운세 에러 UI 타입
+ * FortuneError 컴포넌트에서 사용
+ */
+export type FortuneErrorType = 'general' | 'saju_required' | 'network'
+
 // =============================================================================
 // 공통 상수 (Story 3.3 Code Review - DRY 원칙)
 // =============================================================================

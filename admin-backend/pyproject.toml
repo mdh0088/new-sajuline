@@ -38,9 +38,8 @@ dependencies = [
     "aiomysql==0.2.0", # MariaDB/MySQL 비동기 드라이버
     "pymysql==1.1.0", # MariaDB/MySQL 동기 드라이버 (Alembic용)
     "pymssql==2.3.0", # MSSQL (2005 호환)
-    # Redis (제거됨)
-    # "redis[hiredis]==5.0.3",
-    # "aioredis==2.0.1",
+    # Redis (AI 세션 관리용)
+    "redis[hiredis]>=5.0.0",
     # 인증 및 보안
     "python-jose[cryptography]==3.3.0",
     "passlib[bcrypt]==1.7.4",
@@ -51,6 +50,12 @@ dependencies = [
     # 외부 API 연동
     "httpx==0.27.0",
     "aiohttp==3.9.3",
+    # AI/LLM
+    "langchain>=0.1.0",
+    "langchain-openai>=0.0.5",
+    "langchain-community>=0.0.20",
+    "langgraph>=0.0.40",
+    "openai>=1.0.0",
     # 유틸리티
     "python-dateutil==2.9.0.post0",
     "email-validator==2.1.1",
@@ -65,6 +70,7 @@ dependencies = [
     "sentry-sdk[fastapi]==1.45.0",
     "python-json-logger==2.0.7",
     "loguru==0.7.2",
+    "structlog>=24.1.0",  # 구조화 JSON 로깅 (Story 1-2)
     # 환경 변수 및 설정
     "python-dotenv==1.0.1",
     # 검증 및 직렬화

@@ -395,6 +395,7 @@ export const useFortuneApi = () => {
     invalidateFortuneCache,
     // Error utilities
     getFortuneErrorMessage,
+    extractErrorCode,
   }
 }
 
