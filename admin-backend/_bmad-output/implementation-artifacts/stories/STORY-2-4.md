@@ -102,11 +102,21 @@ so that 데이터를 쉽게 이해할 수 있다.
 - [x] [MEDIUM-3][개선] ResponseFormatter 금액 감지 로직 한계 ✅ 수정 완료 (2026-02-03)
   - 해결: 한글 키워드 12개 추가 (금액, 가격, 매출, 수익, 비용, 합계, 수수료, 요금, 입금, 환불, 할인, 세금)
   - 파일: `src/services/ai/utils/response_formatter.py:74-100`
-- [ ] [MEDIUM-4][규칙 위반] LLM 호출 폴백 패턴 미적용 (Review 2026-02-03 #4)
+- [x] [MEDIUM-4][규칙 위반] LLM 호출 폴백 패턴 미적용 (Review 2026-02-03 #4) ✅ 완료 (2026-02-03)
   - 위반 규칙: Project Context - "LLM Call Pattern"
   - 문제: `call_llm_with_fallback()` 래퍼 사용 대신 직접 호출
   - 해결: Project Context 패턴 적용
-  - 파일: `src/services/ai/agents/response_agent.py:103-112`
+  - 구현:
+    * `src/services/ai/utils/llm_helpers.py` 생성 - `call_llm_with_fallback()` 함수 구현
+    * Primary LLM 실패 시 Fallback LLM 자동 전환
+    * Exponential backoff 재시도 로직 (최대 2회)
+    * OpenAI 에러 타입별 세분화 처리 (RateLimitError, APIConnectionError, APITimeoutError, AuthenticationError)
+    * 상세한 로깅 및 에러 추적
+  - 수정 파일:
+    * `src/services/ai/agents/response_agent.py:18-19, 40-46, 106-122` (call_llm_with_fallback 적용)
+    * `src/api/v1/ai_assistant_api.py:287-290` (settings 파라미터 추가)
+    * `tests/services/ai/unit/test_response_agent.py` (mock_settings fixture 추가, 모든 테스트 업데이트)
+    * `tests/services/ai/integration/test_response_generation_integration.py` (mock_settings fixture 추가, 모든 테스트 업데이트)
 - [x] [MEDIUM-6][버그] ResponseAgent 에러 핸들링 불완전 ✅ 수정 완료 (2026-02-03)
   - 해결: OpenAI 에러 타입별 세분화된 처리 추가 (RateLimitError, APIConnectionError, APITimeoutError, AuthenticationError)
   - 파일: `src/services/ai/agents/response_agent.py:163-210`
@@ -268,6 +278,24 @@ Claude Sonnet 4.5 (claude-sonnet-4-5-20250929)
 
 ### Completion Notes List
 
+**Code Review Follow-up #4 완료 (2026-02-03) - MEDIUM-4 LLM 폴백 패턴 적용**
+- Project Context "LLM Call Pattern" 준수
+- `call_llm_with_fallback()` 유틸리티 함수 구현
+  - Primary LLM (gpt-4o-mini) 실패 시 Fallback LLM (gpt-3.5-turbo) 자동 전환
+  - Exponential backoff 재시도 로직 (최대 2회, 1s → 2s 대기)
+  - OpenAI 에러 타입별 세분화 처리 (RateLimitError, APIConnectionError, APITimeoutError, AuthenticationError)
+  - 상세한 로깅 및 에러 추적 (llm_call_attempt, llm_call_success, llm_call_retry, llm_call_fallback_attempt, llm_call_complete_failure)
+- ResponseGenerationAgent 수정
+  - Settings 의존성 주입 추가
+  - 직접 LLM 호출 대신 `call_llm_with_fallback()` 사용
+- API 및 테스트 업데이트
+  - API에서 settings 전달
+  - 모든 단위/통합 테스트에 mock_settings fixture 추가
+- 파일 변경:
+  - 생성: `src/services/ai/utils/llm_helpers.py`
+  - 수정: `src/services/ai/agents/response_agent.py`, `src/api/v1/ai_assistant_api.py`, 2개 테스트 파일
+- Python 문법 검증 통과
+
 **Code Review Follow-up 완료 (2026-02-03)**
 - [HIGH-2] 통합 테스트 실행 및 프롬프트 템플릿 이슈 수정
   - 프롬프트 템플릿에서 예시 변수 이스케이프 처리 (중괄호 이중화)
@@ -334,10 +362,12 @@ Claude Sonnet 4.5 (claude-sonnet-4-5-20250929)
 - src/services/ai/agents/response_agent.py (응답 생성 에이전트)
 - src/services/ai/prompts/response_generation.py (프롬프트 템플릿)
 - src/services/ai/utils/response_formatter.py (데이터 포맷터)
+- src/services/ai/utils/llm_helpers.py (LLM 폴백 패턴 헬퍼 - MEDIUM-4)
 - src/services/ai/config/column_mappings.py (컬럼 한글 매핑)
 - tests/services/ai/unit/test_response_agent.py (단위 테스트)
 - tests/services/ai/unit/test_response_formatter.py (단위 테스트)
 - tests/services/ai/integration/test_response_generation_integration.py (통합 테스트)
+- tests/api/v1/test_ai_health_check.py (헬스체크 테스트)
 
 **수정된 파일:**
 - src/api/v1/ai_assistant_api.py (API 통합 - Story 2-2, 2-3, 2-4 완전 통합, unused import 제거, max_sample_rows 전달 추가)
@@ -349,6 +379,23 @@ Claude Sonnet 4.5 (claude-sonnet-4-5-20250929)
 - src/main.py (Pydantic ValidationError 422→400 변환 handler 추가)
 
 ## Change Log
+
+**2026-02-03: Code Review Follow-up #4 완료 (MEDIUM-4 LLM 폴백 패턴 적용)**
+- ✅ MEDIUM-4: Project Context LLM Call Pattern 준수
+- `call_llm_with_fallback()` 유틸리티 함수 구현
+- Primary LLM 실패 시 자동 Fallback LLM 전환
+- Exponential backoff 재시도 로직 추가
+- OpenAI 에러 타입별 세분화 처리
+- ResponseGenerationAgent에 설정 주입 및 폴백 패턴 적용
+- 모든 테스트 파일 업데이트 (mock_settings fixture 추가)
+- 📝 **생성된 파일**:
+  - src/services/ai/utils/llm_helpers.py (신규 생성)
+- 📝 **수정된 파일**:
+  - src/services/ai/agents/response_agent.py (call_llm_with_fallback 적용)
+  - src/api/v1/ai_assistant_api.py (settings 파라미터 추가)
+  - tests/services/ai/unit/test_response_agent.py (mock_settings 추가)
+  - tests/services/ai/integration/test_response_generation_integration.py (mock_settings 추가)
+- Status: in-progress (남은 Action Items: 3개 - HIGH 3개)
 
 **2026-02-03: Code Review #3 추가 자동 수정 완료 (3개 이슈)**
 - ✅ MEDIUM-6: OpenAI API 세분화된 에러 처리 추가 (RateLimitError, APIConnectionError, APITimeoutError, AuthenticationError)

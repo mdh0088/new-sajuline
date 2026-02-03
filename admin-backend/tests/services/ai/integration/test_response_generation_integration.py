@@ -29,8 +29,20 @@ def mock_llm_response():
     return _create_response
 
 
+@pytest.fixture
+def mock_settings():
+    """Mock Settings 인스턴스"""
+    settings = Mock()
+    settings.ai_llm_model = "gpt-4o-mini"
+    settings.ai_llm_fallback_model = "gpt-3.5-turbo"
+    settings.ai_llm_timeout = 10
+    settings.openai_api_key = "test-api-key"
+    settings.ai_llm_max_sample_rows = 10
+    return settings
+
+
 @pytest.mark.asyncio
-async def test_full_response_generation_flow(mock_llm_response):
+async def test_full_response_generation_flow(mock_llm_response, mock_settings):
     """전체 응답 생성 플로우 통합 테스트"""
     # Given: 쿼리 결과 데이터
     question = "이번 달 총 매출은 얼마인가요?"
@@ -42,7 +54,7 @@ async def test_full_response_generation_flow(mock_llm_response):
     llm = mock_llm_response("이번 달 총 매출은 1억 2천만원입니다. 전월 대비 15% 증가했습니다.")
 
     # When: ResponseGenerationAgent로 자연어 응답 생성
-    response_agent = ResponseGenerationAgent(llm=llm)
+    response_agent = ResponseGenerationAgent(llm=llm, settings=mock_settings)
     response_result = await response_agent.generate_response(
         question=question,
         sql=sql,
@@ -70,7 +82,7 @@ async def test_full_response_generation_flow(mock_llm_response):
 
 
 @pytest.mark.asyncio
-async def test_response_generation_performance(mock_llm_response):
+async def test_response_generation_performance(mock_llm_response, mock_settings):
     """응답 생성 성능 테스트 (p95 < 3초)"""
     # Given: 샘플 데이터
     question = "오늘 가입한 사용자 수는?"
@@ -83,7 +95,7 @@ async def test_response_generation_performance(mock_llm_response):
     # When: 응답 생성 실행 및 시간 측정
     start_time = time.time()
 
-    response_agent = ResponseGenerationAgent(llm=llm)
+    response_agent = ResponseGenerationAgent(llm=llm, settings=mock_settings)
     response_result = await response_agent.generate_response(
         question=question,
         sql=sql,
@@ -100,7 +112,7 @@ async def test_response_generation_performance(mock_llm_response):
 
 
 @pytest.mark.asyncio
-async def test_empty_result_handling(mock_llm_response):
+async def test_empty_result_handling(mock_llm_response, mock_settings):
     """빈 결과 처리 통합 테스트"""
     # Given: 빈 결과
     question = "작년 매출은 얼마인가요?"
@@ -111,7 +123,7 @@ async def test_empty_result_handling(mock_llm_response):
     llm = mock_llm_response("조회 결과가 없습니다. 다른 기간으로 조회해보시는 건 어떨까요?")
 
     # When: 빈 결과에 대한 응답 생성
-    response_agent = ResponseGenerationAgent(llm=llm)
+    response_agent = ResponseGenerationAgent(llm=llm, settings=mock_settings)
     response_result = await response_agent.generate_response(
         question=question,
         sql=sql,
@@ -125,7 +137,7 @@ async def test_empty_result_handling(mock_llm_response):
 
 
 @pytest.mark.asyncio
-async def test_multiple_rows_formatting(mock_llm_response):
+async def test_multiple_rows_formatting(mock_llm_response, mock_settings):
     """다중 행 결과 포맷팅 통합 테스트"""
     # Given: 다중 행 데이터
     question = "상담사별 매출 상위 3명은?"
@@ -142,7 +154,7 @@ async def test_multiple_rows_formatting(mock_llm_response):
     )
 
     # When: 응답 생성 및 데이터 포맷팅
-    response_agent = ResponseGenerationAgent(llm=llm)
+    response_agent = ResponseGenerationAgent(llm=llm, settings=mock_settings)
     response_result = await response_agent.generate_response(
         question=question,
         sql=sql,
@@ -168,14 +180,14 @@ async def test_multiple_rows_formatting(mock_llm_response):
 
 
 @pytest.mark.asyncio
-async def test_error_recovery(mock_llm_response):
+async def test_error_recovery(mock_llm_response, mock_settings):
     """에러 발생 시 복구 메커니즘 테스트"""
     # Given: LLM 타임아웃 발생
     llm = Mock()
     llm.ainvoke = AsyncMock(side_effect=TimeoutError("LLM timeout"))
 
     # When: 에러 발생
-    response_agent = ResponseGenerationAgent(llm=llm)
+    response_agent = ResponseGenerationAgent(llm=llm, settings=mock_settings)
     response_result = await response_agent.generate_response(
         question="테스트 질문",
         sql="SELECT * FROM test",
@@ -190,7 +202,7 @@ async def test_error_recovery(mock_llm_response):
 
 
 @pytest.mark.asyncio
-async def test_complex_data_formatting(mock_llm_response):
+async def test_complex_data_formatting(mock_llm_response, mock_settings):
     """복잡한 데이터 타입 포맷팅 통합 테스트"""
     from datetime import date, datetime
 

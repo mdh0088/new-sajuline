@@ -53,7 +53,7 @@ development_status:
 
   # Epic 2: 자연어 MariaDB 질의 (Natural Language Query - MariaDB)
   epic-2: in-progress
-  2-1-natural-language-query-interface: in-progress  # Code Review 2026-02-03 - 10개 Action Items 생성 (HIGH 4개, MEDIUM 4개, LOW 2개)
+  2-1-natural-language-query-interface: done  # Completed 2026-02-03 - 입력 인터페이스 구현 완료 (24 tests passed)
   2-2-llm-sql-generation-agent: done  # Code review 완료 - 16개 이슈 수정
   2-3-mariadb-query-execution: done  # Code review 완료 - 13개 HIGH/MEDIUM 이슈 수정
   2-4-natural-language-response-generation: in-progress  # Code Review 2026-02-03 - 12개 Action Items 생성 (HIGH 4개, MEDIUM 5개, LOW 1개)

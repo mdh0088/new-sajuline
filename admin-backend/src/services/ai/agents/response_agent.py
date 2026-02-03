@@ -15,6 +15,8 @@ from langchain_core.prompts import ChatPromptTemplate
 from langchain_openai import ChatOpenAI
 
 from src.common.logging import get_logger
+from src.config.settings import Settings
+from src.services.ai.utils.llm_helpers import call_llm_with_fallback
 
 logger = get_logger(__name__)
 
@@ -36,13 +38,17 @@ class ResponseGenerationAgent:
     LLM을 사용하여 쿼리 결과를 사용자 친화적인 한국어 응답으로 변환합니다.
     """
 
-    def __init__(self, llm: ChatOpenAI, max_sample_rows: int = 10):
+    def __init__(
+        self, llm: ChatOpenAI, settings: Settings, max_sample_rows: int = 10
+    ):
         """
         Args:
             llm: LangChain ChatOpenAI 인스턴스
+            settings: 애플리케이션 설정 (폴백 LLM 등)
             max_sample_rows: LLM에 전달할 최대 행 수 (기본값: 10)
         """
         self.llm = llm
+        self.settings = settings
         self.max_sample_rows = max_sample_rows
         self.prompt = self._build_prompt()
 
@@ -104,14 +110,20 @@ class ResponseGenerationAgent:
                 data_summary = ""
 
             chain = self.prompt | self.llm
-            result = await chain.ainvoke(
-                {
-                    "question": question,
-                    "sql": sql,
-                    "result_data": str(sampled_data) + data_summary,
-                    "columns": ", ".join(columns),
-                    "row_count": len(result_data),
-                }
+            input_data = {
+                "question": question,
+                "sql": sql,
+                "result_data": str(sampled_data) + data_summary,
+                "columns": ", ".join(columns),
+                "row_count": len(result_data),
+            }
+
+            # Project Context LLM Call Pattern 적용: call_llm_with_fallback 사용
+            result = await call_llm_with_fallback(
+                chain=chain,
+                input_data=input_data,
+                settings=self.settings,
+                agent_name="response_generation",
             )
 
             # Extract content from AIMessage or convert to string

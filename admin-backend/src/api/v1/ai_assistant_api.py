@@ -285,7 +285,9 @@ async def ai_query(
             api_key=settings.openai_api_key,
         )
         response_agent = ResponseGenerationAgent(
-            llm=llm, max_sample_rows=settings.ai_llm_max_sample_rows
+            llm=llm,
+            settings=settings,
+            max_sample_rows=settings.ai_llm_max_sample_rows,
         )
 
         response_result = await response_agent.generate_response(

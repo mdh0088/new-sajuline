@@ -23,6 +23,18 @@ def mock_llm():
 
 
 @pytest.fixture
+def mock_settings():
+    """Mock Settings 인스턴스"""
+    settings = Mock()
+    settings.ai_llm_model = "gpt-4o-mini"
+    settings.ai_llm_fallback_model = "gpt-3.5-turbo"
+    settings.ai_llm_timeout = 10
+    settings.openai_api_key = "test-api-key"
+    settings.ai_llm_max_sample_rows = 10
+    return settings
+
+
+@pytest.fixture
 def sample_query_result():
     """샘플 쿼리 결과"""
     return {
@@ -49,17 +61,18 @@ def empty_query_result():
 class TestResponseGenerationAgent:
     """ResponseGenerationAgent 테스트"""
 
-    def test_initialization(self, mock_llm):
+    def test_initialization(self, mock_llm, mock_settings):
         """에이전트 초기화 테스트"""
-        agent = ResponseGenerationAgent(llm=mock_llm)
+        agent = ResponseGenerationAgent(llm=mock_llm, settings=mock_settings)
 
         assert agent.llm == mock_llm
+        assert agent.settings == mock_settings
         assert agent.prompt is not None
 
     @pytest.mark.asyncio
-    async def test_generate_response_success(self, mock_llm, sample_query_result):
+    async def test_generate_response_success(self, mock_llm, mock_settings, sample_query_result):
         """정상적인 응답 생성 테스트"""
-        agent = ResponseGenerationAgent(llm=mock_llm)
+        agent = ResponseGenerationAgent(llm=mock_llm, settings=mock_settings)
 
         result = await agent.generate_response(
             question=sample_query_result["question"],
@@ -76,14 +89,14 @@ class TestResponseGenerationAgent:
         assert result.error_message is None
 
     @pytest.mark.asyncio
-    async def test_generate_response_empty_result(self, mock_llm, empty_query_result):
+    async def test_generate_response_empty_result(self, mock_llm, mock_settings, empty_query_result):
         """빈 결과에 대한 응답 생성 테스트"""
         # 빈 결과에 대한 LLM 응답 설정
         mock_llm.ainvoke = AsyncMock(
             return_value=AIMessage(content="조회 결과가 없습니다. 다른 기간으로 조회해보시는 건 어떨까요?")
         )
 
-        agent = ResponseGenerationAgent(llm=mock_llm)
+        agent = ResponseGenerationAgent(llm=mock_llm, settings=mock_settings)
 
         result = await agent.generate_response(
             question=empty_query_result["question"],
@@ -97,12 +110,12 @@ class TestResponseGenerationAgent:
         assert "조회 결과가 없습니다" in result.natural_language_response
 
     @pytest.mark.asyncio
-    async def test_generate_response_llm_timeout(self, mock_llm, sample_query_result):
+    async def test_generate_response_llm_timeout(self, mock_llm, mock_settings, sample_query_result):
         """LLM 타임아웃 에러 처리 테스트"""
         # LLM 타임아웃 시뮬레이션
         mock_llm.ainvoke = AsyncMock(side_effect=TimeoutError("LLM timeout"))
 
-        agent = ResponseGenerationAgent(llm=mock_llm)
+        agent = ResponseGenerationAgent(llm=mock_llm, settings=mock_settings)
 
         result = await agent.generate_response(
             question=sample_query_result["question"],
@@ -116,12 +129,12 @@ class TestResponseGenerationAgent:
         assert result.error_message is not None
 
     @pytest.mark.asyncio
-    async def test_generate_response_llm_error(self, mock_llm, sample_query_result):
+    async def test_generate_response_llm_error(self, mock_llm, mock_settings, sample_query_result):
         """LLM 일반 에러 처리 테스트"""
         # LLM 에러 시뮬레이션
         mock_llm.ainvoke = AsyncMock(side_effect=Exception("LLM error"))
 
-        agent = ResponseGenerationAgent(llm=mock_llm)
+        agent = ResponseGenerationAgent(llm=mock_llm, settings=mock_settings)
 
         result = await agent.generate_response(
             question=sample_query_result["question"],
