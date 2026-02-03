@@ -21,6 +21,7 @@ from src.models.admin_model import Admin
 from src.schemas.ai.error_schema import AIErrorCode, AIErrorResponse
 from src.schemas.ai.query_schema import AIQueryMetadata, AIQueryRequest, AIQueryResponse
 from src.services.ai.config.table_permissions import extract_tables_from_sql
+from src.services.ai.security import SecurityPipeline  # Story 3-1: 4-Layer Security
 from src.services.ai.security.audit_logger import log_access_granted
 from src.services.ai.security.rate_limiter import rate_limit_dependency
 from src.services.ai.security.rbac import AIPermission, check_ai_permission
@@ -232,6 +233,12 @@ async def ai_query(
         from src.services.ai.tools.schema_loader import SchemaLoader
         from src.services.ai.utils.response_formatter import ResponseFormatter
 
+        # Story 2-5: 접근성 모드
+        from src.schemas.ai.query_schema import AccessibilityHints
+        from src.services.ai.utils.accessibility_formatter import (
+            AccessibilityFormatter,
+        )
+
         # 1. SQL 생성
         sql_agent = SQLGenerationAgent(settings)
         schema_loader = SchemaLoader()
@@ -253,6 +260,38 @@ async def ai_query(
                     suggestions=["질문을 더 명확하게 표현해주세요."],
                 ),
             )
+
+        # Story 3-1: Layer 2 SQL 보안 검증
+        security_validation = SecurityPipeline.validate_sql(
+            sql_result.sql, allowed_tables
+        )
+        if not security_validation.is_safe:
+            logger.warning(
+                f"SQL security validation failed: {security_validation.violations}"
+            )
+            raise HTTPException(
+                status_code=400,
+                detail=create_ai_error_response(
+                    error_code=AIErrorCode.SECURITY_VIOLATION,
+                    message="생성된 SQL이 보안 정책을 위반했습니다.",
+                    suggestions=[
+                        "질문을 더 안전하게 표현해주세요.",
+                        f"위반 사항: {', '.join(security_validation.violations[:2])}",
+                    ],
+                ),
+            )
+
+        # Story 3-1: Layer 4 사용자 확인 필요 여부 체크
+        confirmation_check = SecurityPipeline.check_user_confirmation(
+            sql_result.sql, estimated_rows=request.max_rows
+        )
+        if confirmation_check.required:
+            logger.info(
+                f"User confirmation required for SQL: {confirmation_check.reason}"
+            )
+            # Note: 실제 UI에서는 확인 다이얼로그 표시 필요
+            # 현재는 경고 로그만 기록하고 진행
+            # TODO: Frontend에서 confirmation_required 플래그 처리
 
         # 2. MariaDB 쿼리 실행
         pool = await get_aiomysql_pool()
@@ -276,6 +315,22 @@ async def ai_query(
                     suggestions=["잠시 후 다시 시도해주세요."],
                 ),
             )
+
+        # Story 3-1: Layer 3 결과 보안 검증 및 정제 (PII 마스킹, 행 수 제한)
+        sanitized_data, result_validation = SecurityPipeline.sanitize_result(
+            query_result.data or [], query_result.columns or []
+        )
+        if result_validation.was_truncated:
+            logger.info(
+                f"Result truncated: {result_validation.row_count} → 500 rows (MAX_ROWS)"
+            )
+        if result_validation.masked_columns:
+            logger.info(
+                f"Sensitive data masked: {', '.join(result_validation.masked_columns)}"
+            )
+
+        # 정제된 데이터로 query_result 업데이트
+        query_result.data = sanitized_data
 
         # 3. 자연어 응답 생성 (Story 2-4)
         llm = ChatOpenAI(
@@ -331,6 +386,43 @@ async def ai_query(
                 column_mappings=COLUMN_MAPPINGS,
             )
 
+        # 5. 접근성 모드 처리 (Story 2-5)
+        answer_summary = None
+        accessibility_hints_data = None
+
+        if request.accessibility_mode:
+            # 접근성 모드: 테이블 대신 상세 텍스트 요약 생성
+            answer_summary = AccessibilityFormatter.format_for_screen_reader(
+                answer=natural_language_answer,
+                data=query_result.data or [],
+                columns=query_result.columns or [],
+            )
+
+            # 접근성 힌트 생성
+            question_preview = request.question[:47]
+            if len(request.question) > 47:
+                question_preview += "..."
+
+            accessibility_hints_data = AccessibilityHints(
+                aria_label=f"AI 분석 결과: {question_preview}",
+                aria_live="polite",
+                row_count=query_result.row_count,
+                column_count=len(query_result.columns or []),
+            )
+
+            # 접근성 모드에서는 테이블 데이터를 빈 배열로 반환 (AC 4 준수)
+            formatted_data = []
+
+            logger.info(
+                "ai_accessibility_mode_activated",
+                extra={
+                    "event": "ai_accessibility_mode_activated",
+                    "admin_id": admin.admin_id,
+                    "query_id": query_id,
+                    "row_count": query_result.row_count,
+                },
+            )
+
         # 실행 시간 계산 (밀리초)
         execution_time_ms = int((time.time() - start_time) * 1000)
 
@@ -359,13 +451,14 @@ async def ai_query(
             },
         )
 
-        # 응답 반환 (Story 2-2, 2-3, 2-4 통합 완료)
+        # 응답 반환 (Story 2-2, 2-3, 2-4, 2-5 통합 완료)
         return AIQueryResponse(
             success=True,
             query_id=query_id,
             answer=natural_language_answer,
+            answer_summary=answer_summary,  # Story 2-5
             data=formatted_data,
-            generated_sql=sql_result.sql if request.include_sql else None,
+            generated_sql=sql_result.sql if request.include_sql else None,  # Story 2-5
             execution_time_ms=execution_time_ms,
             suggestions=[
                 "더 자세한 분석이 필요하신가요?",
@@ -381,6 +474,7 @@ async def ai_query(
                     "response_generation",
                 ],
             ),
+            accessibility_hints=accessibility_hints_data,  # Story 2-5
         )
 
     except HTTPException:

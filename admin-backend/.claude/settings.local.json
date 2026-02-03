@@ -21,7 +21,20 @@
       "Bash(uv run mypy:*)",
       "Bash(./venv/Scripts/python.exe -m pytest:*)",
       "Bash(./venv/bin/python -m pytest:*)",
-      "Bash(./.venv/bin/python -m pytest:*)"
+      "Bash(./.venv/bin/python -m pytest:*)",
+      "Bash(if:*)",
+      "Bash(then source venv/bin/activate)",
+      "Bash(else python3 -m pip install pytest --quiet)",
+      "Bash(fi:*)",
+      "Bash(.venv/bin/python -m pytest:*)",
+      "Bash(.venv/bin/python:*)",
+      "Bash(./.venv/bin/pytest tests/services/ai/security/ --co -q)",
+      "Bash(./.venv/bin/black:*)",
+      "Bash(./.venv/bin/isort:*)",
+      "Bash(./.venv/bin/flake8:*)",
+      "Bash(./.venv/bin/mypy:*)",
+      "Bash(./.venv/bin/pytest:*)",
+      "Bash(./.venv/bin/python3:*)"
     ]
   }
 }

@@ -59,6 +59,19 @@ class AIQueryRequest(BaseModel):
         return v.strip()
 
 
+class AccessibilityHints(BaseModel):
+    """프론트엔드 접근성 구현을 위한 힌트"""
+
+    aria_label: str = Field(
+        default="AI 분석 결과", description="ARIA 라벨 (스크린리더용)"
+    )
+    aria_live: Literal["polite", "assertive", "off"] = Field(
+        default="polite", description="ARIA live region 설정"
+    )
+    row_count: int = Field(default=0, description="결과 행 수")
+    column_count: int = Field(default=0, description="결과 컬럼 수")
+
+
 class AIQueryMetadata(BaseModel):
     """AI 질의 메타데이터"""
 
@@ -93,4 +106,7 @@ class AIQueryResponse(BaseModel):
     suggestions: List[str] = Field(default_factory=list, description="후속 질문 제안")
     metadata: AIQueryMetadata | None = Field(
         default=None, description="질의 메타데이터"
+    )
+    accessibility_hints: AccessibilityHints | None = Field(
+        default=None, description="접근성 모드 힌트 (accessibility_mode=True 시)"
     )

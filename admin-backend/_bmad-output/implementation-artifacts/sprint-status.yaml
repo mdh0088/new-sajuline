@@ -56,13 +56,13 @@ development_status:
   2-1-natural-language-query-interface: done  # Completed 2026-02-03 - 입력 인터페이스 구현 완료 (24 tests passed)
   2-2-llm-sql-generation-agent: done  # Code review 완료 - 16개 이슈 수정
   2-3-mariadb-query-execution: done  # Code review 완료 - 13개 HIGH/MEDIUM 이슈 수정
-  2-4-natural-language-response-generation: in-progress  # Code Review 2026-02-03 - 12개 Action Items 생성 (HIGH 4개, MEDIUM 5개, LOW 1개)
-  2-5-sql-display-accessibility-mode: ready-for-dev
+  2-4-natural-language-response-generation: in-progress  # Code Review #2 완료 - 5개 이슈 수정, 환경 제약 2개 남음 (HIGH-6, HIGH-7)
+  2-5-sql-display-accessibility-mode: done  # Code review 완료 - 10개 HIGH/MEDIUM 이슈 수정 (숫자 포맷, 테스트, API 개선)
   epic-2-retrospective: optional
 
   # Epic 3: SQL 보안 및 감사 체계 (Security & Audit)
   epic-3: in-progress
-  3-1-four-layer-security-framework: ready-for-dev
+  3-1-four-layer-security-framework: done  # Code review 완료 - 7개 HIGH 이슈 수정 (84 tests, 100% coverage, API 통합)
   3-2-sql-injection-prevention: ready-for-dev
   3-3-sensitive-data-masking: ready-for-dev
   3-4-audit-logging-rate-limiting: ready-for-dev

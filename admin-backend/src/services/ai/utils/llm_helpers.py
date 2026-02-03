@@ -88,7 +88,6 @@ async def call_llm_with_fallback(
         except (RateLimitError, APIConnectionError, APITimeoutError) as e:
             # 재시도 가능한 에러
             last_error = e
-            retry_count += 1
 
             logger.warning(
                 "llm_call_retry",
@@ -103,10 +102,12 @@ async def call_llm_with_fallback(
                 },
             )
 
-            # 재시도 전 대기 (exponential backoff)
+            # 재시도 전 대기 (exponential backoff: 1초, 2초)
             if retry_count < max_retries:
-                wait_time = 2**retry_count  # 1초, 2초, 4초...
+                wait_time = 2**retry_count  # retry_count=0: 1초, retry_count=1: 2초
                 await asyncio.sleep(wait_time)
+
+            retry_count += 1
 
         except AuthenticationError as e:
             # 재시도 불가능한 에러 - 즉시 실패

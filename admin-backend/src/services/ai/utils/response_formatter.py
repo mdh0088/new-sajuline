@@ -114,7 +114,6 @@ class ResponseFormatter:
                 "환불",
                 "할인",
                 "세금",
-                "수수료",
             ]
         )
 

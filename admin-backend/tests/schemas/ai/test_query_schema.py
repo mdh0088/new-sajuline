@@ -1,12 +1,16 @@
 """
 AI 질의 스키마 단위 테스트.
 
-Stories: 2-1
+Stories: 2-1, 2-5
 """
 
 import pytest
 from pydantic import ValidationError
-from src.schemas.ai.query_schema import AIQueryRequest, AIQueryResponse
+from src.schemas.ai.query_schema import (
+    AIQueryRequest,
+    AIQueryResponse,
+    AccessibilityHints,
+)
 
 
 class TestAIQueryRequest:
@@ -174,3 +178,42 @@ class TestAIQueryResponse:
             execution_time_ms=200,
         )
         assert response.answer_summary is not None
+
+
+class TestAccessibilityHints:
+    """AccessibilityHints 스키마 테스트 (Story 2-5)"""
+
+    def test_valid_hints_default_values(self):
+        """기본값으로 접근성 힌트 생성 - 성공"""
+        hints = AccessibilityHints()
+        assert hints.aria_label == "AI 분석 결과"
+        assert hints.aria_live == "polite"
+        assert hints.row_count == 0
+        assert hints.column_count == 0
+
+    def test_valid_hints_custom_values(self):
+        """사용자 지정 값으로 생성 - 성공"""
+        hints = AccessibilityHints(
+            aria_label="사용자 목록 결과",
+            aria_live="assertive",
+            row_count=10,
+            column_count=5,
+        )
+        assert hints.aria_label == "사용자 목록 결과"
+        assert hints.aria_live == "assertive"
+        assert hints.row_count == 10
+        assert hints.column_count == 5
+
+    def test_aria_live_valid_values(self):
+        """aria_live 유효값 테스트"""
+        valid_values = ["polite", "assertive", "off"]
+        for value in valid_values:
+            hints = AccessibilityHints(aria_live=value)  # type: ignore
+            assert hints.aria_live == value
+
+    def test_aria_live_invalid_value(self):
+        """aria_live 잘못된 값 - 실패"""
+        with pytest.raises(ValidationError) as exc_info:
+            AccessibilityHints(aria_live="invalid")  # type: ignore
+        errors = exc_info.value.errors()
+        assert any("aria_live" in str(e) for e in errors)

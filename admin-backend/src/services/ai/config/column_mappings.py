@@ -5,9 +5,15 @@
 
 Stories: 2-4
 FRs: FR-011, FR-013
+
+TODO (Future Enhancement):
+- DB 메타데이터 기반 자동 매핑 생성 (INFORMATION_SCHEMA.COLUMNS)
+- 동적 컬럼 매핑 추가 메커니즘
+- 사용자 정의 매핑 오버라이드 기능
 """
 
 # 컬럼 영문 → 한글 매핑
+# 현재 128개 컬럼 하드코딩 (사용자/상담사/결제/매출/통계 도메인)
 COLUMN_MAPPINGS: dict[str, str] = {
     # 공통 컬럼
     "id": "ID",
