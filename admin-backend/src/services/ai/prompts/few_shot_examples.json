@@ -1,0 +1,36 @@
+{
+  "version": "1.0.0",
+  "description": "SQL 생성을 위한 Few-shot 예시 쌍",
+  "examples": [
+    {
+      "id": 1,
+      "category": "basic_select",
+      "question": "모든 사용자를 조회해줘",
+      "sql": "SELECT id, username, email, created_at FROM users ORDER BY created_at DESC LIMIT 100"
+    },
+    {
+      "id": 2,
+      "category": "date_filter_today",
+      "question": "오늘 가입한 사용자는?",
+      "sql": "SELECT id, username, email, created_at FROM users WHERE DATE(created_at) = CURDATE() LIMIT 100"
+    },
+    {
+      "id": 3,
+      "category": "aggregation_sum",
+      "question": "이번 달 총 매출은?",
+      "sql": "SELECT SUM(amount) as total_revenue FROM payments WHERE YEAR(created_at) = YEAR(CURDATE()) AND MONTH(created_at) = MONTH(CURDATE())"
+    },
+    {
+      "id": 4,
+      "category": "join_basic",
+      "question": "최근 7일간 결제한 사용자 목록",
+      "sql": "SELECT DISTINCT u.id, u.username, u.email FROM users u INNER JOIN payments p ON u.id = p.user_id WHERE p.created_at >= DATE_SUB(CURDATE(), INTERVAL 7 DAY) LIMIT 100"
+    },
+    {
+      "id": 5,
+      "category": "top_n",
+      "question": "가장 많이 결제한 상위 10명의 사용자",
+      "sql": "SELECT u.id, u.username, COUNT(p.id) as payment_count, SUM(p.amount) as total_amount FROM users u INNER JOIN payments p ON u.id = p.user_id GROUP BY u.id, u.username ORDER BY total_amount DESC LIMIT 10"
+    }
+  ]
+}

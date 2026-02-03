@@ -76,6 +76,9 @@ dependencies = [
     # 검증 및 직렬화
     "marshmallow==3.21.1",
     "jsonschema==4.21.1",
+    # SQL 파싱 (AI SQL 검증용)
+    # NOTE: sqlparse 0.5.0은 Python 3.8+ 지원, 알려진 보안 이슈 없음 (2024-01 릴리스)
+    "sqlparse==0.5.0",
 ]
 
 [project.optional-dependencies]

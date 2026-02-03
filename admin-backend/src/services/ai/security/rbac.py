@@ -5,9 +5,9 @@ AI 어시스턴트 기능에 대한 역할별 권한 관리
 """
 
 from enum import Enum
-from typing import TypedDict
 
 from fastapi import HTTPException, status
+from typing_extensions import TypedDict
 
 from src.models.admin_model import Admin
 
@@ -55,33 +55,24 @@ def get_admin_ai_role(admin: Admin) -> AIRole:
     return role_mapping.get(admin.role, AIRole.VIEWER)
 
 
-def check_ai_permission(admin: Admin | None) -> AIPermission:
+def check_ai_permission(admin: Admin) -> AIPermission:
     """
     AI 어시스턴트 접근 권한 확인
 
-    FastAPI dependency로 사용
-
     Args:
-        admin: 현재 인증된 관리자 (None이면 미인증)
+        admin: 현재 인증된 관리자
 
     Returns:
         AIPermission: 권한 정보
 
     Raises:
-        HTTPException: 인증되지 않았거나 비활성화된 경우
+        HTTPException: 비활성화된 경우
     """
-    # 미인증 확인
-    if admin is None:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="인증이 필요합니다",
-        )
-
     # 비활성화된 관리자 확인
     if hasattr(admin, "is_active") and not admin.is_active:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail="비활성화된 계정입니다",
+            detail={"detail": "비활성화된 계정입니다", "code": "ACCESS_DENIED"},
         )
 
     # 역할 조회

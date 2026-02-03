@@ -9,7 +9,16 @@
       "Bash(pip install:*)",
       "Bash(uv pip install:*)",
       "Bash(uv run pytest:*)",
-      "Bash(uv run black:*)"
+      "Bash(uv run black:*)",
+      "Bash(pytest:*)",
+      "Bash(python -m black:*)",
+      "Bash(source:*)",
+      "Bash(python -m mypy:*)",
+      "Bash(python -c:*)",
+      "Bash(python:*)",
+      "Bash(uv run isort:*)",
+      "Bash(uv run flake8:*)",
+      "Bash(uv run mypy:*)"
     ]
   }
 }

@@ -1,6 +1,6 @@
 # Story 1.3: 역할 기반 접근 제어 설정
 
-Status: review
+Status: done
 
 ## Story
 
@@ -231,6 +231,22 @@ Claude Sonnet 4.5 (model ID: claude-sonnet-4-5-20250929)
 - ✅ Task 8: black, isort로 코드 포매팅 완료
 - 💡 테이블 권한 체크는 SQL 생성 후에 적용되므로 Story 2-3에서 통합 예정
 - 💡 structlog는 향후 적용 가능하도록 설계, 현재는 표준 logging 모듈 사용
+
+**코드 리뷰 수정 (2026-02-03):**
+- ✅ HIGH 이슈 8건 수정:
+  1. Redis 의존성 주입 구현 (`get_redis_client()` DI 함수 추가)
+  2. 테이블 권한 체크 샘플 코드 추가 (Story 2-3 통합 대기)
+  3. 403 에러 응답에 `code` 필드 추가 (AC 4 준수)
+  4. Viewer 읽기 전용 제약 구현 (`validate_viewer_query()`, `is_aggregate_query()`, `is_read_only_query()`)
+  5. Rate Limit 초과 시 `log_rate_limit_exceeded()` 호출 추가
+  6. SQL Injection 방어 강화 (주석, 문자열 리터럴 제거)
+  7. Redis 연결 장애 시 로깅 추가 (ping 실패 시 경고 로그)
+  8. Rate Limiter에 실제 Redis 클라이언트 주입으로 프로덕션 작동 보장
+- ✅ MEDIUM 이슈 3건 수정:
+  9. 보안 로깅 JSON 구조화 (`json.dumps()` 사용)
+  10. Rate Limit TTL 음수 처리 및 로깅 추가
+  11. 타입 힌팅 일관성 개선 (`tuple[bool, int | None]`)
+- ✅ 시간대 통일: `datetime.utcnow()` → `datetime.now(KST)` (프로젝트 표준 준수)
 
 ### File List
 

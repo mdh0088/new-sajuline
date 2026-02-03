@@ -4,11 +4,13 @@ AI 어시스턴트 인증 관련 스키마
 Stories: 1-2
 FRs: FR-012
 """
+
 from pydantic import BaseModel, Field
 
 
 class AuthErrorResponse(BaseModel):
     """인증 에러 응답 스키마"""
+
     detail: str = Field(..., description="에러 메시지")
     code: str = Field(..., description="에러 코드")
 

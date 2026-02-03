@@ -1,0 +1,207 @@
+{
+  "version": "1.0.0",
+  "compatible_prompt_versions": ["1.0.x"],
+  "description": "SQL 생성 에이전트를 위한 Golden Dataset - 자연어 질문과 기대되는 SQL 패턴",
+  "cases": [
+    {
+      "id": 1,
+      "category": "basic_select",
+      "question": "모든 사용자를 조회해줘",
+      "expected_patterns": ["SELECT", "users", "LIMIT"],
+      "must_not_contain": ["UPDATE", "DELETE", "INSERT"],
+      "tables_used": ["users"]
+    },
+    {
+      "id": 2,
+      "category": "date_filter_today",
+      "question": "오늘 가입한 사용자는?",
+      "expected_patterns": ["SELECT", "users", "CURDATE()", "LIMIT"],
+      "must_not_contain": ["UPDATE", "DELETE"],
+      "tables_used": ["users"]
+    },
+    {
+      "id": 3,
+      "category": "date_filter_yesterday",
+      "question": "어제 가입한 사용자를 보여줘",
+      "expected_patterns": ["SELECT", "users", "DATE_SUB", "INTERVAL 1 DAY"],
+      "must_not_contain": ["UPDATE", "DELETE"],
+      "tables_used": ["users"]
+    },
+    {
+      "id": 4,
+      "category": "date_filter_this_week",
+      "question": "이번 주에 가입한 사용자는?",
+      "expected_patterns": ["SELECT", "users", "YEARWEEK"],
+      "must_not_contain": [],
+      "tables_used": ["users"]
+    },
+    {
+      "id": 5,
+      "category": "date_filter_this_month",
+      "question": "이번 달에 결제한 내역",
+      "expected_patterns": ["SELECT", "payments", "YEAR", "MONTH", "CURDATE()"],
+      "must_not_contain": [],
+      "tables_used": ["payments"]
+    },
+    {
+      "id": 6,
+      "category": "aggregation_count",
+      "question": "총 사용자 수는?",
+      "expected_patterns": ["SELECT", "COUNT", "users"],
+      "must_not_contain": ["UPDATE", "DELETE"],
+      "tables_used": ["users"]
+    },
+    {
+      "id": 7,
+      "category": "aggregation_sum",
+      "question": "이번 달 총 매출은?",
+      "expected_patterns": ["SELECT", "SUM", "payments", "YEAR", "MONTH"],
+      "must_not_contain": [],
+      "tables_used": ["payments"]
+    },
+    {
+      "id": 8,
+      "category": "join_basic",
+      "question": "최근 결제한 사용자 목록",
+      "expected_patterns": ["SELECT", "users", "payments", "JOIN", "LIMIT"],
+      "must_not_contain": ["UPDATE", "DELETE"],
+      "tables_used": ["users", "payments"]
+    },
+    {
+      "id": 9,
+      "category": "join_with_date",
+      "question": "최근 7일간 결제한 사용자",
+      "expected_patterns": ["SELECT", "users", "payments", "JOIN", "DATE_SUB", "INTERVAL 7 DAY"],
+      "must_not_contain": [],
+      "tables_used": ["users", "payments"]
+    },
+    {
+      "id": 10,
+      "category": "sorting_limit",
+      "question": "가장 최근에 가입한 사용자 10명",
+      "expected_patterns": ["SELECT", "users", "ORDER BY", "DESC", "LIMIT 10"],
+      "must_not_contain": [],
+      "tables_used": ["users"]
+    },
+    {
+      "id": 11,
+      "category": "group_by",
+      "question": "상태별 사용자 수",
+      "expected_patterns": ["SELECT", "COUNT", "users", "GROUP BY", "status"],
+      "must_not_contain": [],
+      "tables_used": ["users"]
+    },
+    {
+      "id": 12,
+      "category": "where_condition",
+      "question": "활성 상태인 사용자만 조회",
+      "expected_patterns": ["SELECT", "users", "WHERE", "status", "LIMIT"],
+      "must_not_contain": [],
+      "tables_used": ["users"]
+    },
+    {
+      "id": 13,
+      "category": "date_range",
+      "question": "최근 30일간 결제 내역",
+      "expected_patterns": ["SELECT", "payments", "DATE_SUB", "INTERVAL 30 DAY", "LIMIT"],
+      "must_not_contain": [],
+      "tables_used": ["payments"]
+    },
+    {
+      "id": 14,
+      "category": "top_n",
+      "question": "가장 많이 결제한 상위 10명의 사용자",
+      "expected_patterns": ["SELECT", "users", "payments", "SUM", "GROUP BY", "ORDER BY", "DESC", "LIMIT 10"],
+      "must_not_contain": [],
+      "tables_used": ["users", "payments"]
+    },
+    {
+      "id": 15,
+      "category": "distinct",
+      "question": "결제한 적이 있는 모든 사용자 ID",
+      "expected_patterns": ["SELECT", "DISTINCT", "payments", "user_id"],
+      "must_not_contain": [],
+      "tables_used": ["payments"]
+    },
+    {
+      "id": 16,
+      "category": "multiple_conditions",
+      "question": "이번 달에 가입하고 결제도 한 사용자",
+      "expected_patterns": ["SELECT", "users", "payments", "JOIN", "YEAR", "MONTH"],
+      "must_not_contain": [],
+      "tables_used": ["users", "payments"]
+    },
+    {
+      "id": 17,
+      "category": "having_clause",
+      "question": "결제 횟수가 5회 이상인 사용자",
+      "expected_patterns": ["SELECT", "COUNT", "GROUP BY", "HAVING"],
+      "must_not_contain": [],
+      "tables_used": ["users", "payments"]
+    },
+    {
+      "id": 18,
+      "category": "average",
+      "question": "사용자당 평균 결제 금액",
+      "expected_patterns": ["SELECT", "AVG", "payments", "GROUP BY"],
+      "must_not_contain": [],
+      "tables_used": ["payments"]
+    },
+    {
+      "id": 19,
+      "category": "min_max",
+      "question": "최소 및 최대 결제 금액",
+      "expected_patterns": ["SELECT", "MIN", "MAX", "payments"],
+      "must_not_contain": [],
+      "tables_used": ["payments"]
+    },
+    {
+      "id": 20,
+      "category": "subquery",
+      "question": "1000원 이상 결제한 적이 있는 사용자",
+      "expected_patterns": ["SELECT", "users", "IN", "payments", "amount"],
+      "must_not_contain": ["UPDATE", "DELETE"],
+      "tables_used": ["users", "payments"]
+    },
+    {
+      "id": 21,
+      "category": "like_pattern",
+      "question": "이름이 '김'으로 시작하는 사용자",
+      "expected_patterns": ["SELECT", "users", "WHERE", "LIKE", "LIMIT"],
+      "must_not_contain": [],
+      "tables_used": ["users"]
+    },
+    {
+      "id": 22,
+      "category": "null_check",
+      "question": "이메일이 없는 사용자",
+      "expected_patterns": ["SELECT", "users", "WHERE", "IS NULL", "LIMIT"],
+      "must_not_contain": [],
+      "tables_used": ["users"]
+    },
+    {
+      "id": 23,
+      "category": "between",
+      "question": "2023년 1월부터 3월까지 가입한 사용자",
+      "expected_patterns": ["SELECT", "users", "BETWEEN", "LIMIT"],
+      "must_not_contain": [],
+      "tables_used": ["users"]
+    },
+    {
+      "id": 24,
+      "category": "in_clause",
+      "question": "서울, 부산, 대구에 사는 사용자",
+      "expected_patterns": ["SELECT", "users", "IN", "LIMIT"],
+      "must_not_contain": [],
+      "tables_used": ["users"]
+    },
+    {
+      "id": 25,
+      "category": "complex_join_aggregate",
+      "question": "각 지역별 총 결제 금액과 사용자 수",
+      "expected_patterns": ["SELECT", "users", "payments", "JOIN", "SUM", "COUNT", "GROUP BY"],
+      "must_not_contain": [],
+      "tables_used": ["users", "payments"]
+    }
+  ]
+}
