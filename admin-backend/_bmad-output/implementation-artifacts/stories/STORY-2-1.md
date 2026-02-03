@@ -1,6 +1,6 @@
 # Story 2.1: 자연어 질의 입력 인터페이스
 
-Status: review
+Status: in-progress
 
 ## Story
 
@@ -94,18 +94,27 @@ so that SQL을 몰라도 데이터를 조회할 수 있다.
   - 문제: 프로젝트 컨텍스트 규칙 위반 (API → Graph → Agents 패턴 필요)
   - 해결: Story 2-2에서 AIGraph 구현 후 리팩토링 필요
   - 참조: `_bmad-output/project-context.md#Dependency-Direction-Rules`
-- [ ] [AI-Review][HIGH] AC #6 미충족: Pydantic ValidationError 422 → 400 변환
+- [x] [AI-Review][HIGH] AC #6 미충족: Pydantic ValidationError 422 → 400 변환 ✅ 수정 완료 (2026-02-03)
   - 문제: AC는 "400 Bad Request"를 요구하지만 Pydantic은 422 반환
-  - 해결: main.py에 전역 exception handler 추가 필요
-  - 파일: `src/main.py` (exception_handler 추가)
+  - 해결: main.py에 전역 exception handler 추가
+  - 파일: `src/main.py:116-151` (validation_exception_handler 추가)
 - [ ] [AI-Review][MEDIUM] 테스트 범위 재정의
   - 문제: 테스트가 Story 2-2/2-3/2-4 범위까지 검증함
   - 해결: Story 2-1 테스트는 입력 인터페이스만 검증하도록 분리
   - 파일: `tests/api/v1/test_ai_query_endpoint.py`, `tests/services/ai/integration/test_ai_query_integration.py`
-- [ ] [AI-Review][MEDIUM] Health check 테스트 추가
-  - 문제: `/health` 엔드포인트 테스트 누락
-  - 해결: Redis, OpenAI 연결 상태 확인 테스트 추가
-  - 파일: `tests/api/v1/test_ai_health_check.py` (생성 필요)
+- [x] [AI-Review][MEDIUM] Health check 테스트 추가 ✅ 완료 (2026-02-03)
+  - 해결: Health check 테스트 8개 작성 (정상, Redis 실패, OpenAI 실패, 전체 실패, API key 없음, 인증 없음, 타임아웃)
+  - 파일: `tests/api/v1/test_ai_health_check.py` (신규 생성)
+- [ ] [AI-Review][MEDIUM] 불필요한 session_id 중복 (Review 2026-02-03 #2)
+  - 문제: `session_id = query_id` 임시 방편이지만 TODO 주석만 있고 실제 계획 불명확
+  - 해결: Story 4-1에서 실제 세션 관리 구현 시 수정
+  - 파일: `src/api/v1/ai_assistant_api.py:136-138`
+- [x] [AI-Review][MEDIUM] Error response 스키마 생성 중복 ✅ 완료 (2026-02-03)
+  - 해결: `create_ai_error_response()` helper 함수 추가, 7곳의 중복 코드 제거
+  - 파일: `src/api/v1/ai_assistant_api.py:34-52, 189-196, 249-256, 272-279, 395-401, 418-424, 446-452`
+- [x] [AI-Review][LOW] 로깅 필드명 불일치 ✅ 완료 (2026-02-03)
+  - 해결: `answer_preview` → `natural_language_answer_preview`로 변경
+  - 파일: `src/api/v1/ai_assistant_api.py:350`
 
 ## Dev Notes
 
@@ -384,6 +393,7 @@ async def validate_query_input(question: str) -> ValidationResult:
 - `tests/api/v1/test_ai_query_endpoint.py` - API 엔드포인트 테스트 (8개 테스트)
 
 **수정된 파일:**
+- `src/main.py` - Pydantic ValidationError 422→400 변환 handler 추가 (Code Review #2)
 - `src/schemas/ai/__init__.py` - Import 에러 수정 (Post-Review), 새로운 스키마 export 추가
 - `src/api/v1/ai_assistant_api.py` - RBAC dependency 수정 (Post-Review), `/query` 엔드포인트 구현 및 에러 핸들링 추가 (Code Review 수정), 에러 핸들링 세분화 (Adversarial Review), 불필요한 import 제거
 - `src/schemas/ai/error_schema.py` - FR 참조 추가 (Code Review 수정)
@@ -396,6 +406,14 @@ async def validate_query_input(question: str) -> ValidationResult:
 - `tests/services/ai/integration/test_ai_query_integration.py` - AsyncMock 수정 (Code Review 수정)
 
 ## Change Log
+
+**2026-02-03 - Code Review #2 자동 수정 완료**
+- ✅ AC #6 수정: Pydantic ValidationError 422 → 400 변환
+  - main.py에 `validation_exception_handler` 추가
+  - Story 2-1 AC #6 완전 충족
+- 📝 **수정된 파일**:
+  - src/main.py (RequestValidationError exception handler 추가)
+- Status: in-progress (남은 Action Items: 9개 - HIGH 3개, MEDIUM 4개, LOW 2개)
 
 **2026-02-03 - Adversarial Code Review 수정 완료**
 - ✅ MEDIUM #4: 에러 핸들링 세분화 (ImportError → 503, TimeoutError → 504)

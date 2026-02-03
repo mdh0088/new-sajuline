@@ -1,6 +1,6 @@
 # Story 2.4: 자연어 응답 생성 및 결과 포맷팅
 
-Status: review
+Status: in-progress
 
 ## Story
 
@@ -78,7 +78,7 @@ so that 데이터를 쉽게 이해할 수 있다.
 - [x] [MEDIUM-10] 금액 감지 키워드 7개 추가
 - [x] [MEDIUM-11] 로깅에 응답 미리보기 추가
 
-**후속 액션 아이템 (4개):**
+**후속 액션 아이템 (12개):**
 - [x] [HIGH-2][테스트] 통합 테스트 실제 실행 및 검증 [tests/services/ai/integration/test_response_generation_integration.py]
   - **부분 완료**: Mock 기반 테스트 구조 문제로 실제 LLM 호출 필요 (HIGH-6과 통합)
   - 프롬프트 템플릿 이스케이프 이슈 수정 완료
@@ -86,8 +86,39 @@ so that 데이터를 쉽게 이해할 수 있다.
 - [ ] [HIGH-6][테스트] 실제 OpenAI API 호출 테스트 추가 (Mock 대신) [tests/services/ai/]
   - **필수**: Mock 테스트 한계로 실제 API 호출 통합 테스트 필요
   - 통합 테스트 및 ResponseAgent 단위 테스트 Mock 구조 개선 필요
+- [ ] [HIGH-7][테스트] p95 성능 테스트 미검증 (Review 2026-02-03 #7)
+  - AC: "응답 시간이 p95 3초 이내이다" (Story 2-4 AC #4)
+  - 문제: 성능 테스트가 Mock 기반이므로 실제 p95 측정 불가
+  - 해결: 실제 LLM 호출 100회 + p95 계산 테스트 추가
+  - 파일: `tests/services/ai/integration/test_response_generation_integration.py`
 - [ ] [HIGH-8][DevOps] 코드 변경사항 git commit 및 push [전체]
-- [ ] [MEDIUM-12][성능] p95 성능 테스트 개선 - 실제 LLM 호출 100회 [tests/services/ai/integration/]
+- [x] [HIGH-10][버그] ResponseFormatter 날짜 감지 로직 불완전 ✅ 수정 완료 (2026-02-03)
+  - 문제: 날짜 컬럼 감지 키워드가 7개뿐
+  - 해결: 날짜 감지 키워드 11개 추가 (started, finished, expired, birth, joined, registered, modified, confirmed, completed, canceled, scheduled)
+  - 파일: `src/services/ai/utils/response_formatter.py:95-113`
+- [x] [HIGH-11][규칙 위반] 프롬프트 버전 관리 부재 ✅ 수정 완료 (2026-02-03)
+  - 해결: `PROMPT_VERSION = "1.0.0"` 이미 정의됨, 로깅에 추가
+  - 파일: `src/services/ai/agents/response_agent.py:47-58, 122-130`
+- [x] [MEDIUM-3][개선] ResponseFormatter 금액 감지 로직 한계 ✅ 수정 완료 (2026-02-03)
+  - 해결: 한글 키워드 12개 추가 (금액, 가격, 매출, 수익, 비용, 합계, 수수료, 요금, 입금, 환불, 할인, 세금)
+  - 파일: `src/services/ai/utils/response_formatter.py:74-100`
+- [ ] [MEDIUM-4][규칙 위반] LLM 호출 폴백 패턴 미적용 (Review 2026-02-03 #4)
+  - 위반 규칙: Project Context - "LLM Call Pattern"
+  - 문제: `call_llm_with_fallback()` 래퍼 사용 대신 직접 호출
+  - 해결: Project Context 패턴 적용
+  - 파일: `src/services/ai/agents/response_agent.py:103-112`
+- [x] [MEDIUM-6][버그] ResponseAgent 에러 핸들링 불완전 ✅ 수정 완료 (2026-02-03)
+  - 해결: OpenAI 에러 타입별 세분화된 처리 추가 (RateLimitError, APIConnectionError, APITimeoutError, AuthenticationError)
+  - 파일: `src/services/ai/agents/response_agent.py:163-210`
+- [x] [MEDIUM-7][개선] 대용량 데이터 샘플링 하드코딩 ✅ 수정 완료 (2026-02-03)
+  - 해결: `ai_llm_max_sample_rows` 설정 추가 (기본값: 10)
+  - 파일: `src/config/settings.py:127`, `src/services/ai/agents/response_agent.py:40-44, 95-99`, `src/api/v1/ai_assistant_api.py:267-269`
+- [x] [MEDIUM-8][성능] 빈 결과 처리 LLM 호출 비효율 ✅ 수정 완료 (2026-02-03)
+  - 해결: 간단한 템플릿 기반 메시지로 변경하여 불필요한 LLM 호출 제거
+  - 파일: `src/services/ai/agents/response_agent.py:212-229`
+- [x] [LOW-3][개선] Docstring 누락 ✅ 수정 완료 (2026-02-03)
+  - 해결: `_format_value` 메서드에 상세 docstring 추가 (타입 추론 순서 설명)
+  - 파일: `src/services/ai/utils/response_formatter.py:63-84`
 
 ## Dev Notes
 
@@ -309,12 +340,37 @@ Claude Sonnet 4.5 (claude-sonnet-4-5-20250929)
 - tests/services/ai/integration/test_response_generation_integration.py (통합 테스트)
 
 **수정된 파일:**
-- src/api/v1/ai_assistant_api.py (API 통합 - Story 2-2, 2-3, 2-4 완전 통합, unused import 제거)
-- src/services/ai/prompts/response_generation.py (프롬프트 템플릿 이스케이프, 라인 길이 수정)
-- src/services/ai/agents/response_agent.py (Mock 처리 개선)
+- src/api/v1/ai_assistant_api.py (API 통합 - Story 2-2, 2-3, 2-4 완전 통합, unused import 제거, max_sample_rows 전달 추가)
+- src/services/ai/prompts/response_generation.py (프롬프트 템플릿 이스케이프, 라인 길이 수정, PROMPT_VERSION 정의)
+- src/services/ai/agents/response_agent.py (Mock 처리 개선, 프롬프트 버전 로깅 추가, max_sample_rows 설정화)
 - src/services/ai/agents/mariadb_agent.py (f-string 문법 오류 수정)
+- src/services/ai/utils/response_formatter.py (날짜/금액 감지 키워드 확장, Docstring 추가)
+- src/config/settings.py (ai_llm_max_sample_rows 설정 추가)
+- src/main.py (Pydantic ValidationError 422→400 변환 handler 추가)
 
 ## Change Log
+
+**2026-02-03: Code Review #3 추가 자동 수정 완료 (3개 이슈)**
+- ✅ MEDIUM-6: OpenAI API 세분화된 에러 처리 추가 (RateLimitError, APIConnectionError, APITimeoutError, AuthenticationError)
+- ✅ MEDIUM-8: 빈 결과 처리 최적화 - 불필요한 LLM 호출 제거
+- ✅ MEDIUM-5: Health check 테스트 파일 생성 (8개 테스트 케이스)
+- 📝 **수정된 파일**:
+  - src/services/ai/agents/response_agent.py (OpenAI 에러 처리, 빈 결과 최적화)
+  - tests/api/v1/test_ai_health_check.py (신규 생성)
+- Status: in-progress (남은 Action Items: 4개 - HIGH 3개, MEDIUM 1개)
+
+**2026-02-03: Code Review #2 자동 수정 완료 (6개 이슈)**
+- ✅ HIGH-11: 프롬프트 버전 로깅 추가 (PROMPT_VERSION = "1.0.0")
+- ✅ HIGH-10: 날짜 감지 키워드 11개 추가 (started, finished, expired, birth, joined, registered, modified, confirmed, completed, canceled, scheduled)
+- ✅ MEDIUM-3: 금액 감지 한글 키워드 12개 추가 (금액, 가격, 매출, 수익, 비용, 합계, 수수료, 요금, 입금, 환불, 할인, 세금)
+- ✅ MEDIUM-7: 대용량 샘플링 설정 가능하도록 변경 (`ai_llm_max_sample_rows`)
+- ✅ LOW-3: `_format_value` Docstring 추가 (타입 추론 로직 상세 설명)
+- 📝 **수정된 파일**:
+  - src/services/ai/agents/response_agent.py (프롬프트 버전 로깅, max_sample_rows 설정화)
+  - src/services/ai/utils/response_formatter.py (날짜/금액 키워드 확장, Docstring 추가)
+  - src/config/settings.py (ai_llm_max_sample_rows 설정 추가)
+  - src/api/v1/ai_assistant_api.py (max_sample_rows 전달)
+- Status: in-progress (남은 Action Items: 7개 - HIGH 2개, MEDIUM 3개, DevOps 1개)
 
 **2026-02-03: Code Review Follow-up 작업 완료**
 - [HIGH-2] 통합 테스트 실행 및 프롬프트 템플릿 이슈 해결

@@ -61,20 +61,33 @@ class ResponseFormatter:
     def _format_value(value: Any, column_name: str) -> Any:
         """개별 값 포맷팅
 
+        컬럼명과 값 타입을 기반으로 적절한 포맷을 적용합니다.
+
+        타입 추론 순서:
+        1. NULL 값 → "-"
+        2. 컬럼명에 금액 키워드 포함 → 금액 포맷 (억/만/원)
+        3. 컬럼명에 날짜 키워드 포함 → 날짜 포맷 (YYYY-MM-DD)
+        4. datetime/date 타입 → 날짜 포맷
+        5. 숫자 타입 (금액 컬럼) → 금액 포맷
+        6. 숫자 타입 (일반) → 천 단위 구분
+        7. 기타 → 문자열 변환
+
         Args:
             value: 원본 값
-            column_name: 컬럼명 (타입 추론용)
+            column_name: 컬럼명 (타입 추론용 - 금액/날짜 키워드 감지)
 
         Returns:
-            Any: 포맷팅된 값
+            Any: 포맷팅된 값 (문자열 또는 원본)
         """
         if value is None:
             return "-"
 
         # 금액 컬럼 감지 (amount, price, sales, revenue, cost 등)
+        # 영문 및 한글 키워드 모두 지원
         is_money_column = any(
             keyword in column_name.lower()
             for keyword in [
+                # 영문 키워드
                 "amount",
                 "price",
                 "sales",
@@ -88,13 +101,45 @@ class ResponseFormatter:
                 "discount",
                 "tax",
                 "commission",
+                # 한글 키워드
+                "금액",
+                "가격",
+                "매출",
+                "수익",
+                "비용",
+                "합계",
+                "수수료",
+                "요금",
+                "입금",
+                "환불",
+                "할인",
+                "세금",
+                "수수료",
             ]
         )
 
         # 날짜 컬럼 감지 (date, time, created, updated 등)
         is_date_column = any(
             keyword in column_name.lower()
-            for keyword in ["date", "time", "created", "updated", "deleted", "at"]
+            for keyword in [
+                "date",
+                "time",
+                "created",
+                "updated",
+                "deleted",
+                "at",
+                "started",
+                "finished",
+                "expired",
+                "birth",
+                "joined",
+                "registered",
+                "modified",
+                "confirmed",
+                "completed",
+                "canceled",
+                "scheduled",
+            ]
         )
 
         # 날짜 타입

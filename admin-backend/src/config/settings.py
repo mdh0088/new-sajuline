@@ -124,6 +124,7 @@ class Settings(BaseSettings):
     ai_llm_model: str = Field(default="gpt-4o-mini", env="AI_LLM_MODEL")
     ai_llm_timeout: int = Field(default=10, env="AI_LLM_TIMEOUT")
     ai_llm_fallback_model: str = Field(default="gpt-3.5-turbo", env="AI_LLM_FALLBACK_MODEL")
+    ai_llm_max_sample_rows: int = Field(default=10, env="AI_LLM_MAX_SAMPLE_ROWS")  # 응답 생성 시 LLM에 전달할 최대 행 수
 
     class Config:
         # 환경에 따라 자동으로 env 파일 선택

@@ -36,21 +36,25 @@ class ResponseGenerationAgent:
     LLM을 사용하여 쿼리 결과를 사용자 친화적인 한국어 응답으로 변환합니다.
     """
 
-    def __init__(self, llm: ChatOpenAI):
+    def __init__(self, llm: ChatOpenAI, max_sample_rows: int = 10):
         """
         Args:
             llm: LangChain ChatOpenAI 인스턴스
+            max_sample_rows: LLM에 전달할 최대 행 수 (기본값: 10)
         """
         self.llm = llm
+        self.max_sample_rows = max_sample_rows
         self.prompt = self._build_prompt()
 
     def _build_prompt(self) -> ChatPromptTemplate:
         """응답 생성용 프롬프트 템플릿 생성"""
         from src.services.ai.prompts.response_generation import (
+            PROMPT_VERSION,
             RESPONSE_SYSTEM_PROMPT,
             RESPONSE_USER_TEMPLATE,
         )
 
+        self.prompt_version = PROMPT_VERSION
         return ChatPromptTemplate.from_messages(
             [
                 ("system", RESPONSE_SYSTEM_PROMPT),
@@ -90,11 +94,10 @@ class ResponseGenerationAgent:
 
             # LLM 호출하여 자연어 응답 생성
             # 대용량 데이터는 샘플만 전달 (토큰 제한 고려)
-            max_rows_for_llm = 10
-            if len(result_data) > max_rows_for_llm:
-                sampled_data = result_data[:max_rows_for_llm]
+            if len(result_data) > self.max_sample_rows:
+                sampled_data = result_data[: self.max_sample_rows]
                 data_summary = (
-                    f"(처음 {max_rows_for_llm}개 행만 표시, 총 {len(result_data)}개)"
+                    f"(처음 {self.max_sample_rows}개 행만 표시, 총 {len(result_data)}개)"
                 )
             else:
                 sampled_data = result_data
@@ -126,6 +129,7 @@ class ResponseGenerationAgent:
                     "execution_time_ms": execution_time_ms,
                     "result_length": len(result_data),
                     "response_length": len(response_text),
+                    "prompt_version": self.prompt_version,
                 },
             )
 
@@ -156,21 +160,51 @@ class ResponseGenerationAgent:
             )
 
         except Exception as e:
+            # OpenAI API 특정 에러 처리
+            from openai import (
+                APIConnectionError,
+                APITimeoutError,
+                AuthenticationError,
+                RateLimitError,
+            )
+
             execution_time_ms = int((time.time() - start_time) * 1000)
-            error_msg = f"응답 생성 중 에러 발생: {str(e)}"
+
+            # 에러 타입별 세분화 처리
+            if isinstance(e, RateLimitError):
+                error_code = "AIBI_RATE_LIMIT_EXCEEDED"
+                error_msg = "LLM API 요청 한도를 초과했습니다."
+                event = "response_generation_rate_limit"
+            elif isinstance(e, APIConnectionError):
+                error_code = "AIBI_API_CONNECTION_ERROR"
+                error_msg = "LLM API 연결에 실패했습니다."
+                event = "response_generation_connection_error"
+            elif isinstance(e, APITimeoutError):
+                error_code = "AIBI_API_TIMEOUT"
+                error_msg = "LLM API 응답 시간이 초과되었습니다."
+                event = "response_generation_api_timeout"
+            elif isinstance(e, AuthenticationError):
+                error_code = "AIBI_API_AUTH_ERROR"
+                error_msg = "LLM API 인증에 실패했습니다."
+                event = "response_generation_auth_error"
+            else:
+                error_code = "AIBI_RESPONSE_GENERATION_ERROR"
+                error_msg = f"응답 생성 중 에러 발생: {str(e)}"
+                event = "response_generation_error"
 
             logger.error(
-                "response_generation_error",
+                event,
                 extra={
-                    "event": "response_generation_error",
+                    "event": event,
                     "error": str(e),
+                    "error_type": type(e).__name__,
                     "execution_time_ms": execution_time_ms,
                 },
             )
 
             return ResponseGenerationResult(
                 success=False,
-                error_code="AIBI_RESPONSE_GENERATION_ERROR",
+                error_code=error_code,
                 error_message=error_msg,
                 execution_time_ms=execution_time_ms,
             )
@@ -178,37 +212,18 @@ class ResponseGenerationAgent:
     async def _handle_empty_result(self, question: str) -> str:
         """빈 결과에 대한 응답 생성
 
+        비용 절감을 위해 템플릿 기반 메시지를 사용하고,
+        필요한 경우에만 LLM을 호출합니다.
+
         Args:
             question: 사용자 질문
 
         Returns:
             str: 빈 결과에 대한 자연어 응답
         """
-        # LLM을 사용하여 더 나은 대안 제안 생성
-        try:
-            chain = self.prompt | self.llm
-            result = await chain.ainvoke(
-                {
-                    "question": question,
-                    "sql": "",
-                    "result_data": "[]",
-                    "columns": "",
-                    "row_count": 0,
-                }
-            )
-            # Extract content from AIMessage or convert to string
-            if hasattr(result, "content"):
-                return str(result.content)
-            else:
-                return str(result)
-
-        except Exception as e:
-            logger.warning(
-                "empty_result_response_fallback",
-                extra={
-                    "event": "empty_result_response_fallback",
-                    "error": str(e),
-                },
-            )
-            # 폴백: 간단한 기본 메시지
-            return "조회 결과가 없습니다. 다른 조건으로 다시 조회해 주세요."
+        # 간단한 템플릿 기반 메시지 (LLM 호출 없이)
+        # 비용 절감 및 응답 속도 개선
+        return (
+            "조회 결과가 없습니다. "
+            "검색 조건을 확인하시거나 다른 기간으로 다시 조회해 주세요."
+        )

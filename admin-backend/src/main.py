@@ -7,6 +7,7 @@ from src.common.monitoring.sentry_config import initialize_sentry
 initialize_sentry()
 
 from fastapi import FastAPI, Request
+from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.trustedhost import TrustedHostMiddleware
 from fastapi.responses import JSONResponse
@@ -113,6 +114,51 @@ app.add_middleware(LoggingMiddleware)
 #     app.add_middleware(AuditLogMiddleware)
 
 # 전역 예외 핸들러
+@app.exception_handler(RequestValidationError)
+async def validation_exception_handler(request: Request, exc: RequestValidationError):
+    """Pydantic 유효성 검사 예외 처리 (422 → 400 변환)
+
+    Story 2-1 AC #6: 유효성 검사 실패 시 400 Bad Request 반환
+    """
+    log = get_logger_with_request_id()
+
+    # 유효성 검사 에러 상세 정보 추출
+    errors = exc.errors()
+    error_messages = []
+    for error in errors:
+        field = " -> ".join(str(loc) for loc in error["loc"])
+        message = error["msg"]
+        error_messages.append(f"{field}: {message}")
+
+    error_detail = "; ".join(error_messages)
+
+    log.warning(
+        "validation_error",
+        extra={
+            "event": "validation_error",
+            "path": request.url.path,
+            "method": request.method,
+            "error_detail": error_detail,
+            "client_ip": request.client.host if request.client else None,
+        },
+    )
+
+    return JSONResponse(
+        status_code=400,  # 422 대신 400 반환
+        content={
+            "success": False,
+            "message": "입력 데이터가 유효하지 않습니다.",
+            "data": None,
+            "error": {
+                "code": "VALIDATION_ERROR",
+                "detail": error_detail,
+                "errors": errors,
+            },
+            "meta": {"timestamp": None, "request_id": None, "pagination": None},
+        },
+    )
+
+
 @app.exception_handler(BaseAppException)
 async def app_exception_handler(request: Request, exc: BaseAppException):
     """커스텀 애플리케이션 예외 처리"""

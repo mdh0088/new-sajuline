@@ -32,6 +32,26 @@ logger = get_logger(__name__)
 router = APIRouter(prefix="/ai", tags=["AI Assistant"])
 
 
+def create_ai_error_response(
+    error_code: str, message: str, suggestions: list[str] | None = None
+) -> dict:
+    """AI 에러 응답 생성 helper 함수
+
+    Args:
+        error_code: 에러 코드 (AIErrorCode 상수)
+        message: 사용자 친화적 에러 메시지
+        suggestions: 해결 방법 제안 (옵션)
+
+    Returns:
+        dict: AIErrorResponse 형태의 딕셔너리
+    """
+    return AIErrorResponse(
+        error_code=error_code,
+        message=message,
+        suggestions=suggestions or [],
+    ).model_dump()
+
+
 class HealthCheckResponse(BaseModel):
     """Health check 응답 모델"""
 
@@ -169,11 +189,11 @@ async def ai_query(
                 )
                 raise HTTPException(
                     status_code=400,
-                    detail=AIErrorResponse(
+                    detail=create_ai_error_response(
                         error_code=validation_result.error_code,
                         message=validation_result.message,
                         suggestions=validation_result.suggestions,
-                    ).model_dump(),
+                    ),
                 )
         except HTTPException:
             raise
@@ -189,11 +209,11 @@ async def ai_query(
             )
             raise HTTPException(
                 status_code=500,
-                detail=AIErrorResponse(
+                detail=create_ai_error_response(
                     error_code=AIErrorCode.INTERNAL_ERROR,
                     message="내부 서버 오류가 발생했습니다. 잠시 후 다시 시도해주세요.",
                     suggestions=["잠시 후 다시 시도해주세요."],
-                ).model_dump(),
+                ),
             )
 
         # Story 2-2: SQL 생성
@@ -227,11 +247,11 @@ async def ai_query(
         if not sql_result.success or not sql_result.sql:
             raise HTTPException(
                 status_code=400,
-                detail=AIErrorResponse(
+                detail=create_ai_error_response(
                     error_code=AIErrorCode.INVALID_QUERY,
                     message=sql_result.error or "SQL 생성에 실패했습니다.",
                     suggestions=["질문을 더 명확하게 표현해주세요."],
-                ).model_dump(),
+                ),
             )
 
         # 2. MariaDB 쿼리 실행
@@ -249,12 +269,12 @@ async def ai_query(
         if not query_result.success:
             raise HTTPException(
                 status_code=500,
-                detail=AIErrorResponse(
+                detail=create_ai_error_response(
                     error_code=query_result.error_code or AIErrorCode.DATABASE_ERROR,
                     message=query_result.error_message
                     or "데이터베이스 조회에 실패했습니다.",
                     suggestions=["잠시 후 다시 시도해주세요."],
-                ).model_dump(),
+                ),
             )
 
         # 3. 자연어 응답 생성 (Story 2-4)
@@ -264,7 +284,9 @@ async def ai_query(
             timeout=settings.ai_llm_timeout,
             api_key=settings.openai_api_key,
         )
-        response_agent = ResponseGenerationAgent(llm=llm)
+        response_agent = ResponseGenerationAgent(
+            llm=llm, max_sample_rows=settings.ai_llm_max_sample_rows
+        )
 
         response_result = await response_agent.generate_response(
             question=request.question,
@@ -328,7 +350,7 @@ async def ai_query(
                 "execution_time_ms": execution_time_ms,
                 "tables_accessed": tables_accessed,
                 "row_count": query_result.row_count,
-                "answer_preview": (
+                "natural_language_answer_preview": (
                     natural_language_answer[:100] if natural_language_answer else None
                 ),
                 "response_generation_success": response_result.success,
@@ -376,11 +398,11 @@ async def ai_query(
         )
         raise HTTPException(
             status_code=503,
-            detail=AIErrorResponse(
+            detail=create_ai_error_response(
                 error_code=AIErrorCode.SERVICE_UNAVAILABLE,
                 message="AI 서비스가 일시적으로 사용 불가능합니다. 관리자에게 문의하세요.",
                 suggestions=["잠시 후 다시 시도해주세요.", "관리자에게 문의하세요."],
-            ).model_dump(),
+            ),
         )
     except TimeoutError as e:
         # LLM 타임아웃
@@ -396,14 +418,14 @@ async def ai_query(
         )
         raise HTTPException(
             status_code=504,
-            detail=AIErrorResponse(
+            detail=create_ai_error_response(
                 error_code=AIErrorCode.LLM_TIMEOUT,
                 message="요청 처리 시간이 초과되었습니다. 잠시 후 다시 시도해주세요.",
                 suggestions=[
                     "질문을 더 간단하게 표현해주세요.",
                     "잠시 후 다시 시도해주세요.",
                 ],
-            ).model_dump(),
+            ),
         )
     except Exception as e:
         # 예상치 못한 에러 처리
@@ -419,11 +441,11 @@ async def ai_query(
         )
         raise HTTPException(
             status_code=500,
-            detail=AIErrorResponse(
+            detail=create_ai_error_response(
                 error_code=AIErrorCode.INTERNAL_ERROR,
                 message="요청 처리 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요.",
                 suggestions=["잠시 후 다시 시도해주세요."],
-            ).model_dump(),
+            ),
         )
 
 
