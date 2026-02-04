@@ -11,6 +11,16 @@ from src.schemas.ai.query_schema import (
     AIQueryMetadata,
 )
 from src.schemas.ai.error_schema import AIErrorResponse, AIErrorCode
+from src.schemas.ai.correction_schema import (
+    CorrectionRequest,
+    CorrectionResponse,
+    CorrectionItem,
+    CorrectionHistoryResponse,
+)
+from src.schemas.ai.feedback_schema import (
+    AIFeedbackRequest,
+    AIFeedbackResponse,
+)
 
 __all__ = [
     "AuthErrorResponse",
@@ -20,4 +30,10 @@ __all__ = [
     "AIQueryMetadata",
     "AIErrorResponse",
     "AIErrorCode",
+    "CorrectionRequest",
+    "CorrectionResponse",
+    "CorrectionItem",
+    "CorrectionHistoryResponse",
+    "AIFeedbackRequest",
+    "AIFeedbackResponse",
 ]

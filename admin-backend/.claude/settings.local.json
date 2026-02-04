@@ -34,7 +34,19 @@
       "Bash(./.venv/bin/flake8:*)",
       "Bash(./.venv/bin/mypy:*)",
       "Bash(./.venv/bin/pytest:*)",
-      "Bash(./.venv/bin/python3:*)"
+      "Bash(./.venv/bin/python3:*)",
+      "Bash(black:*)",
+      "Bash(mypy:*)",
+      "Bash(pip3 --version:*)",
+      "Bash(ls:*)",
+      "Bash(pip3 install:*)",
+      "Bash(PYTHONPATH=/mnt/c/Users/user/mdh/project/temp/new-sajuline/admin-backend:$PYTHONPATH python3 -m pytest:*)",
+      "Bash(.env.test <<'EOF'\nDATABASE_URL=sqlite:///test.db\nREDIS_URL=redis://localhost:6379\nSECRET_KEY=test_secret_key\nAI_FEATURE_ENABLED=True\nEOF)",
+      "Bash(alembic revision:*)",
+      "Bash(.venv/bin/alembic revision:*)",
+      "Bash(.venv/bin/pip install:*)",
+      "Bash(grep:*)",
+      "Bash(isort:*)"
     ]
   }
 }

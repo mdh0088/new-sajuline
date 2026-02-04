@@ -3,15 +3,19 @@ Layer 2: SQL 보안 검증.
 
 생성된 SQL을 화이트리스트 기반으로 검증하여 위험한 패턴을 차단합니다.
 
-Stories: 3-1
-FRs: FR-021 (4-Layer Security)
+Stories: 3-1, 3-2
+FRs: FR-021 (4-Layer Security), FR-014, FR-015
 """
 
 import re
 from dataclasses import dataclass, field
 from typing import Set
 
+from src.services.ai.security.injection_detector import SQLInjectionDetector
+from src.services.ai.security.table_guard import TableAccessGuard
+
 # 금지 키워드 (대문자로 정의, 검증 시 대소문자 무시)
+# 추가 보안 레이어: SQLInjectionDetector와 함께 사용하여 다층 방어
 FORBIDDEN_KEYWORDS = {
     "INSERT",
     "UPDATE",
@@ -31,7 +35,8 @@ FORBIDDEN_KEYWORDS = {
     "INTO DUMPFILE",
 }
 
-# 위험 패턴 (정규식)
+# DEPRECATED: 이제 SQLInjectionDetector를 사용합니다 (Story 3-2)
+# 하위 호환성을 위해 유지하지만 사용하지 않습니다
 DANGEROUS_PATTERNS = [
     r"UNION\s+(?:ALL\s+)?SELECT",  # UNION Injection
     r";\s*SELECT",  # Stacked queries (semicolon)
@@ -76,7 +81,9 @@ class Layer2SQLValidator:
     """Layer 2: SQL 보안 검증기"""
 
     @classmethod
-    def validate(cls, sql: str, allowed_tables: Set[str]) -> SecurityValidationResult:
+    def validate(
+        cls, sql: str, allowed_tables: Set[str]
+    ) -> SecurityValidationResult:
         """
         SQL 보안 검증 수행.
 
@@ -92,7 +99,9 @@ class Layer2SQLValidator:
 
         # 1. 빈 SQL 체크
         if not sql or not sql.strip():
-            violations.append("EMPTY_SQL: SQL query is empty or whitespace-only")
+            violations.append(
+                "EMPTY_SQL: SQL query is empty or whitespace-only"
+            )
             return SecurityValidationResult(
                 is_safe=False,
                 is_warning=False,
@@ -104,32 +113,26 @@ class Layer2SQLValidator:
         # 대소문자 무시를 위해 대문자 변환 (원본은 유지)
         sql_upper = sql.upper()
 
-        # 2. 금지 키워드 검증
+        # 2. 금지 키워드 검증 (추가 보안 레이어)
         for keyword in FORBIDDEN_KEYWORDS:
             # 단어 경계를 고려하여 검사 (예: "INSERTED" != "INSERT")
             pattern = r"\b" + re.escape(keyword) + r"\b"
             if re.search(pattern, sql_upper):
                 violations.append(f"FORBIDDEN_KEYWORD: {keyword}")
 
-        # 3. 위험 패턴 검증 (정규식)
-        for pattern in DANGEROUS_PATTERNS:
-            if re.search(pattern, sql, re.IGNORECASE | re.DOTALL):
-                pattern_name = pattern[:30]  # 패턴 이름 축약
-                violations.append(f"DANGEROUS_PATTERN: {pattern_name}")
+        # 3. SQL Injection 패턴 검증 (Story 3-2)
+        injection_result = SQLInjectionDetector.detect(sql)
+        if injection_result.is_injection:
+            for pattern_name in injection_result.patterns_detected:
+                violations.append(f"SQL_INJECTION: {pattern_name}")
 
-        # 4. 테이블 화이트리스트 검증
-        # FROM/JOIN 절에서 테이블 이름 추출 (스키마.테이블 형식 포함)
-        table_pattern = r"\b(?:FROM|JOIN)\s+(?:([a-zA-Z_][a-zA-Z0-9_]*)\.)?([a-zA-Z_][a-zA-Z0-9_]*)"
-        found_tables_raw = re.findall(table_pattern, sql, re.IGNORECASE)
-
-        # (schema, table) 튜플에서 table만 추출 (스키마 prefix 제거)
-        found_tables = [table for schema, table in found_tables_raw]
-
-        for table in found_tables:
-            if table.lower() not in {t.lower() for t in allowed_tables}:
-                violations.append(
-                    f"TABLE_NOT_ALLOWED: '{table}' is not in allowed tables"
-                )
+        # 4. 테이블 접근 제어 검증 (Story 3-2)
+        table_access_result = TableAccessGuard.check_access(
+            sql=sql, allowed_tables=allowed_tables, is_super_admin=False
+        )
+        if not table_access_result.allowed:
+            for blocked_table in table_access_result.blocked_tables:
+                violations.append(f"TABLE_ACCESS_DENIED: {blocked_table}")
 
         # 5. 경고 패턴 검증 (선택적)
         for pattern in WARNING_PATTERNS:

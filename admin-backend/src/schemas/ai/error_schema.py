@@ -1,12 +1,12 @@
 """
 AI 에러 응답 스키마.
 
-Stories: 2-1
-FRs: FR-012 (입력 유효성 검사), FR-015 (에러 처리)
+Stories: 2-1, 4-2
+FRs: FR-012 (입력 유효성 검사), FR-015 (에러 처리), FR20, FR21
 """
 
 from pydantic import BaseModel, Field
-from typing import List
+from typing import List, Dict, Any
 
 
 # AI 에러 코드 상수
@@ -47,12 +47,15 @@ class AIErrorCode:
 
 
 class AIErrorResponse(BaseModel):
-    """AI 에러 응답 스키마"""
+    """AI 에러 응답 스키마 (Story 4-2: 사용자 친화적 에러)"""
 
     success: bool = Field(default=False, description="항상 False")
     error_code: str = Field(description="에러 코드 (AIErrorCode)")
     message: str = Field(description="사용자에게 표시할 에러 메시지")
-    suggestions: List[str] = Field(default_factory=list, description="해결 방법 제안")
+    suggestions: List[str] = Field(default_factory=list, description="해결 방법 제안 (Story 4-2)")
+    error_guide: Dict[str, Any] | None = Field(
+        default=None, description="에러 유형별 안내 정보 (Story 4-2: AC5)"
+    )
     technical_details: str | None = Field(
         default=None, description="기술 상세 정보 (디버그 모드에서만)"
     )

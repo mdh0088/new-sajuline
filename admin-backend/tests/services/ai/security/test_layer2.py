@@ -160,13 +160,14 @@ class TestLayer2SQLValidator:
         assert len(result.violations) > 0
 
     def test_validate_dangerous_pattern_sql_comment(self, allowed_tables):
-        """SQL 주석 차단"""
+        """SQL 주석 차단 (Story 3-2: SQLInjectionDetector 사용)"""
         sql = "SELECT * FROM users -- comment"
 
         result = Layer2SQLValidator.validate(sql, allowed_tables)
 
         assert result.is_safe is False
-        assert any("--" in v for v in result.violations)
+        # Story 3-2 리팩토링 후: SQL_INJECTION으로 검출됨
+        assert any("SQL_INJECTION" in v and "comment" in v.lower() for v in result.violations)
 
     def test_validate_dangerous_pattern_information_schema(
         self, allowed_tables
@@ -283,13 +284,14 @@ class TestLayer2SQLValidator:
             assert len(result.warnings) > 0
 
     def test_validate_dangerous_pattern_block_comment(self, allowed_tables):
-        """블록 주석 패턴 차단 (/* */)"""
+        """블록 주석 패턴 차단 (/* */ - Story 3-2: SQLInjectionDetector 사용)"""
         sql = "SELECT * FROM users /* malicious comment */"
 
         result = Layer2SQLValidator.validate(sql, allowed_tables)
 
         assert result.is_safe is False
-        assert any("DANGEROUS_PATTERN" in v and "*" in v for v in result.violations)
+        # Story 3-2 리팩토링 후: SQL_INJECTION으로 검출됨
+        assert any("SQL_INJECTION" in v and "comment" in v.lower() for v in result.violations)
 
     def test_validate_warning_patterns_coverage(self, allowed_tables):
         """WARNING_PATTERNS 코드 커버리지 (활성화된 경고 패턴 테스트)"""

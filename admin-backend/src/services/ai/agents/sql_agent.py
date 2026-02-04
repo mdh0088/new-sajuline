@@ -3,8 +3,8 @@ MariaDB Text-to-SQL 에이전트.
 
 자연어 질의를 SQL로 변환합니다.
 
-Stories: AI-002
-FRs: FR-011, FR-012, FR-013
+Stories: AI-002, STORY-6-1
+FRs: FR-011, FR-012, FR-013, FR29
 """
 
 import time
@@ -17,6 +17,15 @@ from langchain_openai import ChatOpenAI
 
 from src.common.logging import get_logger
 from src.config.settings import Settings
+from src.services.ai.utils.llm_fallback import (
+    LLMFallbackManager,
+    LLMConfig,
+    LLMAllModelsFailedError,
+)
+from src.services.ai.utils.graceful_degradation import (
+    GracefulDegradationManager,
+    DegradationLevel,
+)
 
 logger = get_logger(__name__)
 
@@ -51,16 +60,36 @@ class SQLGenerationAgent:
         """
         self.settings = settings
 
-        # LLM 초기화 (temperature=0으로 결정적 출력 보장)
-        self.llm = ChatOpenAI(
-            model=settings.ai_llm_model,
+        # LLM Fallback Manager 초기화 (gpt-4o-mini → gpt-3.5-turbo)
+        primary_config = LLMConfig(
+            model=settings.ai_llm_model,  # gpt-4o-mini
+            api_key=settings.openai_api_key,
             temperature=0,
             timeout=settings.ai_llm_timeout,
-            api_key=settings.openai_api_key,
+            max_retries=2,
         )
+
+        fallback_config = LLMConfig(
+            model=getattr(settings, "ai_llm_fallback_model", "gpt-3.5-turbo"),
+            api_key=settings.openai_api_key,
+            temperature=0,
+            timeout=settings.ai_llm_timeout,
+            max_retries=2,
+        )
+
+        self.llm_manager = LLMFallbackManager(
+            primary_config=primary_config,
+            fallback_configs=[fallback_config],
+        )
+
+        # Graceful Degradation Manager 초기화
+        self.degradation_manager = GracefulDegradationManager()
 
         # 프롬프트 템플릿 구성
         self.prompt = self._build_prompt()
+
+        # 기존 LLM (호환성 유지, 실제로는 llm_manager 사용)
+        self.llm = self.llm_manager.get_primary_llm()
 
         # LLM 실행 체인 구성 (prompt → llm → parser)
         self.chain = self.prompt | self.llm | StrOutputParser()
@@ -119,15 +148,19 @@ class SQLGenerationAgent:
             )
 
         try:
-            # LLM 호출
-            response = await self.chain.ainvoke(
-                {
-                    "question": question,
-                    "schema_info": schema_info,
-                    "allowed_tables": ", ".join(allowed_tables),
-                    "current_date": time.strftime("%Y-%m-%d"),
-                }
+            # 프롬프트 메시지 구성
+            messages = self.prompt.format_messages(
+                question=question,
+                schema_info=schema_info,
+                allowed_tables=", ".join(allowed_tables),
+                current_date=time.strftime("%Y-%m-%d"),
             )
+
+            # LLM Fallback Manager를 통한 호출
+            llm_response = await self.llm_manager.invoke(messages)
+
+            # 응답 파싱
+            response = llm_response.content
 
             # 마크다운 코드 블록 제거
             sql = self._clean_sql_response(response)
@@ -147,6 +180,9 @@ class SQLGenerationAgent:
                 },
             )
 
+            # 성공 시 FULL 레벨 유지
+            self.degradation_manager.set_level(DegradationLevel.FULL)
+
             return SQLGenerationResult(
                 success=True,
                 sql=sql,
@@ -156,6 +192,39 @@ class SQLGenerationAgent:
                     "duration_ms": duration_ms,
                     "timestamp": time.time(),
                     "model": self.settings.ai_llm_model,
+                    "degradation_level": self.degradation_manager.current_level.name,
+                },
+            )
+
+        except LLMAllModelsFailedError as e:
+            # 모든 LLM 모델 실패 시 Degradation 레벨 설정
+            duration_ms = int((time.time() - start_time) * 1000)
+            error_msg = "모든 LLM 모델이 실패했습니다"
+
+            self.degradation_manager.set_level(DegradationLevel.CACHED)
+
+            logger.error(
+                "llm_all_models_failed",
+                extra={
+                    "event": "llm_all_models_failed",
+                    "agent": "sql_generation_agent",
+                    "error": str(e),
+                    "question": question[:50],
+                    "duration_ms": duration_ms,
+                    "degradation_level": self.degradation_manager.current_level.name,
+                },
+                exc_info=True,
+            )
+
+            return SQLGenerationResult(
+                success=False,
+                sql=None,
+                error=error_msg,
+                metadata={
+                    "agent": "sql_generation_agent",
+                    "duration_ms": duration_ms,
+                    "timestamp": time.time(),
+                    "degradation_level": self.degradation_manager.current_level.name,
                 },
             )
 

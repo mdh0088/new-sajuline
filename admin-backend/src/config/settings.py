@@ -125,6 +125,12 @@ class Settings(BaseSettings):
     ai_llm_timeout: int = Field(default=10, env="AI_LLM_TIMEOUT")
     ai_llm_fallback_model: str = Field(default="gpt-3.5-turbo", env="AI_LLM_FALLBACK_MODEL")
     ai_llm_max_sample_rows: int = Field(default=10, env="AI_LLM_MAX_SAMPLE_ROWS")  # 응답 생성 시 LLM에 전달할 최대 행 수
+    ai_log_preview_length: int = Field(default=100, env="AI_LOG_PREVIEW_LENGTH")  # 로깅 시 answer_preview 최대 길이
+
+    # AI Cache Settings (Story 6-2)
+    ai_cache_query_ttl: int = Field(default=300, env="AI_CACHE_QUERY_TTL")  # 쿼리 캐시 TTL (5분)
+    ai_cache_schema_ttl: int = Field(default=3600, env="AI_CACHE_SCHEMA_TTL")  # 스키마 캐시 TTL (1시간)
+    ai_cache_stats_ttl: int = Field(default=86400, env="AI_CACHE_STATS_TTL")  # 통계 TTL (24시간)
 
     class Config:
         # 환경에 따라 자동으로 env 파일 선택
@@ -155,6 +161,11 @@ class Settings(BaseSettings):
     def is_production(self) -> bool:
         """프로덕션 환경 여부"""
         return self.app_env == "production"
+
+    @property
+    def REDIS_URL(self) -> str:
+        """Redis 연결 URL (Story 6-2 호환성)"""
+        return self.ai_redis_url
 
     @property
     def mariadb_url(self) -> str:
