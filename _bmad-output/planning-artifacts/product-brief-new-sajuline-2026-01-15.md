@@ -7,9 +7,13 @@ inputDocuments:
   - docs/API-REFERENCE.md
   - docs/DATA-MODELS.md
   - docs/DEPLOYMENT.md
-  - _bmad-output/planning-artifacts/prd.md
+  - admin-backend/docs/ai-assistant/00-index.md
+  - admin-backend/docs/ai-assistant/01-architecture-overview.md
+  - admin-backend/_bmad-output/planning-artifacts/product-brief-admin-backend-2026-01-29.md
+  - admin-backend/_bmad-output/project-context.md
 date: 2026-01-15
 author: DongDong
+lastUpdated: 2026-02-04
 ---
 
 # Product Brief: new-sajuline
@@ -21,7 +25,8 @@ author: DongDong
 사주에 관심 있는 모든 사용자에게 간편하고 트렌디한 경험을 제공한다.
 
 **핵심 가치 제안:**
-- AI 기반 일일/주간 운세로 낮은 진입장벽 제공
+- **사용자 서비스**: AI 기반 일일/주간/월간/연간 운세로 낮은 진입장벽 제공
+- **관리자 서비스**: LangGraph 기반 AI BI 어시스턴트로 자연어 데이터 조회 지원
 - 모던하고 빠른 모바일 퍼스트 UX
 - 포인트 기반 투명한 결제 시스템 (신규 가입 시 10,000P 지급)
 - 전문 상담사와 AI의 하이브리드 상담 모델
@@ -177,7 +182,7 @@ author: DongDong
 
 ## MVP Scope
 
-### Core Features
+### Part A: 사용자 서비스 - AI 운세
 
 #### AI 운세 서비스 (MVP 핵심)
 
@@ -189,21 +194,58 @@ author: DongDong
 | **연간 운세** | 올해 운세 AI 분석 | P0 (필수) |
 
 **기술 구현:**
-- OpenAI API 연동
+- Backend: FastAPI + OpenAI API 연동
+- Frontend: Nuxt 3 사용자 인터페이스
 - 사용자 사주 정보 기반 (생년월일, 태어난 시간)
 - 프롬프트 템플릿 방식 (일일/주간/월간/연간 차이는 프롬프트 변경)
 - 로그인 필수 (가입 시 입력한 사주 정보 활용)
 - 추가 사용자 입력 없음 (기존 데이터 활용)
 
-**이미 완료된 기능:**
-- 모던 UI/UX 리뉴얼 ✅
-- 기존 상담 서비스 (상담사 목록, 예약, 채팅) ✅
-- 회원 시스템 (가입, 로그인, 소셜 로그인) ✅
-- 결제 시스템 (포인트 충전) ✅
-- 관리자 시스템 ✅
+---
+
+### Part B: 관리자 서비스 - AI BI 어시스턴트
+
+#### AI BI 어시스턴트 (자연어 데이터 조회)
+
+| 기능 | 설명 | 우선순위 |
+|------|------|----------|
+| **자연어 질의** | "오늘 매출 얼마야?" 형태의 질문 수용 | P0 (필수) |
+| **멀티 DB 조회** | MariaDB + MSSQL 2005 통합 분석 | P0 (필수) |
+| **실시간 응답** | 5초 이내 정확한 답변 제공 | P0 (필수) |
+| **대시보드 UI** | Admin-Frontend에 채팅 인터페이스 | P0 (필수) |
+
+**기술 구현:**
+- Admin-Backend: FastAPI + LangGraph 멀티 에이전트
+  - Supervisor (작업 분할 및 오케스트레이션)
+  - MariaDB Agent (매출, 유저, 상담사 조회)
+  - MSSQL Agent (상담 로그, 실시간 상태)
+  - Cross-DB Joiner (pandas 메모리 조인)
+- Admin-Frontend: Vue 3 대시보드 + AI 채팅 UI
+- OpenAI API (gpt-4o-mini 또는 gpt-3.5-turbo)
+- 4중 보안 방어: Prompt 검증 + SQL 검증 + 결과 검증 + 사용자 확인
+- 읽기 전용 (SELECT만 허용)
+
+**주요 질의 유형 (MVP):**
+| 질의 유형 | 예시 | 데이터 소스 |
+|----------|------|------------|
+| 매출 현황 | "오늘 매출", "이번 주 매출" | MariaDB (t_payment) |
+| 결제 건수 | "오늘 결제 몇 건?" | MariaDB (t_payment) |
+| 유저 조회 | "신규 가입자 몇 명?" | MariaDB (t_user) |
+| 상담사 성과 | "김철수 상담사 이번 주 실적" | MariaDB + MSSQL (크로스 조인) |
+
+---
+
+### 이미 완료된 기능
+
+- ✅ 모던 UI/UX 리뉴얼 (Frontend + Admin-Frontend)
+- ✅ 기존 상담 서비스 (상담사 목록, 예약, 채팅)
+- ✅ 회원 시스템 (가입, 로그인, 소셜 로그인)
+- ✅ 결제 시스템 (포인트 충전)
+- ✅ 관리자 시스템 기본 구조 (Admin-Backend + Admin-Frontend)
 
 ### Out of Scope for MVP
 
+#### 사용자 서비스 관련
 | 기능 | 이유 | 향후 계획 |
 |------|------|-----------|
 | AI 채팅 상담 | Phase 2 범위 | 전문 상담사 데이터 기반 구현 |
@@ -211,16 +253,38 @@ author: DongDong
 | 궁합 분석 | 추가 개발 필요 | 운세 안정화 후 검토 |
 | 타로/꿈해몽 | 다른 도메인 | 장기 검토 |
 
+#### 관리자 서비스 관련
+| 기능 | 이유 | 향후 계획 |
+|------|------|-----------|
+| GA4 연동 (유입 분석) | Phase 4 범위 | 마케팅 ROI 측정 기능 |
+| SSE 스트리밍 응답 | Phase 2 범위 | UX 고도화 단계 |
+| Redis Checkpointing | Phase 2 범위 | 대화 맥락 유지 기능 |
+| 프로액티브 인사이트 제안 | Phase 3 범위 | "매출 떨어졌네요" → "원인 분석할까요?" |
+| 시각화 (차트 생성) | Phase 4 범위 | 텍스트/테이블 응답 우선 |
+| Schema-aware RAG | Phase 3 범위 | 정확도 향상 기능 |
+
 ### MVP Success Criteria
 
+#### 사용자 서비스 (AI 운세)
 | 지표 | 목표 | 측정 방법 |
 |------|------|-----------|
-| AI 운세 응답시간 | < 3초 | API 응답 모니터링 |
+| AI 운세 응답시간 | < 3초 | OpenAI API 응답 모니터링 |
 | AI 운세 이용률 | 가입자의 30%+ | 일일 운세 조회 수 |
 | 서비스 안정성 | 99%+ 가용성 | 업타임 모니터링 |
 | 사용자 피드백 | 긍정적 반응 | 정성적 피드백 수집 |
 
+#### 관리자 서비스 (AI BI 어시스턴트)
+| 지표 | 목표 | 측정 방법 |
+|------|------|-----------|
+| 첫 질문 성공률 | ≥90% | 첫 질의 시 정확한 답변 비율 |
+| 응답 시간 (p95) | ≤5초 | "오늘 매출" 질문 → 응답 시간 |
+| SQL 오류율 | ≤1% | 생성된 SQL 오류 발생 비율 |
+| 일일 사용 횟수 | ≥5회 | 관리자 1인 기준 하루 질의 횟수 |
+| 개발팀 부담 감소 | 데이터 요청 50% 감소 | 개발팀 요청 건수 추적 |
+
 ### Future Vision
+
+#### 사용자 서비스 로드맵
 
 **Phase 2: 하이브리드 상담**
 - 전문 상담사 + AI 보조 상담
@@ -235,3 +299,43 @@ author: DongDong
 - AI 사주 서비스 시장 선점
 - 개인화된 운세 알림 서비스
 - 사주 기반 라이프스타일 추천
+
+---
+
+#### 관리자 서비스 로드맵
+
+**Phase 2: 멀티 DB 고도화 (3주)**
+- SSE 스트리밍 응답 (실시간 진행 상황 표시)
+- Redis Checkpointing (대화 맥락 유지)
+- 크로스 DB 조인 성능 최적화
+
+**Phase 3: UX 고도화 (4주)**
+- Schema-aware RAG (정확도 향상)
+- 프로액티브 인사이트 제안
+  - "매출 떨어졌네요" → "원인 분석할까요?" 자동 제안
+  - 후속 질문 추천
+
+**Phase 4: 확장 및 시각화 (4주+)**
+- GA4 Agent 추가 (유입 경로, 전환율 분석)
+- 유입-매출 연계 분석 ("카카오 유입 유저 중 결제한 사람 몇 명?")
+- 차트 자동 생성 (매출 추이, 상담사 성과 그래프)
+
+**2-3년 후 비전:**
+- 전사 BI 플랫폼 (모든 부서가 자연어로 데이터 조회)
+- 예측 분석 ("다음 달 매출 예상치")
+- 자동 리포트 (일간/주간 핵심 지표 자동 생성)
+- 외부 시스템 연동 (CRM, ERP 확장)
+
+---
+
+## 변경 이력
+
+| 날짜 | 버전 | 변경 내용 |
+|------|------|----------|
+| 2026-01-15 | 1.0.0 | 초기 Product Brief 생성 (Steps 1-5 완료) |
+| 2026-02-04 | 1.1.0 | **관리자 서비스 추가**: Admin-Backend AI BI 어시스턴트 (LangGraph 기반 자연어 데이터 조회) 통합 |
+|  |  | - Executive Summary에 관리자 서비스 가치 제안 추가 |
+|  |  | - MVP Scope를 Part A (사용자 AI 운세) + Part B (관리자 AI BI)로 분리 |
+|  |  | - Admin-Backend 관련 문서 4개 inputDocuments에 추가 |
+|  |  | - Success Criteria에 관리자 서비스 지표 추가 |
+|  |  | - Future Vision에 관리자 서비스 Phase 2-4 로드맵 추가 |
