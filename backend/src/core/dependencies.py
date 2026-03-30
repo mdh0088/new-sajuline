@@ -384,12 +384,14 @@ def get_notification_wait_service(
 def get_inquiry_service(
     inquiry_repo: InquiryRepository = Depends(get_inquiry_repository),
     counselor_repo: CounselorRepository = Depends(get_counselor_repository),
+    user_repo: UserRepository = Depends(get_user_repository),
     notification_service: NotificationService = Depends(get_notification_service)
 ) -> InquiryService:
     """1:1 문의 서비스 의존성 주입 (사용자용)"""
     return InquiryService(
         inquiry_repo=inquiry_repo,
         counselor_repo=counselor_repo,
+        user_repo=user_repo,
         notification_service=notification_service
     )
 
