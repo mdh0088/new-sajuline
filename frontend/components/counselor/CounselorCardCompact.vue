@@ -228,7 +228,8 @@ const modalCounselorData = computed(() => {
     profile_image_url: props.counselor.profile_image_url,
     specialties: [specialtyLabel.value],
     afterAmount: props.counselor.after_amount ?? null,
-    beforeAmount: null // CounselorSearchItem에는 before_amount가 없으므로 null
+    beforeAmount: null, // CounselorSearchItem에는 before_amount가 없으므로 null
+    grade: props.counselor.grade ?? null,
   }
 })
 

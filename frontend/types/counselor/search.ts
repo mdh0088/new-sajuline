@@ -10,6 +10,7 @@ export interface CounselorSearchItem {
   rating_avg?: number | null
   review_count: number
   m_state?: string | null // '1' 대기중, '2' 상담중, '3' 부재중
+  grade?: string | null // 'BRONZE' | 'SILVER' | 'GOLD' (060 번호 결정에 사용)
 }
 
 export interface CounselorSearchParams {

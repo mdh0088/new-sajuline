@@ -477,7 +477,8 @@ const modalCounselorData = computed(() => {
     specialties: specialtyList.value,
     // after_amount, before_amount may not exist in /public/{counselor_code}; allow undefined
     afterAmount: (counselor.value as any).after_amount ?? null,
-    beforeAmount: (counselor.value as any).before_amount ?? null
+    beforeAmount: (counselor.value as any).before_amount ?? null,
+    grade: (counselor.value as any).grade ?? null,
   }
 })
 

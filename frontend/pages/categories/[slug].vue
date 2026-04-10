@@ -325,7 +325,8 @@ const modalCounselorData = computed(() => {
     profile_image_url: selectedCounselor.value.image,
     specialties: [selectedCounselor.value.specialty],
     afterAmount: selectedCounselor.value.price ?? null,
-    beforeAmount: null
+    beforeAmount: null,
+    grade: selectedCounselor.value.grade ?? null,
   }
 })
 

@@ -94,6 +94,7 @@ class CounselorSearchItem(BaseModel):
     rating_avg: Optional[Decimal] = None
     review_count: int
     m_state: Optional[str] = Field(None, description="TM60 멤버 상태(1 대기중, 2 상담중, 3 부재중 등)")
+    grade: Optional[CounselorGrade] = Field(None, description="상담사 등급 (060 번호 결정에 사용)")
 
     model_config = ConfigDict(from_attributes=True)
 
