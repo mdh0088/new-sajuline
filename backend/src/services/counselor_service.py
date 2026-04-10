@@ -278,6 +278,7 @@ class CounselorService:
                 "rating_avg": avg_rating,
                 "review_count": review_count,
                 "m_state": state_map.get(code) if state_map else None,
+                "grade": c.grade,
             })
         return items
     
